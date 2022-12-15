@@ -10,6 +10,6 @@ class MicroserviceHelloWorldController @Inject()(cc: ControllerComponents)
     extends BackendController(cc) {
 
   def hello(): Action[AnyContent] = Action.async { implicit request =>
-    Future.successful(Ok("Hello Pilla2"))
+    Future.successful(Ok("Hello Pillar2"))
   }
 }
