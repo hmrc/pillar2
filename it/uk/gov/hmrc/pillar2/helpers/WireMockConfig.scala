@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2.helpers
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+trait WireMockConfig {
+  me: BaseISpec with WireMockSupport =>
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+  additionalAppConfig ++=
+    setWireMockPort(
+      "eis",
+    )
 
-  val appName: String = config.get[String]("appName")
-
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
-
+  private def setWireMockPort(services: String*): Map[String, Any] =
+    services.foldLeft(Map.empty[String, Any]) {
+      case (map, service) => map + (s"microservice.services.$service.port" -> mockServerPort)
+    }
 }

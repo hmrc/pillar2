@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2.helpers
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import play.api.http.{HeaderNames, Status}
+import play.api.mvc.Results
+import play.api.test.{ResultExtractors, StubControllerComponentsFactory}
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
-
-  val appName: String = config.get[String]("appName")
-
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
-
-}
+trait ActionFunctionBaseSpec extends BaseSpec with Results with Status with ResultExtractors with HeaderNames with StubControllerComponentsFactory

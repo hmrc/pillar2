@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2.services.test
+import play.api.Logger
+import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import javax.inject.Inject
+import scala.concurrent.ExecutionContext
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+class RegistrationCacheService @Inject() (val repository: RegistrationCacheRepository)(implicit
+  val executionContext:                                   ExecutionContext,
+  appConfig:                                              AppConfig
+) {
 
-  val appName: String = config.get[String]("appName")
-
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
+  implicit val logger: Logger = Logger(this.getClass.getName)
 
 }
