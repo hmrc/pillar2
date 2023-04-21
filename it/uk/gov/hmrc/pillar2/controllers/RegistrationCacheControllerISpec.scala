@@ -42,7 +42,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
     "successfully save data" in {
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
+        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
       val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
@@ -55,7 +55,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
     "successfully get the record" in {
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
+        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
       val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
@@ -67,7 +67,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
     "successfully remove the record" in {
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
+        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
       val expectedResult  = registrationCacheRepository.remove(userAnswersCache.id).futureValue
