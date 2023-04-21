@@ -69,7 +69,7 @@ abstract class BaseISpec
   implicit def ec:                ExecutionContext = global
 
   additionalAppConfig ++= Map(
-    "mongodb.uri"      -> "mongodb://localhost:27017/pillar2",
+    "mongodb.uri"      -> "mongodb://localhost:27017/pillar2-test",
     "metrics.enabled"  -> false,
     "auditing.enabled" -> false
   )
