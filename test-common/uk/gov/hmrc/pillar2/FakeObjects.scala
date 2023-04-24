@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import org.joda.time.{DateTime, DateTimeZone}
+import org.scalatest.OptionValues
+import play.api.libs.json.Json
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.JsonDataEntry
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+trait FakeObjects {
+  self: OptionValues =>
 
-  val appName: String = config.get[String]("appName")
+  val userAnswersCache =
+    JsonDataEntry("id", Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1"), DateTime.now(DateTimeZone.UTC), getExpireAt)
 
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
+  private def getExpireAt: DateTime =
+    DateTime
+      .now(DateTimeZone.UTC)
+      .toLocalDate
+      .plusDays(1)
+      .toDateTimeAtStartOfDay()
 
 }

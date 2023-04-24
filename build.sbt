@@ -1,4 +1,6 @@
 import scoverage.ScoverageKeys
+import play.sbt.PlayImport.PlayKeys.playDefaultPort
+import uk.gov.hmrc.DefaultBuildSettings._
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
@@ -11,8 +13,8 @@ lazy val microservice = Project(appName, file("."))
     scalaVersion        := "2.13.8",
       ScoverageKeys.coverageExcludedFiles :=
         "<empty>;com.kenshoo.play.metrics.*;.*definition.*;prod.*;testOnlyDoNotUseInAppConf.*;" +
-          "app.*;.*BuildInfo.*;.*Routes.*;.*repositories.*;.*controllers.test.*;.*services.test.*;.*metrics.*",
-      ScoverageKeys.coverageMinimum := 80,
+          "app.*;.*BuildInfo.*;.*Routes.*;.*repositories.*;.*package.*;.*controllers.test.*;.*services.test.*;.*metrics.*",
+      ScoverageKeys.coverageMinimumStmtTotal := 80,
       ScoverageKeys.coverageFailOnMinimum := true,
       ScoverageKeys.coverageHighlighting := true,
     PlayKeys.playDefaultPort         := 10051,
@@ -26,5 +28,13 @@ lazy val microservice = Project(appName, file("."))
   .settings(publishingSettings: _*)
   .configs(IntegrationTest)
   .settings(integrationTestSettings(): _*)
+  .settings(
+    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
+    unmanagedSourceDirectories in IntegrationTest :=
+      (baseDirectory in IntegrationTest)(base => Seq(base / "it", base / "test-common")).value,
+    unmanagedSourceDirectories in Test := (baseDirectory in Test)(base => Seq(base / "test", base / "test-common")).value,
+    unmanagedResourceDirectories in IntegrationTest := Seq(baseDirectory.value / "test-resources"),
+    testOptions in IntegrationTest += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports/html-it-report")
+  )
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings: _*)

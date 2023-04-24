@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2.utils
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+object CustomHeaders {
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
-
-  val appName: String = config.get[String]("appName")
-
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
+  val XCorrelationId = "X-Correlation-Id"
+  val Environment    = "environment"
 
 }

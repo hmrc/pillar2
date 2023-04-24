@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2.helpers
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import scala.collection.mutable
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+trait AdditionalAppConfig {
 
-  val appName: String = config.get[String]("appName")
-
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
-
+  val additionalAppConfig: mutable.Map[String, Any] = mutable.Map.empty
 }

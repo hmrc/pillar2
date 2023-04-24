@@ -14,18 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2
 
-import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
+import play.api.libs.json.{JsError, Json}
 
-@Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
-
-  val appName: String = config.get[String]("appName")
-
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
-
+package object controllers {
+  implicit class JsErrorLogger(val error: JsError) extends AnyVal {
+    def toLogFormat: String = Json.prettyPrint(JsError.toJson(error))
+  }
 }

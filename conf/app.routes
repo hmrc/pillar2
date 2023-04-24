@@ -1,3 +1,9 @@
 # microservice specific routes
 
 GET        /hello-world             uk.gov.hmrc.pillar2.controllers.MicroserviceHelloWorldController.hello
+
+# user answers caching in mongo
+GET           /user-cache/registration-subscription/:id            uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.get(id: String)
+POST          /user-cache/registration-subscription/:id            uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
+DELETE        /user-cache/registration-subscription/:id            uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
+GET           /user-cache/registration-subscription/:id/lastUpdated            uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
