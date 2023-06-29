@@ -79,7 +79,7 @@ class RegistrationCacheRepository @Inject() (
 )(implicit
   ec: ExecutionContext
 ) extends PlayMongoRepository[RegistrationDataEntry](
-      collectionName = "user-answers-records",
+      collectionName = "user-data-records",
       mongoComponent = mongoComponent,
       domainFormat = RegistrationDataEntryFormats.format,
       extraCodecs = Seq(
