@@ -1,0 +1,7 @@
+GET         /get-all                                                                 test.controllers.TestController.getAllRecords(max: Int ?= 100)
+GET         /clear-all                                                               stubsonly.controllers.TestOnlyController.clearAllData()
+GET         /clear-current                                                           stubsonly.controllers.TestOnlyController.clearCurrentData()
+GET         /registration-data                                                       stubsonly.controllers.TestOnlyController.getRegistrationData()
+
+GET         /de-enrol                                                                stubsonly.controllers.TestOnlyController.deEnrol()
+
