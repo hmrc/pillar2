@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.controllers.test
+package uk.gov.hmrc.pillar2.controllers.stubs
 
 import org.joda.time.DateTime
 import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
@@ -26,34 +26,31 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class TestController @Inject()(
+class TestController @Inject() (
   repository:                RegistrationCacheRepository,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
-
-  def getAllRecords(max:Int): Action[AnyContent] = Action.async { implicit request =>
+  def getAllRecords(max: Int): Action[AnyContent] = Action.async { implicit request =>
     repository.getAll(max).map { response =>
       Ok(Json.toJson(response))
     }
   }
 
-  def getRegistrationData(id:String): Action[AnyContent] =  Action.async { implicit request =>
+  def getRegistrationData(id: String): Action[AnyContent] = Action.async { implicit request =>
     repository.get(id).map { response =>
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
 
-  def clearCurrent(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def clearCurrentData(id: String): Action[AnyContent] = Action.async { implicit request =>
     repository.remove(id).map(_ => Ok)
   }
-
 
   def clearAllData(): Action[AnyContent] = Action.async { implicit request =>
     repository.clearAllData().map(_ => Ok)
   }
-
 
   def deEnrol(): Action[AnyContent] = Action.async { implicit request =>
     ???

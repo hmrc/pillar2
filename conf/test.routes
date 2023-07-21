@@ -1,7 +1,7 @@
-GET         /get-all                                                                 test.controllers.TestController.getAllRecords(max: Int ?= 100)
-GET         /clear-all                                                               stubsonly.controllers.TestOnlyController.clearAllData()
-GET         /clear-current                                                           stubsonly.controllers.TestOnlyController.clearCurrentData()
-GET         /registration-data                                                       stubsonly.controllers.TestOnlyController.getRegistrationData()
+GET         /get-all                                  uk.gov.hmrc.pillar2.controllers.stubs.TestController.getAllRecords(max: Int ?= 100)
+GET         /clear-all                                uk.gov.hmrc.pillar2.controllers.stubs.TestController.clearAllData()
+GET         /clear-current/:id                        uk.gov.hmrc.pillar2.controllers.stubs.TestController.clearCurrentData(id:String)
+GET         /registration-data/:id                    uk.gov.hmrc.pillar2.controllers.stubs.TestController.getRegistrationData(id:String)
 
-GET         /de-enrol                                                                stubsonly.controllers.TestOnlyController.deEnrol()
+GET         /de-enrol                                  uk.gov.hmrc.pillar2.controllers.stubs.TestController.deEnrol()
 

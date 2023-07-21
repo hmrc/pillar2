@@ -79,7 +79,7 @@ class RegistrationCacheRepository @Inject() (
 )(implicit
   ec: ExecutionContext
 ) extends PlayMongoRepository[RegistrationDataEntry](
-      collectionName = "user-data-records",
+      collectionName = "user-answers-records",
       mongoComponent = mongoComponent,
       domainFormat = RegistrationDataEntryFormats.format,
       extraCodecs = Seq(
@@ -145,10 +145,12 @@ class RegistrationCacheRepository @Inject() (
     }
 
   def getAll(max: Int)(implicit ec: ExecutionContext): Future[Seq[JsValue]] =
-    collection.find[JsonDataEntry]().map { dataEntry =>
+    collection
+      .find[JsonDataEntry]()
+      .map { dataEntry =>
         dataEntry.data
-    }.toFuture()
-
+      }
+      .toFuture()
 
   def clearAllData()(implicit ec: ExecutionContext): Future[Boolean] =
     collection.deleteMany(BsonDocument()).toFuture().map { result =>
