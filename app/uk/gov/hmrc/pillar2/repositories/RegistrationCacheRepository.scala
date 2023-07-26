@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.repositories
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import org.joda.time.{DateTime, DateTimeZone}
-import org.mongodb.scala.bson.BsonBinary
+import org.mongodb.scala.bson.{BsonBinary, BsonDocument}
 import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
 import play.api.{Configuration, Logging}
 import play.api.libs.json.{Format, JsValue, Json, Reads, Writes}
@@ -143,4 +143,19 @@ class RegistrationCacheRepository @Inject() (
       logger.info(s"Removing row from collection $collectionName externalId:$id")
       result.wasAcknowledged
     }
+
+  def getAll(max: Int)(implicit ec: ExecutionContext): Future[Seq[JsValue]] =
+    collection
+      .find[JsonDataEntry]()
+      .map { dataEntry =>
+        dataEntry.data
+      }
+      .toFuture()
+
+  def clearAllData()(implicit ec: ExecutionContext): Future[Boolean] =
+    collection.deleteMany(BsonDocument()).toFuture().map { result =>
+      logger.info(s"Removing all the rows from collection $collectionName")
+      result.wasAcknowledged
+    }
+
 }
