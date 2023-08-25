@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.utils
+package uk.gov.hmrc.pillar2.models.registration
 
-object CustomHeaders {
+import play.api.libs.json.{Json, OFormat}
 
-  val XCorrelationId = "X-Correlation-Id"
-  val Environment    = "environment"
+final case class RegistrationWithoutId(
+  userId:                        String,
+  registrationWithoutIdRequest:  RegistrationWithoutIdRequest,
+  registrationWithoutIdResponse: Option[IncorporatedEntityRegistrationData]
+)
 
+object RegistrationWithoutId {
+  implicit val format: OFormat[RegistrationWithoutId] = Json.format[RegistrationWithoutId]
 }

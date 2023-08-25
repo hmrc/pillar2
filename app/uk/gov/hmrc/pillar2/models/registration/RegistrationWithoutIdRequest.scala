@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.services.test
-import play.api.Logger
-import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+package uk.gov.hmrc.pillar2.models.registration
 
-import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.grs.EntityType
 
-class RegistrationCacheService @Inject() (val repository: RegistrationCacheRepository)(implicit
-  val executionContext:                                   ExecutionContext,
-  appConfig:                                              AppConfig
-) {
+final case class RegistrationWithoutIdRequest(orgType: Option[EntityType])
 
-  implicit val logger: Logger = Logger(this.getClass.getName)
-
+object RegistrationWithoutIdRequest {
+  implicit val format: OFormat[RegistrationWithoutIdRequest] = Json.format[RegistrationWithoutIdRequest]
 }

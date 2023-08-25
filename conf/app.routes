@@ -5,3 +5,6 @@ GET          /user-cache/registration-subscription/:id              uk.gov.hmrc.
 POST         /user-cache/registration-subscription/:id              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
 DELETE       /user-cache/registration-subscription/:id              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
 GET          /user-cache/registration-subscription/:id/lastUpdated  uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
+
+
+POST          /registration/:id                                    uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdRegistrationSubmission(id: String)

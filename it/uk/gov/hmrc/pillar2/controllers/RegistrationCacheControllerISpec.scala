@@ -20,7 +20,7 @@ import org.scalatest.OptionValues
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockHelper, WireMockSupport}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.pillar2.services.test.TestService
+import uk.gov.hmrc.pillar2.service.test.TestService
 
 
 class RegistrationCacheControllerISpec extends BaseISpec

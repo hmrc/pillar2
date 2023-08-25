@@ -20,7 +20,6 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.client.{MappingBuilder, ResponseDefinitionBuilder}
 import com.github.tomakehurst.wiremock.http.{HttpHeader, HttpHeaders}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
-import uk.gov.hmrc.pillar2.utils.CustomHeaders
 
 import scala.collection.JavaConverters._
 
@@ -38,7 +37,7 @@ trait WireMockHelper {
     stubFor(
       post(urlMatching(url))
         .willReturn(
-          aResponse().withStatus(responseStatus).withBody(responseBody).withHeader(CustomHeaders.XCorrelationId, "correlationId")
+          aResponse().withStatus(responseStatus).withBody(responseBody)
         ))
   }
 
