@@ -12,4 +12,4 @@
 # Add all the application routes to the prod.routes file
 ->         /                          prod.Routes
 
-->         /pillar-two/test-only/                          test.Routes
+->         /report-pillar2-top-up-taxes/test-only/                          test.Routes
