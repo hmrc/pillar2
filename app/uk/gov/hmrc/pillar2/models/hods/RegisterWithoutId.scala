@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.models.hods
 
 import play.api.libs.json._
+import uk.gov.hmrc.pillar2.models.fm.NfmRegisteredAddress
 import uk.gov.hmrc.pillar2.models.registration.UpeRegisteredAddress
 
 import java.time.format.DateTimeFormatter
@@ -44,6 +45,9 @@ object Address {
   implicit val addressFormat: OFormat[Address] = Json.format[Address]
 
   def fromAddress(address: UpeRegisteredAddress): Address =
+    Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
+
+  def fromFmAddress(address: NfmRegisteredAddress): Address =
     Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
 
 }

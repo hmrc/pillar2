@@ -19,12 +19,11 @@ package uk.gov.hmrc.pillar2.service
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutId}
-import uk.gov.hmrc.pillar2.models.identifiers.RegistrationId
+import uk.gov.hmrc.pillar2.models.identifiers.{FiliningMemberId, RegistrationId}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import play.api.Logging
 import uk.gov.hmrc.pillar2.connectors.DataSubmissionsConnector
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.libs.json.Json
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,27 +32,7 @@ class DataSubmissionsService @Inject() (repository: RegistrationCacheRepository,
   ec:                                               ExecutionContext
 ) extends Logging {
 
-  /*  def sendBusinessRegistration(userAnswers: UserAnswers): Future[HttpResponse] = {
-    for {
-      registration <- userAnswers.get(RegistrationId)
-      data         <- registration.withoutIdRegData
-      phoneNumber  <- data.telephoneNumber
-      emailAddress <- data.emailAddress
-      address      <- data.upeRegisteredAddress
-
-    } yield {
-      registerWithoutId(
-        data.upeNameRegistration,
-        Address.fromAddress(address),
-        ContactDetails(Some(phoneNumber), None, None, Some(emailAddress))
-      )
-    }
-  }.getOrElse {
-    logger.warn("Registration Information Missing")
-    registerWithoutIdError
-  }*/
-
-  def sendBusinessRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
       registration <- userAnswers.get(RegistrationId)
       data         <- registration.withoutIdRegData
@@ -65,7 +44,23 @@ class DataSubmissionsService @Inject() (repository: RegistrationCacheRepository,
       ContactDetails(None, None, None, Some(emailAddress))
     )
   }.getOrElse {
-    logger.warn("Registration Information Missing")
+    logger.warn("Upe Registration Information Missing")
+    registerWithoutIdError
+  }
+
+  def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    for {
+      fm           <- userAnswers.get(FiliningMemberId)
+      data         <- fm.withoutIdRegData
+      emailAddress <- data.fmEmailAddress
+      address      <- data.registeredFmAddress
+    } yield registerWithoutId(
+      data.registeredFmName,
+      Address.fromFmAddress(address),
+      ContactDetails(None, None, None, Some(emailAddress))
+    )
+  }.getOrElse {
+    logger.warn("Filing Member Registration Information Missing")
     registerWithoutIdError
   }
 

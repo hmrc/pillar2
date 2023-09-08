@@ -17,9 +17,10 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.fm.FilingMember
 import uk.gov.hmrc.pillar2.models.registration.Registration
 
-case object FiliningMemberId extends TypedIdentifier[Registration] {
+case object FiliningMemberId extends TypedIdentifier[FilingMember] {
 
   override def path: JsPath = JsPath \ toString
 

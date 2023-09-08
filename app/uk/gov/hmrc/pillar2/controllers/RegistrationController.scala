@@ -38,10 +38,18 @@ class RegistrationController @Inject() (
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
-  def withoutIdRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
-        .sendBusinessRegistration(userAnswer)
+        .sendNoIdUpeRegistration(userAnswer)
+        .map(handleResult)
+    }
+  }
+
+  def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+    getUserAnswers(id).flatMap { userAnswer =>
+      dataSubmissionService
+        .sendNoIdFmRegistration(userAnswer)
         .map(handleResult)
     }
   }
@@ -53,7 +61,9 @@ class RegistrationController @Inject() (
 
   private def handleResult(httpResponse: HttpResponse): Result =
     httpResponse.status match {
-      case OK        => Ok(httpResponse.body)
+      case OK =>
+        logger.info(s"Received Response body - ${httpResponse.body}")
+        Ok(httpResponse.body)
       case NOT_FOUND => NotFound(httpResponse.body)
 
       case BAD_REQUEST =>
