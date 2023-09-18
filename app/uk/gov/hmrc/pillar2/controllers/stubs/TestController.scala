@@ -22,7 +22,7 @@ import uk.gov.hmrc.pillar2.controllers.BasePillar2Controller
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class TestController @Inject() (
@@ -31,10 +31,16 @@ class TestController @Inject() (
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
-  def getAllRecords(max: Int): Action[AnyContent] = Action.async {
-    repository.getAll(max).map { response =>
-      Ok(Json.toJson(response))
-    }
+
+  def getAllRecords(max: Int): Action[AnyContent] = Action.async { implicit request =>
+    repository
+      .getAll(max)
+      .map { records =>
+        Ok(Json.toJson(records))
+      }
+      .recover { case e: Exception =>
+        InternalServerError(Json.obj("message" -> e.getMessage))
+      }
   }
 
   def getRegistrationData(id: String): Action[AnyContent] = Action.async {
@@ -43,16 +49,44 @@ class TestController @Inject() (
     }
   }
 
-  def clearCurrentData(id: String): Action[AnyContent] = Action.async {
-    repository.remove(id).map(_ => Ok)
+
+  def clearCurrentData(id: String): Action[AnyContent] = Action.async { implicit request =>
+    repository
+      .remove(id)
+      .map { _ =>
+        Ok(Json.obj("message" -> "Data cleared successfully"))
+      }
+      .recover { case e: Exception =>
+        InternalServerError(Json.obj("message" -> e.getMessage))
+      }
   }
 
-  def clearAllData(): Action[AnyContent] = Action.async {
-    repository.clearAllData().map(_ => Ok)
+  def clearAllData(): Action[AnyContent] = Action.async { implicit request =>
+    repository
+      .clearAllData()
+      .map { _ =>
+        Ok(Json.obj("message" -> "Data cleared successfully"))
+      }
+      .recover { case e: Exception =>
+        InternalServerError(Json.obj("message" -> e.getMessage))
+      }
+
   }
 
   def deEnrol(): Action[AnyContent] = Action.async { implicit request =>
     ???
+  }
+
+  def upsertRecord(id: String): Action[AnyContent] = Action.async { implicit request =>
+    println(s"UpsertRecord called with id: $id")
+    request.body.asJson match {
+      case Some(jsonData) =>
+        repository.upsert(id, jsonData).map { _ =>
+          Ok("Record upserted successfully")
+        }
+      case None =>
+        Future.successful(BadRequest("Invalid JSON"))
+    }
   }
 
 }

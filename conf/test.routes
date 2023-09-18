@@ -3,5 +3,5 @@ GET         /clear-all                                uk.gov.hmrc.pillar2.contro
 GET         /clear-current/:id                        uk.gov.hmrc.pillar2.controllers.stubs.TestController.clearCurrentData(id:String)
 GET         /registration-data/:id                    uk.gov.hmrc.pillar2.controllers.stubs.TestController.getRegistrationData(id:String)
 
-GET         /de-enrol                                  uk.gov.hmrc.pillar2.controllers.stubs.TestController.deEnrol()
-
+GET         /de-enrol                                 uk.gov.hmrc.pillar2.controllers.stubs.TestController.deEnrol()
+POST        /upsertRecord/:id                         uk.gov.hmrc.pillar2.controllers.stubs.TestController.upsertRecord(id: String)
