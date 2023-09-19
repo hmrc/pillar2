@@ -78,7 +78,6 @@ class TestController @Inject() (
   }
 
   def upsertRecord(id: String): Action[AnyContent] = Action.async { implicit request =>
-    println(s"UpsertRecord called with id: $id")
     request.body.asJson match {
       case Some(jsonData) =>
         repository.upsert(id, jsonData).map { _ =>
