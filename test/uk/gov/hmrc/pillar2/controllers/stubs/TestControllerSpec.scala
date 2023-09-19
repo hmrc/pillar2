@@ -127,5 +127,29 @@ class TestControllerSpec extends BaseSpec {
       contentAsString(result) shouldBe "Invalid JSON"
     }
 
+    "return OK when record is upserted successfully" in {
+      // Setup the mock repository to return a successful future when upsert is called
+      when(mockRepository.upsert(any[String], any[JsValue])(any[ExecutionContext])) thenReturn Future.successful(())
+
+      // Create a fake request with JSON body
+      val request = fakeRequest.withMethod(POST).withJsonBody(Json.obj("foo" -> "bar"))
+
+      // Call the method and check the result
+      val result = controller.upsertRecord("someId")(request)
+
+      status(result)          shouldBe OK
+      contentAsString(result) shouldBe "Record upserted successfully"
+    }
+
+    "return BadRequest when JSON is invalid" in {
+      // Create a fake request with invalid JSON (no body)
+      val request = fakeRequest.withMethod(POST)
+
+      // Call the method and check the result
+      val result = controller.upsertRecord("someId")(request)
+
+      status(result)          shouldBe BAD_REQUEST
+      contentAsString(result) shouldBe "Invalid JSON"
+    }
   }
 }

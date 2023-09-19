@@ -98,6 +98,5 @@ class TestControllerIntegrationSpec extends AnyWordSpec with Matchers with Scala
       response.status shouldBe OK
       response.body shouldEqual "Record upserted successfully"
     }
-
   }
 }
