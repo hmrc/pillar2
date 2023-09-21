@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.pillar2.service.DataSubmissionsService
+import uk.gov.hmrc.pillar2.service.RegistrationService
 
 import scala.concurrent.Future
 
@@ -56,25 +56,26 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     )
     .overrides(
       bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
-      bind[DataSubmissionsService].toInstance(mockDataSubmissionsService),
+      bind[RegistrationService].toInstance(mockDataSubmissionsService),
       bind[AuthConnector].toInstance(mockAuthConnector),
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
 
-  def routeWithoutID(id: String): String = routes.RegistrationController.withoutIdRegistrationSubmission(id).url
+  def routeUpeWithoutID(id: String): String = routes.RegistrationController.withoutIdUpeRegistrationSubmission(id).url
+  def routeFmWithoutID(id: String):  String = routes.RegistrationController.withoutIdFmRegistrationSubmission(id).url
 
-  "withoutIdRegistrationSubmission" - {
+  "withoutIdUpeRegistrationSubmission" - {
 
     "rerutn OK with valid data has been submitted" in new Setup {
       forAll(arbitrary[UserAnswers]) { userAnswers =>
         when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
-        when(mockDataSubmissionsService.sendBusinessRegistration(any())(any())).thenReturn(
+        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(OK, "Success")
           )
         )
-        val request = FakeRequest(POST, routeWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val request = FakeRequest(POST, routeUpeWithoutID(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
         status(result) mustEqual OK
 
@@ -84,12 +85,12 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     "rerutn BAD_REQUEST with data has been submitted" in new Setup {
       forAll(arbitrary[UserAnswers]) { userAnswers =>
         when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
-        when(mockDataSubmissionsService.sendBusinessRegistration(any())(any())).thenReturn(
+        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(BAD_REQUEST, "Bad Request")
           )
         )
-        val request = FakeRequest(POST, routeWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val request = FakeRequest(POST, routeUpeWithoutID(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
         status(result) mustEqual BAD_REQUEST
 
@@ -99,12 +100,12 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     "rerutn NOT_FOUND with data has been submitted" in new Setup {
       forAll(arbitrary[UserAnswers]) { userAnswers =>
         when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
-        when(mockDataSubmissionsService.sendBusinessRegistration(any())(any())).thenReturn(
+        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(NOT_FOUND, "Not Found")
           )
         )
-        val request = FakeRequest(POST, routeWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val request = FakeRequest(POST, routeUpeWithoutID(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
         status(result) mustEqual NOT_FOUND
 
@@ -113,12 +114,12 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     "rerutn FORBIDDEN with data has been submitted" in new Setup {
       forAll(arbitrary[UserAnswers]) { userAnswers =>
         when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
-        when(mockDataSubmissionsService.sendBusinessRegistration(any())(any())).thenReturn(
+        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(FORBIDDEN, "Forbidden")
           )
         )
-        val request = FakeRequest(POST, routeWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val request = FakeRequest(POST, routeUpeWithoutID(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
         status(result) mustEqual FORBIDDEN
 
@@ -128,12 +129,90 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
       forAll(arbitrary[UserAnswers]) { userAnswers =>
         when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
-        when(mockDataSubmissionsService.sendBusinessRegistration(any())(any())).thenReturn(
+        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR")
           )
         )
-        val request = FakeRequest(POST, routeWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val request = FakeRequest(POST, routeUpeWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual INTERNAL_SERVER_ERROR
+
+      }
+    }
+
+  }
+
+  "withoutIdFmRegistrationSubmission" - {
+
+    "rerutn OK with valid data has been submitted" in new Setup {
+      forAll(arbitrary[UserAnswers]) { userAnswers =>
+        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(OK, "Success")
+          )
+        )
+        val request = FakeRequest(POST, routeFmWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual OK
+
+      }
+    }
+
+    "rerutn BAD_REQUEST with data has been submitted" in new Setup {
+      forAll(arbitrary[UserAnswers]) { userAnswers =>
+        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(BAD_REQUEST, "Bad Request")
+          )
+        )
+        val request = FakeRequest(POST, routeFmWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual BAD_REQUEST
+
+      }
+    }
+
+    "rerutn NOT_FOUND with data has been submitted" in new Setup {
+      forAll(arbitrary[UserAnswers]) { userAnswers =>
+        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(NOT_FOUND, "Not Found")
+          )
+        )
+        val request = FakeRequest(POST, routeFmWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual NOT_FOUND
+
+      }
+    }
+    "rerutn FORBIDDEN with data has been submitted" in new Setup {
+      forAll(arbitrary[UserAnswers]) { userAnswers =>
+        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(FORBIDDEN, "Forbidden")
+          )
+        )
+        val request = FakeRequest(POST, routeFmWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual FORBIDDEN
+
+      }
+    }
+
+    "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
+      forAll(arbitrary[UserAnswers]) { userAnswers =>
+        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR")
+          )
+        )
+        val request = FakeRequest(POST, routeFmWithoutID(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
         status(result) mustEqual INTERNAL_SERVER_ERROR
 

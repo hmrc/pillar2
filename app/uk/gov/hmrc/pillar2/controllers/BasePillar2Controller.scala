@@ -17,11 +17,10 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Reads}
-import play.api.mvc.{ControllerComponents, Request, Result}
+import play.api.mvc.ControllerComponents
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 abstract class BasePillar2Controller(cc: ControllerComponents)(implicit ec: ExecutionContext) extends BackendController(cc) {
 

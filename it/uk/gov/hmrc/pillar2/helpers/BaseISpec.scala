@@ -36,6 +36,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
 
 
+
 abstract class BaseISpec
     extends AnyWordSpec
     with CleanMongo

@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.identifiers
+package uk.gov.hmrc.pillar2.models.hods.subscription.request
 
-import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.fm.FilingMember
-import uk.gov.hmrc.pillar2.models.registration.Registration
+import play.api.libs.json.{Json, OFormat}
 
-case object FiliningMemberId extends TypedIdentifier[FilingMember] {
+case class CreateSubscriptionRequest(
+  createSubscriptionRequest: SubscriptionRequest
+)
 
-  override def path: JsPath = JsPath \ toString
-
-  override def toString: String = "FilingMember"
-
+object CreateSubscriptionRequest {
+  implicit val format: OFormat[CreateSubscriptionRequest] =
+    Json.format[CreateSubscriptionRequest]
 }

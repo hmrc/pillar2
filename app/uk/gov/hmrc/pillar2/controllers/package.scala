@@ -16,10 +16,59 @@
 
 package uk.gov.hmrc.pillar2
 
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.Logger
+import play.api.http.Status._
+import play.api.mvc.Result
+import play.api.mvc.Results._
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
+import scala.util.{Success, Try}
 
 package object controllers {
   implicit class JsErrorLogger(val error: JsError) extends AnyVal {
     def toLogFormat: String = Json.prettyPrint(JsError.toJson(error))
+  }
+
+  def convertToResult(
+    httpResponse:    HttpResponse
+  )(implicit logger: Logger): Result =
+    httpResponse.status match {
+      case OK        => Ok(httpResponse.body)
+      case NOT_FOUND => NotFound(httpResponse.body)
+      case BAD_REQUEST =>
+        logDownStreamError(httpResponse.body)
+        BadRequest(httpResponse.body)
+
+      case FORBIDDEN =>
+        logDownStreamError(httpResponse.body)
+        Forbidden(httpResponse.body)
+
+      case SERVICE_UNAVAILABLE =>
+        logDownStreamError(httpResponse.body)
+        ServiceUnavailable(httpResponse.body)
+
+      case CONFLICT =>
+        logDownStreamError(httpResponse.body)
+        Conflict(httpResponse.body)
+
+      case _ =>
+        logDownStreamError(httpResponse.body)
+        InternalServerError(httpResponse.body)
+
+    }
+
+  private def logDownStreamError(
+    body:            String
+  )(implicit logger: Logger): Unit = {
+    val error = Try(Json.parse(body).validate[ErrorDetails])
+    error match {
+      case Success(JsSuccess(value, _)) =>
+        logger.warn(
+          s"Error with submission: ${value.errorDetail.sourceFaultDetail.map(_.detail.mkString)}"
+        )
+      case _ =>
+        logger.warn("Error with submission but return is not a valid json")
+    }
   }
 }

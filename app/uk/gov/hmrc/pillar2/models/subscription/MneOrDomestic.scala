@@ -14,34 +14,34 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models
+package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json._
 
-sealed trait YesNoType extends Product with Serializable
+sealed trait MneOrDomestic extends Product with Serializable
 
-object YesNoType {
+object MneOrDomestic {
 
-  case object Yes extends YesNoType
+  case object UkAndOther extends MneOrDomestic
 
-  case object No extends YesNoType
+  case object Uk extends MneOrDomestic
 
   //to handle contravariant to invariant in 2.8 play-json
-  val yes: YesNoType = Yes
-  val no:  YesNoType = No
+  val ukAndOther: MneOrDomestic = UkAndOther
+  val uk:         MneOrDomestic = Uk
 
-  implicit val format: Format[YesNoType] = new Format[YesNoType] {
-    override def reads(json: JsValue): JsResult[YesNoType] =
+  implicit val format: Format[MneOrDomestic] = new Format[MneOrDomestic] {
+    override def reads(json: JsValue): JsResult[MneOrDomestic] =
       json.as[String] match {
-        case "yes" => JsSuccess(Yes)
-        case "no"  => JsSuccess(No)
-        case _     => JsError("Invalid movement type")
+        case "ukAndOther" => JsSuccess(UkAndOther)
+        case "uk"         => JsSuccess(Uk)
+        case _            => JsError("Invalid movement type")
       }
 
-    override def writes(yesNoType: YesNoType): JsValue =
+    override def writes(yesNoType: MneOrDomestic): JsValue =
       yesNoType match {
-        case Yes => JsString("yes")
-        case No  => JsString("no")
+        case UkAndOther => JsString("ukAndOther")
+        case Uk         => JsString("uk")
       }
   }
 

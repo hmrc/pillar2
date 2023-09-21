@@ -20,9 +20,9 @@ import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.{BsonBinary, BsonDocument}
-import org.mongodb.scala.model.{Filters, IndexModel, IndexOptions, Indexes, Updates}
-import play.api.{Configuration, Logging}
-import play.api.libs.json.{Format, JsValue, Json, Reads, Writes}
+import org.mongodb.scala.model._
+import play.api.Logging
+import play.api.libs.json._
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats

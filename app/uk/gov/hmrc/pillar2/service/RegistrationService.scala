@@ -16,20 +16,20 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutId}
-import uk.gov.hmrc.pillar2.models.identifiers.{FiliningMemberId, RegistrationId}
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import play.api.Logging
-import uk.gov.hmrc.pillar2.connectors.DataSubmissionsConnector
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutId}
+import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId}
+import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class DataSubmissionsService @Inject() (repository: RegistrationCacheRepository, dataSubmissionConnectors: DataSubmissionsConnector)(implicit
-  ec:                                               ExecutionContext
+class RegistrationService @Inject() (repository: RegistrationCacheRepository, dataSubmissionConnectors: RegistrationConnector)(implicit
+  ec:                                            ExecutionContext
 ) extends Logging {
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
@@ -50,7 +50,7 @@ class DataSubmissionsService @Inject() (repository: RegistrationCacheRepository,
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
-      fm           <- userAnswers.get(FiliningMemberId)
+      fm           <- userAnswers.get(FilingMemberId)
       data         <- fm.withoutIdRegData
       emailAddress <- data.fmEmailAddress
       address      <- data.registeredFmAddress

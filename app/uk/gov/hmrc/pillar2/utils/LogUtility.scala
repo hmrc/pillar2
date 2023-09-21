@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.pillar2.utils
 
-import play.api.Logger
-
 import javax.inject.{Inject, Named, Singleton}
 
 @Singleton

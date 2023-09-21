@@ -16,15 +16,14 @@
 
 package uk.gov.hmrc.pillar2.models.registration
 
-import org.mongodb.scala.Subscription
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.fm.FilingMember
-import uk.gov.hmrc.pillar2.models.{RowStatus, YesNoType}
-import uk.gov.hmrc.pillar2.models.grs.EntityType
+import uk.gov.hmrc.pillar2.models.subscription.Subscription
 
 case class UserData(
   Registration: Registration,
-  FilingMember: Option[FilingMember] = None
+  FilingMember: Option[FilingMember] = None,
+  Subscription: Option[Subscription] = None
 )
 
 object UserData {

@@ -14,20 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.registration
+package uk.gov.hmrc.pillar2.models
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.{RowStatus, YesNoType}
 
-case class Registration(
-  isUPERegisteredInUK:  YesNoType,
-  orgType:              Option[EntityType] = None,
-  isRegistrationStatus: RowStatus,
-  withIdRegData:        Option[GrsResponse] = None,
-  withoutIdRegData:     Option[WithoutIdRegData] = None
+import java.time.LocalDate
+
+final case class AccountingPeriod(
+  startDate: LocalDate,
+  endDate:   LocalDate
 )
 
-object Registration {
-  implicit val format: OFormat[Registration] = Json.format[Registration]
+object AccountingPeriod {
+  implicit val format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
 }

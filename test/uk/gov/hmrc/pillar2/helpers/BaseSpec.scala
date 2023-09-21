@@ -18,23 +18,24 @@ package uk.gov.hmrc.pillar2.helpers
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, urlEqualTo}
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatestplus.play.guice._
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.guice._
 import play.api.Configuration
 import play.api.http.Status
+import play.api.i18n.MessagesApi
+import play.api.inject.Injector
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.FakeObjects
-import uk.gov.hmrc.pillar2.utils.LogUtility
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.must.Matchers
-import play.api.i18n.MessagesApi
-import play.api.inject.Injector
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.utils.LogUtility
 
 import scala.concurrent.ExecutionContext
 
@@ -49,7 +50,8 @@ trait BaseSpec
     with ScalaFutures
     with OptionValues
     with Configs
-    with Status {
+    with Status
+    with WireMockServerHandler {
 
   implicit lazy val ec:           ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit lazy val hc:           HeaderCarrier    = HeaderCarrier()
@@ -76,4 +78,16 @@ trait BaseSpec
         Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
       )
       .overrides()
+
+  protected def stubResponse(
+    expectedUrl:    String,
+    expectedStatus: Int
+  ): StubMapping =
+    server.stubFor(
+      post(urlEqualTo(expectedUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(expectedStatus)
+        )
+    )
 }

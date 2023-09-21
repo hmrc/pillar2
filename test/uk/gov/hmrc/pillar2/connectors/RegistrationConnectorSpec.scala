@@ -16,17 +16,15 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
-import uk.gov.hmrc.pillar2.helpers.{BaseSpec, WireMockServerHandler}
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, urlEqualTo}
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutId
 
-class DataSubmissionsConnectorSpec extends BaseSpec with WireMockServerHandler with Generators with ScalaCheckPropertyChecks {
+class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
   override lazy val app: Application = applicationBuilder()
     .configure(
@@ -34,8 +32,8 @@ class DataSubmissionsConnectorSpec extends BaseSpec with WireMockServerHandler w
     )
     .build()
 
-  lazy val connector: DataSubmissionsConnector =
-    app.injector.instanceOf[DataSubmissionsConnector]
+  lazy val connector: RegistrationConnector =
+    app.injector.instanceOf[RegistrationConnector]
 
   "DataSubmissionConnector" - {
     "for a registration without id submission" - {
@@ -80,15 +78,4 @@ class DataSubmissionsConnectorSpec extends BaseSpec with WireMockServerHandler w
 
   }
 
-  private def stubResponse(
-    expectedUrl:    String,
-    expectedStatus: Int
-  ): StubMapping =
-    server.stubFor(
-      post(urlEqualTo(expectedUrl))
-        .willReturn(
-          aResponse()
-            .withStatus(expectedStatus)
-        )
-    )
 }

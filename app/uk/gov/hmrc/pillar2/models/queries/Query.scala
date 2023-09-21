@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.pillar2.models.queries
 
-import uk.gov.hmrc.pillar2.models.UserAnswers
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.UserAnswers
 
 import scala.util.{Success, Try}
 

@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.registration
+package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.{RowStatus, YesNoType}
 
-case class Registration(
-  isUPERegisteredInUK:  YesNoType,
-  orgType:              Option[EntityType] = None,
-  isRegistrationStatus: RowStatus,
-  withIdRegData:        Option[GrsResponse] = None,
-  withoutIdRegData:     Option[WithoutIdRegData] = None
+case class SubscriptionRequestParameters(
+  id:        String,
+  regSafeId: String,
+  fmSafeId:  Option[String]
 )
-
-object Registration {
-  implicit val format: OFormat[Registration] = Json.format[Registration]
+object SubscriptionRequestParameters {
+  implicit val format: OFormat[SubscriptionRequestParameters] = Json.format[SubscriptionRequestParameters]
 }

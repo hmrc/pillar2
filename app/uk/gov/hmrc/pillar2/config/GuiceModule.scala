@@ -16,14 +16,9 @@
 
 package uk.gov.hmrc.pillar2.config
 
-import com.google.inject.name.Named
-import com.google.inject.{AbstractModule, Provides}
+import com.google.inject.AbstractModule
 import play.api.libs.concurrent.AkkaGuiceSupport
 import play.api.{Configuration, Environment}
-import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
-
-import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
 
 class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule with AkkaGuiceSupport {
 

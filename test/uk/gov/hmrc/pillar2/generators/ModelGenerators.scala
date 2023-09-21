@@ -20,9 +20,13 @@ import java.time.{Instant, LocalDate}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, Json}
-import uk.gov.hmrc.pillar2.models.{RowStatus, UserAnswers, YesNoType}
+import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, WithoutIdNfmData}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestCommonForSubscription, RequestDetail, RequestParameters, SubscriptionRequest}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers, YesNoType}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, Identification, NoIdOrganisation, RegisterWithoutIDRequest, RegisterWithoutId, RequestCommon, RequestDetails}
 import uk.gov.hmrc.pillar2.models.registration.{Registration, UpeRegisteredAddress, UserData, WithoutIdRegData}
+import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
 
 trait ModelGenerators {
   self: Generators =>
@@ -122,7 +126,9 @@ trait ModelGenerators {
   implicit val arbitraryUserData: Arbitrary[UserData] = Arbitrary {
     for {
       regisrtation <- arbitrary[Registration]
-    } yield UserData(regisrtation, None)
+      filingMember <- arbitrary[FilingMember]
+      subscription <- arbitrary[Subscription]
+    } yield UserData(regisrtation, Some(filingMember), Some(subscription))
   }
 
   implicit val arbitraryUserAnswerRegistration: Arbitrary[Registration] = Arbitrary {
@@ -169,4 +175,232 @@ trait ModelGenerators {
       countryCode = countryCode
     )
   }
+
+  implicit val arbitraryUserAnswerFilingMember: Arbitrary[FilingMember] = Arbitrary {
+
+    for {
+      withoutIdNfmData <- arbitrary[WithoutIdNfmData]
+    } yield FilingMember(
+      nfmConfirmation = YesNoType.Yes,
+      isNfmRegisteredInUK = Some(YesNoType.No),
+      isNFMnStatus = RowStatus.InProgress,
+      withoutIdRegData = Some(withoutIdNfmData)
+    )
+  }
+
+  implicit val arbitraryWithoutIdNfmData: Arbitrary[WithoutIdNfmData] = Arbitrary {
+    for {
+      upeNameRegistration  <- arbitrary[String]
+      upeRegisteredAddress <- arbitrary[NfmRegisteredAddress]
+      upeContactName       <- arbitrary[String]
+      emailAddress         <- arbitrary[String]
+
+    } yield WithoutIdNfmData(
+      upeNameRegistration,
+      Some(upeRegisteredAddress),
+      Some(upeContactName),
+      Some(emailAddress),
+      Some(YesNoType.No)
+    )
+  }
+
+  implicit val arbitraryNfmRegisteredAddress: Arbitrary[NfmRegisteredAddress] = Arbitrary {
+    for {
+      addressLine1 <- arbitrary[String]
+      addressLine2 <- Gen.option(arbitrary[String])
+      addressLine3 <- arbitrary[String]
+      addressLine4 <- Gen.option(arbitrary[String])
+      postalCode   <- Gen.option(arbitrary[String])
+      countryCode  <- arbitrary[String]
+    } yield NfmRegisteredAddress(
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      addressLine3 = addressLine3,
+      addressLine4 = addressLine4,
+      postalCode = postalCode,
+      countryCode = countryCode
+    )
+  }
+
+  implicit val arbitrarySubscription: Arbitrary[Subscription] = Arbitrary {
+    for {
+      accountingPeriod          <- arbitrary[AccountingPeriod]
+      primaryContactName        <- Gen.option(arbitrary[String])
+      primaryContactEmail       <- Gen.option(arbitrary[String])
+      primaryContactTelephone   <- Gen.option(arbitrary[String])
+      secondaryContactName      <- Gen.option(arbitrary[String])
+      secondaryContactEmail     <- Gen.option(arbitrary[String])
+      secondaryContactTelephone <- Gen.option(arbitrary[String])
+      correspondenceAddress     <- Gen.option(arbitrary[SubscriptionAddress])
+    } yield Subscription(
+      domesticOrMne = MneOrDomestic.uk,
+      groupDetailStatus = RowStatus.Completed,
+      accountingPeriod = Some(accountingPeriod),
+      primaryContactName = primaryContactName,
+      primaryContactEmail = primaryContactEmail,
+      primaryContactTelephone = primaryContactTelephone,
+      secondaryContactName = secondaryContactName,
+      secondaryContactEmail = secondaryContactEmail,
+      secondaryContactTelephone = secondaryContactTelephone,
+      correspondenceAddress = correspondenceAddress
+    )
+  }
+
+  implicit val arbitrarySubscriptionAddress: Arbitrary[SubscriptionAddress] = Arbitrary {
+    for {
+      addressLine1 <- arbitrary[String]
+      addressLine2 <- Gen.option(arbitrary[String])
+      addressLine3 <- arbitrary[String]
+      addressLine4 <- Gen.option(arbitrary[String])
+      postalCode   <- Gen.option(arbitrary[String])
+      countryCode  <- arbitrary[String]
+    } yield SubscriptionAddress(
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      addressLine3 = addressLine3,
+      addressLine4 = addressLine4,
+      postalCode = postalCode,
+      countryCode = countryCode
+    )
+  }
+
+  implicit val arbitraryCreateSubscriptionRequest: Arbitrary[CreateSubscriptionRequest] = Arbitrary {
+    for {
+      createSubscriptionRequest <- arbitrary[SubscriptionRequest]
+    } yield CreateSubscriptionRequest(
+      createSubscriptionRequest = createSubscriptionRequest
+    )
+  }
+
+  implicit val arbitrarySubscriptionRequest: Arbitrary[SubscriptionRequest] = Arbitrary {
+    for {
+      requestCommon <- arbitrary[RequestCommonForSubscription]
+      requestDetail <- arbitrary[RequestDetail]
+    } yield SubscriptionRequest(
+      requestCommon = requestCommon,
+      requestDetail = requestDetail
+    )
+  }
+
+  implicit val arbitraryRequestCommonForSubscription: Arbitrary[RequestCommonForSubscription] = Arbitrary {
+    for {
+      receiptDate              <- arbitrary[String]
+      acknowledgementReference <- arbitrary[String]
+
+    } yield RequestCommonForSubscription(
+      regime = "PIL2",
+      conversationID = None,
+      receiptDate = receiptDate,
+      acknowledgementReference = acknowledgementReference,
+      originatingSystem = "MDTP",
+      None
+    )
+  }
+
+  implicit val arbitraryRequestDetail: Arbitrary[RequestDetail] = Arbitrary {
+    for {
+      upeDetails               <- arbitrary[UpeDetails]
+      accountingPeriod         <- arbitrary[AccountingPeriod]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
+    } yield RequestDetail(
+      upeDetails = upeDetails,
+      accountingPeriod = accountingPeriod,
+      upeCorrespAddressDetails = upeCorrespAddressDetails,
+      primaryContactDetails = primaryContactDetails,
+      secondaryContactDetails = secondaryContactDetails,
+      filingMemberDetails = filingMemberDetails
+    )
+  }
+
+  implicit val arbitraryUpeDetails: Arbitrary[UpeDetails] = Arbitrary {
+    for {
+      safeId                  <- arbitrary[String]
+      customerIdentification1 <- Gen.option(arbitrary[String])
+      customerIdentification2 <- Gen.option(arbitrary[String])
+      organisationName        <- arbitrary[String]
+      registrationDate        <- arbitrary[LocalDate]
+      domesticOnly            <- arbitrary[Boolean]
+      filingMember            <- arbitrary[Boolean]
+    } yield UpeDetails(
+      safeId = safeId,
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = organisationName,
+      registrationDate = registrationDate,
+      domesticOnly = domesticOnly,
+      filingMember = filingMember
+    )
+  }
+
+  implicit val arbitraryAccountingPeriod: Arbitrary[AccountingPeriod] = Arbitrary {
+    for {
+      startDate <- arbitrary[LocalDate]
+      endDate   <- arbitrary[LocalDate]
+    } yield AccountingPeriod(
+      startDate = startDate,
+      endDate = endDate
+    )
+  }
+
+  implicit val arbitraryUpeCorrespAddressDetails: Arbitrary[UpeCorrespAddressDetails] = Arbitrary {
+
+    for {
+      addressLine1 <- arbitrary[String]
+      addressLine2 <- Gen.option(arbitrary[String])
+      addressLine3 <- Gen.option(arbitrary[String])
+      addressLine4 <- Gen.option(arbitrary[String])
+      postCode     <- Gen.option(arbitrary[String])
+      countryCode  <- arbitrary[String]
+    } yield UpeCorrespAddressDetails(
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      addressLine3 = addressLine3,
+      addressLine4 = addressLine4,
+      postCode = postCode,
+      countryCode = countryCode
+    )
+  }
+
+  implicit val arbitraryContactDetailsType: Arbitrary[ContactDetailsType] = Arbitrary {
+    for {
+      name         <- arbitrary[String]
+      telephone    <- Gen.option(arbitrary[String])
+      emailAddress <- arbitrary[String]
+    } yield ContactDetailsType(
+      name = name,
+      telephone = telephone,
+      emailAddress = emailAddress
+    )
+  }
+
+  implicit val arbitraryFilingMemberDetails: Arbitrary[FilingMemberDetails] = Arbitrary {
+    for {
+      safeId                  <- arbitrary[String]
+      customerIdentification1 <- Gen.option(arbitrary[String])
+      customerIdentification2 <- Gen.option(arbitrary[String])
+      organisationName        <- arbitrary[String]
+    } yield FilingMemberDetails(
+      safeId = safeId,
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = organisationName
+    )
+  }
+
+  implicit val arbitrarySubscriptionRequestParameters: Arbitrary[SubscriptionRequestParameters] = Arbitrary {
+    for {
+      id        <- arbitrary[String]
+      regSafeId <- arbitrary[String]
+      fmSafeId  <- Gen.option(arbitrary[String])
+
+    } yield SubscriptionRequestParameters(
+      id = id,
+      regSafeId = regSafeId,
+      fmSafeId = fmSafeId
+    )
+  }
+
 }

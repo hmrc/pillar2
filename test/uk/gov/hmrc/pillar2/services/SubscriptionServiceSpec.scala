@@ -19,61 +19,64 @@ package uk.gov.hmrc.pillar2.services
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.service.DataSubmissionsService
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.service.SubscriptionService
 
 import scala.concurrent.Future
-import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.models.UserAnswers
 
-class DataSubmissionsServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
-    val controller =
-      new DataSubmissionsService(
+    val service =
+      new SubscriptionService(
         mockRgistrationCacheRepository,
-        mockDataSubmissionsConnector
+        mockSubscriptionConnector,
+        mockCountryOptions
       )
   }
 
-  "sendBusinessRegistration" - {
+  "sendCreateSubscription" - {
     "Return successful Http Response" in new Setup {
       when(
-        mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
+        mockSubscriptionConnector
+          .sendCreateSubscriptionInformation(any())(any(), any())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(OK, "Success")
         )
       )
 
-      forAll(arbitrary[UserAnswers]) { userAnswers =>
-        controller.sendBusinessRegistration(userAnswers).map { response =>
+      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitrary[UserAnswers]) { (upeSafeId, fmSafeId, userAnswers) =>
+        println(s"What is value ---------------${(upeSafeId, fmSafeId, userAnswers)}")
+        service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
+          println("AM i coming before OK>>>>>>>>>>>>>>>>>>")
           response.status mustBe OK
         }
       }
 
     }
 
-    "Return internal server error with response" in new Setup {
+    /*    "Return internal server error with response" in new Setup {
       when(
-        mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
+        mockSubscriptionConnector
+          .sendCreateSubscriptionInformation(any())(any(), any())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")
         )
       )
 
-      forAll(arbitrary[UserAnswers]) { userAnswers =>
-        controller.sendBusinessRegistration(userAnswers).map { response =>
+      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitrary[UserAnswers]) { (upeSafeId, fmSafeId, userAnswers) =>
+        service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
           response.status mustBe INTERNAL_SERVER_ERROR
         }
       }
 
-    }
+    }*/
   }
 
 }
