@@ -26,7 +26,6 @@ class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesCo
   val appName: String = config.get[String]("appName")
 
   val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
 
   def baseUrl(serviceName: String): String =
     s"${servicesConfig.baseUrl(serviceName)}${servicesConfig.getString(s"microservice.services.$serviceName.context")}"

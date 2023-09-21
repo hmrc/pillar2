@@ -101,11 +101,7 @@ class RegistrationCacheRepository @Inject() (
   import RegistrationDataEntryFormats._
 
   private def getExpireAt: DateTime =
-    DateTime
-      .now(DateTimeZone.UTC)
-      .toLocalDate
-      .plusDays(config.defaultDataExpireInDays + 1)
-      .toDateTimeAtStartOfDay()
+    DateTime.now(DateTimeZone.UTC).plusSeconds(config.defaultDataExpireInSeconds)
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
 
