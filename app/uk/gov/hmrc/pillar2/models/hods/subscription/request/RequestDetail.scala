@@ -66,15 +66,13 @@ object RequestCommonForSubscription {
     //Generate a 32 chars UUID without hyphens
     val acknowledgementReference = UUID.randomUUID().toString.replace("-", "")
 
-    val v = RequestCommonForSubscription(
+    RequestCommonForSubscription(
       regime = "PIL2",
       receiptDate = ZonedDateTime.now().format(formatter),
       acknowledgementReference = acknowledgementReference,
       originatingSystem = mdtp,
       requestParameters = None
     )
-    println(s"what is v 000000)))))))))))))- $v")
-    v
   }
 
 }

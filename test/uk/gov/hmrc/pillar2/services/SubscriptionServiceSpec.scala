@@ -50,17 +50,25 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         )
       )
 
-      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitrary[UserAnswers]) { (upeSafeId, fmSafeId, userAnswers) =>
-        println(s"What is value ---------------${(upeSafeId, fmSafeId, userAnswers)}")
+      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryAnyIdUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
         service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
-          println("AM i coming before OK>>>>>>>>>>>>>>>>>>")
           response.status mustBe OK
         }
       }
 
     }
 
-    /*    "Return internal server error with response" in new Setup {
+    "Return internal server error in service" in new Setup {
+
+      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryAnyIdUncompletedUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
+        service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
+          response.status mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+
+    }
+
+    "Return internal server error with response" in new Setup {
       when(
         mockSubscriptionConnector
           .sendCreateSubscriptionInformation(any())(any(), any())
@@ -70,13 +78,13 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         )
       )
 
-      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitrary[UserAnswers]) { (upeSafeId, fmSafeId, userAnswers) =>
+      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryNoIdUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
         service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
           response.status mustBe INTERNAL_SERVER_ERROR
         }
       }
 
-    }*/
+    }
   }
 
 }

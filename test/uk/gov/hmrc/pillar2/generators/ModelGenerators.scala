@@ -19,13 +19,15 @@ package uk.gov.hmrc.pillar2.generators
 import java.time.{Instant, LocalDate}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
+
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, WithoutIdNfmData}
+import uk.gov.hmrc.pillar2.models.grs.{BusinessVerificationResult, EntityType, GrsRegistrationResult, RegistrationStatus, VerificationStatus}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestCommonForSubscription, RequestDetail, RequestParameters, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers, YesNoType}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, Identification, NoIdOrganisation, RegisterWithoutIDRequest, RegisterWithoutId, RequestCommon, RequestDetails}
-import uk.gov.hmrc.pillar2.models.registration.{Registration, UpeRegisteredAddress, UserData, WithoutIdRegData}
+import uk.gov.hmrc.pillar2.models.registration.{CompanyProfile, GrsResponse, IncorporatedEntityAddress, IncorporatedEntityRegistrationData, PartnershipEntityRegistrationData, Registration, UpeRegisteredAddress, UserData, WithoutIdRegData}
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
 
 trait ModelGenerators {
@@ -112,10 +114,11 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+  //NO-ID USER ANSWERS
+  val arbitraryNoIdUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
       id       <- nonEmptyString
-      userData <- arbitrary[UserData]
+      userData <- arbitraryNoIdUserData.arbitrary
     } yield UserAnswers(
       id = id,
       data = Json.toJson(userData).as[JsObject],
@@ -123,15 +126,15 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUserData: Arbitrary[UserData] = Arbitrary {
+  val arbitraryNoIdUserData: Arbitrary[UserData] = Arbitrary {
     for {
-      regisrtation <- arbitrary[Registration]
-      filingMember <- arbitrary[FilingMember]
+      regisrtation <- arbitraryNoIdRegistration.arbitrary
+      filingMember <- arbitraryNoIdFilingMember.arbitrary
       subscription <- arbitrary[Subscription]
     } yield UserData(regisrtation, Some(filingMember), Some(subscription))
   }
 
-  implicit val arbitraryUserAnswerRegistration: Arbitrary[Registration] = Arbitrary {
+  val arbitraryNoIdRegistration: Arbitrary[Registration] = Arbitrary {
 
     for {
       withoutIdRegData <- arbitrary[WithoutIdRegData]
@@ -176,7 +179,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUserAnswerFilingMember: Arbitrary[FilingMember] = Arbitrary {
+  val arbitraryNoIdFilingMember: Arbitrary[FilingMember] = Arbitrary {
 
     for {
       withoutIdNfmData <- arbitrary[WithoutIdNfmData]
@@ -222,6 +225,192 @@ trait ModelGenerators {
     )
   }
 
+  //UNCOMPLETE USER ANSWER - ERROR
+  val arbitraryAnyIdUncompletedUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      id       <- nonEmptyString
+      userData <- arbitraryAnyIdUncompletedUserData.arbitrary
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
+    )
+  }
+
+  val arbitraryAnyIdUncompletedUserData: Arbitrary[UserData] = Arbitrary {
+    for {
+      regisrtation <-
+        oneOf(
+          Seq(arbitraryWithIdRegistrationForLimitedCompany.arbitrary, arbitraryWithIdRegistrationFoLLP.arbitrary, arbitraryNoIdRegistration.arbitrary)
+        )
+      filingMember <-
+        oneOf(
+          Seq(arbitraryWithIdFilingMemberForLimitedCompany.arbitrary, arbitraryWithIdFilingMemberFoLLP.arbitrary, arbitraryNoIdFilingMember.arbitrary)
+        )
+    } yield UserData(regisrtation, Some(filingMember), None)
+  }
+
+  //ANYID USER ANSWERS
+  val arbitraryAnyIdUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      id       <- nonEmptyString
+      userData <- arbitraryAnyIdUserData.arbitrary
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
+    )
+  }
+
+  val arbitraryAnyIdUserData: Arbitrary[UserData] = Arbitrary {
+    for {
+      regisrtation <-
+        oneOf(
+          Seq(arbitraryWithIdRegistrationForLimitedCompany.arbitrary, arbitraryWithIdRegistrationFoLLP.arbitrary, arbitraryNoIdRegistration.arbitrary)
+        )
+      filingMember <-
+        oneOf(
+          Seq(arbitraryWithIdFilingMemberForLimitedCompany.arbitrary, arbitraryWithIdFilingMemberFoLLP.arbitrary, arbitraryNoIdFilingMember.arbitrary)
+        )
+      subscription <- arbitrary[Subscription]
+    } yield UserData(regisrtation, Some(filingMember), Some(subscription))
+  }
+
+  val arbitraryWithIdRegistrationForLimitedCompany: Arbitrary[Registration] = Arbitrary {
+
+    for {
+      withIdRegData <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+    } yield Registration(
+      isUPERegisteredInUK = YesNoType.Yes,
+      orgType = Some(EntityType.UKLimitedCompany),
+      isRegistrationStatus = RowStatus.InProgress,
+      withIdRegData = Some(withIdRegData)
+    )
+  }
+
+  val arbitraryWithIdRegistrationFoLLP: Arbitrary[Registration] = Arbitrary {
+
+    for {
+      withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
+    } yield Registration(
+      isUPERegisteredInUK = YesNoType.Yes,
+      orgType = Some(EntityType.LimitedLiabilityPartnership),
+      isRegistrationStatus = RowStatus.InProgress,
+      withIdRegData = Some(withIdRegData)
+    )
+  }
+
+  val arbitraryWithIdFilingMemberForLimitedCompany: Arbitrary[FilingMember] = Arbitrary {
+    for {
+      withIdRegData <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+    } yield FilingMember(
+      nfmConfirmation = YesNoType.Yes,
+      isNfmRegisteredInUK = Some(YesNoType.Yes),
+      orgType = Some(EntityType.UKLimitedCompany),
+      isNFMnStatus = RowStatus.Completed,
+      withIdRegData = Some(withIdRegData)
+    )
+  }
+
+  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
+
+    for {
+      withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
+    } yield FilingMember(
+      nfmConfirmation = YesNoType.Yes,
+      isNfmRegisteredInUK = Some(YesNoType.Yes),
+      orgType = Some(EntityType.LimitedLiabilityPartnership),
+      isNFMnStatus = RowStatus.Completed,
+      withIdRegData = Some(withIdRegData)
+    )
+  }
+
+  val arbitraryWithIdRegDataForLimitedCompany: Arbitrary[GrsResponse] = Arbitrary {
+    for {
+      incorporatedEntityRegistrationData <- arbitrary[IncorporatedEntityRegistrationData]
+
+    } yield GrsResponse(incorporatedEntityRegistrationData = Some(incorporatedEntityRegistrationData))
+  }
+
+  val arbitraryWithIdRegDataFoLLP: Arbitrary[GrsResponse] = Arbitrary {
+    for {
+      partnershipEntityRegistrationData <- arbitrary[PartnershipEntityRegistrationData]
+
+    } yield GrsResponse(partnershipEntityRegistrationData = Some(partnershipEntityRegistrationData))
+  }
+
+  implicit val arbitraryIncorporatedEntityRegistrationData: Arbitrary[IncorporatedEntityRegistrationData] = Arbitrary {
+
+    for {
+      companyProfile <- arbitrary[CompanyProfile]
+      ctutr          <- arbitrary[String]
+    } yield IncorporatedEntityRegistrationData(
+      companyProfile = companyProfile,
+      ctutr = ctutr,
+      identifiersMatch = true,
+      businessVerification = Some(BusinessVerificationResult(verificationStatus = VerificationStatus.Pass)),
+      registration =
+        GrsRegistrationResult(registrationStatus = RegistrationStatus.Registered, registeredBusinessPartnerId = Some("XB0000000000001"), None)
+    )
+  }
+
+  implicit val arbitraryPartnershipEntityRegistrationData: Arbitrary[PartnershipEntityRegistrationData] = Arbitrary {
+
+    for {
+      companyProfile <- arbitrary[CompanyProfile]
+      sautr          <- arbitrary[String]
+      postCode       <- arbitrary[String]
+    } yield PartnershipEntityRegistrationData(
+      companyProfile = Some(companyProfile),
+      sautr = Some(sautr),
+      postcode = Some(postCode),
+      identifiersMatch = true,
+      businessVerification = Some(BusinessVerificationResult(verificationStatus = VerificationStatus.Pass)),
+      registration =
+        GrsRegistrationResult(registrationStatus = RegistrationStatus.Registered, registeredBusinessPartnerId = Some("XB0000000000001"), None)
+    )
+  }
+
+  implicit val arbitraryCompanyProfile: Arbitrary[CompanyProfile] = Arbitrary {
+
+    for {
+      companyName            <- arbitrary[String]
+      companyNumber          <- arbitrary[String]
+      dateOfIncorporation    <- arbitrary[LocalDate]
+      unsanitisedCHROAddress <- arbitrary[IncorporatedEntityAddress]
+
+    } yield CompanyProfile(
+      companyName = companyName,
+      companyNumber = companyNumber,
+      dateOfIncorporation = dateOfIncorporation,
+      unsanitisedCHROAddress = unsanitisedCHROAddress
+    )
+  }
+
+  implicit val arbitraryIncorporatedEntityAddress: Arbitrary[IncorporatedEntityAddress] = Arbitrary {
+    for {
+      address_line_1 <- arbitrary[String]
+      address_line_2 <- Gen.option(arbitrary[String])
+      country        <- arbitrary[String]
+      locality       <- Gen.option(arbitrary[String])
+      po_box         <- Gen.option(arbitrary[String])
+      postal_code    <- Gen.option(arbitrary[String])
+      premises       <- Gen.option(arbitrary[String])
+      region         <- Gen.option(arbitrary[String])
+
+    } yield IncorporatedEntityAddress(
+      address_line_1 = Some(address_line_1),
+      address_line_2 = address_line_2,
+      country = Some(country),
+      locality = locality,
+      po_box = po_box,
+      postal_code = postal_code,
+      premises = premises,
+      region = region
+    )
+  }
+
+  //SUBSCRIPTION DATA
   implicit val arbitrarySubscription: Arbitrary[Subscription] = Arbitrary {
     for {
       accountingPeriod          <- arbitrary[AccountingPeriod]

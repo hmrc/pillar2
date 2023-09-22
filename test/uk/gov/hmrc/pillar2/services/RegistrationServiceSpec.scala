@@ -48,7 +48,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         )
       )
 
-      forAll(arbitraryUserAnswers.arbitrary) { userAnswers =>
+      forAll(arbitraryNoIdUserAnswers.arbitrary) { userAnswers =>
         service.sendNoIdUpeRegistration(userAnswers).map { response =>
           response.status mustBe OK
         }
@@ -66,7 +66,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         )
       )
 
-      forAll(arbitraryUserAnswers.arbitrary) { userAnswers =>
+      forAll(arbitraryNoIdUserAnswers.arbitrary) { userAnswers =>
         service.sendNoIdUpeRegistration(userAnswers).map { response =>
           response.status mustBe INTERNAL_SERVER_ERROR
         }
@@ -86,7 +86,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         )
       )
 
-      forAll(arbitraryUserAnswers.arbitrary) { userAnswers =>
+      forAll(arbitraryNoIdUserAnswers.arbitrary) { userAnswers =>
         service.sendNoIdFmRegistration(userAnswers).map { response =>
           response.status mustBe OK
         }
@@ -104,7 +104,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         )
       )
 
-      forAll(arbitraryUserAnswers.arbitrary) { userAnswers =>
+      forAll(arbitraryNoIdUserAnswers.arbitrary) { userAnswers =>
         service.sendNoIdFmRegistration(userAnswers).map { response =>
           response.status mustBe INTERNAL_SERVER_ERROR
         }

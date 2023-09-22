@@ -34,6 +34,7 @@ lazy val microservice = Project(appName, file("."))
       (baseDirectory in IntegrationTest)(base => Seq(base / "it", base / "test-common")).value,
     unmanagedSourceDirectories in Test := (baseDirectory in Test)(base => Seq(base / "test", base / "test-common")).value,
     unmanagedResourceDirectories in IntegrationTest := Seq(baseDirectory.value / "test-resources"),
+    unmanagedResourceDirectories in Test := Seq(baseDirectory.value / "test-resources"),
     testOptions in IntegrationTest += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports/html-it-report")
   )
   .settings(resolvers += Resolver.jcenterRepo)

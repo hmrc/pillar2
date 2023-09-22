@@ -48,17 +48,12 @@ class SubscriptionService @Inject() (
   def sendCreateSubscription(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
     hc:                                 HeaderCarrier
   ): Future[HttpResponse] = {
-    println(s"I am inside for mate -----------------BEFORE For-----------${(upeSafeId, fmSafeId, userAnswers)}")
     for {
-      upe <- userAnswers.get(RegistrationId)
-      _ = println(s"I am inside for mate -----------------UPE-----------$upe")
-      fm <- userAnswers.get(FilingMemberId)
-      _ = println(s"I am inside for mate ------------------FM----------$fm")
+      upe  <- userAnswers.get(RegistrationId)
+      fm   <- userAnswers.get(FilingMemberId)
       subs <- userAnswers.get(SubscriptionId)
-      _ = println(s"I am inside for mate ------------------SUBS----------$subs")
 
     } yield {
-      println("AM i coming here --------->>>>>>>>>>>>>>>>>>>>---------------")
       val subscriptionRequest = CreateSubscriptionRequest(
         createSubscriptionRequest = SubscriptionRequest(
           requestCommon = createRequestCommonForSubscription(),
@@ -72,11 +67,9 @@ class SubscriptionService @Inject() (
           )
         )
       )
-      println(s"what is subscription Request --------------${Json.toJson(subscriptionRequest)}")
       sendSubmissionRequest(subscriptionRequest)
     }
   }.getOrElse {
-    println("Are we coming to get or else error -------------------------")
     logger.warn("Subscription Information Missing")
     subscriptionError
   }
@@ -93,8 +86,6 @@ class SubscriptionService @Inject() (
   private def getUpeDetails(upeSafeId: String, registration: Registration, fm: FilingMember, subscription: Subscription): UpeDetails = {
     val domesticOnly   = if (subscription.domesticOrMne == MneOrDomestic.uk) true else false
     val isFilingMember = if (fm.nfmConfirmation == YesNoType.Yes) true else false
-
-    println("I am in upe Details ++++++++++++++++++++")
     registration.isUPERegisteredInUK match {
       case YesNoType.Yes =>
         val withIdData = registration.withIdRegData.getOrElse(throw new Exception("Malformed Registration data"))
@@ -217,7 +208,6 @@ class SubscriptionService @Inject() (
     }
 
   private def getAccountingPeriod(subscription: Subscription): AccountingPeriod = {
-    println(s"what is SUBSCRIPTION----------------------------------${Json.toJson(subscription)}")
     val accountingPeriod = subscription.accountingPeriod.getOrElse(throw new Exception("Malformed accountingPeriod data"))
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
   }
