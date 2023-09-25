@@ -420,7 +420,7 @@ trait ModelGenerators {
       secondaryContactName      <- Gen.option(arbitrary[String])
       secondaryContactEmail     <- Gen.option(arbitrary[String])
       secondaryContactTelephone <- Gen.option(arbitrary[String])
-      correspondenceAddress     <- Gen.option(arbitrary[SubscriptionAddress])
+      correspondenceAddress     <- arbitrary[SubscriptionAddress]
     } yield Subscription(
       domesticOrMne = MneOrDomestic.uk,
       groupDetailStatus = RowStatus.Completed,
@@ -431,7 +431,7 @@ trait ModelGenerators {
       secondaryContactName = secondaryContactName,
       secondaryContactEmail = secondaryContactEmail,
       secondaryContactTelephone = secondaryContactTelephone,
-      correspondenceAddress = correspondenceAddress
+      correspondenceAddress = Some(correspondenceAddress)
     )
   }
 

@@ -60,7 +60,7 @@ class SubscriptionService @Inject() (
           requestDetail = RequestDetail(
             getUpeDetails(upeSafeId, upe, fm, subs),
             getAccountingPeriod(subs),
-            getUpeAddressDetails(upe),
+            getUpeAddressDetails(subs),
             getPrimaryContactDetails(subs),
             getSecondaryContactDetails(subs),
             getFilingMemberDetails(fmSafeId, fm)
@@ -157,55 +157,17 @@ class SubscriptionService @Inject() (
       case _ => None
     }
 
-  private def getUpeAddressDetails(registration: Registration): UpeCorrespAddressDetails =
-    registration.isUPERegisteredInUK match {
-      case YesNoType.Yes =>
-        registration.orgType match {
-          case Some(EntityType.UKLimitedCompany) =>
-            val withIdData                         = registration.withIdRegData.getOrElse(throw new Exception("Malformed WithId data"))
-            val incorporatedEntityRegistrationData = withIdData.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed data"))
-
-            UpeCorrespAddressDetails(
-              addressLine1 = incorporatedEntityRegistrationData.companyProfile.unsanitisedCHROAddress.address_line_1.fold("")(add1 => add1),
-              addressLine2 = incorporatedEntityRegistrationData.companyProfile.unsanitisedCHROAddress.address_line_2,
-              addressLine3 = incorporatedEntityRegistrationData.companyProfile.unsanitisedCHROAddress.premises,
-              addressLine4 = incorporatedEntityRegistrationData.companyProfile.unsanitisedCHROAddress.region,
-              postCode = incorporatedEntityRegistrationData.companyProfile.unsanitisedCHROAddress.postal_code,
-              countryCode = incorporatedEntityRegistrationData.companyProfile.unsanitisedCHROAddress.country.fold("")(country =>
-                countryOptions.getCountryCodeFromName(country)
-              )
-            )
-          case Some(EntityType.LimitedLiabilityPartnership) =>
-            val withIdData = registration.withIdRegData.getOrElse(throw new Exception("Malformed withId data for LLP"))
-            val partnershipEntityRegistrationData =
-              withIdData.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed partnershipEntityRegistrationData data"))
-            val companyProfile =
-              partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed Company profile data in LLP"))
-
-            UpeCorrespAddressDetails(
-              addressLine1 = companyProfile.unsanitisedCHROAddress.address_line_1.fold("")(add1 => add1),
-              addressLine2 = companyProfile.unsanitisedCHROAddress.address_line_2,
-              addressLine3 = companyProfile.unsanitisedCHROAddress.premises,
-              addressLine4 = companyProfile.unsanitisedCHROAddress.region,
-              postCode = companyProfile.unsanitisedCHROAddress.postal_code,
-              countryCode = companyProfile.unsanitisedCHROAddress.country.fold("")(country => countryOptions.getCountryCodeFromName(country))
-            )
-
-          case _ => throw new Exception("Invalid Org Type")
-        }
-      case YesNoType.No =>
-        val withoutIdData = registration.withoutIdRegData.getOrElse(throw new Exception("Malformed withoutIdReg data"))
-        val address       = withoutIdData.upeRegisteredAddress.getOrElse(throw new Exception("Malformed address data"))
-
-        UpeCorrespAddressDetails(
-          addressLine1 = address.addressLine1,
-          addressLine2 = address.addressLine2,
-          addressLine3 = Some(address.addressLine3),
-          addressLine4 = address.addressLine4,
-          postCode = address.postalCode,
-          countryCode = address.countryCode
-        )
-    }
+  private def getUpeAddressDetails(subscription: Subscription): UpeCorrespAddressDetails = {
+    val subsAddress = subscription.correspondenceAddress.getOrElse(throw new Exception("Malformed Subscription Address"))
+    UpeCorrespAddressDetails(
+      addressLine1 = subsAddress.addressLine1,
+      addressLine2 = subsAddress.addressLine2,
+      addressLine3 = Some(subsAddress.addressLine3),
+      addressLine4 = subsAddress.addressLine4,
+      postCode = subsAddress.postalCode,
+      countryCode = subsAddress.countryCode
+    )
+  }
 
   private def getAccountingPeriod(subscription: Subscription): AccountingPeriod = {
     val accountingPeriod = subscription.accountingPeriod.getOrElse(throw new Exception("Malformed accountingPeriod data"))
