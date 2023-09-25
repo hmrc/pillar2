@@ -25,7 +25,7 @@ import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, Withou
 import uk.gov.hmrc.pillar2.models.grs.{BusinessVerificationResult, EntityType, GrsRegistrationResult, RegistrationStatus, VerificationStatus}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestCommonForSubscription, RequestDetail, RequestParameters, SubscriptionRequest}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers, YesNoType}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, Identification, NoIdOrganisation, RegisterWithoutIDRequest, RegisterWithoutId, RequestCommon, RequestDetails}
 import uk.gov.hmrc.pillar2.models.registration.{CompanyProfile, GrsResponse, IncorporatedEntityAddress, IncorporatedEntityRegistrationData, PartnershipEntityRegistrationData, Registration, UpeRegisteredAddress, UserData, WithoutIdRegData}
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
@@ -139,7 +139,7 @@ trait ModelGenerators {
     for {
       withoutIdRegData <- arbitrary[WithoutIdRegData]
     } yield Registration(
-      isUPERegisteredInUK = YesNoType.No,
+      isUPERegisteredInUK = false,
       isRegistrationStatus = RowStatus.InProgress,
       withoutIdRegData = Some(withoutIdRegData)
     )
@@ -157,7 +157,7 @@ trait ModelGenerators {
       Some(upeRegisteredAddress),
       Some(upeContactName),
       Some(emailAddress),
-      Some(YesNoType.No)
+      Some(false)
     )
   }
 
@@ -184,8 +184,8 @@ trait ModelGenerators {
     for {
       withoutIdNfmData <- arbitrary[WithoutIdNfmData]
     } yield FilingMember(
-      nfmConfirmation = YesNoType.Yes,
-      isNfmRegisteredInUK = Some(YesNoType.No),
+      nfmConfirmation = true,
+      isNfmRegisteredInUK = Some(false),
       isNFMnStatus = RowStatus.InProgress,
       withoutIdRegData = Some(withoutIdNfmData)
     )
@@ -203,7 +203,7 @@ trait ModelGenerators {
       Some(upeRegisteredAddress),
       Some(upeContactName),
       Some(emailAddress),
-      Some(YesNoType.No)
+      Some(false)
     )
   }
 
@@ -281,7 +281,7 @@ trait ModelGenerators {
     for {
       withIdRegData <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
     } yield Registration(
-      isUPERegisteredInUK = YesNoType.Yes,
+      isUPERegisteredInUK = true,
       orgType = Some(EntityType.UKLimitedCompany),
       isRegistrationStatus = RowStatus.InProgress,
       withIdRegData = Some(withIdRegData)
@@ -293,7 +293,7 @@ trait ModelGenerators {
     for {
       withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
     } yield Registration(
-      isUPERegisteredInUK = YesNoType.Yes,
+      isUPERegisteredInUK = true,
       orgType = Some(EntityType.LimitedLiabilityPartnership),
       isRegistrationStatus = RowStatus.InProgress,
       withIdRegData = Some(withIdRegData)
@@ -304,8 +304,8 @@ trait ModelGenerators {
     for {
       withIdRegData <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
     } yield FilingMember(
-      nfmConfirmation = YesNoType.Yes,
-      isNfmRegisteredInUK = Some(YesNoType.Yes),
+      nfmConfirmation = true,
+      isNfmRegisteredInUK = Some(true),
       orgType = Some(EntityType.UKLimitedCompany),
       isNFMnStatus = RowStatus.Completed,
       withIdRegData = Some(withIdRegData)
@@ -317,8 +317,8 @@ trait ModelGenerators {
     for {
       withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
     } yield FilingMember(
-      nfmConfirmation = YesNoType.Yes,
-      isNfmRegisteredInUK = Some(YesNoType.Yes),
+      nfmConfirmation = true,
+      isNfmRegisteredInUK = Some(true),
       orgType = Some(EntityType.LimitedLiabilityPartnership),
       isNFMnStatus = RowStatus.Completed,
       withIdRegData = Some(withIdRegData)

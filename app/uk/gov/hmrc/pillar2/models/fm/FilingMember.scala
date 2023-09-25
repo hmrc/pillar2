@@ -17,13 +17,13 @@
 package uk.gov.hmrc.pillar2.models.fm
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.{RowStatus, YesNoType}
+import uk.gov.hmrc.pillar2.models.RowStatus
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 
 case class FilingMember(
-  nfmConfirmation:     YesNoType,
-  isNfmRegisteredInUK: Option[YesNoType] = None,
+  nfmConfirmation:     Boolean,
+  isNfmRegisteredInUK: Option[Boolean] = None,
   orgType:             Option[EntityType] = None,
   isNFMnStatus:        RowStatus,
   withIdRegData:       Option[GrsResponse] = None,

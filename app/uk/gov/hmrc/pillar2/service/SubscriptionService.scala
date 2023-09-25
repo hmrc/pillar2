@@ -29,7 +29,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionR
 import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId, SubscriptionId}
 import uk.gov.hmrc.pillar2.models.registration.Registration
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, UserAnswers, YesNoType}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
@@ -85,9 +85,9 @@ class SubscriptionService @Inject() (
 
   private def getUpeDetails(upeSafeId: String, registration: Registration, fm: FilingMember, subscription: Subscription): UpeDetails = {
     val domesticOnly   = if (subscription.domesticOrMne == MneOrDomestic.uk) true else false
-    val isFilingMember = if (fm.nfmConfirmation == YesNoType.Yes) true else false
+    val isFilingMember = fm.nfmConfirmation
     registration.isUPERegisteredInUK match {
-      case YesNoType.Yes =>
+      case true =>
         val withIdData = registration.withIdRegData.getOrElse(throw new Exception("Malformed Registration data"))
         registration.orgType match {
           case Some(EntityType.UKLimitedCompany) =>
@@ -110,7 +110,7 @@ class SubscriptionService @Inject() (
 
           case _ => throw new Exception("Invalid Org Type")
         }
-      case YesNoType.No =>
+      case false =>
         val withoutId = registration.withoutIdRegData.getOrElse(throw new Exception("Malformed without id data"))
         val upeName   = withoutId.upeNameRegistration
 
@@ -122,9 +122,9 @@ class SubscriptionService @Inject() (
     filingMemberSafeId match {
       case Some(fmSafeId) =>
         fm.nfmConfirmation match {
-          case YesNoType.Yes =>
+          case true =>
             fm.isNfmRegisteredInUK match {
-              case Some(YesNoType.Yes) =>
+              case Some(true) =>
                 val withIdData = fm.withIdRegData.getOrElse(throw new Exception("Malformed Grs Response data"))
                 fm.orgType match {
                   case Some(EntityType.UKLimitedCompany) =>
@@ -146,13 +146,13 @@ class SubscriptionService @Inject() (
 
                   case _ => throw new Exception("Filing Member: Invalid Org Type")
                 }
-              case Some(YesNoType.No) =>
+              case Some(false) =>
                 val upeName = fm.withoutIdRegData.fold("")(withoutId => withoutId.registeredFmName)
                 Some(FilingMemberDetails(fmSafeId, None, None, upeName))
               case _ => throw new Exception("Filing Member: Invalid Uk or other resident")
             }
 
-          case YesNoType.No => None
+          case false => None
         }
       case _ => None
     }

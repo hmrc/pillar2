@@ -17,14 +17,13 @@
 package uk.gov.hmrc.pillar2.models.registration
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.YesNoType
 
 case class WithoutIdRegData(
   upeNameRegistration:   String,
   upeRegisteredAddress:  Option[UpeRegisteredAddress] = None,
   upeContactName:        Option[String] = None,
   emailAddress:          Option[String] = None,
-  contactUpeByTelephone: Option[YesNoType] = None,
+  contactUpeByTelephone: Option[Boolean] = None,
   telephoneNumber:       Option[String] = None
 )
 

@@ -18,10 +18,10 @@ package uk.gov.hmrc.pillar2.models.registration
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.{RowStatus, YesNoType}
+import uk.gov.hmrc.pillar2.models.RowStatus
 
 case class Registration(
-  isUPERegisteredInUK:  YesNoType,
+  isUPERegisteredInUK:  Boolean,
   orgType:              Option[EntityType] = None,
   isRegistrationStatus: RowStatus,
   withIdRegData:        Option[GrsResponse] = None,

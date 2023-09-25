@@ -17,14 +17,13 @@
 package uk.gov.hmrc.pillar2.models.fm
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.YesNoType
 
 case class WithoutIdNfmData(
   registeredFmName:      String,
   registeredFmAddress:   Option[NfmRegisteredAddress] = None,
   fmContactName:         Option[String] = None,
   fmEmailAddress:        Option[String] = None,
-  contactNfmByTelephone: Option[YesNoType] = None,
+  contactNfmByTelephone: Option[Boolean] = None,
   telephoneNumber:       Option[String] = None
 )
 
