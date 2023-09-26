@@ -77,9 +77,12 @@ class SubscriptionService @Inject() (
   private def sendSubmissionRequest(subscriptionRequest: CreateSubscriptionRequest)(implicit
     hc:                                                  HeaderCarrier,
     ec:                                                  ExecutionContext
-  ): Future[HttpResponse] =
+  ): Future[HttpResponse] = {
+
+    println(s"What is the subscription Request ${Json.toJson(subscriptionRequest)}")
     subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
+  }
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
