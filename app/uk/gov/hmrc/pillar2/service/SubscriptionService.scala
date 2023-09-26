@@ -78,8 +78,6 @@ class SubscriptionService @Inject() (
     hc:                                                  HeaderCarrier,
     ec:                                                  ExecutionContext
   ): Future[HttpResponse] = {
-
-    println(s"What is the subscription Request ${Json.toJson(subscriptionRequest)}")
     subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
   }
