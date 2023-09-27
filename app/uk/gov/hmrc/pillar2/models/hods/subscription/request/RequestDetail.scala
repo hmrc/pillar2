@@ -20,10 +20,6 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.AccountingPeriod
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-import java.util.UUID
-
 case class RequestDetail(
   upeDetails:               UpeDetails,
   accountingPeriod:         AccountingPeriod,
@@ -38,48 +34,8 @@ object RequestDetail {
     Json.format[RequestDetail]
 }
 
-case class RequestParameters(paramName: String, paramValue: String)
-
-object RequestParameters {
-  implicit val formats: OFormat[RequestParameters] =
-    Json.format[RequestParameters]
-}
-
-case class RequestCommonForSubscription(
-  regime:                   String,
-  conversationID:           Option[String] = None,
-  receiptDate:              String,
-  acknowledgementReference: String,
-  originatingSystem:        String,
-  requestParameters:        Option[Seq[RequestParameters]]
-)
-
-object RequestCommonForSubscription {
-  implicit val requestCommonForSubscriptionFormats: OFormat[RequestCommonForSubscription] =
-    Json.format[RequestCommonForSubscription]
-
-  private val mdtp = "MDTP"
-
-  def createRequestCommonForSubscription(): RequestCommonForSubscription = {
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-
-    //Generate a 32 chars UUID without hyphens
-    val acknowledgementReference = UUID.randomUUID().toString.replace("-", "")
-
-    RequestCommonForSubscription(
-      regime = "PIL2",
-      receiptDate = ZonedDateTime.now().format(formatter),
-      acknowledgementReference = acknowledgementReference,
-      originatingSystem = mdtp,
-      requestParameters = None
-    )
-  }
-
-}
-
 case class SubscriptionRequest(
-  requestCommon: RequestCommonForSubscription,
-  requestDetail: RequestDetail
+  requestBody: RequestDetail
 )
 
 object SubscriptionRequest {

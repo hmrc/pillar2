@@ -23,7 +23,6 @@ import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.fm.FilingMember
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestCommonForSubscription.createRequestCommonForSubscription
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId, SubscriptionId}
 import uk.gov.hmrc.pillar2.models.registration.Registration
@@ -55,8 +54,7 @@ class SubscriptionService @Inject() (
     } yield {
       val subscriptionRequest = CreateSubscriptionRequest(
         createSubscriptionRequest = SubscriptionRequest(
-          requestCommon = createRequestCommonForSubscription(),
-          requestDetail = RequestDetail(
+          requestBody = RequestDetail(
             getUpeDetails(upeSafeId, upe, fm, subs),
             getAccountingPeriod(subs),
             getUpeAddressDetails(subs),

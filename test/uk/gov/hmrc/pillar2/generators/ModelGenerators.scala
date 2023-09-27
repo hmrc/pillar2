@@ -24,7 +24,7 @@ import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, WithoutIdNfmData}
 import uk.gov.hmrc.pillar2.models.grs.{BusinessVerificationResult, EntityType, GrsRegistrationResult, RegistrationStatus, VerificationStatus}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestCommonForSubscription, RequestDetail, RequestParameters, SubscriptionRequest}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, Identification, NoIdOrganisation, RegisterWithoutIDRequest, RegisterWithoutId, RequestCommon, RequestDetails}
 import uk.gov.hmrc.pillar2.models.registration.{CompanyProfile, GrsResponse, IncorporatedEntityAddress, IncorporatedEntityRegistrationData, PartnershipEntityRegistrationData, Registration, UpeRegisteredAddress, UserData, WithoutIdRegData}
@@ -463,26 +463,9 @@ trait ModelGenerators {
 
   implicit val arbitrarySubscriptionRequest: Arbitrary[SubscriptionRequest] = Arbitrary {
     for {
-      requestCommon <- arbitrary[RequestCommonForSubscription]
       requestDetail <- arbitrary[RequestDetail]
     } yield SubscriptionRequest(
-      requestCommon = requestCommon,
-      requestDetail = requestDetail
-    )
-  }
-
-  implicit val arbitraryRequestCommonForSubscription: Arbitrary[RequestCommonForSubscription] = Arbitrary {
-    for {
-      receiptDate              <- arbitrary[String]
-      acknowledgementReference <- arbitrary[String]
-
-    } yield RequestCommonForSubscription(
-      regime = "PIL2",
-      conversationID = None,
-      receiptDate = receiptDate,
-      acknowledgementReference = acknowledgementReference,
-      originatingSystem = "MDTP",
-      None
+      requestBody = requestDetail
     )
   }
 
