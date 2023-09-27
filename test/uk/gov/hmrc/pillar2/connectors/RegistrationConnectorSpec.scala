@@ -41,7 +41,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
         forAll(arbitrary[RegisterWithoutId]) { sub =>
           stubResponse(
-            "/dac6/dct50a/v1",
+            "/pillar2-stubs/dac6/dct50a/v1",
             OK
           )
           val result = await(connector.sendWithoutIDInformation(sub))
@@ -53,7 +53,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
         forAll(arbitrary[RegisterWithoutId]) { sub =>
           stubResponse(
-            "/dac6/dct50a/v1",
+            "/pillar2-stubs/dac6/dct50a/v1",
             BAD_REQUEST
           )
 
@@ -66,7 +66,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
         forAll(arbitrary[RegisterWithoutId]) { sub =>
           stubResponse(
-            "/dac6/dct50a/v1",
+            "/pillar2-stubs/dac6/dct50a/v1",
             INTERNAL_SERVER_ERROR
           )
 

@@ -44,7 +44,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
       ContactDetails(None, None, None, Some(emailAddress))
     )
   }.getOrElse {
-    logger.warn("Upe Registration Information Missing")
+    logger.warn("RegistrationService - Upe Registration Information Missing")
     registerWithoutIdError
   }
 
@@ -60,7 +60,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
       ContactDetails(None, None, None, Some(emailAddress))
     )
   }.getOrElse {
-    logger.warn("Filing Member Registration Information Missing")
+    logger.warn("RegistrationService - Filing Member Registration Information Missing")
     registerWithoutIdError
   }
 
@@ -71,6 +71,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
     dataSubmissionConnectors
       .sendWithoutIDInformation(RegisterWithoutId(businessName, address, contactDetails))(hc, ec)
 
-  private val registerWithoutIdError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in registration"))
+  private val registerWithoutIdError =
+    Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "RegistrationService - Response not received in registration"))
 
 }

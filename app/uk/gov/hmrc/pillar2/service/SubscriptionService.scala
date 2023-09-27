@@ -18,7 +18,6 @@ package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
-import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.fm.FilingMember
@@ -77,10 +76,9 @@ class SubscriptionService @Inject() (
   private def sendSubmissionRequest(subscriptionRequest: CreateSubscriptionRequest)(implicit
     hc:                                                  HeaderCarrier,
     ec:                                                  ExecutionContext
-  ): Future[HttpResponse] = {
+  ): Future[HttpResponse] =
     subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
-  }
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 

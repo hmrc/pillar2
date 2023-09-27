@@ -141,7 +141,7 @@ object RegisterWithoutId {
   def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutId =
     RegisterWithoutId(
       RegisterWithoutIDRequest(
-        RequestCommon("PIL2"),
+        RequestCommon("PILLAR2"),
         RequestDetails(NoIdOrganisation(organisationName), address, contactDetails, None)
       )
     )
