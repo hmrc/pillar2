@@ -73,76 +73,28 @@ object Identification {
   implicit val indentifierFormats = Json.format[Identification]
 }
 
-case class RequestParameter(paramName: String, paramValue: String)
-
-object RequestParameter {
-  implicit val indentifierFormats = Json.format[RequestParameter]
-}
-
-case class RequestCommon(
-  receiptDate:              String,
+case class RegisterWithoutIDRequest(
   regime:                   String,
   acknowledgementReference: String,
-  requestParameters:        Option[Seq[RequestParameter]]
-)
-
-object RequestCommon {
-  implicit val requestCommonFormats: OFormat[RequestCommon] = Json.format[RequestCommon]
-
-  def apply(regime: String): RequestCommon = {
-    val acknRef: String = UUID.randomUUID().toString.replaceAll("-", "") //uuids are 36 and spec demands 32
-    //Format: ISO 8601 YYYY-MM-DDTHH:mm:ssZ e.g. 2020-09-23T16:12:11Z
-    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    val dateTime: String = ZonedDateTime
-      .now(ZoneId.of("UTC"))
-      .format(formatter)
-    RequestCommon(dateTime, regime, acknRef, None)
-  }
-}
-
-case class RequestDetails(
-  organisation:   NoIdOrganisation,
-  address:        Address,
-  contactDetails: ContactDetails,
-  identification: Option[Identification]
-)
-
-object RequestDetails {
-
-  implicit lazy val residentWrites = Json.writes[RequestDetails]
-
-  implicit lazy val reads: Reads[RequestDetails] = {
-    import play.api.libs.functional.syntax._
-    (
-      (__ \ "organisation").read[NoIdOrganisation] and
-        (__ \ "address").read[Address] and
-        (__ \ "contactDetails").read[ContactDetails] and
-        (__ \ "identification").readNullable[Identification]
-    )((organisation, address, contactDetails, identification) => RequestDetails(organisation, address, contactDetails, identification))
-  }
-}
-
-case class RegisterWithoutIDRequest(
-  requestCommon: RequestCommon,
-  requestDetail: RequestDetails
+  isAnAgent:                Boolean,
+  isAGroup:                 Boolean,
+  identification:           Option[Identification],
+  organisation:             NoIdOrganisation,
+  address:                  Address,
+  contactDetails:           ContactDetails
 )
 
 object RegisterWithoutIDRequest {
   implicit val format = Json.format[RegisterWithoutIDRequest]
-}
-
-case class RegisterWithoutId(
-  registerWithoutIDRequest: RegisterWithoutIDRequest
-)
-
-object RegisterWithoutId {
-  implicit val format: OFormat[RegisterWithoutId] = Json.format[RegisterWithoutId]
-
-  def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutId =
-    RegisterWithoutId(
-      RegisterWithoutIDRequest(
-        RequestCommon("PILLAR2"),
-        RequestDetails(NoIdOrganisation(organisationName), address, contactDetails, None)
-      )
+  def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutIDRequest =
+    RegisterWithoutIDRequest(
+      regime = "PLR",
+      acknowledgementReference = UUID.randomUUID().toString.replaceAll("-", ""), //uuids are 36 and spec demands 32
+      isAnAgent = false,
+      isAGroup = true,
+      identification = None,
+      organisation = NoIdOrganisation(organisationName),
+      address = address,
+      contactDetails
     )
 }

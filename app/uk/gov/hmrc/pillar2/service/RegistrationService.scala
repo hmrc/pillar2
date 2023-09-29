@@ -21,7 +21,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutId}
+import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
 import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
@@ -37,11 +37,12 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
       registration <- userAnswers.get(RegistrationId)
       data         <- registration.withoutIdRegData
       emailAddress <- data.emailAddress
+      telephone    <- data.telephoneNumber
       address      <- data.upeRegisteredAddress
     } yield registerWithoutId(
       data.upeNameRegistration,
       Address.fromAddress(address),
-      ContactDetails(None, None, None, Some(emailAddress))
+      ContactDetails(Some(telephone), None, None, Some(emailAddress))
     )
   }.getOrElse {
     logger.warn("RegistrationService - Upe Registration Information Missing")
@@ -69,7 +70,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
     ec:                                       ExecutionContext
   ): Future[HttpResponse] =
     dataSubmissionConnectors
-      .sendWithoutIDInformation(RegisterWithoutId(businessName, address, contactDetails))(hc, ec)
+      .sendWithoutIDInformation(RegisterWithoutIDRequest(businessName, address, contactDetails))(hc, ec)
 
   private val registerWithoutIdError =
     Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "RegistrationService - Response not received in registration"))

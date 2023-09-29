@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.pillar2.generators
 
-import java.time.{Instant, LocalDate}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
-
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, WithoutIdNfmData}
-import uk.gov.hmrc.pillar2.models.grs.{BusinessVerificationResult, EntityType, GrsRegistrationResult, RegistrationStatus, VerificationStatus}
+import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
-import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, Identification, NoIdOrganisation, RegisterWithoutIDRequest, RegisterWithoutId, RequestCommon, RequestDetails}
-import uk.gov.hmrc.pillar2.models.registration.{CompanyProfile, GrsResponse, IncorporatedEntityAddress, IncorporatedEntityRegistrationData, PartnershipEntityRegistrationData, Registration, UpeRegisteredAddress, UserData, WithoutIdRegData}
+import uk.gov.hmrc.pillar2.models.hods._
+import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
+
+import java.time.{Instant, LocalDate}
 
 trait ModelGenerators {
   self: Generators =>
@@ -37,37 +37,24 @@ trait ModelGenerators {
     datesBetween(LocalDate.of(1900, 1, 1), LocalDate.of(2100, 1, 1))
   }
 
-  implicit val arbitraryRequestCommon: Arbitrary[RequestCommon] = Arbitrary {
+  implicit val arbitraryRegistration: Arbitrary[RegisterWithoutIDRequest] = Arbitrary {
     for {
-      receiptDate        <- arbitrary[String]
-      acknowledgementRef <- stringsWithMaxLength(32)
-
-    } yield RequestCommon(
-      receiptDate = receiptDate,
-      regime = "PIL2",
-      acknowledgementReference = acknowledgementRef,
-      None
-    )
-  }
-
-  implicit val arbitraryRegistration: Arbitrary[RegisterWithoutId] = Arbitrary {
-    for {
-      requestCommon  <- arbitrary[RequestCommon]
+      ack            <- arbitrary[String]
       name           <- arbitrary[String]
       address        <- arbitrary[Address]
       contactDetails <- arbitrary[ContactDetails]
       identification <- Gen.option(arbitrary[Identification])
-    } yield RegisterWithoutId(
-      RegisterWithoutIDRequest(
-        requestCommon,
-        RequestDetails(
-          NoIdOrganisation(name),
-          address = address,
-          contactDetails = contactDetails,
-          identification = identification
-        )
-      )
+    } yield RegisterWithoutIDRequest(
+      regime = "PLR",
+      acknowledgementReference = ack,
+      isAnAgent = false,
+      isAGroup = true,
+      identification = identification,
+      NoIdOrganisation(name),
+      address = address,
+      contactDetails = contactDetails
     )
+
   }
 
   implicit val arbitraryAddress: Arbitrary[Address] = Arbitrary {

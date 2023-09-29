@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.connectors
 import com.google.inject.Inject
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutId
+import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,13 +28,13 @@ class RegistrationConnector @Inject() (
   val http:   HttpClient
 ) {
 
-  def sendWithoutIDInformation(registration: RegisterWithoutId)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def sendWithoutIDInformation(registration: RegisterWithoutIDRequest)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "register-without-id"
-    http.POST[RegisterWithoutId, HttpResponse](
+    http.POST[RegisterWithoutIDRequest, HttpResponse](
       config.baseUrl(serviceName),
       registration,
       headers = extraHeaders(config, serviceName)
-    )(wts = RegisterWithoutId.format, rds = httpReads, hc = hc, ec = ec)
+    )(wts = RegisterWithoutIDRequest.format, rds = httpReads, hc = hc, ec = ec)
   }
 
 }

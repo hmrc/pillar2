@@ -22,7 +22,7 @@ import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutId
+import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
 class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
@@ -39,7 +39,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
     "for a registration without id submission" - {
       "must return status as OK" in {
 
-        forAll(arbitrary[RegisterWithoutId]) { sub =>
+        forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
           stubResponse(
             "/pillar2-stubs/dac6/dct50a/v1",
             OK
@@ -51,7 +51,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
       "must return status as BAD_REQUEST" in {
 
-        forAll(arbitrary[RegisterWithoutId]) { sub =>
+        forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
           stubResponse(
             "/pillar2-stubs/dac6/dct50a/v1",
             BAD_REQUEST
@@ -64,7 +64,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
       "must return status as INTERNAL_SERVER_ERROR" in {
 
-        forAll(arbitrary[RegisterWithoutId]) { sub =>
+        forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
           stubResponse(
             "/pillar2-stubs/dac6/dct50a/v1",
             INTERNAL_SERVER_ERROR
