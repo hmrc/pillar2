@@ -40,7 +40,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
         forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
           stubResponse(
-            "/pillar2-stubs/pillar2/subscription",
+            "/pillar2/subscription",
             OK
           )
           val result = await(connector.sendCreateSubscriptionInformation(sub))
@@ -52,7 +52,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
         forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
           stubResponse(
-            "/pillar2-stubs/pillar2/subscription",
+            "/pillar2/subscription",
             BAD_REQUEST
           )
 
@@ -65,7 +65,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
         forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
           stubResponse(
-            "/pillar2-stubs/pillar2/subscription",
+            "/pillar2/subscription",
             INTERNAL_SERVER_ERROR
           )
 
