@@ -18,31 +18,40 @@ package uk.gov.hmrc.pillar2.helpers
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, post, urlEqualTo}
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
+import org.scalatestplus.play.guice._
+import play.api.Configuration
 import play.api.http.Status
+import play.api.i18n.MessagesApi
+import play.api.inject.Injector
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.FakeObjects
+import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.utils.LogUtility
 
 import scala.concurrent.ExecutionContext
 
 trait BaseSpec
-    extends AnyWordSpec
+    extends AnyFreeSpec
     with Matchers
     with DefaultAwaitTimeout
+    with GuiceOneAppPerSuite
     with MockitoSugar
     with BeforeAndAfterEach
     with AllMocks
     with ScalaFutures
     with OptionValues
     with Configs
-    with Status {
+    with Status
+    with WireMockServerHandler {
 
   implicit lazy val ec:           ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit lazy val hc:           HeaderCarrier    = HeaderCarrier()
@@ -50,10 +59,35 @@ trait BaseSpec
   implicit lazy val materializer: Materializer     = Materializer(system)
   val contentType:                (String, String) = "Content-Type" -> "application/json"
 
+  def injector: Injector = app.injector
+
+  def frontendAppConfig: AppConfig = injector.instanceOf[AppConfig]
+
+  def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
+
   implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
     .withHeaders(contentType)
 
   val PLATFORM_LOG_LIMIT = 12288
 
   val logUtils = new LogUtility(PLATFORM_LOG_LIMIT)
+
+  protected def applicationBuilder(): GuiceApplicationBuilder =
+    new GuiceApplicationBuilder()
+      .configure(
+        Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
+      )
+      .overrides()
+
+  protected def stubResponse(
+    expectedUrl:    String,
+    expectedStatus: Int
+  ): StubMapping =
+    server.stubFor(
+      post(urlEqualTo(expectedUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(expectedStatus)
+        )
+    )
 }

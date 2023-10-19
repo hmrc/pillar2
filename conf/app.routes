@@ -1,7 +1,13 @@
 # microservice specific routes
 
 # user answers caching in mongo
-GET          /user-cache/registration-subscription/:id              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.get(id: String)
-POST         /user-cache/registration-subscription/:id              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
-DELETE       /user-cache/registration-subscription/:id              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
-GET          /user-cache/registration-subscription/:id/lastUpdated  uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
+GET          /user-cache/registration-subscription/:id                              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.get(id: String)
+POST         /user-cache/registration-subscription/:id                              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
+DELETE       /user-cache/registration-subscription/:id                              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
+GET          /user-cache/registration-subscription/:id/lastUpdated                  uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
+
+
+POST          /upe/registration/:id                                                 uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdUpeRegistrationSubmission(id: String)
+POST          /fm/registration/:id                                                  uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
+
+POST          /subscription/create-subscription                                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription

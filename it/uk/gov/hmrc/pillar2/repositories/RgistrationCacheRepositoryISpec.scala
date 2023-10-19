@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.repositories
 
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.helpers.BaseISpec
-import uk.gov.hmrc.pillar2.services.test.TestService
+import uk.gov.hmrc.pillar2.service.test.TestService
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.JsonDataEntry
 
 class RgistrationCacheRepositoryISpec extends BaseISpec {

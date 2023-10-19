@@ -39,12 +39,12 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       )
   }
 
-  "save" when {
+  "save" - {
     "return 200 when request is saved successfully" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
 
       val result = controller.save("id")(FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
-      status(result) shouldBe OK
+      status(result) mustBe OK
     }
 
     "return 413 when request is not right" in new Setup {
@@ -52,7 +52,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
       val result = controller.save("foo")(FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
 
-      status(result) shouldBe REQUEST_ENTITY_TOO_LARGE
+      status(result) mustBe REQUEST_ENTITY_TOO_LARGE
     }
     "throw exception when mongo is down" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.failed(new Exception(""))
@@ -61,15 +61,15 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
     }
   }
-  "get" when {
+  "get" - {
     "return 200 when data exists" in new Setup {
       when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         Some(Json.obj())
       }
       val result = controller.get("id")(FakeRequest())
 
-      status(result)          shouldBe OK
-      contentAsString(result) shouldBe "{}"
+      status(result) mustBe OK
+      contentAsString(result) mustBe "{}"
 
     }
     "return NOT_FOUND when data exists" in new Setup {
@@ -78,20 +78,20 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       }
       val result = controller.get("id")(FakeRequest())
 
-      status(result) shouldBe NOT_FOUND
+      status(result) mustBe NOT_FOUND
 
     }
-    "remove" when {
+    "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
         when(mockRgistrationCacheRepository.remove(eqTo("id"))(any())) thenReturn Future.successful(true)
 
         val result = controller.remove("id")(FakeRequest())
 
-        status(result) shouldBe OK
+        status(result) mustBe OK
       }
 
     }
-    "lastUpdated" when {
+    "lastUpdated" - {
       "return 200 and if record when it exists" in new Setup {
         val date = DateTime.now
         when(mockRgistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
@@ -100,8 +100,8 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
-        status(result)        shouldBe OK
-        contentAsJson(result) shouldBe Json.toJson(date.getMillis)
+        status(result) mustBe OK
+        contentAsJson(result) mustBe Json.toJson(date.getMillis)
       }
 
       "return 404 when the data doesn't exist" in new Setup {
@@ -111,7 +111,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
         val result = controller.lastUpdated("foo")(FakeRequest())
 
-        status(result) shouldBe NOT_FOUND
+        status(result) mustBe NOT_FOUND
       }
     }
   }

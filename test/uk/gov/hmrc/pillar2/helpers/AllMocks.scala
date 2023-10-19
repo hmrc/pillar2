@@ -23,7 +23,11 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.connectors.{RegistrationConnector, SubscriptionConnector}
+import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.service.{RegistrationService, SubscriptionService}
+import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
 trait AllMocks extends MockitoSugar {
@@ -35,6 +39,12 @@ trait AllMocks extends MockitoSugar {
   val mockAppConfig:                  AppConfig                   = mock[AppConfig]
   val mockRgistrationCacheRepository: RegistrationCacheRepository = mock[RegistrationCacheRepository]
   val mockHttpClient:                 HttpClient                  = mock[HttpClient]
+  val mockDataSubmissionsConnector:   RegistrationConnector       = mock[RegistrationConnector]
+  val mockDataSubmissionsService:     RegistrationService         = mock[RegistrationService]
+  val mockSubscriptionConnector:      SubscriptionConnector       = mock[SubscriptionConnector]
+  val mockSubscriptionService:        SubscriptionService         = mock[SubscriptionService]
+  val mockCountryOptions:             CountryOptions              = mock[CountryOptions]
+  val mockAuthAction:                 AuthAction                  = mock[AuthAction]
 
   override protected def beforeEach(): Unit =
     Seq(
@@ -43,6 +53,12 @@ trait AllMocks extends MockitoSugar {
       mockAuthConnector,
       mockAppConfig,
       mockRgistrationCacheRepository,
-      mockHttpClient
+      mockHttpClient,
+      mockDataSubmissionsConnector,
+      mockDataSubmissionsService,
+      mockSubscriptionConnector,
+      mockSubscriptionService,
+      mockCountryOptions,
+      mockAuthAction
     ).foreach(Mockito.reset(_))
 }

@@ -21,11 +21,17 @@ import play.api.{Configuration, Environment}
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton
-class AppConfig @Inject() (val config: Configuration, environment: Environment, servicesConfig: ServicesConfig) {
+class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesConfig) {
 
   val appName: String = config.get[String]("appName")
 
   val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
   val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
 
+  def baseUrl(serviceName: String): String =
+    s"${servicesConfig.baseUrl(serviceName)}${servicesConfig.getString(s"microservice.services.$serviceName.context")}"
+
+  val bearerToken:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.bearer-token")
+  val environment:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.environment")
+  lazy val locationCanonicalList: String           = config.get[String]("location.canonical.list.all")
 }

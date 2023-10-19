@@ -17,7 +17,6 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.joda.time.DateTime
-import play.api.Logger
 import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository

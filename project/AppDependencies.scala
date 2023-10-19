@@ -23,8 +23,11 @@ object AppDependencies {
     "org.scalatestplus.play" %% "scalatestplus-play"     % "5.1.0"   % "test, it",
     "com.vladsch.flexmark"   % "flexmark-all"            % "0.35.10" % "test, it",
     "org.scalatestplus"      %% "mockito-3-4"            % "3.2.7.0" % "test",
+    "org.scalatestplus"       %% "scalatestplus-scalacheck"   % "3.1.0.0-RC2" % Test,
+    "wolfendale"              %% "scalacheck-gen-regexp"      % "0.1.2"       % Test,
     "com.github.tomakehurst" % "wiremock-standalone"     % "2.27.2"  % "it",
     "com.softwaremill.diffx" %% "diffx-core"             % "0.4.1"   % "test, it",
     "com.softwaremill.diffx" %% "diffx-scalatest"        % "0.4.1"   % "test, it"
+
   )
 }

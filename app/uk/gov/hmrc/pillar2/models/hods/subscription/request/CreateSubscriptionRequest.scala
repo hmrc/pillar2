@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.services.test
-import play.api.Logger
-import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+package uk.gov.hmrc.pillar2.models.hods.subscription.request
 
-import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import play.api.libs.json.{Json, OFormat}
 
-class RegistrationCacheService @Inject() (val repository: RegistrationCacheRepository)(implicit
-  val executionContext:                                   ExecutionContext,
-  appConfig:                                              AppConfig
-) {
+case class CreateSubscriptionRequest(
+  createSubscriptionRequest: SubscriptionRequest
+)
 
-  implicit val logger: Logger = Logger(this.getClass.getName)
-
+object CreateSubscriptionRequest {
+  implicit val format: OFormat[CreateSubscriptionRequest] =
+    Json.format[CreateSubscriptionRequest]
 }
