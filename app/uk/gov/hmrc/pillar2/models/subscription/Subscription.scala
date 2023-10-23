@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, RowStatus}
 
 case class Subscription(
   domesticOrMne:             MneOrDomestic,
@@ -29,7 +29,8 @@ case class Subscription(
   secondaryContactName:      Option[String] = None,
   secondaryContactEmail:     Option[String] = None,
   secondaryContactTelephone: Option[String] = None,
-  correspondenceAddress:     Option[SubscriptionAddress] = None
+  correspondenceAddress:     Option[SubscriptionAddress] = None,
+  accountStatus:             Option[AccountStatus] = None
 )
 
 object Subscription {

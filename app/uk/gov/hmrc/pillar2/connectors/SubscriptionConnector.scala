@@ -39,4 +39,14 @@ class SubscriptionConnector @Inject() (
     )(wts = CreateSubscriptionRequest.format, rds = httpReads, hc = hc, ec = ec)
   }
 
+  def getSubscriptionInformation(
+    plrReference: String
+  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val serviceName = "create-subscription" ///pillar2/subscription   read-subscription/:id/:plrReference use in the tests for the stub
+    http.GET[HttpResponse](
+      s"${config.baseUrl(serviceName)}/$plrReference",
+      headers = extraHeaders(config, serviceName)
+    )
+  }
+
 }

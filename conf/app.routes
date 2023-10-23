@@ -11,3 +11,4 @@ POST          /upe/registration/:id                                             
 POST          /fm/registration/:id                                                  uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
 
 POST          /subscription/create-subscription                                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
+GET           /subscription/read-subscription/:id/:plrReference                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(id: String, plrReference: String)

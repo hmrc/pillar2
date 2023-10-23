@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models
+package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
-
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  duetDate:  Option[LocalDate] = None
+case class ReadSubscriptionRequestParameters(
+  id:           String,
+  plrReference: String
 )
-
-object AccountingPeriod {
-  implicit val format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object ReadSubscriptionRequestParameters {
+  implicit val format: OFormat[ReadSubscriptionRequestParameters] = Json.format[ReadSubscriptionRequestParameters]
 }

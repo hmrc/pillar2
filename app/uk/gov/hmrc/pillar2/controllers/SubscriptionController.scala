@@ -17,11 +17,13 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsResult, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.libs.functional.syntax._
+import play.api.libs.json.Reads.minLength
+import play.api.libs.json._
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
+import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
@@ -48,6 +50,24 @@ class SubscriptionController @Inject() (
         for {
           userAnswer <- getUserAnswers(subs.id)
           response   <- subscriptionService.sendCreateSubscription(subs.regSafeId, subs.fmSafeId, userAnswer)
+        } yield convertToResult(response)(implicitly[Logger](logger))
+    )
+  }
+
+  implicit val readSubscriptionParamsReads: Reads[ReadSubscriptionRequestParameters] = (
+    (__ \ "id").read[String](minLength[String](1)) and
+      (__ \ "plrReference").read[String](minLength[String](1))
+  )(ReadSubscriptionRequestParameters.apply _)
+
+  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+    val params           = ReadSubscriptionRequestParameters(id, plrReference)
+    val validationResult = Json.toJson(params).validate[ReadSubscriptionRequestParameters]
+
+    validationResult.fold(
+      invalid = _ => Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters"))),
+      valid = validParams =>
+        for {
+          response <- subscriptionService.retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }

@@ -18,6 +18,7 @@ package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.fm.FilingMember
@@ -26,15 +27,14 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId, SubscriptionId}
 import uk.gov.hmrc.pillar2.models.registration.Registration
-import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, UserAnswers}
+import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, _}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -78,7 +78,55 @@ class SubscriptionService @Inject() (
     subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
 
-  private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
+  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    (for {
+      httpResponse <- subscriptionConnectors.getSubscriptionInformation(plrReference)
+      jsonBody = httpResponse.json
+      request  = jsonBody.as[SubscriptionResponse]
+      sub      = request.success
+    } yield {
+      // Extract the UpeDetails from SubscriptionSuccess
+      val upeDetails = sub.upeDetails
+
+      val subscriptionData: Subscription = Subscription(
+        domesticOrMne = if (upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
+        groupDetailStatus = RowStatus.Completed,
+        accountingPeriod = Some(
+          uk.gov.hmrc.pillar2.models.AccountingPeriod(
+            startDate = sub.accountingPeriod.startDate,
+            endDate = sub.accountingPeriod.endDate,
+            duetDate = sub.accountingPeriod.duetDate
+          )
+        ),
+        primaryContactName = Some(sub.primaryContactDetails.name),
+        primaryContactEmail = Some(sub.primaryContactDetails.emailAddress),
+        primaryContactTelephone = sub.primaryContactDetails.telephone,
+        secondaryContactName = Some(sub.secondaryContactDetails.name),
+        secondaryContactEmail = Some(sub.secondaryContactDetails.emailAddress),
+        secondaryContactTelephone = sub.secondaryContactDetails.telephone,
+        correspondenceAddress = Some(
+          SubscriptionAddress(
+            addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+            addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
+            addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
+            addressLine4 = None,
+            postalCode = sub.upeCorrespAddressDetails.postCode,
+            countryCode = sub.upeCorrespAddressDetails.countryCode
+          )
+        ),
+        accountStatus = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive))
+      )
+
+      val jsonData: JsValue = Json.toJson(subscriptionData)
+      repository.upsert(id, jsonData)
+      httpResponse
+    }).recover { case e: Exception =>
+      logger.warn("Subscription Information Missing or other error", e)
+      ReadsubscriptionError
+    }
+
+  private val ReadsubscriptionError = HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription")
+  private val subscriptionError     = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
   private def getUpeDetails(upeSafeId: String, registration: Registration, fm: FilingMember, subscription: Subscription): UpeDetails = {
     val domesticOnly   = if (subscription.domesticOrMne == MneOrDomestic.uk) true else false
