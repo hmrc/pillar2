@@ -90,4 +90,19 @@ trait BaseSpec
             .withStatus(expectedStatus)
         )
     )
+
+  import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
+
+  protected def stubGetResponse(
+    expectedUrl:    String,
+    expectedStatus: Int
+  ): StubMapping =
+    server.stubFor(
+      get(urlEqualTo(expectedUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(expectedStatus)
+        )
+    )
+
 }

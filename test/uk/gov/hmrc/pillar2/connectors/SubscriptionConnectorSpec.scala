@@ -75,6 +75,59 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
     }
 
+    "for retrieving Subscription Information" - {
+
+      "must return status as OK" in {
+        forAll(plrReferenceGen) { (plrReference: String) =>
+          stubGetResponse(
+            s"/pillar2/subscription/$plrReference",
+            OK
+          )
+          val result = await(connector.getSubscriptionInformation(plrReference))
+          result.status mustBe OK
+        }
+      }
+
+      "must return status as NOT_FOUND" in {
+
+        forAll(plrReferenceGen) { (plrReference: String) =>
+          stubGetResponse(
+            s"/pillar2/subscription/$plrReference",
+            NOT_FOUND
+          )
+
+          val result = connector.getSubscriptionInformation(plrReference).futureValue
+          result.status mustBe NOT_FOUND
+        }
+      }
+
+      "must return status as BAD_REQUEST" in {
+
+        forAll(plrReferenceGen) { (plrReference: String) =>
+          stubGetResponse(
+            s"/pillar2/subscription/$plrReference",
+            BAD_REQUEST
+          )
+
+          val result = connector.getSubscriptionInformation(plrReference).futureValue
+          result.status mustBe BAD_REQUEST
+        }
+      }
+
+      "must return status as INTERNAL_SERVER_ERROR" in {
+
+        forAll(plrReferenceGen) { (plrReference: String) =>
+          stubGetResponse(
+            s"/pillar2/subscription/$plrReference",
+            INTERNAL_SERVER_ERROR
+          )
+
+          val result = connector.getSubscriptionInformation(plrReference).futureValue
+          result.status mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+    }
+
   }
 
 }

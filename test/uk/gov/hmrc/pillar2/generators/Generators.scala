@@ -150,4 +150,11 @@ trait Generators extends ModelGenerators {
   val apiOrgName = "^([a-zA-Z0-9_.]{1,105})\\$"
   def validOrgName: Gen[String] = RegexpGen.from(apiOrgName)
 
+  import org.scalacheck.Gen
+
+  val plrReferenceGen: Gen[String] = for {
+    length <- Gen.choose(1, 100) // for example, generate strings of length between 1 and 100
+    chars  <- Gen.listOfN(length, Gen.alphaNumChar)
+  } yield chars.mkString
+
 }
