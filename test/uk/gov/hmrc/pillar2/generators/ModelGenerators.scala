@@ -17,16 +17,17 @@
 package uk.gov.hmrc.pillar2.generators
 
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen.{alphaUpperStr, option}
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, WithoutIdNfmData}
 import uk.gov.hmrc.pillar2.models.grs._
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, SubscriptionResponse, SubscriptionSuccess, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, RowStatus, UserAnswers}
 
 import java.time.{Instant, LocalDate}
 
@@ -496,12 +497,10 @@ trait ModelGenerators {
 
   implicit val arbitraryAccountingPeriod: Arbitrary[AccountingPeriod] = Arbitrary {
     for {
-      startDate <- arbitrary[LocalDate]
-      endDate   <- arbitrary[LocalDate]
-    } yield AccountingPeriod(
-      startDate = startDate,
-      endDate = endDate
-    )
+      startDate <- datesBetween(LocalDate.now().minusYears(10), LocalDate.now())
+      endDate   <- datesBetween(startDate, startDate.plusYears(5))
+      dueDate   <- option(datesBetween(startDate, endDate))
+    } yield AccountingPeriod(startDate, endDate, dueDate)
   }
 
   implicit val arbitraryUpeCorrespAddressDetails: Arbitrary[UpeCorrespAddressDetails] = Arbitrary {
@@ -560,6 +559,52 @@ trait ModelGenerators {
       regSafeId = regSafeId,
       fmSafeId = fmSafeId
     )
+  }
+
+  implicit val arbitraryAccountStatus: Arbitrary[AccountStatus] = Arbitrary {
+    arbitrary[Boolean].map(AccountStatus(_))
+  }
+
+  implicit val arbitrarySubscriptionResponse: Arbitrary[SubscriptionResponse] = Arbitrary {
+    for {
+      success <- arbitrary[SubscriptionSuccess]
+    } yield SubscriptionResponse(success)
+  }
+
+  implicit val arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {
+    for {
+      plrReference             <- plrReferenceGen
+      processingDate           <- datesBetween(LocalDate.now().minusYears(10), LocalDate.now())
+      formBundleNumber         <- stringsWithMaxLength(20) // Adjust the max length as needed
+      upeDetails               <- arbitrary[UpeDetails]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- arbitrary[ContactDetailsType]
+      filingMemberDetails      <- arbitrary[FilingMemberDetails]
+      accountingPeriod         <- arbitrary[AccountingPeriod]
+      accountStatus            <- arbitrary[AccountStatus]
+    } yield SubscriptionSuccess(
+      plrReference,
+      processingDate,
+      formBundleNumber,
+      upeDetails,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails,
+      accountingPeriod,
+      accountStatus
+    )
+  }
+
+  import org.scalacheck.{Arbitrary, Gen}
+  import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
+
+  implicit val readSubscriptionRequestParametersArbitrary: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary {
+    for {
+      id           <- Gen.alphaStr
+      plrReference <- Gen.alphaStr
+    } yield ReadSubscriptionRequestParameters(id, plrReference)
   }
 
 }

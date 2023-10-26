@@ -33,12 +33,18 @@
 package uk.gov.hmrc.pillar2.generators
 
 import java.time.{Instant, LocalDate, ZoneOffset}
-
 import org.scalacheck.Arbitrary.{arbitrary, _}
 import org.scalacheck.Gen._
 import org.scalacheck.{Gen, Shrink}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import wolfendale.scalacheck.regexp.RegexpGen
-
+import org.scalacheck.Arbitrary
+import org.scalacheck.Arbitrary._
+import org.scalacheck.Gen._
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models._
+import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 trait Generators extends ModelGenerators {
 
   implicit val dontShrink: Shrink[String] = Shrink.shrinkAny
@@ -153,8 +159,26 @@ trait Generators extends ModelGenerators {
   import org.scalacheck.Gen
 
   val plrReferenceGen: Gen[String] = for {
-    length <- Gen.choose(1, 100) // for example, generate strings of length between 1 and 100
+    length <- Gen.choose(1, 100)
     chars  <- Gen.listOfN(length, Gen.alphaNumChar)
   } yield chars.mkString
+
+  val arbMockId:       Arbitrary[String] = Arbitrary(Gen.uuid.map(_.toString))
+  val arbPlrReference: Arbitrary[String] = Arbitrary(plrReferenceGen)
+
+  val readSubscriptionRequestParametersGen: Gen[ReadSubscriptionRequestParameters] = for {
+    id           <- Gen.uuid.map(_.toString)
+    plrReference <- plrReferenceGen
+  } yield ReadSubscriptionRequestParameters(id, plrReference)
+
+  val arbReadSubscriptionRequestParameters: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary(readSubscriptionRequestParametersGen)
+
+  def email: Gen[String] =
+    for {
+      localPart  <- Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
+      subdomain  <- Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
+      mainDomain <- Gen.nonEmptyListOf(Gen.alphaNumChar).map(_.mkString)
+      tld        <- Gen.oneOf(".com", ".org", ".net", ".uk", ".gov")
+    } yield s"$localPart@$subdomain.$mainDomain$tld"
 
 }

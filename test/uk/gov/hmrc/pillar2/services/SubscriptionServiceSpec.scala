@@ -16,18 +16,21 @@
 
 package uk.gov.hmrc.pillar2.services
 
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.gov.hmrc.http.HttpResponse
+import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
+import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
@@ -87,4 +90,75 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
   }
 
+  "retrieveSubscriptionInformation" - {
+
+    "Return successful HttpResponse, retrieve subscription information, and upsert data correctly" in new Setup {
+      forAll(arbMockId.arbitrary, arbReadSubscriptionRequestParameters.arbitrary, arbitrary[SubscriptionResponse]) {
+        (mockId, mockParams, mockSubscriptionResponse) =>
+          val expectedHttpResponse = HttpResponse(status = OK, body = Json.toJson(mockSubscriptionResponse).toString())
+
+          val plrReferenceCaptor     = ArgumentCaptor.forClass(classOf[String])
+          val headerCarrierCaptor    = ArgumentCaptor.forClass(classOf[HeaderCarrier])
+          val executionContextCaptor = ArgumentCaptor.forClass(classOf[ExecutionContext])
+
+          when(
+            mockSubscriptionConnector
+              .getSubscriptionInformation(plrReferenceCaptor.capture())(headerCarrierCaptor.capture(), executionContextCaptor.capture())
+          )
+            .thenReturn(Future.successful(expectedHttpResponse))
+
+          when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
+            .thenReturn(Future.successful(()))
+          val resultFuture = service.retrieveSubscriptionInformation(mockId, mockParams.plrReference)(hc, ec)
+
+          whenReady(resultFuture) { response =>
+            response.status mustBe OK
+            assert(plrReferenceCaptor.getValue == mockParams.plrReference)
+          }
+      }
+    }
+
+    "handle external connector failure" in new Setup {
+      forAll(arbMockId.arbitrary, arbPlrReference.arbitrary) { (mockId: String, mockPlrReference: String) =>
+        when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.failed(new Exception("Mock failure")))
+
+        service.retrieveSubscriptionInformation(mockId, mockPlrReference).map { response =>
+          response.status mustBe INTERNAL_SERVER_ERROR
+          response.body mustBe "Response not received in Subscription"
+        }
+      }
+    }
+
+    "handle data transformation error" in new Setup {
+
+      val malformedHttpResponse = HttpResponse(status = OK, body = "{\"malformed\": \"data\"}")
+      forAll(arbMockId.arbitrary, arbPlrReference.arbitrary) { (mockId: String, mockPlrReference: String) =>
+        when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(malformedHttpResponse))
+
+        service.retrieveSubscriptionInformation(mockId, mockPlrReference).map { response =>
+          response.status mustBe INTERNAL_SERVER_ERROR
+          response.body mustBe "Response not received in Subscription"
+        }
+      }
+    }
+
+    "handle database upsert failure" in new Setup {
+      forAll(arbMockId.arbitrary, arbitrary[ReadSubscriptionRequestParameters], arbitrary[SubscriptionResponse]) {
+        (mockId, mockPlrReference, mockSubscriptionResponse) =>
+          val expectedHttpResponse = HttpResponse(status = OK, body = Json.toJson(mockSubscriptionResponse).toString())
+          when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
+            .thenReturn(Future.successful(expectedHttpResponse))
+
+          when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
+            .thenReturn(Future.failed(new Exception("DB upsert error")))
+
+          service.retrieveSubscriptionInformation(mockId, mockPlrReference.plrReference).map { response =>
+            response.status mustBe INTERNAL_SERVER_ERROR
+            response.body mustBe "Response not received in Subscription"
+          }
+      }
+    }
+  }
 }

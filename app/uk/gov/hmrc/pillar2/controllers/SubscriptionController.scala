@@ -20,7 +20,8 @@ import play.api.Logger
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Reads.minLength
 import play.api.libs.json._
-import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
@@ -60,17 +61,50 @@ class SubscriptionController @Inject() (
   )(ReadSubscriptionRequestParameters.apply _)
 
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-    val params           = ReadSubscriptionRequestParameters(id, plrReference)
+    logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
+
+    val params = ReadSubscriptionRequestParameters(id, plrReference)
+    logger.info(s"Parameters created: $params")
+
     val validationResult = Json.toJson(params).validate[ReadSubscriptionRequestParameters]
 
     validationResult.fold(
-      invalid = _ => Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters"))),
-      valid = validParams =>
-        for {
-          response <- subscriptionService.retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
-        } yield convertToResult(response)(implicitly[Logger](logger))
+      invalid = _ => {
+        logger.warn(s"Validation failed for parameters: $params")
+        Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
+      },
+      valid = validParams => {
+        logger.info(s"OLA1 Calling subscriptionService with valid parameters: $validParams")
+        try subscriptionService
+          .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
+          .map { response =>
+            logger.info(s"OLA2 Received response: $response")
+            handleHttpResponse(response)
+          }
+          .recover { case e: Exception =>
+            logger.error("OLA3 Error retrieving subscription information", e)
+            InternalServerError(Json.obj("error" -> "Error retrieving subscription information"))
+          } catch {
+          case e: Exception =>
+            logger.error("OLA4 Exception thrown before Future was created", e)
+            Future.successful(InternalServerError(Json.obj("error" -> "Exception thrown before Future was created")))
+        }
+      }
     )
   }
+
+  private def handleHttpResponse(response: HttpResponse): Result =
+    response.status match {
+      case 200 => Ok(Json.obj("message" -> "Success"))
+      case 400 => BadRequest(Json.obj("error" -> "Bad request from EIS"))
+      case 404 => NotFound(Json.obj("error" -> "Resource not found"))
+      case 422 => UnprocessableEntity(Json.obj("error" -> "Unprocessable entity"))
+      case 500 => InternalServerError(Json.obj("error" -> "Internal server error"))
+      case 503 => ServiceUnavailable(Json.obj("error" -> "Service unavailable"))
+      case other =>
+        logger.warn(s"Unexpected response: $other")
+        InternalServerError(Json.obj("error" -> "Unexpected error occurred"))
+    }
 
   def getUserAnswers(id: String)(implicit executionContext: ExecutionContext): Future[UserAnswers] =
     repository.get(id).map { userAnswer =>

@@ -17,9 +17,9 @@
 package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
-import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse, InternalServerException, NotFoundException, ServiceUnavailableException, UnprocessableEntityException}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.fm.FilingMember
 import uk.gov.hmrc.pillar2.models.grs.EntityType
@@ -81,8 +81,18 @@ class SubscriptionService @Inject() (
   def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     (for {
       httpResponse <- subscriptionConnectors.getSubscriptionInformation(plrReference)
+      _ = logger.info(s"Received HTTP response: ${httpResponse.status}")
+      _ = httpResponse.status match {
+            case NOT_FOUND             => throw new NotFoundException("Resource not found")
+            case BAD_REQUEST           => throw new BadRequestException("Bad request from EIS")
+            case UNPROCESSABLE_ENTITY  => throw new UnprocessableEntityException("Unprocessable entity")
+            case INTERNAL_SERVER_ERROR => throw new InternalServerException("Internal server error")
+            case SERVICE_UNAVAILABLE   => throw new ServiceUnavailableException("Service unavailable")
+          }
       jsonBody = httpResponse.json
+      _        = logger.info(s"Parsed JSON body: $jsonBody")
       request  = jsonBody.as[SubscriptionResponse]
+      _        = logger.info(s"Parsed SubscriptionResponse: $request")
       sub      = request.success
     } yield {
       // Extract the UpeDetails from SubscriptionSuccess
@@ -120,9 +130,15 @@ class SubscriptionService @Inject() (
       val jsonData: JsValue = Json.toJson(subscriptionData)
       repository.upsert(id, jsonData)
       httpResponse
-    }).recover { case e: Exception =>
-      logger.warn("Subscription Information Missing or other error", e)
-      ReadsubscriptionError
+    }).recover {
+      case _: NotFoundException            => HttpResponse(NOT_FOUND, Json.obj("error" -> "Resource not found").toString())
+      case _: BadRequestException          => HttpResponse(BAD_REQUEST, Json.obj("error" -> "Bad request from EIS").toString())
+      case _: UnprocessableEntityException => HttpResponse(UNPROCESSABLE_ENTITY, Json.obj("error" -> "Unprocessable entity").toString())
+      case _: InternalServerException      => HttpResponse(INTERNAL_SERVER_ERROR, Json.obj("error" -> "Internal server error").toString())
+      case _: ServiceUnavailableException  => HttpResponse(SERVICE_UNAVAILABLE, Json.obj("error" -> "Service unavailable").toString())
+      case e: Exception =>
+        logger.warn("Subscription Information Missing or other error", e)
+        ReadsubscriptionError
     }
 
   private val ReadsubscriptionError = HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription")
@@ -236,5 +252,4 @@ class SubscriptionService @Inject() (
         )
       )
     )
-
 }
