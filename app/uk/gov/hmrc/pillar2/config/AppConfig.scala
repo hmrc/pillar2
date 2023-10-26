@@ -23,7 +23,8 @@ import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 @Singleton
 class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesConfig) {
 
-  val appName: String = config.get[String]("appName")
+  val appName: String  = config.get[String]("appName")
+  def useStub: Boolean = config.get[Boolean]("use.stub")
 
   val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
   val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
