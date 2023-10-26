@@ -74,19 +74,19 @@ class SubscriptionController @Inject() (
         Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
       },
       valid = validParams => {
-        logger.info(s"OLA1 Calling subscriptionService with valid parameters: $validParams")
+        logger.info(s"Calling subscriptionService with valid parameters: $validParams")
         try subscriptionService
           .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
           .map { response =>
-            logger.info(s"OLA2 Received response: $response")
+            logger.info(s"Received response: $response")
             handleHttpResponse(response)
           }
           .recover { case e: Exception =>
-            logger.error("OLA3 Error retrieving subscription information", e)
+            logger.error("Error retrieving subscription information", e)
             InternalServerError(Json.obj("error" -> "Error retrieving subscription information"))
           } catch {
           case e: Exception =>
-            logger.error("OLA4 Exception thrown before Future was created", e)
+            logger.error("Exception thrown before Future was created", e)
             Future.successful(InternalServerError(Json.obj("error" -> "Exception thrown before Future was created")))
         }
       }

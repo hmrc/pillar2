@@ -116,32 +116,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
     }
 
-    //    "Return successful HttpResponse, retrieve subscription information, and upsert data correctly" in new Setup {
-//      forAll(arbMockId.arbitrary, arbReadSubscriptionRequestParameters.arbitrary, arbitrary[SubscriptionResponse]) {
-//        (mockId, mockParams, mockSubscriptionResponse) =>
-//          val expectedHttpResponse = HttpResponse(status = OK, body = Json.toJson(mockSubscriptionResponse).toString())
-//
-//          val plrReferenceCaptor     = ArgumentCaptor.forClass(classOf[String])
-//          val headerCarrierCaptor    = ArgumentCaptor.forClass(classOf[HeaderCarrier])
-//          val executionContextCaptor = ArgumentCaptor.forClass(classOf[ExecutionContext])
-//
-//          when(
-//            mockSubscriptionConnector
-//              .getSubscriptionInformation(plrReferenceCaptor.capture())(headerCarrierCaptor.capture(), executionContextCaptor.capture())
-//          )
-//            .thenReturn(Future.successful(expectedHttpResponse))
-//
-//          when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
-//            .thenReturn(Future.successful(()))
-//          val resultFuture = service.retrieveSubscriptionInformation(mockId, mockParams.plrReference)(hc, ec)
-//
-//          whenReady(resultFuture) { response =>
-//            response.status mustBe OK
-////            assert(plrReferenceCaptor.getValue == mockParams.plrReference)
-//          }
-//      }
-//    }
-
     "handle external connector failure" in new Setup {
       forAll(arbMockId.arbitrary, arbPlrReference.arbitrary) { (mockId: String, mockPlrReference: String) =>
         when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
