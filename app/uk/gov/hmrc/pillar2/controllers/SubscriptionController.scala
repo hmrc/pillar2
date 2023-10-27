@@ -52,7 +52,8 @@ class SubscriptionController @Inject() (
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }
-  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+//  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def readSubscription(id: String, plrReference: String): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
 
     val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
@@ -62,9 +63,9 @@ class SubscriptionController @Inject() (
         logger.info(s"Calling subscriptionService with valid parameters: $validParams")
         try subscriptionService
           .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
-          .map { response =>
-            logger.info(s"Received response: $response")
-            handleHttpResponse(response)
+          .map { subscriptionResponse =>
+            logger.info(s"Received response: $subscriptionResponse")
+            Ok(Json.toJson(subscriptionResponse))
           }
           .recover { case e: Exception =>
             logger.error("Error retrieving subscription information", e)

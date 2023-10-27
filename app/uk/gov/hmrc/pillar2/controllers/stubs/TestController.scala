@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.controllers.stubs
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.BasePillar2Controller
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
@@ -59,6 +60,7 @@ class TestController @Inject() (
     ???
   }
 
+//  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = Action.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
 
@@ -69,9 +71,9 @@ class TestController @Inject() (
         logger.info(s"Calling subscriptionService with valid parameters: $validParams")
         try subscriptionService
           .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
-          .map { response =>
-            logger.info(s"Received response: $response")
-            handleHttpResponse(response)
+          .map { subscriptionResponse =>
+            logger.info(s"Received response: $subscriptionResponse")
+            Ok(Json.toJson(subscriptionResponse))
           }
           .recover { case e: Exception =>
             logger.error("Error retrieving subscription information", e)
@@ -87,18 +89,5 @@ class TestController @Inject() (
         Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
     }
   }
-
-  private def handleHttpResponse(response: HttpResponse): Result =
-    response.status match {
-      case 200 => Ok(Json.obj("message" -> "Success"))
-      case 400 => BadRequest(Json.obj("error" -> "Bad request from EIS"))
-      case 404 => NotFound(Json.obj("error" -> "Resource not found"))
-      case 422 => UnprocessableEntity(Json.obj("error" -> "Unprocessable entity"))
-      case 500 => InternalServerError(Json.obj("error" -> "Internal server error"))
-      case 503 => ServiceUnavailable(Json.obj("error" -> "Service unavailable"))
-      case other =>
-        logger.warn(s"Unexpected response: $other")
-        InternalServerError(Json.obj("error" -> "Unexpected error occurred"))
-    }
 
 }
