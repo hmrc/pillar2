@@ -32,6 +32,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class TestController @Inject() (
   subscriptionService:       SubscriptionService,
   repository:                RegistrationCacheRepository,
+  authenticate:              AuthAction,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
@@ -60,8 +61,7 @@ class TestController @Inject() (
     ???
   }
 
-//  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-  def readSubscription(id: String, plrReference: String): Action[AnyContent] = Action.async { implicit request =>
+  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
 
     val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)

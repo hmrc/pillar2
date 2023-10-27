@@ -52,8 +52,7 @@ class SubscriptionController @Inject() (
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }
-//  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-  def readSubscription(id: String, plrReference: String): Action[AnyContent] = Action.async { implicit request =>
+  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
 
     val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
