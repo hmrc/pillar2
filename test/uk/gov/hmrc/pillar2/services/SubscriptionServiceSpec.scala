@@ -22,7 +22,7 @@ import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsResultException, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -108,9 +108,8 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
-        whenReady(resultFuture) { response =>
-          response.status mustBe NOT_FOUND
-          response.body mustBe Json.obj("error" -> "Resource not found").toString()
+        whenReady(resultFuture.failed) { exception =>
+          exception.getMessage must include(s"Error response from ETMP with status: $NOT_FOUND")
           assert(plrReferenceCaptor.getValue == plrReference)
         }
       }
@@ -121,9 +120,10 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
           .thenReturn(Future.failed(new Exception("Mock failure")))
 
-        service.retrieveSubscriptionInformation(mockId, mockPlrReference).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-          response.body mustBe "Response not received in Subscription"
+        val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference)
+
+        whenReady(resultFuture.failed) { exception =>
+          exception.getMessage mustBe "Mock failure"
         }
       }
     }
@@ -131,13 +131,16 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "handle data transformation error" in new Setup {
 
       val malformedHttpResponse = HttpResponse(status = OK, body = "{\"malformed\": \"data\"}")
+
       forAll(arbMockId.arbitrary, arbPlrReference.arbitrary) { (mockId: String, mockPlrReference: String) =>
         when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
           .thenReturn(Future.successful(malformedHttpResponse))
 
-        service.retrieveSubscriptionInformation(mockId, mockPlrReference).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-          response.body mustBe "Response not received in Subscription"
+        val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference)
+
+        whenReady(resultFuture.failed) { exception =>
+          exception mustBe a[JsResultException]
+          exception.getMessage must include("error.path.missing")
         }
       }
     }
@@ -146,17 +149,20 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       forAll(arbMockId.arbitrary, arbitrary[ReadSubscriptionRequestParameters], arbitrary[SubscriptionResponse]) {
         (mockId, mockPlrReference, mockSubscriptionResponse) =>
           val expectedHttpResponse = HttpResponse(status = OK, body = Json.toJson(mockSubscriptionResponse).toString())
+
           when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(expectedHttpResponse))
 
           when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
             .thenReturn(Future.failed(new Exception("DB upsert error")))
 
-          service.retrieveSubscriptionInformation(mockId, mockPlrReference.plrReference).map { response =>
-            response.status mustBe INTERNAL_SERVER_ERROR
-            response.body mustBe "Response not received in Subscription"
+          val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference.plrReference)
+
+          whenReady(resultFuture.failed) { exception =>
+            exception.getMessage must include("DB upsert error")
           }
       }
     }
+
   }
 }

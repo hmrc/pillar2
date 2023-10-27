@@ -78,60 +78,6 @@ class SubscriptionService @Inject() (
     subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
 
-//  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-//    subscriptionConnectors
-//      .getSubscriptionInformation(plrReference)
-//      .flatMap { httpResponse =>
-//        httpResponse.status match {
-//          case status if Set(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).contains(status) =>
-//            Future.successful(handleErrorStatus(status))
-//          case _ =>
-//            val jsonBody         = httpResponse.json
-//            val request          = jsonBody.as[SubscriptionResponse]
-//            val subscriptionData = extractSubscriptionData(request.success)
-//            val jsonData         = Json.toJson(subscriptionData)
-//
-//            repository.upsert(id, jsonData).map { _ =>
-//              logger.info(s"Upserted data for id: $id")
-//              httpResponse
-//            }
-//        }
-//      }
-//      .recover { case e: Exception =>
-//        logger.warn("Subscription Information Missing or other error", e)
-//        ReadsubscriptionError
-//      }
-
-//  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit
-//    hc:                                   HeaderCarrier,
-//    ec:                                   ExecutionContext
-//  ): Future[SubscriptionResponse] =
-//    subscriptionConnectors
-//      .getSubscriptionInformation(plrReference)
-//      .flatMap { httpResponse =>
-//        httpResponse.status match {
-//          case status if Set(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).contains(status) =>
-//            Future.failed(new Exception(handleErrorStatus(status).body))
-//          case _ =>
-//            val request          = httpResponse.json.as[SubscriptionResponse]
-//            val subscriptionData = extractSubscriptionData(request.success)
-//
-//            if (subscriptionData.isDefined) {
-//              val jsonData = Json.toJson(subscriptionData)
-//              repository.upsert(id, jsonData).map { _ =>
-//                logger.info(s"Upserted data for id: $id")
-//                request
-//              }
-//            } else {
-//              Future.failed(new Exception("Failed to extract subscription data"))
-//            }
-//        }
-//      }
-//      .recover { case e: Exception =>
-//        logger.warn("Subscription Information Missing or other error", e)
-//        throw e // or provide a default SubscriptionResponse, if desired
-//      }
-
   def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit
     hc:                                   HeaderCarrier,
     ec:                                   ExecutionContext
@@ -144,12 +90,10 @@ class SubscriptionService @Inject() (
             Future.successful(httpResponse.json.as[SubscriptionResponse])
 
           case status if Set(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).contains(status) =>
-            // Handle error scenarios here as you deem fit.
-            // For the sake of simplicity, I'm failing the Future if there's an error. Adjust as needed.
-            Future.failed(new Exception(s"Error response from EIS with status: $status"))
+            Future.failed(new Exception(s"Error response from ETMP with status: $status"))
 
           case _ =>
-            Future.failed(new Exception("Unexpected response status from EIS"))
+            Future.failed(new Exception("Unexpected response status from ETMP"))
         }
       }
       .flatMap { subscriptionResponse =>

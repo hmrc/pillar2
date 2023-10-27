@@ -485,7 +485,7 @@ trait ModelGenerators {
       domesticOnly            <- arbitrary[Boolean]
       filingMember            <- arbitrary[Boolean]
     } yield UpeDetails(
-      safeId = safeId,
+      safeId = Some(safeId),
       customerIdentification1 = customerIdentification1,
       customerIdentification2 = customerIdentification2,
       organisationName = organisationName,

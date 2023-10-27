@@ -305,10 +305,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
                 s"/pillar2/subscription/$plrReference",
                 OK
               )
-              val expectedHttpResponse = HttpResponse(status = OK, body = Json.toJson(mockSubscriptionResponse).toString())
-
               when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
-                .thenReturn(Future.successful(expectedHttpResponse))
+                .thenReturn(Future.successful(mockSubscriptionResponse))
 
               when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
                 .thenReturn(Future.successful(()))
@@ -336,10 +334,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
             val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
-            whenReady(resultFuture) { response =>
-              response.status mustBe NOT_FOUND
-//              contentAsJson(response) mustBe Json.obj("error" -> "Resource not found")
-//              assert(plrReferenceCaptor.getValue == plrReference)
+            whenReady(resultFuture.failed) { exception =>
+              exception.getMessage must include("Error response from ETMP with status: 404")
             }
           }
         }
@@ -360,9 +356,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
             val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
-            whenReady(resultFuture) { response =>
-              response.status mustBe UNPROCESSABLE_ENTITY
-              response.body mustBe Json.obj("error" -> "Unprocessable entity").toString()
+            whenReady(resultFuture.failed) { exception =>
+              exception.getMessage must include(s"Error response from ETMP with status: $UNPROCESSABLE_ENTITY")
             }
           }
         }
@@ -383,9 +378,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
             val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
-            whenReady(resultFuture) { response =>
-              response.status mustBe INTERNAL_SERVER_ERROR
-              response.body mustBe Json.obj("error" -> "Internal server error").toString()
+            whenReady(resultFuture.failed) { exception =>
+              exception.getMessage must include(s"Error response from ETMP with status: $INTERNAL_SERVER_ERROR")
             }
           }
         }
@@ -406,9 +400,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
             val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
-            whenReady(resultFuture) { response =>
-              response.status mustBe SERVICE_UNAVAILABLE
-              response.body mustBe Json.obj("error" -> "Service unavailable").toString()
+            whenReady(resultFuture.failed) { exception =>
+              exception.getMessage must include(s"Error response from ETMP with status: $SERVICE_UNAVAILABLE")
             }
           }
         }
@@ -430,11 +423,12 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
             val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
-            whenReady(resultFuture) { response =>
-              response.status mustBe INTERNAL_SERVER_ERROR
+            whenReady(resultFuture.failed) { exception =>
+              exception.getMessage must include(s"Error response from ETMP with status: $INTERNAL_SERVER_ERROR")
             }
           }
         }
+
       }
     }
   }
