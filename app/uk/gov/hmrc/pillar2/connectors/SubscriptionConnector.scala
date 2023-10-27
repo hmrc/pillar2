@@ -39,14 +39,39 @@ class SubscriptionConnector @Inject() (
     )(wts = CreateSubscriptionRequest.format, rds = httpReads, hc = hc, ec = ec)
   }
 
-  def getSubscriptionInformation(
-    plrReference: String
-  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = if (config.useStub) "stub-subscription" else "create-subscription"
-    http.GET[HttpResponse](
-      s"${config.baseUrl(serviceName)}/$plrReference",
-      headers = extraHeaders(config, serviceName)
-    )
+  def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val serviceName = "create-subscription"
+
+    // Ensure the URL is constructed correctly
+    val url = s"${config.baseUrl(serviceName)}/$plrReference"
+    println(s"Constructed URL: $url") // For debugging. Remove once everything works fine.
+
+    http
+      .GET[HttpResponse](url, headers = extraHeaders(config, serviceName))(httpReads, hc, ec)
+      .map { response =>
+        println(s"Response received: ${response.toString}")
+        response
+      }
+      .recover { // To handle and log any errors that might occur during the request
+        case ex: Throwable =>
+          println(s"Error while fetching subscription information: ${ex.getMessage}")
+          throw ex
+      }
   }
+
+//  def getSubscriptionInformation(
+//    plrReference: String
+//  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+//    val serviceName = "create-subscription"
+//    http
+//      .GET[HttpResponse](
+//        s"${config.baseUrl(serviceName)}/$plrReference",
+//        headers = extraHeaders(config, serviceName)
+//      )(httpReads, hc, ec)
+//      .map { response =>
+//        println(s"Response received: ${response.toString}")
+//        response
+//      }
+//  }
 
 }

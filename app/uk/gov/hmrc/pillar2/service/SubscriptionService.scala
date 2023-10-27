@@ -18,8 +18,8 @@ package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
 import play.api.http.Status._
-import play.api.libs.json.{JsValue, Json}
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse, InternalServerException, NotFoundException, ServiceUnavailableException, UnprocessableEntityException}
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.fm.FilingMember
 import uk.gov.hmrc.pillar2.models.grs.EntityType
@@ -79,67 +79,194 @@ class SubscriptionService @Inject() (
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
 
   def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-    (for {
-      httpResponse <- subscriptionConnectors.getSubscriptionInformation(plrReference)
-      _ = logger.info(s"Received HTTP response: ${httpResponse.status}")
-      _ = httpResponse.status match {
-            case NOT_FOUND             => throw new NotFoundException("Resource not found")
-            case BAD_REQUEST           => throw new BadRequestException("Bad request from EIS")
-            case UNPROCESSABLE_ENTITY  => throw new UnprocessableEntityException("Unprocessable entity")
-            case INTERNAL_SERVER_ERROR => throw new InternalServerException("Internal server error")
-            case SERVICE_UNAVAILABLE   => throw new ServiceUnavailableException("Service unavailable")
-          }
-      jsonBody = httpResponse.json
-      _        = logger.info(s"Parsed JSON body: $jsonBody")
-      request  = jsonBody.as[SubscriptionResponse]
-      _        = logger.info(s"Parsed SubscriptionResponse: $request")
-      sub      = request.success
-    } yield {
-      // Extract the UpeDetails from SubscriptionSuccess
-      val upeDetails = sub.upeDetails
+    subscriptionConnectors
+      .getSubscriptionInformation(plrReference)
+      .flatMap { httpResponse =>
+        httpResponse.status match {
+          case status if Set(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).contains(status) =>
+            Future.successful(handleErrorStatus(status))
+          case _ =>
+            val jsonBody         = httpResponse.json
+            val request          = jsonBody.as[SubscriptionResponse]
+            val subscriptionData = extractSubscriptionData(request.success)
+            val jsonData         = Json.toJson(subscriptionData)
 
-      val subscriptionData: Subscription = Subscription(
-        domesticOrMne = if (upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
-        groupDetailStatus = RowStatus.Completed,
-        accountingPeriod = Some(
-          uk.gov.hmrc.pillar2.models.AccountingPeriod(
-            startDate = sub.accountingPeriod.startDate,
-            endDate = sub.accountingPeriod.endDate,
-            duetDate = sub.accountingPeriod.duetDate
-          )
-        ),
-        primaryContactName = Some(sub.primaryContactDetails.name),
-        primaryContactEmail = Some(sub.primaryContactDetails.emailAddress),
-        primaryContactTelephone = sub.primaryContactDetails.telephone,
-        secondaryContactName = Some(sub.secondaryContactDetails.name),
-        secondaryContactEmail = Some(sub.secondaryContactDetails.emailAddress),
-        secondaryContactTelephone = sub.secondaryContactDetails.telephone,
-        correspondenceAddress = Some(
-          SubscriptionAddress(
-            addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
-            addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
-            addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
-            addressLine4 = None,
-            postalCode = sub.upeCorrespAddressDetails.postCode,
-            countryCode = sub.upeCorrespAddressDetails.countryCode
-          )
-        ),
-        accountStatus = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive))
-      )
-
-      val jsonData: JsValue = Json.toJson(subscriptionData)
-      repository.upsert(id, jsonData)
-      httpResponse
-    }).recover {
-      case _: NotFoundException            => HttpResponse(NOT_FOUND, Json.obj("error" -> "Resource not found").toString())
-      case _: BadRequestException          => HttpResponse(BAD_REQUEST, Json.obj("error" -> "Bad request from EIS").toString())
-      case _: UnprocessableEntityException => HttpResponse(UNPROCESSABLE_ENTITY, Json.obj("error" -> "Unprocessable entity").toString())
-      case _: InternalServerException      => HttpResponse(INTERNAL_SERVER_ERROR, Json.obj("error" -> "Internal server error").toString())
-      case _: ServiceUnavailableException  => HttpResponse(SERVICE_UNAVAILABLE, Json.obj("error" -> "Service unavailable").toString())
-      case e: Exception =>
+            repository.upsert(id, jsonData).map { _ =>
+              logger.info(s"Upserted data for id: $id")
+              httpResponse
+            }
+        }
+      }
+      .recover { case e: Exception =>
         logger.warn("Subscription Information Missing or other error", e)
         ReadsubscriptionError
+      }
+
+  private def handleErrorStatus(status: Int): HttpResponse =
+    status match {
+      case NOT_FOUND             => HttpResponse(NOT_FOUND, Json.obj("error" -> "Resource not found").toString())
+      case BAD_REQUEST           => HttpResponse(BAD_REQUEST, Json.obj("error" -> "Bad request from EIS").toString())
+      case UNPROCESSABLE_ENTITY  => HttpResponse(UNPROCESSABLE_ENTITY, Json.obj("error" -> "Unprocessable entity").toString())
+      case INTERNAL_SERVER_ERROR => HttpResponse(INTERNAL_SERVER_ERROR, Json.obj("error" -> "Internal server error").toString())
+      case SERVICE_UNAVAILABLE   => HttpResponse(SERVICE_UNAVAILABLE, Json.obj("error" -> "Service unavailable").toString())
+      case _                     => ReadsubscriptionError
     }
+
+  private def extractSubscriptionData(sub: SubscriptionSuccess): Option[Subscription] =
+    try {
+      // Directly access fields without wrapping them in Option, as they are not optional at the top level
+      val upeDetails               = sub.upeDetails
+      val accountingPeriod         = sub.accountingPeriod
+      val primaryContactDetails    = sub.primaryContactDetails
+      val secondaryContactDetails  = sub.secondaryContactDetails
+      val upeCorrespAddressDetails = sub.upeCorrespAddressDetails
+
+      Some(
+        Subscription(
+          domesticOrMne = if (upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
+          groupDetailStatus = RowStatus.Completed,
+          accountingPeriod = Some(
+            uk.gov.hmrc.pillar2.models.AccountingPeriod(
+              startDate = accountingPeriod.startDate,
+              endDate = accountingPeriod.endDate,
+              duetDate = accountingPeriod.duetDate
+            )
+          ),
+          primaryContactName = Some(primaryContactDetails.name),
+          primaryContactEmail = Some(primaryContactDetails.emailAddress),
+          primaryContactTelephone = primaryContactDetails.telephone,
+          secondaryContactName = Some(secondaryContactDetails.name),
+          secondaryContactEmail = Some(secondaryContactDetails.emailAddress),
+          secondaryContactTelephone = secondaryContactDetails.telephone,
+          correspondenceAddress = Some(
+            SubscriptionAddress(
+              addressLine1 = upeCorrespAddressDetails.addressLine1,
+              addressLine2 = upeCorrespAddressDetails.addressLine2.orElse(Some("")),
+              addressLine3 = upeCorrespAddressDetails.addressLine3.orElse(Some("")).getOrElse(""),
+              addressLine4 = None, // Assuming this field is always None in your current logic
+              postalCode = upeCorrespAddressDetails.postCode.orElse(Some("")),
+              countryCode = upeCorrespAddressDetails.countryCode
+            )
+          ),
+          accountStatus = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive))
+        )
+      )
+    } catch {
+      case e: Exception =>
+        logger.warn(s"Failed to extract subscription data: ${e.getMessage}", e)
+        logger.warn(s"SubscriptionSuccess input: $sub")
+        None
+    }
+
+  //  private def extractSubscriptionData(sub: SubscriptionSuccess): Option[Subscription] =
+//    try {
+//      val upeDetailsOpt               = Option(sub.upeDetails)
+//      val accountingPeriodOpt         = Option(sub.accountingPeriod)
+//      val primaryContactDetailsOpt    = Option(sub.primaryContactDetails)
+//      val secondaryContactDetailsOpt  = Option(sub.secondaryContactDetails)
+//      val upeCorrespAddressDetailsOpt = Option(sub.upeCorrespAddressDetails)
+//
+//      for {
+//        upeDetails               <- upeDetailsOpt
+//        accountingPeriod         <- accountingPeriodOpt
+//        primaryContactDetails    <- primaryContactDetailsOpt
+//        secondaryContactDetails  <- secondaryContactDetailsOpt
+//        upeCorrespAddressDetails <- upeCorrespAddressDetailsOpt
+//      } yield {
+//        logger.info(s"Constructing Subscription from SubscriptionSuccess: $sub")
+//
+//        val domesticOrMneValue = if (upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk
+//        logger.info(s"Constructed domesticOrMne: $domesticOrMneValue")
+//
+//        val accountStatusValue = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive))
+//        logger.info(s"Constructed accountStatus: $accountStatusValue")
+//
+//        val correspondenceAddressValue = Some(
+//          SubscriptionAddress(
+//            addressLine1 = upeCorrespAddressDetails.addressLine1,
+//            addressLine2 = upeCorrespAddressDetails.addressLine2,
+//            addressLine3 = upeCorrespAddressDetails.addressLine3.getOrElse(""),
+//            addressLine4 = None,
+//            postalCode = upeCorrespAddressDetails.postCode,
+//            countryCode = upeCorrespAddressDetails.countryCode
+//          )
+//        )
+//        logger.info(s"Constructed correspondenceAddress: $correspondenceAddressValue")
+//
+//        Subscription(
+//          domesticOrMne = domesticOrMneValue,
+//          groupDetailStatus = RowStatus.Completed,
+//          accountingPeriod = Some(
+//            uk.gov.hmrc.pillar2.models.AccountingPeriod(
+//              startDate = accountingPeriod.startDate,
+//              endDate = accountingPeriod.endDate,
+//              duetDate = accountingPeriod.duetDate
+//            )
+//          ),
+//          primaryContactName = Some(primaryContactDetails.name),
+//          primaryContactEmail = Some(primaryContactDetails.emailAddress),
+//          primaryContactTelephone = primaryContactDetails.telephone,
+//          secondaryContactName = Some(secondaryContactDetails.name),
+//          secondaryContactEmail = Some(secondaryContactDetails.emailAddress),
+//          secondaryContactTelephone = secondaryContactDetails.telephone,
+//          correspondenceAddress = correspondenceAddressValue,
+//          accountStatus = accountStatusValue
+//        )
+//      }
+//    } catch {
+//      case e: Exception =>
+//        logger.warn(s"Failed to extract subscription data: ${e.getMessage}", e)
+//        logger.warn(s"SubscriptionSuccess input: $sub")
+//        None
+//    }
+
+  //  private def extractSubscriptionData(sub: SubscriptionSuccess): Option[Subscription] =
+//    try {
+//      val upeDetailsOpt               = Option(sub.upeDetails)
+//      val accountingPeriodOpt         = Option(sub.accountingPeriod)
+//      val primaryContactDetailsOpt    = Option(sub.primaryContactDetails)
+//      val secondaryContactDetailsOpt  = Option(sub.secondaryContactDetails)
+//      val upeCorrespAddressDetailsOpt = Option(sub.upeCorrespAddressDetails)
+//
+//      for {
+//        upeDetails               <- upeDetailsOpt
+//        accountingPeriod         <- accountingPeriodOpt
+//        primaryContactDetails    <- primaryContactDetailsOpt
+//        secondaryContactDetails  <- secondaryContactDetailsOpt
+//        upeCorrespAddressDetails <- upeCorrespAddressDetailsOpt
+//      } yield Subscription(
+//        domesticOrMne = if (upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
+//        groupDetailStatus = RowStatus.Completed,
+//        accountingPeriod = Some(
+//          uk.gov.hmrc.pillar2.models.AccountingPeriod(
+//            startDate = accountingPeriod.startDate,
+//            endDate = accountingPeriod.endDate,
+//            duetDate = accountingPeriod.duetDate
+//          )
+//        ),
+//        primaryContactName = Some(primaryContactDetails.name),
+//        primaryContactEmail = Some(primaryContactDetails.emailAddress),
+//        primaryContactTelephone = primaryContactDetails.telephone,
+//        secondaryContactName = Some(secondaryContactDetails.name),
+//        secondaryContactEmail = Some(secondaryContactDetails.emailAddress),
+//        secondaryContactTelephone = secondaryContactDetails.telephone,
+//        correspondenceAddress = Some(
+//          SubscriptionAddress(
+//            addressLine1 = upeCorrespAddressDetails.addressLine1,
+//            addressLine2 = upeCorrespAddressDetails.addressLine2,
+//            addressLine3 = upeCorrespAddressDetails.addressLine3.getOrElse(""),
+//            addressLine4 = None, // Assuming this field is always None in your current logic
+//            postalCode = upeCorrespAddressDetails.postCode,
+//            countryCode = upeCorrespAddressDetails.countryCode
+//          )
+//        ),
+//        accountStatus = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive))
+//      )
+//    } catch {
+//      case e: Exception =>
+//        logger.warn(s"Failed to extract subscription data: ${e.getMessage}")
+//        None
+//    }
 
   private val ReadsubscriptionError = HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription")
   private val subscriptionError     = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
@@ -158,7 +285,7 @@ class SubscriptionService @Inject() (
             val name = incorporatedEntityRegistrationData.companyProfile.companyName
             val utr  = incorporatedEntityRegistrationData.ctutr
 
-            UpeDetails(upeSafeId, Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, isFilingMember)
+            UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, isFilingMember)
 
           case Some(EntityType.LimitedLiabilityPartnership) =>
             val partnershipEntityRegistrationData = withIdData.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
@@ -167,7 +294,7 @@ class SubscriptionService @Inject() (
             val name           = companyProfile.companyName
             val utr            = partnershipEntityRegistrationData.sautr
 
-            UpeDetails(upeSafeId, Some(crn), utr, name, LocalDate.now(), domesticOnly, isFilingMember)
+            UpeDetails(Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, isFilingMember)
 
           case _ => throw new Exception("Invalid Org Type")
         }
@@ -175,7 +302,7 @@ class SubscriptionService @Inject() (
         val withoutId = registration.withoutIdRegData.getOrElse(throw new Exception("Malformed without id data"))
         val upeName   = withoutId.upeNameRegistration
 
-        UpeDetails(upeSafeId, None, None, upeName, LocalDate.now(), domesticOnly, isFilingMember)
+        UpeDetails(Some(upeSafeId), None, None, upeName, LocalDate.now(), domesticOnly, isFilingMember)
     }
   }
 

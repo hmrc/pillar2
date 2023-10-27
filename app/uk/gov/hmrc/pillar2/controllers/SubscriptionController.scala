@@ -17,8 +17,6 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
-import play.api.libs.functional.syntax._
-import play.api.libs.json.Reads.minLength
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
 import uk.gov.hmrc.http.HttpResponse
@@ -54,26 +52,13 @@ class SubscriptionController @Inject() (
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }
-
-  implicit val readSubscriptionParamsReads: Reads[ReadSubscriptionRequestParameters] = (
-    (__ \ "id").read[String](minLength[String](1)) and
-      (__ \ "plrReference").read[String](minLength[String](1))
-  )(ReadSubscriptionRequestParameters.apply _)
-
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
 
-    val params = ReadSubscriptionRequestParameters(id, plrReference)
-    logger.info(s"Parameters created: $params")
+    val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
 
-    val validationResult = Json.toJson(params).validate[ReadSubscriptionRequestParameters]
-
-    validationResult.fold(
-      invalid = _ => {
-        logger.warn(s"Validation failed for parameters: $params")
-        Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
-      },
-      valid = validParams => {
+    paramsJson.validate[ReadSubscriptionRequestParameters] match {
+      case JsSuccess(validParams, _) =>
         logger.info(s"Calling subscriptionService with valid parameters: $validParams")
         try subscriptionService
           .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
@@ -89,8 +74,11 @@ class SubscriptionController @Inject() (
             logger.error("Exception thrown before Future was created", e)
             Future.successful(InternalServerError(Json.obj("error" -> "Exception thrown before Future was created")))
         }
-      }
-    )
+
+      case JsError(errors) =>
+        logger.warn(s"Validation failed for parameters: $paramsJson with errors: $errors")
+        Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
+    }
   }
 
   private def handleHttpResponse(response: HttpResponse): Result =
