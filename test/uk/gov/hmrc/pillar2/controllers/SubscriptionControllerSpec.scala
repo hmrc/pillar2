@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
@@ -25,6 +26,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.Results.{BadRequest, InternalServerError, NotFound, ServiceUnavailable, UnprocessableEntity}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
@@ -427,6 +429,20 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               exception.getMessage must include(s"Error response from ETMP with status: $INTERNAL_SERVER_ERROR")
             }
           }
+        }
+
+        "should return InternalServerError when an exception occurs" in new Setup {
+          val id           = "testId"
+          val plrReference = "testPlrReference"
+
+          when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
+            .thenReturn(Future.failed(new Exception("Test exception")))
+
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
+          val result  = route(application, request).value
+
+          status(result) mustBe INTERNAL_SERVER_ERROR
+          contentAsJson(result) mustEqual Json.obj("error" -> "Error retrieving subscription information")
         }
 
       }

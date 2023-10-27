@@ -41,21 +41,16 @@ class SubscriptionConnector @Inject() (
 
   def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
-
-    // Ensure the URL is constructed correctly
-    val url = s"${config.baseUrl(serviceName)}/$plrReference"
-    println(s"Constructed URL: $url") // For debugging. Remove once everything works fine.
-
+    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
     http
       .GET[HttpResponse](url, headers = extraHeaders(config, serviceName))(httpReads, hc, ec)
       .map { response =>
         println(s"Response received: ${response.toString}")
         response
       }
-      .recover { // To handle and log any errors that might occur during the request
-        case ex: Throwable =>
-          println(s"Error while fetching subscription information: ${ex.getMessage}")
-          throw ex
+      .recover { case ex: Throwable =>
+        println(s"Error while fetching subscription information: ${ex.getMessage}")
+        throw ex
       }
   }
 

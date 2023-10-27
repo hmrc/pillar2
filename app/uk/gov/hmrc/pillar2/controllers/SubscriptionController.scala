@@ -18,8 +18,7 @@ package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
 import play.api.libs.json._
-import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
-import uk.gov.hmrc.http.HttpResponse
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
@@ -80,19 +79,6 @@ class SubscriptionController @Inject() (
         Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
     }
   }
-
-  private def handleHttpResponse(response: HttpResponse): Result =
-    response.status match {
-      case 200 => Ok(Json.obj("message" -> "Success"))
-      case 400 => BadRequest(Json.obj("error" -> "Bad request from EIS"))
-      case 404 => NotFound(Json.obj("error" -> "Resource not found"))
-      case 422 => UnprocessableEntity(Json.obj("error" -> "Unprocessable entity"))
-      case 500 => InternalServerError(Json.obj("error" -> "Internal server error"))
-      case 503 => ServiceUnavailable(Json.obj("error" -> "Service unavailable"))
-      case other =>
-        logger.warn(s"Unexpected response: $other")
-        InternalServerError(Json.obj("error" -> "Unexpected error occurred"))
-    }
 
   def getUserAnswers(id: String)(implicit executionContext: ExecutionContext): Future[UserAnswers] =
     repository.get(id).map { userAnswer =>
