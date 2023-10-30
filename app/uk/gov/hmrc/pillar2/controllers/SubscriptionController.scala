@@ -51,6 +51,7 @@ class SubscriptionController @Inject() (
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }
+
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
 
