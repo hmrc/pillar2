@@ -35,6 +35,7 @@ import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.json.JsValue
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -81,7 +82,7 @@ class SubscriptionService @Inject() (
   def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit
     hc:                                   HeaderCarrier,
     ec:                                   ExecutionContext
-  ): Future[SubscriptionResponse] =
+  ): Future[JsValue] =
     subscriptionConnectors
       .getSubscriptionInformation(plrReference)
       .flatMap { httpResponse =>
@@ -102,23 +103,13 @@ class SubscriptionService @Inject() (
 
         repository.upsert(id, jsonData).map { _ =>
           logger.info(s"Upserted data for id: $id")
-          subscriptionResponse
+          jsonData
         }
       }
       .recover { case e: Exception =>
         logger.warn("Subscription Information Missing or other error", e)
         throw e
       }
-
-  private def handleErrorStatus(status: Int): HttpResponse =
-    status match {
-      case NOT_FOUND             => HttpResponse(NOT_FOUND, Json.obj("error" -> "Resource not found").toString())
-      case BAD_REQUEST           => HttpResponse(BAD_REQUEST, Json.obj("error" -> "Bad request from EIS").toString())
-      case UNPROCESSABLE_ENTITY  => HttpResponse(UNPROCESSABLE_ENTITY, Json.obj("error" -> "Unprocessable entity").toString())
-      case INTERNAL_SERVER_ERROR => HttpResponse(INTERNAL_SERVER_ERROR, Json.obj("error" -> "Internal server error").toString())
-      case SERVICE_UNAVAILABLE   => HttpResponse(SERVICE_UNAVAILABLE, Json.obj("error" -> "Service unavailable").toString())
-      case _                     => ReadsubscriptionError
-    }
 
   private def extractSubscriptionData(sub: SubscriptionSuccess): Option[Subscription] =
     try {
@@ -166,8 +157,7 @@ class SubscriptionService @Inject() (
         None
     }
 
-  private val ReadsubscriptionError = HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription")
-  private val subscriptionError     = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
+  private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
   private def getUpeDetails(upeSafeId: String, registration: Registration, fm: FilingMember, subscription: Subscription): UpeDetails = {
     val domesticOnly   = if (subscription.domesticOrMne == MneOrDomestic.uk) true else false

@@ -302,13 +302,14 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
         "return OK when valid data is provided" in new Setup {
           forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) {
-            (id: String, plrReference: String, mockSubscriptionResponse) =>
+            (id: String, plrReference: String, mockSubscriptionResponse: SubscriptionResponse) =>
               stubResponse(
                 s"/pillar2/subscription/$plrReference",
                 OK
               )
+
               when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
-                .thenReturn(Future.successful(mockSubscriptionResponse))
+                .thenReturn(Future.successful(Json.toJson(mockSubscriptionResponse)))
 
               when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
                 .thenReturn(Future.successful(()))
