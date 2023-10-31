@@ -299,7 +299,7 @@ trait ModelGenerators {
     )
   }
 
-  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
+/*  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
 
     for {
       withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
@@ -310,6 +310,15 @@ trait ModelGenerators {
       isNFMnStatus = RowStatus.Completed,
       withIdRegData = Some(withIdRegData)
     )
+  }*/
+
+
+
+  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
+
+    for {
+      upeGRSResponse <- arbitraryWithIdRegDataFoLLP.arbitrary
+    } yield upeGRSResponse
   }
 
   val arbitraryWithIdRegDataForLimitedCompany: Arbitrary[GrsResponse] = Arbitrary {

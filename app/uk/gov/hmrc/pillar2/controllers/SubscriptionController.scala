@@ -37,6 +37,7 @@ class SubscriptionController @Inject() (
     extends BasePillar2Controller(cc) {
 
   def createSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
+    println(s"what is subscriptionParameter-------------------${request.body}")
     val subscriptionParameters: JsResult[SubscriptionRequestParameters] =
       request.body.validate[SubscriptionRequestParameters]
     subscriptionParameters.fold(

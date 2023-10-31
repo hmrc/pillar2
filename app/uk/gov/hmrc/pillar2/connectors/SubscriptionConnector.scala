@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.CreateSubscriptionRequest
@@ -32,6 +33,7 @@ class SubscriptionConnector @Inject() (
     suscription: CreateSubscriptionRequest
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
+    println(s"What is subscription Request ---------------${Json.toJson(suscription)}")
     http.POST[CreateSubscriptionRequest, HttpResponse](
       config.baseUrl(serviceName),
       suscription,

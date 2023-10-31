@@ -20,13 +20,12 @@ import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
-import uk.gov.hmrc.pillar2.models.fm.FilingMember
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
-import uk.gov.hmrc.pillar2.models.identifiers.{EntityTypeId, FilingMemberId, NominateFilingMemberId, RegistrationId, SubscriptionId, fmEntityTypeId, fmGRSResponseId, fmNameRegistrationId, fmRegisteredInUKId, subAccountingPeriodId, subMneOrDomesticId, subPrimaryCapturePhoneId, subPrimaryContactNameId, subPrimaryEmailId, subRegisteredAddressId, subSecondaryCapturePhoneId, subSecondaryContactNameId, subSecondaryEmailId, upeEntityTypeId, upeGRSResponseId, upeNameRegistrationId, upeRegisteredInUKId}
-import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, Registration}
-import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
+import uk.gov.hmrc.pillar2.models.identifiers._
+import uk.gov.hmrc.pillar2.models.registration.GrsResponse
+import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
@@ -46,46 +45,179 @@ class SubscriptionService @Inject() (
   def sendCreateSubscription(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
     hc:                                 HeaderCarrier
   ): Future[HttpResponse] = {
-    for {
-      upeOrgType          <- userAnswers.get(upeEntityTypeId)
-      upeRegisteredInUK   <- userAnswers.get(upeRegisteredInUKId)
-      subMneOrDomestic    <- userAnswers.get(subMneOrDomesticId)
-      nominateFm          <- userAnswers.get(NominateFilingMemberId)
-      upeGrsResponse      <- userAnswers.get(upeGRSResponseId)
-      upeNameRegistration <- userAnswers.get(upeNameRegistrationId)
-      fmRegisteredInUK    <- userAnswers.get(fmRegisteredInUKId)
-      fmEntityTypeId      <- userAnswers.get(fmEntityTypeId)
-      fmGrsResponseId     <- userAnswers.get(fmGRSResponseId)
-      fmNameRegistration  <- userAnswers.get(fmNameRegistrationId)
-      subAddressId        <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod    <- userAnswers.get(subAccountingPeriodId)
+    userAnswers.get(NominateFilingMemberId) match {
+      case Some(true) =>
+        {
+          (userAnswers.get(upeRegisteredInUKId), userAnswers.get(fmRegisteredInUKId)) match {
 
-      primaryContactName <- userAnswers.get(subPrimaryContactNameId)
-      primaryPhone       <- userAnswers.get(subPrimaryCapturePhoneId)
-      primaryEmail       <- userAnswers.get(subPrimaryEmailId)
+            case (Some(true), Some(true)) =>
+              for {
+                upeOrgType            <- userAnswers.get(upeEntityTypeId)
+                subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
+                nominateFm            <- userAnswers.get(NominateFilingMemberId)
+                upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
+                fmEntityTypeId        <- userAnswers.get(fmEntityTypeId)
+                fmGrsResponseId       <- userAnswers.get(fmGRSResponseId)
+                subAddressId          <- userAnswers.get(subRegisteredAddressId)
+                accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+                primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
-      secondaryContactName <- userAnswers.get(subSecondaryContactNameId)
-      secondaryEmail       <- userAnswers.get(subSecondaryEmailId)
-      secondaryPhone       <- userAnswers.get(subSecondaryCapturePhoneId)
+              } yield {
+                val subscriptionRequest = CreateSubscriptionRequest(
+                  createSubscriptionRequest = SubscriptionRequest(
+                    requestBody = RequestDetail(
+                      getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                      getAccountingPeriod(accountingPeriod),
+                      getUpeAddressDetails(subAddressId),
+                      primaryContactDetails,
+                      getSecondaryContactInformation(userAnswers),
+                      getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
+                    )
+                  )
+                )
+                sendSubmissionRequest(subscriptionRequest)
+              }
+            case (Some(false), Some(false)) =>
+              for {
+                upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
+                subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
+                nominateFm            <- userAnswers.get(NominateFilingMemberId)
+                fmNameRegistration    <- userAnswers.get(fmNameRegistrationId)
+                subAddressId          <- userAnswers.get(subRegisteredAddressId)
+                accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+                primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
-    } yield {
-      val subscriptionRequest = CreateSubscriptionRequest(
-        createSubscriptionRequest = SubscriptionRequest(
-          requestBody = RequestDetail(
-            getUpeDetails(upeSafeId, upeOrgType, upeRegisteredInUK, subMneOrDomestic, nominateFm, upeGrsResponse, upeNameRegistration),
-            getAccountingPeriod(accountingPeriod),
-            getUpeAddressDetails(subAddressId),
-            getPrimaryContactDetails(primaryContactName, primaryPhone, primaryEmail),
-            Some(getSecondaryContactDetails(secondaryContactName, secondaryEmail, secondaryPhone)),
-            getFilingMemberDetails(fmSafeId, fmRegisteredInUK, nominateFm, fmEntityTypeId, fmGrsResponseId, fmNameRegistration)
-          )
-        )
-      )
-      sendSubmissionRequest(subscriptionRequest)
+              } yield {
+                val subscriptionRequest = CreateSubscriptionRequest(
+                  createSubscriptionRequest = SubscriptionRequest(
+                    requestBody = RequestDetail(
+                      getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                      getAccountingPeriod(accountingPeriod),
+                      getUpeAddressDetails(subAddressId),
+                      primaryContactDetails,
+                      getSecondaryContactInformation(userAnswers),
+                      getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
+                    )
+                  )
+                )
+                sendSubmissionRequest(subscriptionRequest)
+              }
+            case (Some(true), Some(false)) =>
+              for {
+                upeOrgType            <- userAnswers.get(upeEntityTypeId)
+                subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
+                nominateFm            <- userAnswers.get(NominateFilingMemberId)
+                upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
+                fmNameRegistration    <- userAnswers.get(fmNameRegistrationId)
+                subAddressId          <- userAnswers.get(subRegisteredAddressId)
+                accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+                primaryContactDetails <- getPrimaryContactInformation(userAnswers)
+
+              } yield {
+                val subscriptionRequest = CreateSubscriptionRequest(
+                  createSubscriptionRequest = SubscriptionRequest(
+                    requestBody = RequestDetail(
+                      getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                      getAccountingPeriod(accountingPeriod),
+                      getUpeAddressDetails(subAddressId),
+                      primaryContactDetails,
+                      getSecondaryContactInformation(userAnswers),
+                      getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
+                    )
+                  )
+                )
+                sendSubmissionRequest(subscriptionRequest)
+              }
+            case (Some(false), Some(true)) =>
+              for {
+                upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
+                subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
+                nominateFm            <- userAnswers.get(NominateFilingMemberId)
+                fmEntityTypeId        <- userAnswers.get(fmEntityTypeId)
+                fmGrsResponseId       <- userAnswers.get(fmGRSResponseId)
+                subAddressId          <- userAnswers.get(subRegisteredAddressId)
+                accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+                primaryContactDetails <- getPrimaryContactInformation(userAnswers)
+
+              } yield {
+                val subscriptionRequest = CreateSubscriptionRequest(
+                  createSubscriptionRequest = SubscriptionRequest(
+                    requestBody = RequestDetail(
+                      getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                      getAccountingPeriod(accountingPeriod),
+                      getUpeAddressDetails(subAddressId),
+                      primaryContactDetails,
+                      getSecondaryContactInformation(userAnswers),
+                      getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
+                    )
+                  )
+                )
+                sendSubmissionRequest(subscriptionRequest)
+              }
+          }
+        }.getOrElse {
+          logger.warn("Subscription Information Missing")
+          subscriptionError
+        }
+
+      case Some(false) =>
+        {
+          userAnswers.get(upeRegisteredInUKId) match {
+            case Some(true) =>
+              for {
+                upeOrgType            <- userAnswers.get(upeEntityTypeId)
+                subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
+                nominateFm            <- userAnswers.get(NominateFilingMemberId)
+                upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
+                subAddressId          <- userAnswers.get(subRegisteredAddressId)
+                accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+                primaryContactDetails <- getPrimaryContactInformation(userAnswers)
+
+              } yield {
+                val subscriptionRequest = CreateSubscriptionRequest(
+                  createSubscriptionRequest = SubscriptionRequest(
+                    requestBody = RequestDetail(
+                      getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                      getAccountingPeriod(accountingPeriod),
+                      getUpeAddressDetails(subAddressId),
+                      primaryContactDetails,
+                      getSecondaryContactInformation(userAnswers),
+                      None
+                    )
+                  )
+                )
+                sendSubmissionRequest(subscriptionRequest)
+              }
+            case Some(false) =>
+              for {
+                upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
+                subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
+                nominateFm            <- userAnswers.get(NominateFilingMemberId)
+                subAddressId          <- userAnswers.get(subRegisteredAddressId)
+                accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+                primaryContactDetails <- getPrimaryContactInformation(userAnswers)
+
+              } yield {
+                val subscriptionRequest = CreateSubscriptionRequest(
+                  createSubscriptionRequest = SubscriptionRequest(
+                    requestBody = RequestDetail(
+                      getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                      getAccountingPeriod(accountingPeriod),
+                      getUpeAddressDetails(subAddressId),
+                      primaryContactDetails,
+                      getSecondaryContactInformation(userAnswers),
+                      None
+                    )
+                  )
+                )
+                sendSubmissionRequest(subscriptionRequest)
+              }
+          }
+        }.getOrElse {
+          logger.warn("Subscription Information Missing")
+          subscriptionError
+        }
     }
-  }.getOrElse {
-    logger.warn("Subscription Information Missing")
-    subscriptionError
   }
 
   private def sendSubmissionRequest(subscriptionRequest: CreateSubscriptionRequest)(implicit
@@ -97,88 +229,126 @@ class SubscriptionService @Inject() (
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
-  private def getUpeDetails(
-    upeSafeId:           String,
-    upeOrgType:          EntityType,
-    upeRegisteredInUK:   Boolean,
-    subMneOrDomestic:    MneOrDomestic,
-    nominateFm:          Boolean,
-    upeGrsResponse:      GrsResponse,
-    upeNameRegistration: String
+  private def getWithIdUpeDetails(
+    upeSafeId:        String,
+    upeOrgType:       EntityType,
+    subMneOrDomestic: MneOrDomestic,
+    nominateFm:       Boolean,
+    upeGrsResponse:   GrsResponse
   ): UpeDetails = {
     val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
-    upeRegisteredInUK match {
-      case true =>
-        upeOrgType match {
-          case EntityType.UKLimitedCompany =>
-            val incorporatedEntityRegistrationData =
-              upeGrsResponse.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Incorporation Registration Data"))
-            val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
-            val name = incorporatedEntityRegistrationData.companyProfile.companyName
-            val utr  = incorporatedEntityRegistrationData.ctutr
+    upeOrgType match {
+      case EntityType.UKLimitedCompany =>
+        val incorporatedEntityRegistrationData =
+          upeGrsResponse.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Incorporation Registration Data"))
+        val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
+        val name = incorporatedEntityRegistrationData.companyProfile.companyName
+        val utr  = incorporatedEntityRegistrationData.ctutr
 
-            UpeDetails(upeSafeId, Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(upeSafeId, Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
-          case EntityType.LimitedLiabilityPartnership =>
-            val partnershipEntityRegistrationData =
-              upeGrsResponse.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
-            val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
-            val crn            = companyProfile.companyNumber
-            val name           = companyProfile.companyName
-            val utr            = partnershipEntityRegistrationData.sautr
+      case EntityType.LimitedLiabilityPartnership =>
+        val partnershipEntityRegistrationData =
+          upeGrsResponse.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
+        val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
+        val crn            = companyProfile.companyNumber
+        val name           = companyProfile.companyName
+        val utr            = partnershipEntityRegistrationData.sautr
 
-            UpeDetails(upeSafeId, Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(upeSafeId, Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
 
-          case _ => throw new Exception("Invalid Org Type")
-        }
-      case false =>
-        UpeDetails(upeSafeId, None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
+      case _ => throw new Exception("Invalid Org Type")
     }
   }
 
-  private def getFilingMemberDetails(
+  private def getWithoutIdUpeDetails(
+    upeSafeId:           String,
+    subMneOrDomestic:    MneOrDomestic,
+    nominateFm:          Boolean,
+    upeNameRegistration: String
+  ): UpeDetails = {
+    val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
+    UpeDetails(upeSafeId, None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
+
+  }
+
+  private def getWithIdFilingMemberDetails(
     filingMemberSafeId: Option[String],
-    fmRegisteredInUK:   Boolean,
     nominateFm:         Boolean,
     fmEntityTypeId:     EntityType,
-    fmGrsResponseId:    GrsResponse,
+    fmGrsResponseId:    GrsResponse
+  ): Option[FilingMemberDetails] =
+    filingMemberSafeId match {
+      case Some(fmSafeId) =>
+        nominateFm match {
+          case true =>
+            fmEntityTypeId match {
+              case EntityType.UKLimitedCompany =>
+                val incorporatedEntityRegistrationData =
+                  fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
+                    throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
+                  )
+                val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
+                val name = incorporatedEntityRegistrationData.companyProfile.companyName
+                val utr  = incorporatedEntityRegistrationData.ctutr
+
+                Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
+              case EntityType.LimitedLiabilityPartnership =>
+                val partnershipEntityRegistrationData =
+                  fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
+                    throw new Exception("Malformed partnershipEntityRegistrationData data for Filing Member")
+                  )
+                val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
+                val crn            = companyProfile.companyNumber
+                val name           = companyProfile.companyName
+                val utr            = partnershipEntityRegistrationData.sautr
+                Some(FilingMemberDetails(fmSafeId, Some(crn), utr, name))
+
+              case _ => throw new Exception("Filing Member: Invalid Org Type")
+            }
+
+          case false => None
+        }
+      case _ => None
+    }
+
+  def getPrimaryContactInformation(userAnswers: UserAnswers): Option[ContactDetailsType] =
+    for {
+      primaryEmail       <- userAnswers.get(subPrimaryEmailId)
+      primaryContactName <- userAnswers.get(subPrimaryContactNameId)
+    } yield ContactDetailsType(name = primaryContactName, telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = primaryEmail)
+
+  def getSecondaryContactInformation(userAnswers: UserAnswers): Option[ContactDetailsType] = {
+    val doYouHaveSecondContact      = userAnswers.get(subAddSecondaryContactId)
+    val doYouHaveSecondContactPhone = userAnswers.get(subSecondaryPhonePreferenceId)
+
+    (doYouHaveSecondContact, doYouHaveSecondContactPhone) match {
+      case (Some(false), _) => None
+      case (Some(true), Some(_)) =>
+        for {
+          secondaryContactName <- userAnswers.get(subSecondaryContactNameId)
+          secondaryEmail       <- userAnswers.get(subSecondaryEmailId)
+        } yield ContactDetailsType(
+          name = secondaryContactName,
+          telephone = userAnswers.get(subSecondaryCapturePhoneId),
+          emailAddress = secondaryEmail
+        )
+
+      case (Some(true), None) => throw new Exception("subSecondaryPhonePreference Page not answered")
+      case (None, _)          => throw new Exception("doYouHaveSecondContact Page not answered")
+    }
+  }
+
+  private def getWithoutIdFilingMemberDetails(
+    filingMemberSafeId: Option[String],
+    nominateFm:         Boolean,
     fmNameRegistration: String
   ): Option[FilingMemberDetails] =
     filingMemberSafeId match {
       case Some(fmSafeId) =>
         nominateFm match {
           case true =>
-            fmRegisteredInUK match {
-              case true =>
-                fmEntityTypeId match {
-                  case EntityType.UKLimitedCompany =>
-                    val incorporatedEntityRegistrationData =
-                      fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
-                        throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
-                      )
-                    val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
-                    val name = incorporatedEntityRegistrationData.companyProfile.companyName
-                    val utr  = incorporatedEntityRegistrationData.ctutr
-
-                    Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
-                  case EntityType.LimitedLiabilityPartnership =>
-                    val partnershipEntityRegistrationData =
-                      fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
-                        throw new Exception("Malformed partnershipEntityRegistrationData data for Filing Member")
-                      )
-                    val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
-                    val crn            = companyProfile.companyNumber
-                    val name           = companyProfile.companyName
-                    val utr            = partnershipEntityRegistrationData.sautr
-                    Some(FilingMemberDetails(fmSafeId, Some(crn), utr, name))
-
-                  case _ => throw new Exception("Filing Member: Invalid Org Type")
-                }
-              case false =>
-                Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
-              case _ => throw new Exception("Filing Member: Invalid Uk or other resident")
-            }
-
+            Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
           case false => None
         }
       case _ => None
@@ -196,19 +366,5 @@ class SubscriptionService @Inject() (
 
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
-
-  private def getPrimaryContactDetails(primaryContactName: String, primaryPhone: String, primaryEmail: String): ContactDetailsType =
-    ContactDetailsType(
-      name = primaryContactName,
-      telephone = Some(primaryPhone),
-      emailAddress = primaryEmail
-    )
-
-  private def getSecondaryContactDetails(secondaryContactName: String, secondaryEmail: String, secondaryPhone: String): ContactDetailsType =
-    ContactDetailsType(
-      name = secondaryContactName,
-      telephone = Some(secondaryPhone),
-      emailAddress = secondaryEmail
-    )
 
 }
