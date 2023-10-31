@@ -97,11 +97,12 @@ class SubscriptionService @Inject() (
             Future.failed(new Exception("Unexpected response status from ETMP"))
         }
       }
-      .flatMap { subscriptionResponse =>
+      .flatMap { subscriptionResponse => //JsObject
         val subscriptionData = extractSubscriptionData(subscriptionResponse.success)
         val jsonData         = Json.toJson(subscriptionData)
+        val nestedJsonData   = Json.obj("Subscription" -> jsonData)
 
-        repository.upsert(id, jsonData).map { _ =>
+        repository.upsert(id, nestedJsonData).map { _ =>
           logger.info(s"Upserted data for id: $id")
           jsonData
         }
@@ -119,6 +120,7 @@ class SubscriptionService @Inject() (
       val primaryContactDetails    = sub.primaryContactDetails
       val secondaryContactDetails  = sub.secondaryContactDetails
       val upeCorrespAddressDetails = sub.upeCorrespAddressDetails
+      val filingMemberDetails      = sub.filingMemberDetails
 
       Some(
         Subscription(
@@ -147,7 +149,11 @@ class SubscriptionService @Inject() (
               countryCode = upeCorrespAddressDetails.countryCode
             )
           ),
-          accountStatus = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive))
+          accountStatus = Some(uk.gov.hmrc.pillar2.models.AccountStatus(sub.accountStatus.inactive)),
+          formBundleNumber = Some(sub.formBundleNumber),
+          upeDetails = Some(upeDetails),
+          upeCorrespAddressDetails = Some(upeCorrespAddressDetails),
+          filingMemberDetails = Some(filingMemberDetails)
         )
       )
     } catch {
