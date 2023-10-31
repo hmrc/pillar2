@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.models.hods
 
 import play.api.libs.json._
+import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
 import uk.gov.hmrc.pillar2.models.fm.NfmRegisteredAddress
 import uk.gov.hmrc.pillar2.models.registration.UpeRegisteredAddress
 
@@ -44,10 +45,10 @@ case class Address(
 object Address {
   implicit val addressFormat: OFormat[Address] = Json.format[Address]
 
-  def fromAddress(address: UpeRegisteredAddress): Address =
-    Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
+  def fromAddress(address: UKAddress): Address =
+    Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, Some(address.postalCode), address.countryCode)
 
-  def fromFmAddress(address: NfmRegisteredAddress): Address =
+  def fromFmAddress(address: NonUKAddress): Address =
     Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
 
 }

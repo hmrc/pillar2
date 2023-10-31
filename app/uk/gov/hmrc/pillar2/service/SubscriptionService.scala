@@ -24,10 +24,10 @@ import uk.gov.hmrc.pillar2.models.fm.FilingMember
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
-import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId, SubscriptionId}
-import uk.gov.hmrc.pillar2.models.registration.Registration
+import uk.gov.hmrc.pillar2.models.identifiers.{EntityTypeId, FilingMemberId, NominateFilingMemberId, RegistrationId, SubscriptionId, fmEntityTypeId, fmGRSResponseId, fmNameRegistrationId, fmRegisteredInUKId, subAccountingPeriodId, subMneOrDomesticId, subPrimaryCapturePhoneId, subPrimaryContactNameId, subPrimaryEmailId, subRegisteredAddressId, subSecondaryCapturePhoneId, subSecondaryContactNameId, subSecondaryEmailId, upeEntityTypeId, upeGRSResponseId, upeNameRegistrationId, upeRegisteredInUKId}
+import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, Registration}
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
@@ -47,20 +47,37 @@ class SubscriptionService @Inject() (
     hc:                                 HeaderCarrier
   ): Future[HttpResponse] = {
     for {
-      upe  <- userAnswers.get(RegistrationId)
-      fm   <- userAnswers.get(FilingMemberId)
-      subs <- userAnswers.get(SubscriptionId)
+      upeOrgType          <- userAnswers.get(upeEntityTypeId)
+      upeRegisteredInUK   <- userAnswers.get(upeRegisteredInUKId)
+      subMneOrDomestic    <- userAnswers.get(subMneOrDomesticId)
+      nominateFm          <- userAnswers.get(NominateFilingMemberId)
+      upeGrsResponse      <- userAnswers.get(upeGRSResponseId)
+      upeNameRegistration <- userAnswers.get(upeNameRegistrationId)
+      fmRegisteredInUK    <- userAnswers.get(fmRegisteredInUKId)
+      fmEntityTypeId      <- userAnswers.get(fmEntityTypeId)
+      fmGrsResponseId     <- userAnswers.get(fmGRSResponseId)
+      fmNameRegistration  <- userAnswers.get(fmNameRegistrationId)
+      subAddressId        <- userAnswers.get(subRegisteredAddressId)
+      accountingPeriod    <- userAnswers.get(subAccountingPeriodId)
+
+      primaryContactName <- userAnswers.get(subPrimaryContactNameId)
+      primaryPhone       <- userAnswers.get(subPrimaryCapturePhoneId)
+      primaryEmail       <- userAnswers.get(subPrimaryEmailId)
+
+      secondaryContactName <- userAnswers.get(subSecondaryContactNameId)
+      secondaryEmail       <- userAnswers.get(subSecondaryEmailId)
+      secondaryPhone       <- userAnswers.get(subSecondaryCapturePhoneId)
 
     } yield {
       val subscriptionRequest = CreateSubscriptionRequest(
         createSubscriptionRequest = SubscriptionRequest(
           requestBody = RequestDetail(
-            getUpeDetails(upeSafeId, upe, fm, subs),
-            getAccountingPeriod(subs),
-            getUpeAddressDetails(subs),
-            getPrimaryContactDetails(subs),
-            getSecondaryContactDetails(subs),
-            getFilingMemberDetails(fmSafeId, fm)
+            getUpeDetails(upeSafeId, upeOrgType, upeRegisteredInUK, subMneOrDomestic, nominateFm, upeGrsResponse, upeNameRegistration),
+            getAccountingPeriod(accountingPeriod),
+            getUpeAddressDetails(subAddressId),
+            getPrimaryContactDetails(primaryContactName, primaryPhone, primaryEmail),
+            Some(getSecondaryContactDetails(secondaryContactName, secondaryEmail, secondaryPhone)),
+            getFilingMemberDetails(fmSafeId, fmRegisteredInUK, nominateFm, fmEntityTypeId, fmGrsResponseId, fmNameRegistration)
           )
         )
       )
@@ -80,61 +97,75 @@ class SubscriptionService @Inject() (
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
-  private def getUpeDetails(upeSafeId: String, registration: Registration, fm: FilingMember, subscription: Subscription): UpeDetails = {
-    val domesticOnly   = if (subscription.domesticOrMne == MneOrDomestic.uk) true else false
-    val isFilingMember = fm.nfmConfirmation
-    registration.isUPERegisteredInUK match {
+  private def getUpeDetails(
+    upeSafeId:           String,
+    upeOrgType:          EntityType,
+    upeRegisteredInUK:   Boolean,
+    subMneOrDomestic:    MneOrDomestic,
+    nominateFm:          Boolean,
+    upeGrsResponse:      GrsResponse,
+    upeNameRegistration: String
+  ): UpeDetails = {
+    val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
+    upeRegisteredInUK match {
       case true =>
-        val withIdData = registration.withIdRegData.getOrElse(throw new Exception("Malformed Registration data"))
-        registration.orgType match {
-          case Some(EntityType.UKLimitedCompany) =>
+        upeOrgType match {
+          case EntityType.UKLimitedCompany =>
             val incorporatedEntityRegistrationData =
-              withIdData.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Register WithIddata"))
+              upeGrsResponse.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Incorporation Registration Data"))
             val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
             val name = incorporatedEntityRegistrationData.companyProfile.companyName
             val utr  = incorporatedEntityRegistrationData.ctutr
 
-            UpeDetails(upeSafeId, Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, isFilingMember)
+            UpeDetails(upeSafeId, Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
-          case Some(EntityType.LimitedLiabilityPartnership) =>
-            val partnershipEntityRegistrationData = withIdData.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
+          case EntityType.LimitedLiabilityPartnership =>
+            val partnershipEntityRegistrationData =
+              upeGrsResponse.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
             val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
             val crn            = companyProfile.companyNumber
             val name           = companyProfile.companyName
             val utr            = partnershipEntityRegistrationData.sautr
 
-            UpeDetails(upeSafeId, Some(crn), utr, name, LocalDate.now(), domesticOnly, isFilingMember)
+            UpeDetails(upeSafeId, Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
 
           case _ => throw new Exception("Invalid Org Type")
         }
       case false =>
-        val withoutId = registration.withoutIdRegData.getOrElse(throw new Exception("Malformed without id data"))
-        val upeName   = withoutId.upeNameRegistration
-
-        UpeDetails(upeSafeId, None, None, upeName, LocalDate.now(), domesticOnly, isFilingMember)
+        UpeDetails(upeSafeId, None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
     }
   }
 
-  private def getFilingMemberDetails(filingMemberSafeId: Option[String], fm: FilingMember): Option[FilingMemberDetails] =
+  private def getFilingMemberDetails(
+    filingMemberSafeId: Option[String],
+    fmRegisteredInUK:   Boolean,
+    nominateFm:         Boolean,
+    fmEntityTypeId:     EntityType,
+    fmGrsResponseId:    GrsResponse,
+    fmNameRegistration: String
+  ): Option[FilingMemberDetails] =
     filingMemberSafeId match {
       case Some(fmSafeId) =>
-        fm.nfmConfirmation match {
+        nominateFm match {
           case true =>
-            fm.isNfmRegisteredInUK match {
-              case Some(true) =>
-                val withIdData = fm.withIdRegData.getOrElse(throw new Exception("Malformed Grs Response data"))
-                fm.orgType match {
-                  case Some(EntityType.UKLimitedCompany) =>
+            fmRegisteredInUK match {
+              case true =>
+                fmEntityTypeId match {
+                  case EntityType.UKLimitedCompany =>
                     val incorporatedEntityRegistrationData =
-                      withIdData.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed RegisterWithid data"))
+                      fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
+                        throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
+                      )
                     val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
                     val name = incorporatedEntityRegistrationData.companyProfile.companyName
                     val utr  = incorporatedEntityRegistrationData.ctutr
 
                     Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
-                  case Some(EntityType.LimitedLiabilityPartnership) =>
+                  case EntityType.LimitedLiabilityPartnership =>
                     val partnershipEntityRegistrationData =
-                      withIdData.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
+                      fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
+                        throw new Exception("Malformed partnershipEntityRegistrationData data for Filing Member")
+                      )
                     val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
                     val crn            = companyProfile.companyNumber
                     val name           = companyProfile.companyName
@@ -143,9 +174,8 @@ class SubscriptionService @Inject() (
 
                   case _ => throw new Exception("Filing Member: Invalid Org Type")
                 }
-              case Some(false) =>
-                val upeName = fm.withoutIdRegData.fold("")(withoutId => withoutId.registeredFmName)
-                Some(FilingMemberDetails(fmSafeId, None, None, upeName))
+              case false =>
+                Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
               case _ => throw new Exception("Filing Member: Invalid Uk or other resident")
             }
 
@@ -154,39 +184,31 @@ class SubscriptionService @Inject() (
       case _ => None
     }
 
-  private def getUpeAddressDetails(subscription: Subscription): UpeCorrespAddressDetails = {
-    val subsAddress = subscription.correspondenceAddress.getOrElse(throw new Exception("Malformed Subscription Address"))
+  private def getUpeAddressDetails(subAddressId: NonUKAddress): UpeCorrespAddressDetails =
     UpeCorrespAddressDetails(
-      addressLine1 = subsAddress.addressLine1,
-      addressLine2 = subsAddress.addressLine2,
-      addressLine3 = Some(subsAddress.addressLine3),
-      addressLine4 = subsAddress.addressLine4,
-      postCode = subsAddress.postalCode,
-      countryCode = subsAddress.countryCode
+      addressLine1 = subAddressId.addressLine1,
+      addressLine2 = subAddressId.addressLine2,
+      addressLine3 = Some(subAddressId.addressLine3),
+      addressLine4 = subAddressId.addressLine4,
+      postCode = subAddressId.postalCode,
+      countryCode = subAddressId.countryCode
     )
-  }
 
-  private def getAccountingPeriod(subscription: Subscription): AccountingPeriod = {
-    val accountingPeriod = subscription.accountingPeriod.getOrElse(throw new Exception("Malformed accountingPeriod data"))
+  private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
-  }
 
-  private def getPrimaryContactDetails(subscription: Subscription): ContactDetailsType =
+  private def getPrimaryContactDetails(primaryContactName: String, primaryPhone: String, primaryEmail: String): ContactDetailsType =
     ContactDetailsType(
-      name = subscription.primaryContactName.fold("")(primary => primary),
-      telephone = subscription.primaryContactTelephone,
-      emailAddress = subscription.primaryContactEmail.fold("")(email => email)
+      name = primaryContactName,
+      telephone = Some(primaryPhone),
+      emailAddress = primaryEmail
     )
 
-  private def getSecondaryContactDetails(subscription: Subscription): Option[ContactDetailsType] =
-    subscription.secondaryContactName.fold(Option.empty[ContactDetailsType])(secondaryName =>
-      Some(
-        ContactDetailsType(
-          name = secondaryName,
-          telephone = subscription.secondaryContactTelephone,
-          emailAddress = subscription.secondaryContactEmail.fold("")(email => email)
-        )
-      )
+  private def getSecondaryContactDetails(secondaryContactName: String, secondaryEmail: String, secondaryPhone: String): ContactDetailsType =
+    ContactDetailsType(
+      name = secondaryContactName,
+      telephone = Some(secondaryPhone),
+      emailAddress = secondaryEmail
     )
 
 }

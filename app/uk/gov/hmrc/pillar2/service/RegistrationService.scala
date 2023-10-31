@@ -22,7 +22,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
-import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId}
+import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId, fmCapturePhoneId, fmContactEmailId, fmNameRegistrationId, fmRegisteredAddressId, upeCapturePhoneId, upeContactEmailId, upeNameRegistrationId, upeRegisteredAddressId}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.Inject
@@ -34,13 +34,12 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
-      registration <- userAnswers.get(RegistrationId)
-      data         <- registration.withoutIdRegData
-      emailAddress <- data.emailAddress
-      telephone    <- data.telephoneNumber
-      address      <- data.upeRegisteredAddress
+      upeName      <- userAnswers.get(upeNameRegistrationId)
+      emailAddress <- userAnswers.get(upeContactEmailId)
+      telephone    <- userAnswers.get(upeCapturePhoneId)
+      address      <- userAnswers.get(upeRegisteredAddressId)
     } yield registerWithoutId(
-      data.upeNameRegistration,
+      upeName,
       Address.fromAddress(address),
       ContactDetails(Some(telephone), None, None, Some(emailAddress))
     )
@@ -51,14 +50,15 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
-      fm           <- userAnswers.get(FilingMemberId)
-      data         <- fm.withoutIdRegData
-      emailAddress <- data.fmEmailAddress
-      address      <- data.registeredFmAddress
+      fmName       <- userAnswers.get(fmNameRegistrationId)
+      emailAddress <- userAnswers.get(fmContactEmailId)
+      telephone    <- userAnswers.get(fmCapturePhoneId)
+      address      <- userAnswers.get(fmRegisteredAddressId)
+
     } yield registerWithoutId(
-      data.registeredFmName,
+      fmName,
       Address.fromFmAddress(address),
-      ContactDetails(None, None, None, Some(emailAddress))
+      ContactDetails(Some(telephone), None, None, Some(emailAddress))
     )
   }.getOrElse {
     logger.warn("RegistrationService - Filing Member Registration Information Missing")
