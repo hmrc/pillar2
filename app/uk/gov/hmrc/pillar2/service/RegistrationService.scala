@@ -22,7 +22,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
-import uk.gov.hmrc.pillar2.models.identifiers.{FilingMemberId, RegistrationId, fmCapturePhoneId, fmContactEmailId, fmNameRegistrationId, fmRegisteredAddressId, upeCapturePhoneId, upeContactEmailId, upeNameRegistrationId, upeRegisteredAddressId}
+import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.Inject

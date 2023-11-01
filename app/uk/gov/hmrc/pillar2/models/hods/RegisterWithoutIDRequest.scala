@@ -18,11 +18,7 @@ package uk.gov.hmrc.pillar2.models.hods
 
 import play.api.libs.json._
 import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
-import uk.gov.hmrc.pillar2.models.fm.NfmRegisteredAddress
-import uk.gov.hmrc.pillar2.models.registration.UpeRegisteredAddress
 
-import java.time.format.DateTimeFormatter
-import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
 
 case class NoIdOrganisation(organisationName: String)
