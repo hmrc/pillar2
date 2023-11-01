@@ -26,7 +26,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionR
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UKAddress, UserAnswers}
 
 import java.time.{Instant, LocalDate}
 
@@ -249,7 +249,54 @@ trait ModelGenerators {
     )
   }
 
-  val arbitraryAnyIdUserData: Arbitrary[UserData] = Arbitrary {
+  //---------------------------------------------------
+  val arbitraryWithoutIdUpeUserData: Arbitrary[UserData] = Arbitrary {
+    for {
+      upeRegisteredInUK <- false
+      upeNameRegistration <- stringsWithMaxLength(105)
+      upeRegisteredAddress <- arbitraryUKAddressDetails
+      upeContactName <- stringsWithMaxLength(200)
+      upeContactEmail <- arbitrary[String]
+      upeCapturePhone <- arbitrary[String]
+
+
+/*      regisrtation <-
+        oneOf(
+          Seq(arbitraryWithIdRegistrationForLimitedCompany.arbitrary, arbitraryWithIdRegistrationFoLLP.arbitrary, arbitraryNoIdRegistration.arbitrary)
+        )
+      filingMember <-
+        oneOf(
+          Seq(arbitraryWithIdFilingMemberForLimitedCompany.arbitrary, arbitraryWithIdFilingMemberFoLLP.arbitrary, arbitraryNoIdFilingMember.arbitrary)
+        )
+      subscription <- arbitrary[Subscription]*/
+    } yield Json.toJson(upeRegisteredInUK,upeNameRegistration,)
+  }
+
+
+  implicit val arbitraryUKAddressDetails: Arbitrary[UKAddress] = Arbitrary {
+
+    for {
+      addressLine1 <- arbitrary[String]
+      addressLine2 <- Gen.option(arbitrary[String])
+      addressLine3 <- arbitrary[String]
+      addressLine4 <- Gen.option(arbitrary[String])
+      postCode     <- arbitrary[String]
+      countryCode  <- arbitrary[String]
+    } yield UKAddress(
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      addressLine3 = addressLine3,
+      addressLine4 = addressLine4,
+      postalCode = postCode,
+      countryCode = countryCode
+    )
+  }
+
+
+
+  //----------------------------------------------------
+
+  val arbitraryAnyIdUserData1: Arbitrary[UserData] = Arbitrary {
     for {
       regisrtation <-
         oneOf(
@@ -299,7 +346,7 @@ trait ModelGenerators {
     )
   }
 
-/*  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
+  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
 
     for {
       withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
@@ -310,15 +357,6 @@ trait ModelGenerators {
       isNFMnStatus = RowStatus.Completed,
       withIdRegData = Some(withIdRegData)
     )
-  }*/
-
-
-
-  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
-
-    for {
-      upeGRSResponse <- arbitraryWithIdRegDataFoLLP.arbitrary
-    } yield upeGRSResponse
   }
 
   val arbitraryWithIdRegDataForLimitedCompany: Arbitrary[GrsResponse] = Arbitrary {
