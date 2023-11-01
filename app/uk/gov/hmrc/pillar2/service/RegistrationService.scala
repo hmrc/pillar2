@@ -36,12 +36,11 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
     for {
       upeName      <- userAnswers.get(upeNameRegistrationId)
       emailAddress <- userAnswers.get(upeContactEmailId)
-      telephone    <- userAnswers.get(upeCapturePhoneId)
       address      <- userAnswers.get(upeRegisteredAddressId)
     } yield registerWithoutId(
       upeName,
       Address.fromAddress(address),
-      ContactDetails(Some(telephone), None, None, Some(emailAddress))
+      ContactDetails(userAnswers.get(upeCapturePhoneId), None, None, Some(emailAddress))
     )
   }.getOrElse {
     logger.warn("RegistrationService - Upe Registration Information Missing")
@@ -52,13 +51,12 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
     for {
       fmName       <- userAnswers.get(fmNameRegistrationId)
       emailAddress <- userAnswers.get(fmContactEmailId)
-      telephone    <- userAnswers.get(fmCapturePhoneId)
       address      <- userAnswers.get(fmRegisteredAddressId)
 
     } yield registerWithoutId(
       fmName,
       Address.fromFmAddress(address),
-      ContactDetails(Some(telephone), None, None, Some(emailAddress))
+      ContactDetails(userAnswers.get(fmCapturePhoneId), None, None, Some(emailAddress))
     )
   }.getOrElse {
     logger.warn("RegistrationService - Filing Member Registration Information Missing")

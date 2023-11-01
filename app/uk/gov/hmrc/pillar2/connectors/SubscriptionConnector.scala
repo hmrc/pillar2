@@ -33,7 +33,6 @@ class SubscriptionConnector @Inject() (
     suscription: CreateSubscriptionRequest
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
-    println(s"What is subscription Request ---------------${Json.toJson(suscription)}")
     http.POST[CreateSubscriptionRequest, HttpResponse](
       config.baseUrl(serviceName),
       suscription,
