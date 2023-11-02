@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.registration
+package uk.gov.hmrc.pillar2.models.identifiers
 
-import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.fm.FilingMember
-import uk.gov.hmrc.pillar2.models.subscription.Subscription
+import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.grs.EntityType
 
-case class UserData(
-  Registration: Registration,
-  FilingMember: Option[FilingMember] = None,
-  Subscription: Option[Subscription] = None
-)
+case object fmEntityTypeId extends TypedIdentifier[EntityType] {
 
-object UserData {
-  implicit val format: OFormat[UserData] = Json.format[UserData]
+  override def path: JsPath = JsPath \ toString
+
+  override def toString: String = "fmEntityType"
 }

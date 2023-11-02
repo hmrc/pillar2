@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.fm
+package uk.gov.hmrc.pillar2.models.identifiers
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsPath
 
-case class WithoutIdNfmData(
-  registeredFmName:      String,
-  registeredFmAddress:   Option[NfmRegisteredAddress] = None,
-  fmContactName:         Option[String] = None,
-  fmEmailAddress:        Option[String] = None,
-  contactNfmByTelephone: Option[Boolean] = None,
-  telephoneNumber:       Option[String] = None
-)
+case object subPrimaryContactNameId extends TypedIdentifier[String] {
 
-object WithoutIdNfmData {
-  implicit val format: OFormat[WithoutIdNfmData] = Json.format[WithoutIdNfmData]
+  override def path: JsPath = JsPath \ toString
+
+  override def toString: String = "subPrimaryContactName"
 }

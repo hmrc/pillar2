@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.registration
+package uk.gov.hmrc.pillar2.models.identifiers
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsPath
 
-case class WithoutIdRegData(
-  upeNameRegistration:   String,
-  upeRegisteredAddress:  Option[UpeRegisteredAddress] = None,
-  upeContactName:        Option[String] = None,
-  emailAddress:          Option[String] = None,
-  contactUpeByTelephone: Option[Boolean] = None,
-  telephoneNumber:       Option[String] = None
-)
+case object TradingBusinessConfirmationId extends TypedIdentifier[Boolean] {
 
-object WithoutIdRegData {
-  implicit val format: OFormat[WithoutIdRegData] = Json.format[WithoutIdRegData]
+  override def path: JsPath = JsPath \ toString
+
+  override def toString: String = "tradingBusinessConfirmation"
 }

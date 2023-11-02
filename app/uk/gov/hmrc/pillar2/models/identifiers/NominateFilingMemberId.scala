@@ -17,12 +17,13 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.registration.Registration
 
-case object RegistrationId extends TypedIdentifier[Registration] {
+import scala.util.Try
+
+case object NominateFilingMemberId extends TypedIdentifier[Boolean] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "Registration"
+  override def toString: String = "NominateFilingMember"
 
 }

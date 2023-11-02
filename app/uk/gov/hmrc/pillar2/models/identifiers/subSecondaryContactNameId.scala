@@ -17,12 +17,10 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.subscription.Subscription
 
-case object SubscriptionId extends TypedIdentifier[Subscription] {
+case object subSecondaryContactNameId extends TypedIdentifier[String] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "Subscription"
-
+  override def toString: String = "subSecondaryContactName"
 }

@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.registration
+package uk.gov.hmrc.pillar2.models.identifiers
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.RowStatus
 
-case class Registration(
-  isUPERegisteredInUK:  Boolean,
-  orgType:              Option[EntityType] = None,
-  isRegistrationStatus: RowStatus,
-  withIdRegData:        Option[GrsResponse] = None,
-  withoutIdRegData:     Option[WithoutIdRegData] = None
-)
+case object EntityTypeId extends TypedIdentifier[EntityType] {
 
-object Registration {
-  implicit val format: OFormat[Registration] = Json.format[Registration]
+  override def path: JsPath = JsPath \ toString
+
+  override def toString: String = "orgType"
 }

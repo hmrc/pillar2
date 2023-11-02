@@ -18,15 +18,14 @@ package uk.gov.hmrc.pillar2.generators
 
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
-import play.api.libs.json.{JsObject, Json}
-import uk.gov.hmrc.pillar2.models.fm.{FilingMember, NfmRegisteredAddress, WithoutIdNfmData}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.grs._
+import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
-import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.registration._
-import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription, SubscriptionAddress, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, RowStatus, UserAnswers}
+import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 
 import java.time.{Instant, LocalDate}
 
@@ -101,53 +100,6 @@ trait ModelGenerators {
     )
   }
 
-  //NO-ID USER ANSWERS
-  val arbitraryNoIdUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
-    for {
-      id       <- nonEmptyString
-      userData <- arbitraryNoIdUserData.arbitrary
-    } yield UserAnswers(
-      id = id,
-      data = Json.toJson(userData).as[JsObject],
-      lastUpdated = Instant.now
-    )
-  }
-
-  val arbitraryNoIdUserData: Arbitrary[UserData] = Arbitrary {
-    for {
-      regisrtation <- arbitraryNoIdRegistration.arbitrary
-      filingMember <- arbitraryNoIdFilingMember.arbitrary
-      subscription <- arbitrary[Subscription]
-    } yield UserData(regisrtation, Some(filingMember), Some(subscription))
-  }
-
-  val arbitraryNoIdRegistration: Arbitrary[Registration] = Arbitrary {
-
-    for {
-      withoutIdRegData <- arbitrary[WithoutIdRegData]
-    } yield Registration(
-      isUPERegisteredInUK = false,
-      isRegistrationStatus = RowStatus.InProgress,
-      withoutIdRegData = Some(withoutIdRegData)
-    )
-  }
-
-  implicit val arbitraryWithoutIdRegData: Arbitrary[WithoutIdRegData] = Arbitrary {
-    for {
-      upeNameRegistration  <- arbitrary[String]
-      upeRegisteredAddress <- arbitrary[UpeRegisteredAddress]
-      upeContactName       <- arbitrary[String]
-      emailAddress         <- arbitrary[String]
-
-    } yield WithoutIdRegData(
-      upeNameRegistration,
-      Some(upeRegisteredAddress),
-      Some(upeContactName),
-      Some(emailAddress),
-      Some(false)
-    )
-  }
-
   implicit val arbitraryUpeRegisteredAddress: Arbitrary[UpeRegisteredAddress] = Arbitrary {
     for {
       addressLine1 <- arbitrary[String]
@@ -166,151 +118,365 @@ trait ModelGenerators {
     )
   }
 
-  val arbitraryNoIdFilingMember: Arbitrary[FilingMember] = Arbitrary {
+  //---------------------------------------------------
 
+  val arbitraryAnyIdUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
-      withoutIdNfmData <- arbitrary[WithoutIdNfmData]
-    } yield FilingMember(
-      nfmConfirmation = true,
-      isNfmRegisteredInUK = Some(false),
-      isNFMnStatus = RowStatus.InProgress,
-      withoutIdRegData = Some(withoutIdNfmData)
+      id <- nonEmptyString
+      userData <- oneOf(
+                    Seq(
+                      arbitraryWithoutIdUpeFmUserData.arbitrary,
+                      arbitraryWithIdUpeFmUserData.arbitrary,
+                      arbitraryWithIdUpeAndNoIdFmUserData.arbitrary,
+                      arbitraryWithoutIdUpeAndWithIdFmUserData.arbitrary,
+                      arbitraryWithIdUpeAndNoNominatedFilingMember.arbitrary,
+                      arbitraryWithoutIdUpeNoNominatedFilingMember.arbitrary
+                    )
+                  )
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
     )
   }
 
-  implicit val arbitraryWithoutIdNfmData: Arbitrary[WithoutIdNfmData] = Arbitrary {
+  val arbitraryWithoutIdUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
-      upeNameRegistration  <- arbitrary[String]
-      upeRegisteredAddress <- arbitrary[NfmRegisteredAddress]
-      upeContactName       <- arbitrary[String]
-      emailAddress         <- arbitrary[String]
+      id       <- nonEmptyString
+      userData <- arbitraryWithoutIdUpeFmUserData.arbitrary
 
-    } yield WithoutIdNfmData(
-      upeNameRegistration,
-      Some(upeRegisteredAddress),
-      Some(upeContactName),
-      Some(emailAddress),
-      Some(false)
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
     )
   }
 
-  implicit val arbitraryNfmRegisteredAddress: Arbitrary[NfmRegisteredAddress] = Arbitrary {
+  val arbitraryUncompleteUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      id       <- nonEmptyString
+      userData <- arbitraryUncompleteUpeFmUserData.arbitrary
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
+    )
+  }
+
+  val arbitraryWithoutIdUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeNameRegistration      <- stringsWithMaxLength(105)
+      upeRegisteredAddress     <- arbitraryUKAddressDetails.arbitrary
+      upeContactName           <- stringsWithMaxLength(200)
+      upeContactEmail          <- arbitrary[String]
+      upeCapturePhone          <- arbitrary[Int]
+      fmNameRegistration       <- stringsWithMaxLength(200)
+      fmRegisteredAddress      <- arbitraryNonUKAddressDetails.arbitrary
+      fmContactName            <- stringsWithMaxLength(200)
+      fmContactEmail           <- stringsWithMaxLength(200)
+      fmCapturePhone           <- arbitrary[Int]
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> false,
+      "upeNameRegistration"         -> upeNameRegistration,
+      "upeRegisteredAddress"        -> upeRegisteredAddress,
+      "upeContactName"              -> upeContactName,
+      "upeContactEmail"             -> upeContactEmail,
+      "upeCapturePhone"             -> upeCapturePhone,
+      "NominateFilingMember"        -> true,
+      "fmRegisteredInUK"            -> false,
+      "fmNameRegistration"          -> fmNameRegistration,
+      "fmRegisteredAddress"         -> fmRegisteredAddress,
+      "fmContactName"               -> fmContactName,
+      "fmContactEmail"              -> fmContactEmail,
+      "fmPhonePreference"           -> true,
+      "fmCapturePhone"              -> fmCapturePhone,
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryWithIdUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeGRSResponse           <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+      fmGRSResponse            <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> true,
+      "GrsUpStatus"                 -> RowStatus.Completed.value,
+      "upeEntityType"               -> "ukLimitedCompany",
+      "upeGRSResponse"              -> upeGRSResponse,
+      "fmGRSResponse"               -> fmGRSResponse,
+      "NominateFilingMember"        -> true,
+      "fmRegisteredInUK"            -> true,
+      "GrsFilingMemberStatus"       -> RowStatus.Completed.value,
+      "fmEntityType"                -> "ukLimitedCompany",
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryWithIdUpeAndNoIdFmUserData: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeGRSResponse           <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+      fmNameRegistration       <- stringsWithMaxLength(200)
+      fmRegisteredAddress      <- arbitraryNonUKAddressDetails.arbitrary
+      fmContactName            <- stringsWithMaxLength(200)
+      fmContactEmail           <- stringsWithMaxLength(200)
+      fmCapturePhone           <- arbitrary[Int]
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> true,
+      "GrsUpStatus"                 -> RowStatus.Completed.value,
+      "upeEntityType"               -> "ukLimitedCompany",
+      "upeGRSResponse"              -> upeGRSResponse,
+      "NominateFilingMember"        -> true,
+      "fmRegisteredInUK"            -> false,
+      "fmNameRegistration"          -> fmNameRegistration,
+      "fmRegisteredAddress"         -> fmRegisteredAddress,
+      "fmContactName"               -> fmContactName,
+      "fmContactEmail"              -> fmContactEmail,
+      "fmPhonePreference"           -> true,
+      "fmCapturePhone"              -> fmCapturePhone,
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryWithoutIdUpeAndWithIdFmUserData: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeNameRegistration      <- stringsWithMaxLength(105)
+      upeRegisteredAddress     <- arbitraryUKAddressDetails.arbitrary
+      upeContactName           <- stringsWithMaxLength(200)
+      upeContactEmail          <- arbitrary[String]
+      upeCapturePhone          <- arbitrary[Int]
+      fmGRSResponse            <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> false,
+      "upeNameRegistration"         -> upeNameRegistration,
+      "upeRegisteredAddress"        -> upeRegisteredAddress,
+      "upeContactName"              -> upeContactName,
+      "upeContactEmail"             -> upeContactEmail,
+      "upeCapturePhone"             -> upeCapturePhone,
+      "fmGRSResponse"               -> fmGRSResponse,
+      "NominateFilingMember"        -> true,
+      "fmRegisteredInUK"            -> true,
+      "GrsFilingMemberStatus"       -> RowStatus.Completed.value,
+      "fmEntityType"                -> "ukLimitedCompany",
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryWithIdUpeAndNoNominatedFilingMember: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeGRSResponse           <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> true,
+      "GrsUpStatus"                 -> RowStatus.Completed.value,
+      "upeEntityType"               -> "ukLimitedCompany",
+      "upeGRSResponse"              -> upeGRSResponse,
+      "NominateFilingMember"        -> false,
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryWithoutIdUpeNoNominatedFilingMember: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeNameRegistration      <- stringsWithMaxLength(105)
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> false,
+      "upeNameRegistration"         -> upeNameRegistration,
+      "NominateFilingMember"        -> false,
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryUncompleteUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      upeNameRegistration  <- stringsWithMaxLength(105)
+      upeRegisteredAddress <- arbitraryUKAddressDetails.arbitrary
+      upeContactName       <- stringsWithMaxLength(200)
+      upeContactEmail      <- arbitrary[String]
+      upeCapturePhone      <- arbitrary[Int]
+      fmNameRegistration   <- stringsWithMaxLength(200)
+      fmRegisteredAddress  <- arbitraryNonUKAddressDetails.arbitrary
+      fmContactName        <- stringsWithMaxLength(200)
+      fmContactEmail       <- stringsWithMaxLength(200)
+      fmCapturePhone       <- arbitrary[Int]
+
+    } yield Json.obj(
+      "upeRegisteredInUK"    -> false,
+      "upeNameRegistration"  -> upeNameRegistration,
+      "upeRegisteredAddress" -> upeRegisteredAddress,
+      "upeContactName"       -> upeContactName,
+      "upeContactEmail"      -> upeContactEmail,
+      "upeCapturePhone"      -> upeCapturePhone,
+      "NominateFilingMember" -> true,
+      "fmRegisteredInUK"     -> false,
+      "fmNameRegistration"   -> fmNameRegistration,
+      "fmRegisteredAddress"  -> fmRegisteredAddress,
+      "fmContactName"        -> fmContactName,
+      "fmContactEmail"       -> fmContactEmail,
+      "fmPhonePreference"    -> true,
+      "fmCapturePhone"       -> fmCapturePhone,
+      "subMneOrDomestic"     -> "ukAndOther"
+    )
+  }
+
+  implicit val arbitraryUKAddressDetails: Arbitrary[UKAddress] = Arbitrary {
+
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
       addressLine3 <- arbitrary[String]
       addressLine4 <- Gen.option(arbitrary[String])
-      postalCode   <- Gen.option(arbitrary[String])
+      postCode     <- arbitrary[String]
       countryCode  <- arbitrary[String]
-    } yield NfmRegisteredAddress(
+    } yield UKAddress(
       addressLine1 = addressLine1,
       addressLine2 = addressLine2,
       addressLine3 = addressLine3,
       addressLine4 = addressLine4,
-      postalCode = postalCode,
+      postalCode = postCode,
       countryCode = countryCode
     )
   }
 
-  //UNCOMPLETE USER ANSWER - ERROR
-  val arbitraryAnyIdUncompletedUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+  implicit val arbitraryNonUKAddressDetails: Arbitrary[NonUKAddress] = Arbitrary {
+
     for {
-      id       <- nonEmptyString
-      userData <- arbitraryAnyIdUncompletedUserData.arbitrary
-    } yield UserAnswers(
-      id = id,
-      data = Json.toJson(userData).as[JsObject],
-      lastUpdated = Instant.now
+      addressLine1 <- arbitrary[String]
+      addressLine2 <- Gen.option(arbitrary[String])
+      addressLine3 <- arbitrary[String]
+      addressLine4 <- Gen.option(arbitrary[String])
+      postCode     <- Gen.option(arbitrary[String])
+      countryCode  <- arbitrary[String]
+    } yield NonUKAddress(
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      addressLine3 = addressLine3,
+      addressLine4 = addressLine4,
+      postalCode = postCode,
+      countryCode = countryCode
     )
   }
 
-  val arbitraryAnyIdUncompletedUserData: Arbitrary[UserData] = Arbitrary {
-    for {
-      regisrtation <-
-        oneOf(
-          Seq(arbitraryWithIdRegistrationForLimitedCompany.arbitrary, arbitraryWithIdRegistrationFoLLP.arbitrary, arbitraryNoIdRegistration.arbitrary)
-        )
-      filingMember <-
-        oneOf(
-          Seq(arbitraryWithIdFilingMemberForLimitedCompany.arbitrary, arbitraryWithIdFilingMemberFoLLP.arbitrary, arbitraryNoIdFilingMember.arbitrary)
-        )
-    } yield UserData(regisrtation, Some(filingMember), None)
-  }
-
-  //ANYID USER ANSWERS
-  val arbitraryAnyIdUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
-    for {
-      id       <- nonEmptyString
-      userData <- arbitraryAnyIdUserData.arbitrary
-    } yield UserAnswers(
-      id = id,
-      data = Json.toJson(userData).as[JsObject],
-      lastUpdated = Instant.now
-    )
-  }
-
-  val arbitraryAnyIdUserData: Arbitrary[UserData] = Arbitrary {
-    for {
-      regisrtation <-
-        oneOf(
-          Seq(arbitraryWithIdRegistrationForLimitedCompany.arbitrary, arbitraryWithIdRegistrationFoLLP.arbitrary, arbitraryNoIdRegistration.arbitrary)
-        )
-      filingMember <-
-        oneOf(
-          Seq(arbitraryWithIdFilingMemberForLimitedCompany.arbitrary, arbitraryWithIdFilingMemberFoLLP.arbitrary, arbitraryNoIdFilingMember.arbitrary)
-        )
-      subscription <- arbitrary[Subscription]
-    } yield UserData(regisrtation, Some(filingMember), Some(subscription))
-  }
-
-  val arbitraryWithIdRegistrationForLimitedCompany: Arbitrary[Registration] = Arbitrary {
-
-    for {
-      withIdRegData <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
-    } yield Registration(
-      isUPERegisteredInUK = true,
-      orgType = Some(EntityType.UKLimitedCompany),
-      isRegistrationStatus = RowStatus.InProgress,
-      withIdRegData = Some(withIdRegData)
-    )
-  }
-
-  val arbitraryWithIdRegistrationFoLLP: Arbitrary[Registration] = Arbitrary {
-
-    for {
-      withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
-    } yield Registration(
-      isUPERegisteredInUK = true,
-      orgType = Some(EntityType.LimitedLiabilityPartnership),
-      isRegistrationStatus = RowStatus.InProgress,
-      withIdRegData = Some(withIdRegData)
-    )
-  }
-
-  val arbitraryWithIdFilingMemberForLimitedCompany: Arbitrary[FilingMember] = Arbitrary {
-    for {
-      withIdRegData <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
-    } yield FilingMember(
-      nfmConfirmation = true,
-      isNfmRegisteredInUK = Some(true),
-      orgType = Some(EntityType.UKLimitedCompany),
-      isNFMnStatus = RowStatus.Completed,
-      withIdRegData = Some(withIdRegData)
-    )
-  }
-
-  val arbitraryWithIdFilingMemberFoLLP: Arbitrary[FilingMember] = Arbitrary {
-
-    for {
-      withIdRegData <- arbitraryWithIdRegDataFoLLP.arbitrary
-    } yield FilingMember(
-      nfmConfirmation = true,
-      isNfmRegisteredInUK = Some(true),
-      orgType = Some(EntityType.LimitedLiabilityPartnership),
-      isNFMnStatus = RowStatus.Completed,
-      withIdRegData = Some(withIdRegData)
-    )
-  }
+  //----------------------------------------------------
 
   val arbitraryWithIdRegDataForLimitedCompany: Arbitrary[GrsResponse] = Arbitrary {
     for {
@@ -394,31 +560,6 @@ trait ModelGenerators {
       postal_code = postal_code,
       premises = premises,
       region = region
-    )
-  }
-
-  //SUBSCRIPTION DATA
-  implicit val arbitrarySubscription: Arbitrary[Subscription] = Arbitrary {
-    for {
-      accountingPeriod          <- arbitrary[AccountingPeriod]
-      primaryContactName        <- Gen.option(arbitrary[String])
-      primaryContactEmail       <- Gen.option(arbitrary[String])
-      primaryContactTelephone   <- Gen.option(arbitrary[String])
-      secondaryContactName      <- Gen.option(arbitrary[String])
-      secondaryContactEmail     <- Gen.option(arbitrary[String])
-      secondaryContactTelephone <- Gen.option(arbitrary[String])
-      correspondenceAddress     <- arbitrary[SubscriptionAddress]
-    } yield Subscription(
-      domesticOrMne = MneOrDomestic.uk,
-      groupDetailStatus = RowStatus.Completed,
-      accountingPeriod = Some(accountingPeriod),
-      primaryContactName = primaryContactName,
-      primaryContactEmail = primaryContactEmail,
-      primaryContactTelephone = primaryContactTelephone,
-      secondaryContactName = secondaryContactName,
-      secondaryContactEmail = secondaryContactEmail,
-      secondaryContactTelephone = secondaryContactTelephone,
-      correspondenceAddress = Some(correspondenceAddress)
     )
   }
 

@@ -14,22 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.fm
+package uk.gov.hmrc.pillar2.models
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.RowStatus
-import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 
-case class FilingMember(
-  nfmConfirmation:     Boolean,
-  isNfmRegisteredInUK: Option[Boolean] = None,
-  orgType:             Option[EntityType] = None,
-  isNFMnStatus:        RowStatus,
-  withIdRegData:       Option[GrsResponse] = None,
-  withoutIdRegData:    Option[WithoutIdNfmData] = None
+case class UKAddress(
+  addressLine1: String,
+  addressLine2: Option[String],
+  addressLine3: String,
+  addressLine4: Option[String],
+  postalCode:   String,
+  countryCode:  String
 )
-
-object FilingMember {
-  implicit val format: OFormat[FilingMember] = Json.format[FilingMember]
+object UKAddress {
+  implicit val format: OFormat[UKAddress] = Json.format[UKAddress]
 }
