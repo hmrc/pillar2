@@ -412,6 +412,7 @@ trait ModelGenerators {
     } yield Subscription(
       domesticOrMne = MneOrDomestic.uk,
       groupDetailStatus = RowStatus.Completed,
+      contactDetailsStatus = RowStatus.Completed,
       accountingPeriod = Some(accountingPeriod),
       primaryContactName = primaryContactName,
       primaryContactEmail = primaryContactEmail,

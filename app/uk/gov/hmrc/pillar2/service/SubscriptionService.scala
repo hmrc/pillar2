@@ -126,6 +126,7 @@ class SubscriptionService @Inject() (
         Subscription(
           domesticOrMne = if (upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
           groupDetailStatus = RowStatus.Completed,
+          contactDetailsStatus = RowStatus.Completed,
           accountingPeriod = Some(
             uk.gov.hmrc.pillar2.models.AccountingPeriod(
               startDate = accountingPeriod.startDate,

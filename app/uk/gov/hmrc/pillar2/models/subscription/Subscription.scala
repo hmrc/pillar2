@@ -23,6 +23,7 @@ import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, RowStatus}
 case class Subscription(
   domesticOrMne:             MneOrDomestic,
   groupDetailStatus:         RowStatus,
+  contactDetailsStatus:      RowStatus,
   accountingPeriod:          Option[AccountingPeriod] = None,
   primaryContactName:        Option[String] = None,
   primaryContactEmail:       Option[String] = None,

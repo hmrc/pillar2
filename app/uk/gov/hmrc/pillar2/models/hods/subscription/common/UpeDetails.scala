@@ -29,7 +29,14 @@ final case class UpeDetails(
   domesticOnly:            Boolean,
   filingMember:            Boolean
 )
-
+/*
+domesticOnly: false
+                    organisationName: 'International Organisation Inc.'
+                    customerIdentification1: '12345678' //Optional
+                    customerIdentification2: '12345678' //Optional
+                    registrationDate: '2022-01-31'
+                    filingMember: false
+ */
 object UpeDetails {
   implicit val format: OFormat[UpeDetails] = Json.format[UpeDetails]
 }
