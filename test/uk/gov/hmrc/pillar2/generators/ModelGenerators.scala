@@ -398,7 +398,6 @@ trait ModelGenerators {
     )
   }
 
-  //SUBSCRIPTION DATA
   implicit val arbitrarySubscription: Arbitrary[Subscription] = Arbitrary {
     for {
       accountingPeriod          <- arbitrary[AccountingPeriod]
