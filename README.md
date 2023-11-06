@@ -22,6 +22,10 @@ To run the unit tests:
 
     Run 'sbt test' from within the project
 
+To use testonly route locally .
+
+    sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051'
+
 ### License
 
 

@@ -17,7 +17,8 @@
 package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
-import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
+import play.api.libs.json.{JsError, JsObject, JsSuccess, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.grs.EntityType
@@ -25,10 +26,11 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
-import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, SubscriptionData, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
+import uk.gov.hmrc.pillar2.models.identifiers.FmSafeId
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -367,4 +369,73 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
+  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit
+    hc:                                   HeaderCarrier,
+    ec:                                   ExecutionContext
+  ): Future[JsValue] =
+    subscriptionConnectors
+      .getSubscriptionInformation(plrReference)
+      .flatMap { httpResponse =>
+        httpResponse.status match {
+          case OK =>
+            Json.parse(httpResponse.body).validate[Subscription] match {
+              case JsSuccess(subscription, _) =>
+                val subscriptionJson = Json.toJson(subscription)
+                val userAnswers      = UserAnswers(id, subscriptionJson.as[JsObject])
+                readSubscriptionData(userAnswers) match {
+                  case Some(subscriptionData) =>
+                    val subscriptionDataJson: JsValue = Json.toJson(subscriptionData)
+                    repository.upsert(id, subscriptionDataJson).map { _ =>
+                      logger.info(s"Upserted data for id: $id")
+                      userAnswers.data
+                    }
+                  case None =>
+                    Future.failed(new Exception("Failed to extract subscription data"))
+                }
+              case JsError(errors) =>
+                Future.failed(new Exception(s"Error parsing subscription JSON: $errors"))
+            }
+
+          case status if Set(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).contains(status) =>
+            Future.failed(new Exception(s"Error response from ETMP with status: $status"))
+
+          case _ =>
+            Future.failed(new Exception("Unexpected response status from ETMP"))
+        }
+      }
+      .recover { case e: Exception =>
+        logger.warn("Subscription Information Missing or other error", e)
+        throw e
+      }
+
+  def readSubscriptionData(userAnswers: UserAnswers): Option[SubscriptionData] = for {
+    upeRegisteredInUK        <- userAnswers.get(upeRegisteredInUKId)
+    upeNameRegistration      <- userAnswers.get(upeNameRegistrationId)
+    upeRegInformation        <- userAnswers.get(upeRegInformationId)
+    upeRegisteredAddress     <- userAnswers.get(upeRegisteredAddressId)
+    subPrimaryContactName    <- userAnswers.get(subPrimaryContactNameId)
+    subPrimaryEmail          <- userAnswers.get(subPrimaryEmailId)
+    subSecondaryContactName  <- userAnswers.get(subSecondaryContactNameId)
+    subSecondaryCapturePhone <- userAnswers.get(subSecondaryCapturePhoneId)
+    subSecondaryEmail        <- userAnswers.get(subSecondaryEmailId)
+    _FmSafeID                <- userAnswers.get(FmSafeId)
+    subFilingMemberDetails   <- userAnswers.get(subFilingMemberDetailsId)
+    subAccountingPeriod      <- userAnswers.get(subAccountingPeriodId)
+    subAccountStatus         <- userAnswers.get(subAccountiStatusId)
+
+  } yield SubscriptionData(
+    upeRegisteredInUK,
+    upeNameRegistration,
+    upeRegInformation,
+    upeRegisteredAddress,
+    subPrimaryContactName,
+    subPrimaryEmail,
+    subSecondaryContactName,
+    subSecondaryCapturePhone,
+    subSecondaryEmail,
+    _FmSafeID,
+    subFilingMemberDetails,
+    subAccountingPeriod,
+    subAccountStatus
+  )
 }

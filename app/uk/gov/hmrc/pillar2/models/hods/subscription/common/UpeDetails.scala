@@ -67,3 +67,15 @@ final case class FilingMemberDetails(
 object FilingMemberDetails {
   implicit val format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
 }
+
+final case class PrimaryContactDetails(name: String, telephone: String, emailAddress: String)
+
+object PrimaryContactDetails {
+  implicit val format: OFormat[PrimaryContactDetails] = Json.format[PrimaryContactDetails]
+}
+
+final case class SecondaryContactDetails(name: String, telephone: String, emailAddress: String)
+
+object SecondaryContactDetails {
+  implicit val format: OFormat[SecondaryContactDetails] = Json.format[SecondaryContactDetails]
+}
