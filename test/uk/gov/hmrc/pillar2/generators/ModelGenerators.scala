@@ -21,14 +21,15 @@ import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods._
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, PrimaryContactDetails, SecondaryContactDetails, SubscriptionResponse, SubscriptionSuccess, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.registration._
-import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, SubscriptionAddress, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 
 import java.time.{Instant, LocalDate}
-
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 trait ModelGenerators {
   self: Generators =>
 
@@ -625,7 +626,7 @@ trait ModelGenerators {
       domesticOnly            <- arbitrary[Boolean]
       filingMember            <- arbitrary[Boolean]
     } yield UpeDetails(
-      safeId = safeId,
+      safeId = Some(safeId),
       customerIdentification1 = customerIdentification1,
       customerIdentification2 = customerIdentification2,
       organisationName = organisationName,
@@ -701,6 +702,68 @@ trait ModelGenerators {
       regSafeId = regSafeId,
       fmSafeId = fmSafeId
     )
+  }
+
+  implicit val arbitraryAccountStatus: Arbitrary[AccountStatus] = Arbitrary {
+    arbitrary[Boolean].map(AccountStatus(_))
+  }
+
+  implicit val arbitrarySubscriptionResponse: Arbitrary[SubscriptionResponse] = Arbitrary {
+    for {
+      success <- arbitrary[SubscriptionSuccess]
+    } yield SubscriptionResponse(success)
+  }
+
+  implicit val arbitraryPrimaryContactDetails: Arbitrary[PrimaryContactDetails] = Arbitrary {
+    for {
+      name         <- nonEmptyString
+      telephone    <- Gen.option(stringsWithMaxLength(15))
+      emailAddress <- arbitrary[String]
+    } yield PrimaryContactDetails(name, telephone, emailAddress)
+  }
+
+  implicit val arbitrarySecondaryContactDetails: Arbitrary[SecondaryContactDetails] = Arbitrary {
+    for {
+      name         <- nonEmptyString
+      telephone    <- Gen.option(stringsWithMaxLength(15))
+      emailAddress <- arbitrary[String]
+    } yield SecondaryContactDetails(name, telephone, emailAddress)
+  }
+
+  implicit val arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {
+    for {
+      plrReference             <- plrReferenceGen
+      processingDate           <- datesBetween(LocalDate.now().minusYears(10), LocalDate.now())
+      formBundleNumber         <- stringsWithMaxLength(20)
+      upeDetails               <- arbitrary[UpeDetails]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[PrimaryContactDetails]
+      secondaryContactDetails  <- arbitrary[SecondaryContactDetails]
+      filingMemberDetails      <- arbitrary[FilingMemberDetails]
+      accountingPeriod         <- arbitrary[AccountingPeriod]
+      accountStatus            <- arbitrary[AccountStatus]
+    } yield SubscriptionSuccess(
+      plrReference,
+      processingDate,
+      formBundleNumber,
+      upeDetails,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails,
+      accountingPeriod,
+      accountStatus
+    )
+  }
+
+  import org.scalacheck.{Arbitrary, Gen}
+  import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
+
+  implicit val readSubscriptionRequestParametersArbitrary: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary {
+    for {
+      id           <- Gen.alphaStr
+      plrReference <- Gen.alphaStr
+    } yield ReadSubscriptionRequestParameters(id, plrReference)
   }
 
 }

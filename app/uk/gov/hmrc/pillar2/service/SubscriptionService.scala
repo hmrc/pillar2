@@ -17,9 +17,9 @@
 package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
-import play.api.libs.functional.syntax.toFunctionalBuilderOps
-import play.api.libs.json.{JsError, JsNull, JsObject, JsString, JsSuccess, JsValue, Json, Writes}
+import play.api.http.Status._
+import play.api.libs.json.Writes._
+import play.api.libs.json._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.grs.EntityType
@@ -27,17 +27,15 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, RegistrationInfo}
-import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, SubscriptionData, UKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
-import uk.gov.hmrc.pillar2.models.identifiers.FmSafeId
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
-
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -371,32 +369,162 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  import play.api.libs.json.{JsError, JsSuccess, Reads}
+//  def processSuccessfulResponse(id: String, httpResponse: HttpResponse)(implicit
+//    ec:                             ExecutionContext,
+//    reads:                          Reads[SubscriptionResponse]
+//  ): Future[JsValue] =
+//    httpResponse.json.validate[SubscriptionResponse] match {
+//      case JsSuccess(subscriptionResponse, _) =>
+//        extractSubscriptionData(id, subscriptionResponse.success) match {
+//          case Success(userAnswers) =>
+//            repository.upsert(id, userAnswers.data).map { _ =>
+//              logger.info(s"Upserted data for id: $id")
+//              Json.toJson(userAnswers)
+//            }
+//          case Failure(exception) =>
+//            Future.failed(exception)
+//        }
+//
+//      case JsError(errors) =>
+//        val errorDetails = errors
+//          .map { case (path, validationErrors) =>
+//            s"$path: ${validationErrors.mkString(", ")}"
+//          }
+//          .mkString("; ")
+//        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
+//        Future.failed(new Exception("Invalid subscription response format"))
+//    }
 
-  def processSuccessfulResponse(id: String, httpResponse: HttpResponse)(implicit
-    ec:                             ExecutionContext,
-    reads:                          Reads[SubscriptionResponse]
+  import scala.concurrent.Future
+  import play.api.libs.json._
+  import play.api.Logging
+  import scala.util.{Failure, Success, Try}
+
+  import scala.concurrent.Future
+  import play.api.libs.json._
+  import play.api.Logging
+  import scala.util.{Failure, Success, Try}
+
+  import scala.concurrent.Future
+  import scala.util.{Failure, Success}
+  import play.api.libs.json._
+
+//  def processSuccessfulResponse(
+//    id:           String,
+//    httpResponse: HttpResponse
+//  )(implicit
+//    ec:     ExecutionContext,
+//    reads:  Reads[SubscriptionResponse],
+//    writes: Writes[UserAnswers]
+//  ): Future[JsValue] =
+//    httpResponse.json.validate[SubscriptionResponse] match {
+//      case JsSuccess(subscriptionResponse, _) =>
+//        val subscriptionDataTry = extractSubscriptionData(id, subscriptionResponse.success)
+//        Future.fromTry(subscriptionDataTry).flatMap { userAnswers =>
+//          repository
+//            .upsert(id, userAnswers.data)
+//            .map { _ =>
+//              logger.info(s"Upserted user answers for id: $id")
+//              userAnswers.data // Ensure this is a JsValue.
+//            }
+//            .recoverWith { case ex =>
+//              logger.error(s"Error upserting user answers for id: $id", ex)
+//              Future.successful(Json.obj("error" -> ex.getMessage))
+//            }
+//        }
+//
+//      case JsError(errors) =>
+//        val errorDetails = errors
+//          .map { case (path, validationErrors) =>
+//            s"$path: ${validationErrors.mkString(", ")}"
+//          }
+//          .mkString("; ")
+//        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
+//        Future.successful(Json.obj("error" -> "Invalid subscription response format"))
+//    }
+
+//  def processSuccessfulResponse(
+//                                 id: String,
+//                                 httpResponse: HttpResponse
+//                               )(implicit
+//                                 ec: ExecutionContext,
+//                                 reads: Reads[SubscriptionResponse],
+//                                 writes: Writes[UserAnswers]
+//                               ): Future[JsValue] = {
+//    httpResponse.json.validate[SubscriptionResponse] match {
+//      case JsSuccess(subscriptionResponse, _) =>
+//        // Assume extractSubscriptionData returns Try[UserAnswers]
+//        val subscriptionDataTry: Try[UserAnswers] = extractSubscriptionData(id, subscriptionResponse.success)
+//        Future.fromTry(subscriptionDataTry).flatMap { userAnswers =>
+//          // Ensure that repository.upsert expects (String, JsObject) and returns Future[_]
+//          repository.upsert(id, userAnswers.data).map { _ =>
+//            logger.info(s"Upserted user answers for id: $id")
+//            userAnswers.data // data should be a JsObject which is a subclass of JsValue
+//          }
+//        }.recoverWith { case ex =>
+//          logger.error(s"Error upserting user answers for id: $id", ex)
+//          Future.successful(Json.obj("error" -> ex.getMessage))
+//        }
+//
+//      case JsError(errors) =>
+//        // Error processing remains the same
+//        val errorDetails = errors.map { case (path, validationErrors) =>
+//          s"$path: ${validationErrors.mkString(", ")}"
+//        }.mkString("; ")
+//        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
+//        Future.successful(Json.obj("error" -> "Invalid subscription response format"))
+//    }
+//  }
+
+  def processSuccessfulResponse(
+    id:           String,
+    httpResponse: HttpResponse
+  )(implicit
+    ec:     ExecutionContext,
+    reads:  Reads[SubscriptionResponse],
+    writes: Writes[UserAnswers]
   ): Future[JsValue] =
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
-        extractSubscriptionData(id, subscriptionResponse.success) match {
-          case Success(userAnswers) =>
-            repository.upsert(id, userAnswers.data).map { _ =>
-              logger.info(s"Upserted data for id: $id")
-              Json.toJson(userAnswers)
-            }
-          case Failure(exception) =>
-            Future.failed(exception)
-        }
+        // Since extractSubscriptionData returns a Future[JsValue], we work with it directly
+        extractSubscriptionData(id, subscriptionResponse.success)
+          .flatMap {
+            case jsValue: JsObject => // Assuming the JsValue is actually a JsObject
+              // Now we assume jsValue is the JSON representation of UserAnswers, so we should validate it
+              jsValue.validate[UserAnswers] match {
+                case JsSuccess(userAnswers, _) =>
+                  repository.upsert(id, userAnswers.data).map { _ =>
+                    logger.info(s"Upserted user answers for id: $id")
+                    userAnswers.data
+                  }
+                case JsError(errors) =>
+                  // Handle the case where the jsValue cannot be converted to UserAnswers
+                  val errorDetails = errors
+                    .map { case (path, validationErrors) =>
+                      s"$path: ${validationErrors.mkString(", ")}"
+                    }
+                    .mkString("; ")
+                  logger.error(s"Failed to convert json to UserAnswers: $errorDetails")
+                  Future.failed(new Exception("Invalid user answers data"))
+              }
+            case _ =>
+              // Handle the case where the future did not return a JsObject
+              Future.failed(new Exception("Invalid data type received from extractSubscriptionData"))
+          }
+          .recoverWith { case ex =>
+            logger.error(s"Error processing successful response for id: $id", ex)
+            Future.successful(Json.obj("error" -> ex.getMessage))
+          }
 
       case JsError(errors) =>
+        // Error processing remains the same
         val errorDetails = errors
           .map { case (path, validationErrors) =>
             s"$path: ${validationErrors.mkString(", ")}"
           }
           .mkString("; ")
         logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
-        Future.failed(new Exception("Invalid subscription response format"))
+        Future.successful(Json.obj("error" -> "Invalid subscription response format"))
     }
 
   def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
@@ -425,15 +553,16 @@ class SubscriptionService @Inject() (
     Future.successful(Json.obj("error" -> errorMessage)) // Ensures a Future[JsValue] is returned
   }
 
-  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Try[UserAnswers] = {
+//  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Try[UserAnswers] = {
+  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
     val registrationInfo = RegistrationInfo(
-      crn = sub.upeDetails.customerIdentification1.get,
-      utr = sub.upeDetails.customerIdentification2.get,
+      crn = sub.upeDetails.customerIdentification1.getOrElse(" "),
+      utr = sub.upeDetails.customerIdentification2.getOrElse(" "),
       safeId = sub.upeDetails.safeId.getOrElse(""),
-      registrationDate = Some(sub.upeDetails.registrationDate),
-      filingMember = Some(sub.upeDetails.filingMember)
+      registrationDate = Option(sub.upeDetails.registrationDate),
+      filingMember = Option(sub.upeDetails.filingMember)
     )
 
     val ukAddress = UKAddress(
@@ -462,9 +591,6 @@ class SubscriptionService @Inject() (
       inactive = sub.accountStatus.inactive
     )
 
-    import play.api.libs.json.Writes._
-    import play.api.libs.json._
-
     implicit val writesOptionString: Writes[Option[String]] = new Writes[Option[String]] {
       def writes(optStr: Option[String]): JsValue = optStr match {
         case Some(str) => JsString(str)
@@ -472,8 +598,9 @@ class SubscriptionService @Inject() (
       }
     }
 
-    for {
-      u1  <- userAnswers.set(upeRegisteredInUKId, sub.upeDetails.domesticOnly)
+    val result = for {
+
+      u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
       u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
       u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
       u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
@@ -489,5 +616,14 @@ class SubscriptionService @Inject() (
       telephoneStr = telephone.getOrElse("")
       u13 <- u12.set(subSecondaryCapturePhoneId, telephoneStr)
     } yield u13
+
+    result match {
+      case Success(userAnswers) =>
+        Future.successful(Json.toJson(userAnswers))
+      case Failure(exception) =>
+        logger.error("An error occurred while extracting subscription data", exception)
+        Future.successful(Json.obj("error" -> exception.getMessage))
+    }
+
   }
 }
