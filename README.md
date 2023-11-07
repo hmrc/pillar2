@@ -16,6 +16,10 @@ This can be started by running:
 
     Run 'sbt run' from within the project and it will run at port 10051
 
+## To check code coverage:
+
+    sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport
+
 ## Integration and unit tests
 
 To run the unit tests:
@@ -25,6 +29,7 @@ To run the unit tests:
 To use testonly route locally .
 
     sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051'
+
 
 ### License
 

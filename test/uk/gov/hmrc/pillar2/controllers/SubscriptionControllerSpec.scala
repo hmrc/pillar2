@@ -19,6 +19,8 @@ package uk.gov.hmrc.pillar2.controllers
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
@@ -412,6 +414,57 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustEqual Json.obj("error" -> "Error retrieving subscription information")
       }
+
+      "return InternalServerError when an exception is thrown synchronously" in new Setup {
+        val id           = "testId"
+        val plrReference = "testPlrReference"
+
+        // Throw an exception synchronously when the method is called
+        when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenAnswer(new Answer[Future[HttpResponse]] {
+            override def answer(invocation: InvocationOnMock): Future[HttpResponse] =
+              throw new Exception("Synchronous exception")
+          })
+
+        val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
+        val result  = route(application, request).value
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(result) mustEqual Json.obj("error" -> "Exception thrown before Future was created")
+      }
+
+      "respond with InternalServerError when an exception is thrown synchronously" in new Setup {
+        val id              = "testId"
+        val plrReference    = "testPlrReference"
+        val validParamsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
+        val fakeRequest = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
+          .withBody(validParamsJson)
+
+        when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenThrow(new RuntimeException("Synchronous exception"))
+
+        val result = route(application, fakeRequest).value
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(result) mustEqual Json.obj("error" -> "Exception thrown before Future was created")
+      }
+
+      "return an InternalServerError when the service call fails" in new Setup {
+        val validParamsJson = Json.obj("id" -> "validId", "plrReference" -> "validPlrReference")
+
+        when(
+          mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext])
+        ).thenReturn(Future.failed(new RuntimeException("Service call failed")))
+
+        val fakeRequest = FakeRequest(GET, routes.SubscriptionController.readSubscription("validId", "validPlrReference").url)
+          .withJsonBody(validParamsJson)
+
+        val result = route(application, fakeRequest).value
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+        contentAsJson(result) mustEqual Json.obj("error" -> "Error retrieving subscription information")
+      }
+
     }
 
   }
