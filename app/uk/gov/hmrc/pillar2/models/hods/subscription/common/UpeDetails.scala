@@ -21,7 +21,7 @@ import play.api.libs.json.{Json, OFormat}
 import java.time.LocalDate
 
 final case class UpeDetails(
-  safeId:                  String,
+  safeId:                  Option[String],
   customerIdentification1: Option[String],
   customerIdentification2: Option[String],
   organisationName:        String,
@@ -66,16 +66,4 @@ final case class FilingMemberDetails(
 
 object FilingMemberDetails {
   implicit val format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
-}
-
-final case class PrimaryContactDetails(name: String, telephone: String, emailAddress: String)
-
-object PrimaryContactDetails {
-  implicit val format: OFormat[PrimaryContactDetails] = Json.format[PrimaryContactDetails]
-}
-
-final case class SecondaryContactDetails(name: String, telephone: String, emailAddress: String)
-
-object SecondaryContactDetails {
-  implicit val format: OFormat[SecondaryContactDetails] = Json.format[SecondaryContactDetails]
 }

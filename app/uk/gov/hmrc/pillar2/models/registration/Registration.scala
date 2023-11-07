@@ -37,8 +37,8 @@ case class RegistrationInfo(
   crn:              String,
   utr:              String,
   safeId:           String,
-  registrationDate: LocalDate,
-  filingMember:     Boolean
+  registrationDate: Option[LocalDate],
+  filingMember:     Option[Boolean]
 )
 
 object RegistrationInfo {

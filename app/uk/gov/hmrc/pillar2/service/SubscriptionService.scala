@@ -18,16 +18,17 @@ package uk.gov.hmrc.pillar2.service
 
 import play.api.Logging
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, OK, SERVICE_UNAVAILABLE, UNPROCESSABLE_ENTITY}
-import play.api.libs.json.{JsError, JsObject, JsSuccess, JsValue, Json}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json.{JsError, JsNull, JsObject, JsString, JsSuccess, JsValue, Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.models.registration.GrsResponse
+import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, RegistrationInfo}
 import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, Subscription}
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, SubscriptionData, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, SubscriptionData, UKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import uk.gov.hmrc.pillar2.models.identifiers.FmSafeId
@@ -35,6 +36,7 @@ import uk.gov.hmrc.pillar2.models.identifiers.FmSafeId
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
@@ -247,7 +249,7 @@ class SubscriptionService @Inject() (
         val name = incorporatedEntityRegistrationData.companyProfile.companyName
         val utr  = incorporatedEntityRegistrationData.ctutr
 
-        UpeDetails(upeSafeId, Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
       case EntityType.LimitedLiabilityPartnership =>
         val partnershipEntityRegistrationData =
@@ -257,7 +259,7 @@ class SubscriptionService @Inject() (
         val name           = companyProfile.companyName
         val utr            = partnershipEntityRegistrationData.sautr
 
-        UpeDetails(upeSafeId, Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
 
       case _ => throw new Exception("Invalid Org Type")
     }
@@ -270,7 +272,7 @@ class SubscriptionService @Inject() (
     upeNameRegistration: String
   ): UpeDetails = {
     val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
-    UpeDetails(upeSafeId, None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
+    UpeDetails(Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
 
   }
 
@@ -369,73 +371,123 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit
-    hc:                                   HeaderCarrier,
-    ec:                                   ExecutionContext
+  import play.api.libs.json.{JsError, JsSuccess, Reads}
+
+  def processSuccessfulResponse(id: String, httpResponse: HttpResponse)(implicit
+    ec:                             ExecutionContext,
+    reads:                          Reads[SubscriptionResponse]
   ): Future[JsValue] =
+    httpResponse.json.validate[SubscriptionResponse] match {
+      case JsSuccess(subscriptionResponse, _) =>
+        extractSubscriptionData(id, subscriptionResponse.success) match {
+          case Success(userAnswers) =>
+            repository.upsert(id, userAnswers.data).map { _ =>
+              logger.info(s"Upserted data for id: $id")
+              Json.toJson(userAnswers)
+            }
+          case Failure(exception) =>
+            Future.failed(exception)
+        }
+
+      case JsError(errors) =>
+        val errorDetails = errors
+          .map { case (path, validationErrors) =>
+            s"$path: ${validationErrors.mkString(", ")}"
+          }
+          .mkString("; ")
+        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
+        Future.failed(new Exception("Invalid subscription response format"))
+    }
+
+  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     subscriptionConnectors
       .getSubscriptionInformation(plrReference)
       .flatMap { httpResponse =>
         httpResponse.status match {
-          case OK =>
-            Json.parse(httpResponse.body).validate[Subscription] match {
-              case JsSuccess(subscription, _) =>
-                val subscriptionJson = Json.toJson(subscription)
-                val userAnswers      = UserAnswers(id, subscriptionJson.as[JsObject])
-                readSubscriptionData(userAnswers) match {
-                  case Some(subscriptionData) =>
-                    val subscriptionDataJson: JsValue = Json.toJson(subscriptionData)
-                    repository.upsert(id, subscriptionDataJson).map { _ =>
-                      logger.info(s"Upserted data for id: $id")
-                      userAnswers.data
-                    }
-                  case None =>
-                    Future.failed(new Exception("Failed to extract subscription data"))
-                }
-              case JsError(errors) =>
-                Future.failed(new Exception(s"Error parsing subscription JSON: $errors"))
-            }
-
-          case status if Set(NOT_FOUND, BAD_REQUEST, UNPROCESSABLE_ENTITY, INTERNAL_SERVER_ERROR, SERVICE_UNAVAILABLE).contains(status) =>
-            Future.failed(new Exception(s"Error response from ETMP with status: $status"))
-
-          case _ =>
-            Future.failed(new Exception("Unexpected response status from ETMP"))
+          case OK => processSuccessfulResponse(id, httpResponse)
+          case _  => processErrorResponse(httpResponse)
         }
       }
       .recover { case e: Exception =>
-        logger.warn("Subscription Information Missing or other error", e)
-        throw e
+        logger.error("An error occurred while retrieving subscription information", e)
+        Json.obj("error" -> e.getMessage) // No need for Future.successful
       }
 
-  def readSubscriptionData(userAnswers: UserAnswers): Option[SubscriptionData] = for {
-    upeRegisteredInUK        <- userAnswers.get(upeRegisteredInUKId)
-    upeNameRegistration      <- userAnswers.get(upeNameRegistrationId)
-    upeRegInformation        <- userAnswers.get(upeRegInformationId)
-    upeRegisteredAddress     <- userAnswers.get(upeRegisteredAddressId)
-    subPrimaryContactName    <- userAnswers.get(subPrimaryContactNameId)
-    subPrimaryEmail          <- userAnswers.get(subPrimaryEmailId)
-    subSecondaryContactName  <- userAnswers.get(subSecondaryContactNameId)
-    subSecondaryCapturePhone <- userAnswers.get(subSecondaryCapturePhoneId)
-    subSecondaryEmail        <- userAnswers.get(subSecondaryEmailId)
-    _FmSafeID                <- userAnswers.get(FmSafeId)
-    subFilingMemberDetails   <- userAnswers.get(subFilingMemberDetailsId)
-    subAccountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-    subAccountStatus         <- userAnswers.get(subAccountiStatusId)
+  private def processErrorResponse(httpResponse: HttpResponse): Future[JsValue] = {
+    val status = httpResponse.status
+    val errorMessage = status match {
+      case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
+        s"Error response from service with status: $status and body: ${httpResponse.body}"
+      case _ =>
+        s"Unexpected response status from service: $status with body: ${httpResponse.body}"
+    }
+    logger.error(errorMessage)
+    Future.successful(Json.obj("error" -> errorMessage)) // Ensures a Future[JsValue] is returned
+  }
 
-  } yield SubscriptionData(
-    upeRegisteredInUK,
-    upeNameRegistration,
-    upeRegInformation,
-    upeRegisteredAddress,
-    subPrimaryContactName,
-    subPrimaryEmail,
-    subSecondaryContactName,
-    subSecondaryCapturePhone,
-    subSecondaryEmail,
-    _FmSafeID,
-    subFilingMemberDetails,
-    subAccountingPeriod,
-    subAccountStatus
-  )
+  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Try[UserAnswers] = {
+    val userAnswers = UserAnswers(id, Json.obj())
+
+    val registrationInfo = RegistrationInfo(
+      crn = sub.upeDetails.customerIdentification1.get,
+      utr = sub.upeDetails.customerIdentification2.get,
+      safeId = sub.upeDetails.safeId.getOrElse(""),
+      registrationDate = Some(sub.upeDetails.registrationDate),
+      filingMember = Some(sub.upeDetails.filingMember)
+    )
+
+    val ukAddress = UKAddress(
+      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4,
+      postalCode = sub.upeCorrespAddressDetails.postCode.getOrElse(""),
+      countryCode = sub.upeCorrespAddressDetails.countryCode
+    )
+
+    val filingMemberDetails = FilingMemberDetails(
+      safeId = sub.filingMemberDetails.safeId,
+      customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
+      customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
+      organisationName = sub.filingMemberDetails.organisationName
+    )
+
+    val accountingPeriod = AccountingPeriod(
+      startDate = sub.accountingPeriod.startDate,
+      endDate = sub.accountingPeriod.endDate,
+      duetDate = sub.accountingPeriod.duetDate
+    )
+
+    val accountStatus = AccountStatus(
+      inactive = sub.accountStatus.inactive
+    )
+
+    import play.api.libs.json.Writes._
+    import play.api.libs.json._
+
+    implicit val writesOptionString: Writes[Option[String]] = new Writes[Option[String]] {
+      def writes(optStr: Option[String]): JsValue = optStr match {
+        case Some(str) => JsString(str)
+        case None      => JsNull
+      }
+    }
+
+    for {
+      u1  <- userAnswers.set(upeRegisteredInUKId, sub.upeDetails.domesticOnly)
+      u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
+      u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
+      u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
+      u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
+      u6  <- u5.set(upeRegInformationId, registrationInfo)
+      u7  <- u6.set(upeRegisteredAddressId, ukAddress)
+      u8  <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
+      u9  <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
+      u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
+      u11 <- u10.set(subAccountStatusId, accountStatus)
+      u12 <- u11.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+      telephone: Option[String] = sub.secondaryContactDetails.telepphone
+      telephoneStr = telephone.getOrElse("")
+      u13 <- u12.set(subSecondaryCapturePhoneId, telephoneStr)
+    } yield u13
+  }
 }

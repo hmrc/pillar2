@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.models.identifiers
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
 
-case object subAccountiStatusId extends TypedIdentifier[AccountStatus] {
+case object subAccountStatusId extends TypedIdentifier[AccountStatus] {
 
   override def path: JsPath = JsPath \ toString
 
