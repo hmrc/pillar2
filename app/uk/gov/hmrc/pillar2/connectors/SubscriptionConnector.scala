@@ -46,7 +46,6 @@ class SubscriptionConnector @Inject() (
     http
       .GET[HttpResponse](url, headers = extraHeaders(config, serviceName))(httpReads, hc, ec)
       .map { response =>
-        println(s"Response received: ${response.toString}")
         response
       }
       .recover { case ex: Throwable =>

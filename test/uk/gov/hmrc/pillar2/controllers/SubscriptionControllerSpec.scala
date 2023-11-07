@@ -17,9 +17,8 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.joda.time.DateTime
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{reset, verify, when}
+import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
@@ -42,7 +41,6 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
     val controller =
@@ -343,7 +341,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
           whenReady(resultFuture) { result =>
-            // result is expected to be a JsValue representing the error
             result mustBe Json.obj(
               "error" -> s"Error response from service with status: $UNPROCESSABLE_ENTITY and body: ${expectedHttpResponse.body}"
             )
@@ -361,7 +358,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
           whenReady(resultFuture) { result =>
-            // result is expected to be a JsValue representing the error
             result mustBe Json.obj(
               "error" -> s"Error response from service with status: $INTERNAL_SERVER_ERROR and body: ${expectedHttpResponse.body}"
             )
@@ -379,7 +375,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
           whenReady(resultFuture) { result =>
-            // The result here should be a JsValue with the error message, not a failed Future
             result mustBe Json.obj("error" -> s"Error response from service with status: $SERVICE_UNAVAILABLE and body: ${expectedHttpResponse.body}")
           }
         }
@@ -397,7 +392,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
           whenReady(resultFuture) { result =>
-            // Instead of expecting a failed future, you should expect a JsValue containing the error
             result mustBe Json.obj(
               "error" -> s"Error response from service with status: $INTERNAL_SERVER_ERROR and body: ${expectedHttpResponse.body}"
             )
@@ -418,7 +412,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         status(result) mustBe INTERNAL_SERVER_ERROR
         contentAsJson(result) mustEqual Json.obj("error" -> "Error retrieving subscription information")
       }
-
     }
 
   }

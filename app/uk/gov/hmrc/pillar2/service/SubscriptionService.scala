@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -369,113 +369,6 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-//  def processSuccessfulResponse(id: String, httpResponse: HttpResponse)(implicit
-//    ec:                             ExecutionContext,
-//    reads:                          Reads[SubscriptionResponse]
-//  ): Future[JsValue] =
-//    httpResponse.json.validate[SubscriptionResponse] match {
-//      case JsSuccess(subscriptionResponse, _) =>
-//        extractSubscriptionData(id, subscriptionResponse.success) match {
-//          case Success(userAnswers) =>
-//            repository.upsert(id, userAnswers.data).map { _ =>
-//              logger.info(s"Upserted data for id: $id")
-//              Json.toJson(userAnswers)
-//            }
-//          case Failure(exception) =>
-//            Future.failed(exception)
-//        }
-//
-//      case JsError(errors) =>
-//        val errorDetails = errors
-//          .map { case (path, validationErrors) =>
-//            s"$path: ${validationErrors.mkString(", ")}"
-//          }
-//          .mkString("; ")
-//        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
-//        Future.failed(new Exception("Invalid subscription response format"))
-//    }
-
-  import scala.concurrent.Future
-  import play.api.libs.json._
-  import play.api.Logging
-  import scala.util.{Failure, Success, Try}
-
-  import scala.concurrent.Future
-  import play.api.libs.json._
-  import play.api.Logging
-  import scala.util.{Failure, Success, Try}
-
-  import scala.concurrent.Future
-  import scala.util.{Failure, Success}
-  import play.api.libs.json._
-
-//  def processSuccessfulResponse(
-//    id:           String,
-//    httpResponse: HttpResponse
-//  )(implicit
-//    ec:     ExecutionContext,
-//    reads:  Reads[SubscriptionResponse],
-//    writes: Writes[UserAnswers]
-//  ): Future[JsValue] =
-//    httpResponse.json.validate[SubscriptionResponse] match {
-//      case JsSuccess(subscriptionResponse, _) =>
-//        val subscriptionDataTry = extractSubscriptionData(id, subscriptionResponse.success)
-//        Future.fromTry(subscriptionDataTry).flatMap { userAnswers =>
-//          repository
-//            .upsert(id, userAnswers.data)
-//            .map { _ =>
-//              logger.info(s"Upserted user answers for id: $id")
-//              userAnswers.data // Ensure this is a JsValue.
-//            }
-//            .recoverWith { case ex =>
-//              logger.error(s"Error upserting user answers for id: $id", ex)
-//              Future.successful(Json.obj("error" -> ex.getMessage))
-//            }
-//        }
-//
-//      case JsError(errors) =>
-//        val errorDetails = errors
-//          .map { case (path, validationErrors) =>
-//            s"$path: ${validationErrors.mkString(", ")}"
-//          }
-//          .mkString("; ")
-//        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
-//        Future.successful(Json.obj("error" -> "Invalid subscription response format"))
-//    }
-
-//  def processSuccessfulResponse(
-//                                 id: String,
-//                                 httpResponse: HttpResponse
-//                               )(implicit
-//                                 ec: ExecutionContext,
-//                                 reads: Reads[SubscriptionResponse],
-//                                 writes: Writes[UserAnswers]
-//                               ): Future[JsValue] = {
-//    httpResponse.json.validate[SubscriptionResponse] match {
-//      case JsSuccess(subscriptionResponse, _) =>
-//        // Assume extractSubscriptionData returns Try[UserAnswers]
-//        val subscriptionDataTry: Try[UserAnswers] = extractSubscriptionData(id, subscriptionResponse.success)
-//        Future.fromTry(subscriptionDataTry).flatMap { userAnswers =>
-//          // Ensure that repository.upsert expects (String, JsObject) and returns Future[_]
-//          repository.upsert(id, userAnswers.data).map { _ =>
-//            logger.info(s"Upserted user answers for id: $id")
-//            userAnswers.data // data should be a JsObject which is a subclass of JsValue
-//          }
-//        }.recoverWith { case ex =>
-//          logger.error(s"Error upserting user answers for id: $id", ex)
-//          Future.successful(Json.obj("error" -> ex.getMessage))
-//        }
-//
-//      case JsError(errors) =>
-//        // Error processing remains the same
-//        val errorDetails = errors.map { case (path, validationErrors) =>
-//          s"$path: ${validationErrors.mkString(", ")}"
-//        }.mkString("; ")
-//        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
-//        Future.successful(Json.obj("error" -> "Invalid subscription response format"))
-//    }
-//  }
-
   def processSuccessfulResponse(
     id:           String,
     httpResponse: HttpResponse
@@ -486,11 +379,9 @@ class SubscriptionService @Inject() (
   ): Future[JsValue] =
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
-        // Since extractSubscriptionData returns a Future[JsValue], we work with it directly
         extractSubscriptionData(id, subscriptionResponse.success)
           .flatMap {
-            case jsValue: JsObject => // Assuming the JsValue is actually a JsObject
-              // Now we assume jsValue is the JSON representation of UserAnswers, so we should validate it
+            case jsValue: JsObject =>
               jsValue.validate[UserAnswers] match {
                 case JsSuccess(userAnswers, _) =>
                   repository.upsert(id, userAnswers.data).map { _ =>
@@ -498,7 +389,6 @@ class SubscriptionService @Inject() (
                     userAnswers.data
                   }
                 case JsError(errors) =>
-                  // Handle the case where the jsValue cannot be converted to UserAnswers
                   val errorDetails = errors
                     .map { case (path, validationErrors) =>
                       s"$path: ${validationErrors.mkString(", ")}"
@@ -508,7 +398,6 @@ class SubscriptionService @Inject() (
                   Future.failed(new Exception("Invalid user answers data"))
               }
             case _ =>
-              // Handle the case where the future did not return a JsObject
               Future.failed(new Exception("Invalid data type received from extractSubscriptionData"))
           }
           .recoverWith { case ex =>
@@ -517,7 +406,6 @@ class SubscriptionService @Inject() (
           }
 
       case JsError(errors) =>
-        // Error processing remains the same
         val errorDetails = errors
           .map { case (path, validationErrors) =>
             s"$path: ${validationErrors.mkString(", ")}"
@@ -538,7 +426,7 @@ class SubscriptionService @Inject() (
       }
       .recover { case e: Exception =>
         logger.error("An error occurred while retrieving subscription information", e)
-        Json.obj("error" -> e.getMessage) // No need for Future.successful
+        Json.obj("error" -> e.getMessage)
       }
 
   private def processErrorResponse(httpResponse: HttpResponse): Future[JsValue] = {
@@ -550,10 +438,9 @@ class SubscriptionService @Inject() (
         s"Unexpected response status from service: $status with body: ${httpResponse.body}"
     }
     logger.error(errorMessage)
-    Future.successful(Json.obj("error" -> errorMessage)) // Ensures a Future[JsValue] is returned
+    Future.successful(Json.obj("error" -> errorMessage))
   }
 
-//  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Try[UserAnswers] = {
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
@@ -590,13 +477,6 @@ class SubscriptionService @Inject() (
     val accountStatus = AccountStatus(
       inactive = sub.accountStatus.inactive
     )
-
-    implicit val writesOptionString: Writes[Option[String]] = new Writes[Option[String]] {
-      def writes(optStr: Option[String]): JsValue = optStr match {
-        case Some(str) => JsString(str)
-        case None      => JsNull
-      }
-    }
 
     val result = for {
 

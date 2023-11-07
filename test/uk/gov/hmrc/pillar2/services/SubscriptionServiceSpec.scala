@@ -159,7 +159,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
           val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference.plrReference)
 
           whenReady(resultFuture) { result =>
-            // Check that result is a JsObject and has the "error" key
             result                         shouldBe a[JsObject]
             (result \ "error").asOpt[String] should contain("DB upsert error")
           }
