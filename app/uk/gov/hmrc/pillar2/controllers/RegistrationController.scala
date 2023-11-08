@@ -67,14 +67,17 @@ class RegistrationController @Inject() (
       case NOT_FOUND => NotFound(httpResponse.body)
 
       case BAD_REQUEST =>
+        logger.info(s"Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         BadRequest(httpResponse.body)
 
       case FORBIDDEN =>
+        logger.info(s"Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         Forbidden(httpResponse.body)
 
       case _ =>
+        logger.info(s"Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         InternalServerError(httpResponse.body)
     }
