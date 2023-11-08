@@ -37,22 +37,27 @@ package object controllers {
       case OK        => Ok(httpResponse.body)
       case NOT_FOUND => NotFound(httpResponse.body)
       case BAD_REQUEST =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)
         BadRequest(httpResponse.body)
 
       case FORBIDDEN =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)
         Forbidden(httpResponse.body)
 
       case SERVICE_UNAVAILABLE =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)
         ServiceUnavailable(httpResponse.body)
 
       case CONFLICT =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)
         Conflict(httpResponse.body)
 
       case _ =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)
         InternalServerError(httpResponse.body)
 
