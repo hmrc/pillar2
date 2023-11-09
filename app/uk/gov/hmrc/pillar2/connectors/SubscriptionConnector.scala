@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.CreateSubscriptionRequest
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.SubscriptionRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,15 +31,15 @@ class SubscriptionConnector @Inject() (
 ) {
   implicit val logger: Logger = Logger(this.getClass.getName)
   def sendCreateSubscriptionInformation(
-    suscription: CreateSubscriptionRequest
+    suscription: SubscriptionRequest
   )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(suscription)}")
-    http.POST[CreateSubscriptionRequest, HttpResponse](
+    http.POST[SubscriptionRequest, HttpResponse](
       config.baseUrl(serviceName),
       suscription,
       headers = extraHeaders(config, serviceName)
-    )(wts = CreateSubscriptionRequest.format, rds = httpReads, hc = hc, ec = ec)
+    )(wts = SubscriptionRequest.format, rds = httpReads, hc = hc, ec = ec)
   }
 
 }

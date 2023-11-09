@@ -22,9 +22,9 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, SubscriptionRequest}
 import uk.gov.hmrc.pillar2.models.registration._
-import uk.gov.hmrc.pillar2.models.subscription.{MneOrDomestic, SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 
 import java.time.{Instant, LocalDate}
@@ -578,14 +578,6 @@ trait ModelGenerators {
       addressLine4 = addressLine4,
       postalCode = postalCode,
       countryCode = countryCode
-    )
-  }
-
-  implicit val arbitraryCreateSubscriptionRequest: Arbitrary[CreateSubscriptionRequest] = Arbitrary {
-    for {
-      createSubscriptionRequest <- arbitrary[SubscriptionRequest]
-    } yield CreateSubscriptionRequest(
-      createSubscriptionRequest = createSubscriptionRequest
     )
   }
 
