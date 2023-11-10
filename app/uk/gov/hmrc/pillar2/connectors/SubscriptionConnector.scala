@@ -17,9 +17,10 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.CreateSubscriptionRequest
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -52,6 +53,20 @@ class SubscriptionConnector @Inject() (
         println(s"Error while fetching subscription information: ${ex.getMessage}")
         throw ex
       }
+  }
+
+  def amendSubscriptionInformation(
+    amendRequest: SubscriptionResponse
+  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val serviceName = "create-subscription"
+    val url         = s"${config.baseUrl(serviceName)}"
+
+    implicit val writes: Writes[SubscriptionResponse] = SubscriptionResponse.format
+    http.PUT[SubscriptionResponse, HttpResponse](
+      url,
+      amendRequest,
+      extraHeaders(config, serviceName)
+    )(writes, httpReads, hc, ec)
   }
 
 }

@@ -36,6 +36,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -247,7 +248,7 @@ class SubscriptionService @Inject() (
         val name = incorporatedEntityRegistrationData.companyProfile.companyName
         val utr  = incorporatedEntityRegistrationData.ctutr
 
-        UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(None, Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
       case EntityType.LimitedLiabilityPartnership =>
         val partnershipEntityRegistrationData =
@@ -257,7 +258,7 @@ class SubscriptionService @Inject() (
         val name           = companyProfile.companyName
         val utr            = partnershipEntityRegistrationData.sautr
 
-        UpeDetails(Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(None, Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
 
       case _ => throw new Exception("Invalid Org Type")
     }
@@ -270,7 +271,7 @@ class SubscriptionService @Inject() (
     upeNameRegistration: String
   ): UpeDetails = {
     val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
-    UpeDetails(Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
+    UpeDetails(None, Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
 
   }
 
@@ -294,7 +295,7 @@ class SubscriptionService @Inject() (
                 val name = incorporatedEntityRegistrationData.companyProfile.companyName
                 val utr  = incorporatedEntityRegistrationData.ctutr
 
-                Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
+                Some(FilingMemberDetails(None, fmSafeId, Some(crn), Some(utr), name))
               case EntityType.LimitedLiabilityPartnership =>
                 val partnershipEntityRegistrationData =
                   fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
@@ -304,7 +305,7 @@ class SubscriptionService @Inject() (
                 val crn            = companyProfile.companyNumber
                 val name           = companyProfile.companyName
                 val utr            = partnershipEntityRegistrationData.sautr
-                Some(FilingMemberDetails(fmSafeId, Some(crn), utr, name))
+                Some(FilingMemberDetails(None, fmSafeId, Some(crn), utr, name))
 
               case _ => throw new Exception("Filing Member: Invalid Org Type")
             }
@@ -350,7 +351,7 @@ class SubscriptionService @Inject() (
       case Some(fmSafeId) =>
         nominateFm match {
           case true =>
-            Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
+            Some(FilingMemberDetails(None, fmSafeId, None, None, fmNameRegistration))
           case false => None
         }
       case _ => None
@@ -462,6 +463,7 @@ class SubscriptionService @Inject() (
     )
 
     val filingMemberDetails = FilingMemberDetails(
+      addNewFilingMember = None,
       safeId = sub.filingMemberDetails.safeId,
       customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
       customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
@@ -474,10 +476,8 @@ class SubscriptionService @Inject() (
       duetDate = sub.accountingPeriod.duetDate
     )
 
-    val accountStatus = AccountStatus(
-      inactive = sub.accountStatus.inactive
-    )
-
+    val accountStatusOpt: Option[AccountStatus] = Some(sub.accountStatus)
+    val defaultAccountStatus = AccountStatus(inactive = true)
     val result = for {
 
       u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
@@ -490,7 +490,7 @@ class SubscriptionService @Inject() (
       u8  <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
       u9  <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
       u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
-      u11 <- u10.set(subAccountStatusId, accountStatus)
+      u11 <- u10.set(subAccountStatusId, accountStatusOpt.fold(defaultAccountStatus)(identity))
       u12 <- u11.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
       telephone: Option[String] = sub.secondaryContactDetails.telepphone
       telephoneStr = telephone.getOrElse("")
@@ -506,4 +506,83 @@ class SubscriptionService @Inject() (
     }
 
   }
+
+  //  def extractAndProcess(json: JsValue): Future[HttpResponse] =
+  def extractAndProcess(json: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    json.validate[UserAnswers] match {
+      case JsSuccess(userAnswers, _) =>
+        val extractedData = for {
+          domesticOnly         <- userAnswers.get[Boolean](upeRegisteredInUKId)
+          upeNameRegistration  <- userAnswers.get[String](upeNameRegistrationId)
+          filingMember         <- userAnswers.get[Boolean](NominateFilingMemberId)
+          primaryContactName   <- userAnswers.get[String](subPrimaryContactNameId)
+          primaryEmail         <- userAnswers.get[String](subPrimaryEmailId)
+          secondaryContactName <- userAnswers.get[String](subSecondaryContactNameId)
+          regInformation       <- userAnswers.get[RegistrationInfo](upeRegInformationId)
+          registeredAddress    <- userAnswers.get[UKAddress](upeRegisteredAddressId)
+          safeId               <- userAnswers.get[String](FmSafeId)
+          filingMemberDetails  <- userAnswers.get[FilingMemberDetails](subFilingMemberDetailsId)
+          accountingPeriod     <- userAnswers.get[AccountingPeriod](subAccountingPeriodId)
+          accountStatus        <- userAnswers.get[AccountStatus](subAccountStatusId)
+          secondaryEmail       <- userAnswers.get[String](subSecondaryEmailId)
+          secondaryPhone       <- userAnswers.get[String](subSecondaryCapturePhoneId)
+        } yield SubscriptionResponse(
+          success = SubscriptionSuccess(
+            plrReference = Some("SamplePlrReference"),
+            processingDate = Some(LocalDate.now()),
+            formBundleNumber = None,
+            upeDetails = UpeDetails(
+              plrReference = None,
+              safeId = Some(safeId),
+              customerIdentification1 = Some(regInformation.utr),
+              customerIdentification2 = Some(regInformation.crn),
+              organisationName = upeNameRegistration,
+              registrationDate = regInformation.registrationDate.getOrElse(LocalDate.now),
+              domesticOnly = domesticOnly,
+              filingMember = filingMember
+            ),
+            upeCorrespAddressDetails = UpeCorrespAddressDetails(
+              addressLine1 = registeredAddress.addressLine1,
+              addressLine2 = registeredAddress.addressLine2,
+              addressLine3 = Some(registeredAddress.addressLine3),
+              addressLine4 = registeredAddress.addressLine4,
+              postCode = Some(registeredAddress.postalCode),
+              countryCode = registeredAddress.countryCode
+            ),
+            primaryContactDetails = PrimaryContactDetails(
+              name = primaryContactName,
+              telepphone = None,
+              emailAddress = primaryEmail
+            ),
+            secondaryContactDetails = SecondaryContactDetails(
+              name = secondaryContactName,
+              telepphone = Some(secondaryPhone),
+              emailAddress = secondaryEmail
+            ),
+            filingMemberDetails = filingMemberDetails,
+            accountingPeriod = accountingPeriod,
+            accountStatus = accountStatus
+          )
+        )
+
+        extractedData match {
+          case Some(subscriptionResponse) =>
+            subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
+              if (response.status == 200) {
+                repository.upsert(userAnswers.id, userAnswers.data).map { _ =>
+                  logger.info(s"Upserted user answers for id: ${userAnswers.id}")
+                  HttpResponse(200, "Data processed and upserted successfully")
+                }
+              } else {
+                Future.successful(HttpResponse(response.status, "Failed to amend subscription information"))
+              }
+            }
+
+          case None =>
+            Future.successful(HttpResponse(400, "Failed to extract data"))
+        }
+
+      case _ =>
+        Future.successful(HttpResponse(400, "Invalid JSON format"))
+    }
 }

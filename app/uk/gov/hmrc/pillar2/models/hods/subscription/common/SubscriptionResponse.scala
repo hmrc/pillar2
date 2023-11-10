@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat, Reads, Writes}
+import uk.gov.hmrc.pillar2.models.AccountStatus.AccountStatusOpt
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
 
 import java.time.LocalDate
@@ -35,9 +36,9 @@ object SubscriptionResponse {
 }
 
 case class SubscriptionSuccess(
-  plrReference:             String,
-  processingDate:           LocalDate,
-  formBundleNumber:         String,
+  plrReference:             Option[String],
+  processingDate:           Option[LocalDate],
+  formBundleNumber:         Option[String],
   upeDetails:               UpeDetails,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    PrimaryContactDetails,

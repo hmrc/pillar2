@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{JsNull, JsValue, Json, OFormat, Writes}
 
 final case class AccountStatus(
   inactive: Boolean
@@ -24,4 +24,16 @@ final case class AccountStatus(
 
 object AccountStatus {
   implicit val format: OFormat[AccountStatus] = Json.format[AccountStatus]
+
+  implicit val optionWrites: Writes[Option[AccountStatus]] = new Writes[Option[AccountStatus]] {
+    def writes(option: Option[AccountStatus]): JsValue = option match {
+      case Some(accountStatus) => Json.toJson(accountStatus)(format)
+      case None                => JsNull
+    }
+  }
+  implicit val writes: Writes[AccountStatus] = Json.writes[AccountStatus]
+
+  type AccountStatusOpt = Option[AccountStatus]
+  implicit val accountStatusOptWrites: Writes[AccountStatusOpt] = optionWrites
+
 }
