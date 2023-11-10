@@ -21,15 +21,13 @@ import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods._
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, PrimaryContactDetails, SecondaryContactDetails, SubscriptionResponse, SubscriptionSuccess, UpeCorrespAddressDetails, UpeDetails}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
-import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 
 import java.time.{Instant, LocalDate}
-import org.scalacheck.{Arbitrary, Gen}
-import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 trait ModelGenerators {
   self: Generators =>
 
@@ -579,22 +577,6 @@ trait ModelGenerators {
       addressLine4 = addressLine4,
       postalCode = postalCode,
       countryCode = countryCode
-    )
-  }
-
-  implicit val arbitraryCreateSubscriptionRequest: Arbitrary[CreateSubscriptionRequest] = Arbitrary {
-    for {
-      createSubscriptionRequest <- arbitrary[SubscriptionRequest]
-    } yield CreateSubscriptionRequest(
-      createSubscriptionRequest = createSubscriptionRequest
-    )
-  }
-
-  implicit val arbitrarySubscriptionRequest: Arbitrary[SubscriptionRequest] = Arbitrary {
-    for {
-      requestDetail <- arbitrary[RequestDetail]
-    } yield SubscriptionRequest(
-      requestBody = requestDetail
     )
   }
 

@@ -22,7 +22,7 @@ import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.CreateSubscriptionRequest
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   override lazy val app: Application = applicationBuilder()
@@ -38,7 +38,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
     "for a Create Subscription" - {
       "must return status as OK" in {
 
-        forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
+        forAll(arbitrary[RequestDetail]) { sub =>
           stubResponse(
             "/pillar2/subscription",
             OK
@@ -50,7 +50,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
       "must return status as BAD_REQUEST" in {
 
-        forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
+        forAll(arbitrary[RequestDetail]) { sub =>
           stubResponse(
             "/pillar2/subscription",
             BAD_REQUEST
@@ -63,7 +63,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
       "must return status as INTERNAL_SERVER_ERROR" in {
 
-        forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
+        forAll(arbitrary[RequestDetail]) { sub =>
           stubResponse(
             "/pillar2/subscription",
             INTERNAL_SERVER_ERROR

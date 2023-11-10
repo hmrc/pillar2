@@ -40,10 +40,13 @@ class SubscriptionController @Inject() (
     val subscriptionParameters: JsResult[SubscriptionRequestParameters] =
       request.body.validate[SubscriptionRequestParameters]
     subscriptionParameters.fold(
-      invalid = _ =>
+      invalid = error => {
+        logger.info(s"SubscriptionController - createSubscription called $error")
+
         Future.successful(
           BadRequest("Subcription parameter is invalid")
-        ),
+        )
+      },
       valid = subs =>
         for {
           userAnswer <- getUserAnswers(subs.id)

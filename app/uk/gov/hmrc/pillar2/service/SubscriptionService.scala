@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{CreateSubscriptionRequest, RequestDetail, SubscriptionRequest}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, RegistrationInfo}
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
@@ -65,20 +65,18 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                val subscriptionRequest = CreateSubscriptionRequest(
-                  createSubscriptionRequest = SubscriptionRequest(
-                    requestBody = RequestDetail(
-                      getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
-                      getAccountingPeriod(accountingPeriod),
-                      getUpeAddressDetails(subAddressId),
-                      primaryContactDetails,
-                      getSecondaryContactInformation(userAnswers),
-                      getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
-                    )
-                  )
+                val subscriptionRequest = RequestDetail(
+                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                  getAccountingPeriod(accountingPeriod),
+                  getUpeAddressDetails(subAddressId),
+                  primaryContactDetails,
+                  getSecondaryContactInformation(userAnswers),
+                  getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
                 )
+
                 sendSubmissionRequest(subscriptionRequest)
               }
+
             case (Some(false), Some(false)) =>
               for {
                 upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
@@ -90,18 +88,15 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                val subscriptionRequest = CreateSubscriptionRequest(
-                  createSubscriptionRequest = SubscriptionRequest(
-                    requestBody = RequestDetail(
-                      getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
-                      getAccountingPeriod(accountingPeriod),
-                      getUpeAddressDetails(subAddressId),
-                      primaryContactDetails,
-                      getSecondaryContactInformation(userAnswers),
-                      getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
-                    )
-                  )
+                val subscriptionRequest = RequestDetail(
+                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                  getAccountingPeriod(accountingPeriod),
+                  getUpeAddressDetails(subAddressId),
+                  primaryContactDetails,
+                  getSecondaryContactInformation(userAnswers),
+                  getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
                 )
+
                 sendSubmissionRequest(subscriptionRequest)
               }
             case (Some(true), Some(false)) =>
@@ -116,18 +111,15 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                val subscriptionRequest = CreateSubscriptionRequest(
-                  createSubscriptionRequest = SubscriptionRequest(
-                    requestBody = RequestDetail(
-                      getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
-                      getAccountingPeriod(accountingPeriod),
-                      getUpeAddressDetails(subAddressId),
-                      primaryContactDetails,
-                      getSecondaryContactInformation(userAnswers),
-                      getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
-                    )
-                  )
+                val subscriptionRequest = RequestDetail(
+                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                  getAccountingPeriod(accountingPeriod),
+                  getUpeAddressDetails(subAddressId),
+                  primaryContactDetails,
+                  getSecondaryContactInformation(userAnswers),
+                  getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
                 )
+
                 sendSubmissionRequest(subscriptionRequest)
               }
             case (Some(false), Some(true)) =>
@@ -142,18 +134,15 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                val subscriptionRequest = CreateSubscriptionRequest(
-                  createSubscriptionRequest = SubscriptionRequest(
-                    requestBody = RequestDetail(
-                      getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
-                      getAccountingPeriod(accountingPeriod),
-                      getUpeAddressDetails(subAddressId),
-                      primaryContactDetails,
-                      getSecondaryContactInformation(userAnswers),
-                      getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
-                    )
-                  )
+                val subscriptionRequest = RequestDetail(
+                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                  getAccountingPeriod(accountingPeriod),
+                  getUpeAddressDetails(subAddressId),
+                  primaryContactDetails,
+                  getSecondaryContactInformation(userAnswers),
+                  getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
                 )
+
                 sendSubmissionRequest(subscriptionRequest)
               }
           }
@@ -176,18 +165,15 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                val subscriptionRequest = CreateSubscriptionRequest(
-                  createSubscriptionRequest = SubscriptionRequest(
-                    requestBody = RequestDetail(
-                      getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
-                      getAccountingPeriod(accountingPeriod),
-                      getUpeAddressDetails(subAddressId),
-                      primaryContactDetails,
-                      getSecondaryContactInformation(userAnswers),
-                      None
-                    )
-                  )
+                val subscriptionRequest = RequestDetail(
+                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                  getAccountingPeriod(accountingPeriod),
+                  getUpeAddressDetails(subAddressId),
+                  primaryContactDetails,
+                  getSecondaryContactInformation(userAnswers),
+                  None
                 )
+
                 sendSubmissionRequest(subscriptionRequest)
               }
             case Some(false) =>
@@ -200,17 +186,13 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                val subscriptionRequest = CreateSubscriptionRequest(
-                  createSubscriptionRequest = SubscriptionRequest(
-                    requestBody = RequestDetail(
-                      getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
-                      getAccountingPeriod(accountingPeriod),
-                      getUpeAddressDetails(subAddressId),
-                      primaryContactDetails,
-                      getSecondaryContactInformation(userAnswers),
-                      None
-                    )
-                  )
+                val subscriptionRequest = RequestDetail(
+                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                  getAccountingPeriod(accountingPeriod),
+                  getUpeAddressDetails(subAddressId),
+                  primaryContactDetails,
+                  getSecondaryContactInformation(userAnswers),
+                  None
                 )
                 sendSubmissionRequest(subscriptionRequest)
               }
@@ -222,7 +204,7 @@ class SubscriptionService @Inject() (
     }
   }
 
-  private def sendSubmissionRequest(subscriptionRequest: CreateSubscriptionRequest)(implicit
+  private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(implicit
     hc:                                                  HeaderCarrier,
     ec:                                                  ExecutionContext
   ): Future[HttpResponse] =

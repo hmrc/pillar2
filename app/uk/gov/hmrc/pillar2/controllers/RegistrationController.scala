@@ -62,19 +62,22 @@ class RegistrationController @Inject() (
   private def handleResult(httpResponse: HttpResponse): Result =
     httpResponse.status match {
       case OK =>
-        logger.info(s"Received Response body - ${httpResponse.body}")
+        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         Ok(httpResponse.body)
       case NOT_FOUND => NotFound(httpResponse.body)
 
       case BAD_REQUEST =>
+        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         BadRequest(httpResponse.body)
 
       case FORBIDDEN =>
+        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         Forbidden(httpResponse.body)
 
       case _ =>
+        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         InternalServerError(httpResponse.body)
     }
@@ -86,8 +89,8 @@ class RegistrationController @Inject() (
         logger.error(
           s"Error with Regisration: ${value.errorDetail.sourceFaultDetail.map(_.detail.mkString)}"
         )
-      case _ =>
-        logger.error("Error with Registration but return is not a valid json")
+      case err =>
+        logger.error(s"Error with Registration but return is not a valid json - $err")
     }
   }
 
