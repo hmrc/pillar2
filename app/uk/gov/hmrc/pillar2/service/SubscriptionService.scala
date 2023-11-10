@@ -74,6 +74,7 @@ class SubscriptionService @Inject() (
 
                 sendSubmissionRequest(subscriptionRequest)
               }
+              
             case (Some(false), Some(false)) =>
               for {
                 upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
