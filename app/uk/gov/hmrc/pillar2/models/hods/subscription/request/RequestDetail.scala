@@ -30,15 +30,6 @@ case class RequestDetail(
 )
 
 object RequestDetail {
-  implicit val requestDetailFormats: OFormat[RequestDetail] =
+  implicit val format: OFormat[RequestDetail] =
     Json.format[RequestDetail]
-}
-
-case class SubscriptionRequest(
-  requestBody: RequestDetail
-)
-
-object SubscriptionRequest {
-  implicit val format: OFormat[SubscriptionRequest] =
-    Json.format[SubscriptionRequest]
 }
