@@ -64,7 +64,7 @@ class SubscriptionService @Inject() (
 
               } yield {
                 val subscriptionRequest = RequestDetail(
-                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
                   getUpeAddressDetails(subAddressId),
                   primaryContactDetails,
@@ -87,7 +87,7 @@ class SubscriptionService @Inject() (
 
               } yield {
                 val subscriptionRequest = RequestDetail(
-                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
                   getUpeAddressDetails(subAddressId),
                   primaryContactDetails,
@@ -110,7 +110,7 @@ class SubscriptionService @Inject() (
 
               } yield {
                 val subscriptionRequest = RequestDetail(
-                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
                   getUpeAddressDetails(subAddressId),
                   primaryContactDetails,
@@ -133,7 +133,7 @@ class SubscriptionService @Inject() (
 
               } yield {
                 val subscriptionRequest = RequestDetail(
-                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
                   getUpeAddressDetails(subAddressId),
                   primaryContactDetails,
@@ -164,7 +164,7 @@ class SubscriptionService @Inject() (
 
               } yield {
                 val subscriptionRequest = RequestDetail(
-                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, nominateFm, upeGrsResponse),
+                  getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
                   getUpeAddressDetails(subAddressId),
                   primaryContactDetails,
@@ -185,7 +185,7 @@ class SubscriptionService @Inject() (
 
               } yield {
                 val subscriptionRequest = RequestDetail(
-                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, nominateFm, upeNameRegistration),
+                  getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
                   getUpeAddressDetails(subAddressId),
                   primaryContactDetails,
