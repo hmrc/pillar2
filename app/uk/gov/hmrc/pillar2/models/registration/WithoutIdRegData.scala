@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models
+package uk.gov.hmrc.pillar2.models.registration
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.UKAddress
 
-import java.time.LocalDate
-
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  duetDate:  Option[LocalDate] = None
+case class WithoutIdRegData(
+  upeNameRegistration:   String,
+  upeRegisteredAddress:  UKAddress,
+  upeContactName:        String,
+  emailAddress:          String,
+  contactUpeByTelephone: Boolean,
+  telephoneNumber:       Option[String] = None
 )
 
-object AccountingPeriod {
-  implicit val format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object WithoutIdRegData {
+  implicit val format: OFormat[WithoutIdRegData] = Json.format[WithoutIdRegData]
 }

@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models
+package uk.gov.hmrc.pillar2.models.identifiers
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, Settable}
 
-import java.time.LocalDate
-
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  duetDate:  Option[LocalDate] = None
-)
-
-object AccountingPeriod {
-  implicit val format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+trait QuestionPage[A] extends Gettable[A] with Settable[A] {
+  def path: JsPath
 }

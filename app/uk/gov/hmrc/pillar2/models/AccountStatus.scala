@@ -18,14 +18,10 @@ package uk.gov.hmrc.pillar2.models
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
-
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  duetDate:  Option[LocalDate] = None
+final case class AccountStatus(
+  inactive: Boolean
 )
 
-object AccountingPeriod {
-  implicit val format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object AccountStatus {
+  implicit val format: OFormat[AccountStatus] = Json.format[AccountStatus]
 }

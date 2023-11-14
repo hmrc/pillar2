@@ -16,14 +16,22 @@ This can be started by running:
 
     Run 'sbt run' from within the project and it will run at port 10051
 
+## To check code coverage:
+
+    sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport
+
 ## Integration and unit tests
 
 To run the unit tests:
 
     Run 'sbt test' from within the project
 
-### License
+To use testonly route locally .
 
+    sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051'
+
+
+### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
 ### License

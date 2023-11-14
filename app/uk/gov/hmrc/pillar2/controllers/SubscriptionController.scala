@@ -17,11 +17,11 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
-import play.api.libs.json.{JsObject, JsResult, JsValue, Json}
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess, JsValue, Json}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
+import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
@@ -59,5 +59,34 @@ class SubscriptionController @Inject() (
     repository.get(id).map { userAnswer =>
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
     }
+
+  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+    logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
+
+    val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
+
+    paramsJson.validate[ReadSubscriptionRequestParameters] match {
+      case JsSuccess(validParams, _) =>
+        logger.info(s"Calling subscriptionService with valid parameters: $validParams")
+        try subscriptionService
+          .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
+          .map { subscriptionResponse =>
+            logger.info(s"Received response: $subscriptionResponse")
+            Ok(Json.toJson(subscriptionResponse))
+          }
+          .recover { case e: Exception =>
+            logger.error("Error retrieving subscription information", e)
+            InternalServerError(Json.obj("error" -> "Error retrieving subscription information"))
+          } catch {
+          case e: Exception =>
+            logger.error("Exception thrown before Future was created", e)
+            Future.successful(InternalServerError(Json.obj("error" -> "Exception thrown before Future was created")))
+        }
+
+      case JsError(errors) =>
+        logger.warn(s"Validation failed for parameters: $paramsJson with errors: $errors")
+        Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
+    }
+  }
 
 }
