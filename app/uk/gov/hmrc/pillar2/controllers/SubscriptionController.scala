@@ -19,11 +19,13 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logger
 import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess, JsValue, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -83,6 +85,29 @@ class SubscriptionController @Inject() (
       case JsError(errors) =>
         logger.warn(s"Validation failed for parameters: $paramsJson with errors: $errors")
         Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
+    }
+  }
+
+  def amendSubscription: Action[AnyContent] = authenticate.async { implicit request =>
+    request.body.asJson match {
+      case Some(json) =>
+        implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+        subscriptionService
+          .extractAndProcess(json)
+          .flatMap { response =>
+            response.status match {
+              case 200 => Future.successful(Ok(response.body))
+              case _   => Future.successful(BadRequest(response.body))
+            }
+          }
+          .recover { case ex: Exception =>
+            logger.warn("An error occurred: " + ex.getMessage)
+            InternalServerError("An error occurred: " + ex.getMessage)
+          }
+
+      case None =>
+        logger.warn("Missing JSON request body")
+        Future.successful(BadRequest("Missing JSON request body"))
     }
   }
 

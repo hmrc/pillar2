@@ -16,19 +16,19 @@
 
 package uk.gov.hmrc.pillar2.models
 
+import play.api.libs.json.Writes._
 import play.api.libs.json._
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.pillar2.models.queries.{Gettable, Settable}
 
 import java.time.Instant
 import scala.util.{Failure, Success, Try}
-
 final case class UserAnswers(
   id:          String,
   data:        JsObject = Json.obj(),
   lastUpdated: Instant = Instant.now
 ) {
-  import play.api.libs.json.Writes._
+
   def get[A](page: Gettable[A])(implicit rds: Reads[A]): Option[A] =
     Reads.optionNoError(Reads.at(page.path)).reads(data).getOrElse(None)
 
@@ -41,25 +41,6 @@ final case class UserAnswers(
 
     updatedData.map(d => copy(data = d))
   }
-
-  // Approach 2: Debug method for setting simple String values
-  def debugSetString(page: Settable[String], value: String): Try[UserAnswers] =
-    set(page, value)
-
-//  def set[A](page: Settable[A], value: A)(implicit writes: Writes[A]): Try[UserAnswers] = {
-//
-//    val updatedData = data.setObject(page.path, Json.toJson(value)) match {
-//      case JsSuccess(jsValue, _) =>
-//        Success(jsValue)
-//      case JsError(errors) =>
-//        Failure(JsResultException(errors))
-//    }
-//
-//    updatedData.flatMap { d =>
-//      val updatedAnswers = copy(data = d)
-//      page.cleanup(Some(value), updatedAnswers)
-//    }
-//  }
 
   def remove[A](page: Settable[A]): Try[UserAnswers] = {
 

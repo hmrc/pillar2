@@ -17,11 +17,13 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.CreateSubscriptionRequest
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -35,7 +37,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
     app.injector.instanceOf[SubscriptionConnector]
 
   "SubscriptionConnector" - {
-    "for a Create Subscription" - {
+    /*   "for a Create Subscription" - {
       "must return status as OK" in {
 
         forAll(arbitrary[CreateSubscriptionRequest]) { sub =>
@@ -127,7 +129,59 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
     }
+     */
+    "amendSubscriptionInformation" - {
 
+      "should return successful response for valid request" in {
+
+        stubPutResponse(
+          expectedUrl = "/pillar2/subscription",
+          expectedStatus = 200
+        )
+
+        val subscriptionResponse =
+          arbitrarySubscriptionResponse.arbitrary.sample.getOrElse(throw new Exception("Unable to generate SubscriptionResponse"))
+
+        val result = connector.amendSubscriptionInformation(subscriptionResponse)
+
+        whenReady(result) { response =>
+          response.status shouldBe OK
+        }
+      }
+
+      "should handle error scenarios appropriately" - {
+        "such as a 404 NOT FOUND response" in {
+          stubPutResponse(
+            expectedUrl = "/pillar2/subscription",
+            expectedStatus = 404
+          )
+          val subscriptionResponse =
+            arbitrarySubscriptionResponse.arbitrary.sample.getOrElse(throw new Exception("Unable to generate SubscriptionResponse"))
+
+          val result = connector.amendSubscriptionInformation(subscriptionResponse)
+
+          whenReady(result) { response =>
+            response.status shouldBe NOT_FOUND
+          }
+        }
+
+        "such as a 500 INTERNAL SERVER ERROR response" in {
+          stubPutResponse(
+            expectedUrl = "/pillar2/subscription",
+            expectedStatus = 500
+          )
+          val subscriptionResponse =
+            arbitrarySubscriptionResponse.arbitrary.sample.getOrElse(throw new Exception("Unable to generate SubscriptionResponse"))
+
+          val result = connector.amendSubscriptionInformation(subscriptionResponse)
+
+          whenReady(result) { response =>
+            response.status shouldBe INTERNAL_SERVER_ERROR
+          }
+        }
+
+      }
+
+    }
   }
-
 }

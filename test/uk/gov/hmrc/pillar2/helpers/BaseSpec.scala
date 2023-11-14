@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.helpers
 
 import akka.actor.ActorSystem
 import akka.stream.Materializer
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, post, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, post, put, urlEqualTo}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
@@ -100,6 +100,20 @@ trait BaseSpec
         .willReturn(
           aResponse()
             .withStatus(expectedStatus)
+        )
+    )
+
+  protected def stubPutResponse(
+    expectedUrl:    String,
+    expectedStatus: Int,
+    responseBody:   String = ""
+  ): StubMapping =
+    server.stubFor(
+      put(urlEqualTo(expectedUrl))
+        .willReturn(
+          aResponse()
+            .withStatus(expectedStatus)
+            .withBody(responseBody)
         )
     )
 

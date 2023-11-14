@@ -36,7 +36,21 @@ import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.json.{Format, JsError, JsSuccess, JsValue, Json, Reads}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import java.time.LocalDate
+import play.api.libs.json.{JsError, JsSuccess, JsValue}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+
+import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -507,82 +521,76 @@ class SubscriptionService @Inject() (
 
   }
 
-  //  def extractAndProcess(json: JsValue): Future[HttpResponse] =
   def extractAndProcess(json: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     json.validate[UserAnswers] match {
       case JsSuccess(userAnswers, _) =>
-        val extractedData = for {
-          domesticOnly         <- userAnswers.get[Boolean](upeRegisteredInUKId)
-          upeNameRegistration  <- userAnswers.get[String](upeNameRegistrationId)
-          filingMember         <- userAnswers.get[Boolean](NominateFilingMemberId)
-          primaryContactName   <- userAnswers.get[String](subPrimaryContactNameId)
-          primaryEmail         <- userAnswers.get[String](subPrimaryEmailId)
-          secondaryContactName <- userAnswers.get[String](subSecondaryContactNameId)
-          regInformation       <- userAnswers.get[RegistrationInfo](upeRegInformationId)
-          registeredAddress    <- userAnswers.get[UKAddress](upeRegisteredAddressId)
-          safeId               <- userAnswers.get[String](FmSafeId)
-          filingMemberDetails  <- userAnswers.get[FilingMemberDetails](subFilingMemberDetailsId)
-          accountingPeriod     <- userAnswers.get[AccountingPeriod](subAccountingPeriodId)
-          accountStatus        <- userAnswers.get[AccountStatus](subAccountStatusId)
-          secondaryEmail       <- userAnswers.get[String](subSecondaryEmailId)
-          secondaryPhone       <- userAnswers.get[String](subSecondaryCapturePhoneId)
-        } yield SubscriptionResponse(
-          success = SubscriptionSuccess(
-            plrReference = Some("SamplePlrReference"),
-            processingDate = Some(LocalDate.now()),
-            formBundleNumber = None,
-            upeDetails = UpeDetails(
-              plrReference = None,
-              safeId = Some(safeId),
-              customerIdentification1 = Some(regInformation.utr),
-              customerIdentification2 = Some(regInformation.crn),
-              organisationName = upeNameRegistration,
-              registrationDate = regInformation.registrationDate.getOrElse(LocalDate.now),
-              domesticOnly = domesticOnly,
-              filingMember = filingMember
-            ),
-            upeCorrespAddressDetails = UpeCorrespAddressDetails(
-              addressLine1 = registeredAddress.addressLine1,
-              addressLine2 = registeredAddress.addressLine2,
-              addressLine3 = Some(registeredAddress.addressLine3),
-              addressLine4 = registeredAddress.addressLine4,
-              postCode = Some(registeredAddress.postalCode),
-              countryCode = registeredAddress.countryCode
-            ),
-            primaryContactDetails = PrimaryContactDetails(
-              name = primaryContactName,
-              telepphone = None,
-              emailAddress = primaryEmail
-            ),
-            secondaryContactDetails = SecondaryContactDetails(
-              name = secondaryContactName,
-              telepphone = Some(secondaryPhone),
-              emailAddress = secondaryEmail
-            ),
-            filingMemberDetails = filingMemberDetails,
-            accountingPeriod = accountingPeriod,
-            accountStatus = accountStatus
-          )
-        )
+        val subscriptionResponse = constructSubscriptionResponse(userAnswers)
 
-        extractedData match {
-          case Some(subscriptionResponse) =>
-            subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
-              if (response.status == 200) {
-                repository.upsert(userAnswers.id, userAnswers.data).map { _ =>
-                  logger.info(s"Upserted user answers for id: ${userAnswers.id}")
-                  HttpResponse(200, "Data processed and upserted successfully")
-                }
-              } else {
-                Future.successful(HttpResponse(response.status, "Failed to amend subscription information"))
-              }
-            }
+        subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
+          response.status match {
+            case 200 =>
+              extractSubscriptionData(userAnswers.id, subscriptionResponse.success).flatMap(handleJsObjectResponse)
 
-          case None =>
-            Future.successful(HttpResponse(400, "Failed to extract data"))
+            case 409 =>
+              Future.successful(HttpResponse(409, "Conflict error"))
+
+            case 422 =>
+              Future.successful(HttpResponse(422, "Unprocessable entity error"))
+
+            case 500 =>
+              Future.successful(HttpResponse(500, "Internal server error"))
+
+            case 503 =>
+              Future.successful(HttpResponse(503, "Service unavailable error"))
+
+            case _ =>
+              Future.successful(HttpResponse(response.status, "Failed to amend subscription information"))
+          }
         }
-
-      case _ =>
+      case JsError(errors) =>
+        errors.foreach { case (path, validationErrors) =>
+          logger.error(s"Validation error at path $path: ${validationErrors.mkString(", ")}")
+        }
         Future.successful(HttpResponse(400, "Invalid JSON format"))
     }
+
+  private def handleJsObjectResponse(jsValue: JsValue)(implicit ec: ExecutionContext): Future[HttpResponse] =
+    jsValue match {
+      case obj: JsObject =>
+        obj.validate[UserAnswers] match {
+          case JsSuccess(processedUserAnswers, _) =>
+            repository.upsert(processedUserAnswers.id, processedUserAnswers.data).map { _ =>
+              logger.info(s"Upserted user answers for id: ${processedUserAnswers.id}")
+              HttpResponse(200, "Data processed and upserted successfully")
+            }
+          case JsError(upsertErrors) =>
+            Future.successful(HttpResponse(400, "Failed to process subscription data"))
+        }
+      case _ =>
+        Future.successful(HttpResponse(400, "Invalid data format"))
+    }
+
+  def constructSubscriptionResponse(userAnswers: UserAnswers): SubscriptionResponse = {
+    val upeDetails               = userAnswers.data.\("upeDetails").as[UpeDetails]
+    val accountingPeriod         = userAnswers.data.\("accountingPeriod").as[AccountingPeriod]
+    val upeCorrespAddressDetails = userAnswers.data.\("upeCorrespAddressDetails").as[UpeCorrespAddressDetails]
+    val primaryContactDetails    = userAnswers.data.\("primaryContactDetails").as[PrimaryContactDetails]
+    val secondaryContactDetails  = userAnswers.data.\("secondaryContactDetails").as[SecondaryContactDetails]
+    val filingMemberDetails      = userAnswers.data.\("filingMemberDetails").as[FilingMemberDetails]
+
+    SubscriptionResponse(
+      SubscriptionSuccess(
+        plrReference = Some(upeDetails.plrReference.getOrElse("")),
+        processingDate = Some(LocalDate.now()),
+        formBundleNumber = None,
+        upeDetails = upeDetails,
+        upeCorrespAddressDetails = upeCorrespAddressDetails,
+        primaryContactDetails = primaryContactDetails,
+        secondaryContactDetails = secondaryContactDetails,
+        filingMemberDetails = filingMemberDetails,
+        accountingPeriod = accountingPeriod,
+        accountStatus = AccountStatus(inactive = false)
+      )
+    )
+  }
 }

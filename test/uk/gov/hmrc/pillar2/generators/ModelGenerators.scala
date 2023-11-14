@@ -30,6 +30,8 @@ import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress
 import java.time.{Instant, LocalDate}
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 trait ModelGenerators {
   self: Generators =>
 
@@ -625,6 +627,7 @@ trait ModelGenerators {
       registrationDate        <- arbitrary[LocalDate]
       domesticOnly            <- arbitrary[Boolean]
       filingMember            <- arbitrary[Boolean]
+      plrReference            <- arbitrary[String]
     } yield UpeDetails(
       safeId = Some(safeId),
       customerIdentification1 = customerIdentification1,
@@ -632,7 +635,8 @@ trait ModelGenerators {
       organisationName = organisationName,
       registrationDate = registrationDate,
       domesticOnly = domesticOnly,
-      filingMember = filingMember
+      filingMember = filingMember,
+      plrReference = Some(plrReference)
     )
   }
 
@@ -683,11 +687,13 @@ trait ModelGenerators {
       customerIdentification1 <- Gen.option(arbitrary[String])
       customerIdentification2 <- Gen.option(arbitrary[String])
       organisationName        <- arbitrary[String]
+      addNewFilingMember      <- arbitrary[Boolean]
     } yield FilingMemberDetails(
       safeId = safeId,
       customerIdentification1 = customerIdentification1,
       customerIdentification2 = customerIdentification2,
-      organisationName = organisationName
+      organisationName = organisationName,
+      addNewFilingMember = Some(addNewFilingMember)
     )
   }
 
@@ -743,9 +749,9 @@ trait ModelGenerators {
       accountingPeriod         <- arbitrary[AccountingPeriod]
       accountStatus            <- arbitrary[AccountStatus]
     } yield SubscriptionSuccess(
-      plrReference,
-      processingDate,
-      formBundleNumber,
+      Some(plrReference),
+      Some(processingDate),
+      Some(formBundleNumber),
       upeDetails,
       upeCorrespAddressDetails,
       primaryContactDetails,
@@ -756,8 +762,9 @@ trait ModelGenerators {
     )
   }
 
-  import org.scalacheck.{Arbitrary, Gen}
-  import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
+//  implicit val arbitrarySubscriptionResponse: Arbitrary[SubscriptionResponse] = Arbitrary {
+//    arbitrarySubscriptionSuccess.arbitrary.map(SubscriptionResponse(_))
+//  }
 
   implicit val readSubscriptionRequestParametersArbitrary: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary {
     for {
