@@ -31,26 +31,16 @@ import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
+import scala.concurrent.Future
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
+import uk.gov.hmrc.pillar2.models._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.UserAnswers.format
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import scala.concurrent.{ExecutionContext, Future}
-import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
-
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import scala.concurrent.{ExecutionContext, Future}
-import play.api.libs.json.{Format, JsError, JsSuccess, JsValue, Json, Reads}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
-import java.time.LocalDate
-import play.api.libs.json.{JsError, JsSuccess, JsValue}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
-
-import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -456,7 +446,7 @@ class SubscriptionService @Inject() (
     Future.successful(Json.obj("error" -> errorMessage))
   }
 
-  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
+  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess, opType: Int = 0): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
     val registrationInfo = RegistrationInfo(
@@ -484,42 +474,253 @@ class SubscriptionService @Inject() (
       organisationName = sub.filingMemberDetails.organisationName
     )
 
-    val accountingPeriod = AccountingPeriod(
-      startDate = sub.accountingPeriod.startDate,
-      endDate = sub.accountingPeriod.endDate,
-      duetDate = sub.accountingPeriod.duetDate
-    )
-
-    val accountStatusOpt: Option[AccountStatus] = Some(sub.accountStatus)
-    val defaultAccountStatus = AccountStatus(inactive = true)
-    val result = for {
-
-      u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
-      u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
-      u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
-      u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
-      u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
-      u6  <- u5.set(upeRegInformationId, registrationInfo)
-      u7  <- u6.set(upeRegisteredAddressId, ukAddress)
-      u8  <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
-      u9  <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
-      u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
-      u11 <- u10.set(subAccountStatusId, accountStatusOpt.fold(defaultAccountStatus)(identity))
-      u12 <- u11.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
-      telephone: Option[String] = sub.secondaryContactDetails.telepphone
-      telephoneStr = telephone.getOrElse("")
-      u13 <- u12.set(subSecondaryCapturePhoneId, telephoneStr)
-    } yield u13
-
-    result match {
-      case Success(userAnswers) =>
-        Future.successful(Json.toJson(userAnswers))
-      case Failure(exception) =>
-        logger.error("An error occurred while extracting subscription data", exception)
-        Future.successful(Json.obj("error" -> exception.getMessage))
+    val accountingPeriod = if (opType == 0) {
+      AccountingPeriod(sub.accountingPeriod.startDate, sub.accountingPeriod.endDate, sub.accountingPeriod.duetDate)
+    } else {
+      AccountingPeriod(sub.accountingPeriod.startDate, sub.accountingPeriod.endDate)
     }
 
+    val accountStatusOpt: Option[AccountStatus] = if (opType == 0) Some(sub.accountStatus) else None
+
+    val result = for {
+      u1 <- Future.fromTry(userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk))
+      u2 <- Future.fromTry(u1.set(upeNameRegistrationId, sub.upeDetails.organisationName))
+      u3 <- Future.fromTry(u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name))
+      u4 <- Future.fromTry(u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress))
+      u5 <- Future.fromTry(u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name))
+      u6 <- Future.fromTry(u5.set(upeRegInformationId, registrationInfo))
+      u7 <- Future.fromTry(u6.set(upeRegisteredAddressId, ukAddress))
+      u8 <- Future.fromTry(u7.set(FmSafeId, sub.filingMemberDetails.safeId))
+      u9 <- Future.fromTry(u8.set(subFilingMemberDetailsId, filingMemberDetails))
+      u10 <- accountStatusOpt match {
+               case Some(status) => Future.fromTry(u9.set(subAccountStatusId, status))
+               case None         => Future.successful(u9)
+             }
+      telephoneStr = sub.secondaryContactDetails.telepphone.getOrElse("")
+      finalUserAnswers <- Future.fromTry(u10.set(subSecondaryCapturePhoneId, telephoneStr))
+    } yield finalUserAnswers
+
+    result
+      .map(Json.toJson(_))
+      .recover { case exception =>
+        logger.error("An error occurred while extracting subscription data", exception)
+        Json.obj("error" -> exception.getMessage)
+      }
   }
+
+  //      val result = for {
+//      u1 <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
+//      u2 <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
+//      u3 <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
+//      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
+//      u5 <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
+//      u6 <- u5.set(upeRegInformationId, registrationInfo)
+//      u7 <- u6.set(upeRegisteredAddressId, ukAddress)
+//      u8 <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
+//      u9 <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
+//        .flatMap { updatedUA =>
+//          accountStatusOpt match {
+//            case Some(status) => updatedUA.set(subAccountStatusId, status)
+//            case None => Success(updatedUA)
+//          }
+//        }
+//      telephoneStr = sub.secondaryContactDetails.telepphone.getOrElse("")
+//      finalUserAnswers <- Future.fromTry(u10.set(subSecondaryCapturePhoneId, telephoneStr))
+////      telephoneStr = sub.secondaryContactDetails.telepphone.getOrElse("")
+////      finalUserAnswers <- userAnswers.set(subSecondaryCapturePhoneId, telephoneStr)
+//    } yield finalUserAnswers
+//
+//    result match {
+////      case Success(userAnswers) => Future.successful(Json.toJson(userAnswers))
+//      case Success(userAnswers) => Future.successful(Json.toJson(userAnswers)(UserAnswers.format))
+//      case Failure(exception) =>
+//        logger.error("An error occurred while extracting subscription data", exception)
+//        Future.successful(Json.obj("error" -> exception.getMessage))
+//    }
+//  }
+
+  //  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess, opType: Int = 0): Future[JsValue] = {
+//    val userAnswers = UserAnswers(id, Json.obj())
+//
+//    val registrationInfo = RegistrationInfo(
+//      crn = sub.upeDetails.customerIdentification1.getOrElse(" "),
+//      utr = sub.upeDetails.customerIdentification2.getOrElse(" "),
+//      safeId = sub.upeDetails.safeId.getOrElse(""),
+//      registrationDate = Option(sub.upeDetails.registrationDate),
+//      filingMember = Option(sub.upeDetails.filingMember)
+//    )
+//
+//    val ukAddress = UKAddress(
+//      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+//      addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
+//      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
+//      addressLine4 = sub.upeCorrespAddressDetails.addressLine4,
+//      postalCode = sub.upeCorrespAddressDetails.postCode.getOrElse(""),
+//      countryCode = sub.upeCorrespAddressDetails.countryCode
+//    )
+//
+//    val filingMemberDetails = FilingMemberDetails(
+//      addNewFilingMember = None,
+//      safeId = sub.filingMemberDetails.safeId,
+//      customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
+//      customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
+//      organisationName = sub.filingMemberDetails.organisationName
+//    )
+//
+//    val accountStatusOpt: Option[AccountStatus] = if (opType == 0) {
+//      Option(sub.accountStatus)
+//    } else {
+//      None
+//    }
+//
+//    val accountingPeriod = opType match {
+//      case 0 => AccountingPeriod(
+//        startDate = sub.accountingPeriod.startDate,
+//        endDate = sub.accountingPeriod.endDate,
+//        duetDate = sub.accountingPeriod.duetDate
+//      )
+//      case 1 => AccountingPeriod(
+//        startDate = sub.accountingPeriod.startDate,
+//        endDate = sub.accountingPeriod.endDate
+//      )
+//      case _ => throw new IllegalArgumentException("Invalid operation type")
+//    }
+//
+//    val result = for {
+//      u1 <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
+//      u2 <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
+//      u3 <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
+//      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
+//      u5 <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
+//      u6 <- u5.set(upeRegInformationId, registrationInfo)
+//      u7 <- u6.set(upeRegisteredAddressId, ukAddress)
+//      u8 <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
+//      u9 <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
+//      u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
+//      userAnswers <- accountStatusOpt match {
+//        case Some(status) => u10.set(subAccountStatusId, status)
+//        case None => Future.successful(u10)
+//      }
+//      telephoneStr = sub.secondaryContactDetails.telepphone.getOrElse("")
+//      finalUserAnswers <- userAnswers.set(subSecondaryCapturePhoneId, telephoneStr)
+//    } yield finalUserAnswers
+//
+////    result match {
+////      case Success(ua) => Future.successful(Json.toJson(ua)(writes)) // Use the implicit Writes instance
+////      case Failure(exception) =>
+////        logger.error("An error occurred while extracting subscription data", exception)
+////        Future.successful(Json.obj("error" -> exception.getMessage))
+////    }
+//
+//    result match {
+//      case Success(ua) => Future.successful(Json.toJson(ua))
+//      case Failure(exception) =>
+//        logger.error("An error occurred while extracting subscription data", exception)
+//        Future.successful(Json.obj("error" -> exception.getMessage))
+//    }
+//  }
+
+//  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess, opType:Int=0): Future[JsValue] = {
+//    val userAnswers = UserAnswers(id, Json.obj())
+//
+//    val registrationInfo = RegistrationInfo(
+//      crn = sub.upeDetails.customerIdentification1.getOrElse(" "),
+//      utr = sub.upeDetails.customerIdentification2.getOrElse(" "),
+//      safeId = sub.upeDetails.safeId.getOrElse(""),
+//      registrationDate = Option(sub.upeDetails.registrationDate),
+//      filingMember = Option(sub.upeDetails.filingMember)
+//    )
+//
+//    val ukAddress = UKAddress(
+//      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+//      addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
+//      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
+//      addressLine4 = sub.upeCorrespAddressDetails.addressLine4,
+//      postalCode = sub.upeCorrespAddressDetails.postCode.getOrElse(""),
+//      countryCode = sub.upeCorrespAddressDetails.countryCode
+//    )
+//
+//    val filingMemberDetails = FilingMemberDetails(
+//      addNewFilingMember = None,
+//      safeId = sub.filingMemberDetails.safeId,
+//      customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
+//      customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
+//      organisationName = sub.filingMemberDetails.organisationName
+//    )
+//
+//    val accountStatusOpt: Option[AccountStatus] = sub.accountStatus match {
+//      case Some(status) if opType == 0 => Some(status)
+//      case _ => None
+//    }
+//
+//    val accountingPeriod = opType match {
+//      case 0 => AccountingPeriod(
+//        startDate = sub.accountingPeriod.startDate,
+//        endDate = sub.accountingPeriod.endDate,
+//        duetDate = sub.accountingPeriod.duetDate
+//      )
+//      case 1 => AccountingPeriod(
+//        startDate = sub.accountingPeriod.startDate,
+//        endDate = sub.accountingPeriod.endDate
+//      )
+//      case _ => throw new IllegalArgumentException("Invalid operation type")
+//    }
+//
+////    val accountingPeriod = AccountingPeriod(
+////      startDate = sub.accountingPeriod.startDate,
+////      endDate = sub.accountingPeriod.endDate,
+////      duetDate = sub.accountingPeriod.duetDate
+////    )
+//
+//    val accountStatusOpt: Option[AccountStatus] = Some(sub.accountStatus)
+//    val defaultAccountStatus = AccountStatus(inactive = true)
+//    val result = for {
+//
+//      u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
+//      u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
+//      u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
+//      u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
+//      u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
+//      u6  <- u5.set(upeRegInformationId, registrationInfo)
+//      u7  <- u6.set(upeRegisteredAddressId, ukAddress)
+//      u8  <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
+//      u9  <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
+//
+//      userAnswers <- if (opType == 0) {
+//        for {
+//          u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
+//          u11 <- accountStatusOpt.fold(Future.successful(u10))(status => u10.set(subAccountStatusId, status))
+//          telephone = sub.secondaryContactDetails.telepphone
+//          telephoneStr = telephone.getOrElse("")
+//          u12 <- u11.set(subSecondaryCapturePhoneId, telephoneStr)
+//        } yield u12
+//      } else {
+//        for {
+//          u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
+//          telephone = sub.secondaryContactDetails.telepphone
+//          telephoneStr = telephone.getOrElse("")
+//          u11 <- u10.set(subSecondaryCapturePhoneId, telephoneStr)
+//        } yield u11
+//      }
+//
+//
+////      u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
+////      u11 <- u10.set(subAccountStatusId, accountStatusOpt.fold(defaultAccountStatus)(identity))
+////      u12 <- u11.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+////      telephone: Option[String] = sub.secondaryContactDetails.telepphone
+////      telephoneStr = telephone.getOrElse("")
+////      u13 <- u12.set(subSecondaryCapturePhoneId, telephoneStr)
+//    } yield userAnswers
+//
+//    result match {
+//      case Success(userAnswers) =>
+//        Future.successful(Json.toJson(userAnswers))
+//      case Failure(exception) =>
+//        logger.error("An error occurred while extracting subscription data", exception)
+//        Future.successful(Json.obj("error" -> exception.getMessage))
+//    }
+//
+//  }
 
   def extractAndProcess(json: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     json.validate[UserAnswers] match {
@@ -529,7 +730,7 @@ class SubscriptionService @Inject() (
         subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
           response.status match {
             case 200 =>
-              extractSubscriptionData(userAnswers.id, subscriptionResponse.success).flatMap(handleJsObjectResponse)
+              extractSubscriptionData(userAnswers.id, subscriptionResponse.success, 1).flatMap(handleJsObjectResponse)
 
             case 409 =>
               Future.successful(HttpResponse(409, "Conflict error"))

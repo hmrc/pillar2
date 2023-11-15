@@ -16,22 +16,19 @@
 
 package uk.gov.hmrc.pillar2.services
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalacheck.Arbitrary.arbitrary
-import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import play.api.libs.json.JsObject
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
-import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.service.SubscriptionService
-
-import scala.concurrent.{ExecutionContext, Future}
+import play.api.libs.json.Json
+import uk.gov.hmrc.pillar2.models._
+import java.time.Instant
+import scala.concurrent.Future
 class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
     val service =
@@ -169,95 +166,180 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
    */
 
   "extractAndProcess" - {
+//    "process successfully for valid JSON" in new Setup {
+//
+//      import uk.gov.hmrc.pillar2.models._
+//      import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+//      import java.time.LocalDate
+//
+//      // Generate instances of the nested classes
+//      val upeDetails = UpeDetails(
+//        plrReference = Some("PLR12345"),
+//        safeId = Some("SAFE123"),
+//        customerIdentification1 = Some("ID1"),
+//        customerIdentification2 = Some("ID2"),
+//        organisationName = "Test Org",
+//        registrationDate = LocalDate.of(2023, 4, 1),
+//        domesticOnly = false,
+//        filingMember = true
+//      )
+//
+//      val upeCorrespAddressDetails = UpeCorrespAddressDetails(
+//        addressLine1 = "123 Test Street",
+//        addressLine2 = Some("Suite 100"),
+//        addressLine3 = Some("Test Area"),
+//        addressLine4 = Some("Test City"),
+//        postCode = Some("TST 123"),
+//        countryCode = "GB"
+//      )
+//
+//      val primaryContactDetails = PrimaryContactDetails(
+//        name = "John Doe",
+//        telepphone = Some("1234567890"),
+//        emailAddress = "john.doe@test.com"
+//      )
+//
+//      val secondaryContactDetails = SecondaryContactDetails(
+//        name = "Jane Doe",
+//        telepphone = Some("0987654321"),
+//        emailAddress = "jane.doe@test.com"
+//      )
+//
+//      val filingMemberDetails = FilingMemberDetails(
+//        addNewFilingMember = Some(true),
+//        safeId = "FM123",
+//        customerIdentification1 = Some("FMID1"),
+//        customerIdentification2 = Some("FMID2"),
+//        organisationName = "Filing Member Org"
+//      )
+//
+//      val accountingPeriod = AccountingPeriod(
+//        startDate = LocalDate.of(2023, 1, 1),
+//        endDate = LocalDate.of(2023, 12, 31),
+//        duetDate = Some(LocalDate.of(2023, 6, 30))
+//      )
+//
+//      val accountStatus = AccountStatus(
+//        inactive = false
+//      )
+//
+//      // Create the SubscriptionResponse
+//      val subscriptionResponse = SubscriptionResponse(
+//        success = SubscriptionSuccess(
+//          plrReference = Some("PLR12345"),
+//          processingDate = Some(LocalDate.now()),
+//          formBundleNumber = Some("FB12345"),
+//          upeDetails = upeDetails,
+//          upeCorrespAddressDetails = upeCorrespAddressDetails,
+//          primaryContactDetails = primaryContactDetails,
+//          secondaryContactDetails = secondaryContactDetails,
+//          filingMemberDetails = filingMemberDetails,
+//          accountingPeriod = accountingPeriod,
+//          accountStatus = accountStatus
+//        )
+//      )
+//
+//      // Convert to JSON (if needed)
+//      val subscriptionResponseJson = Json.toJson(subscriptionResponse)
+//
+//      stubPutResponse(
+//        expectedUrl = "/pillar2/subscription",
+//        expectedStatus = 200
+//      )
+//
+//      when(
+//        mockSubscriptionConnector
+//          .amendSubscriptionInformation(any())(any(), any())
+//      ).thenReturn(
+//        Future.successful(
+//          HttpResponse.apply(OK, "Success")
+//        )
+//      )
+//
+////      val subscriptionResponse =
+////        arbitrarySubscriptionResponse.arbitrary.sample.getOrElse(throw new Exception("Unable to generate SubscriptionResponse"))
+////      val subscriptionResponseJson = Json.toJson(subscriptionResponse)
+////      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+////        .thenReturn(Future.successful(HttpResponse(200, "")))
+////
+//      whenReady(service.extractAndProcess(subscriptionResponseJson)) { result =>
+//        result.status shouldBe 200
+//      }
+//    }
+
     "process successfully for valid JSON" in new Setup {
-
-      import uk.gov.hmrc.pillar2.models._
-      import uk.gov.hmrc.pillar2.models.hods.subscription.common._
-      import java.time.LocalDate
-
-      // Generate instances of the nested classes
-      val upeDetails = UpeDetails(
-        plrReference = Some("PLR12345"),
-        safeId = Some("SAFE123"),
-        customerIdentification1 = Some("ID1"),
-        customerIdentification2 = Some("ID2"),
-        organisationName = "Test Org",
-        registrationDate = LocalDate.of(2023, 4, 1),
-        domesticOnly = false,
-        filingMember = true
+      // Create UserAnswers from the provided JSON
+      val userAnswersJsonString =
+        """
+          {
+            "_id": "23",
+            "data": {
+              "upeDetails": {
+                "plrReference": "XMPLR0012345678",
+                "customerIdentification1": "SA7743248",
+                "customerIdentification2": "1234567890",
+                "organisationName": "Acme Ltd",
+                "registrationDate": "1994-12-05",
+                "domesticOnly": false,
+                "filingMember": false
+              },
+              "accountingPeriod": {
+                "startDate": "2022-04-06",
+                "endDate": "2023-04-05"
+              },
+              "upeCorrespAddressDetails": {
+                "addressLine1": "10 High Street",
+                "addressLine2": "Egham",
+                "addressLine3": "Surrey",
+                "addressLine4": "Wembley",
+                "postCode": "SU10 6HH",
+                "countryCode": "GB"
+              },
+              "primaryContactDetails": {
+                "name": "Fred Jones",
+                "telephone": "01159700700",
+                "emailAddress": "fred.jone@acme.com"
+              },
+              "secondaryContactDetails": {
+                "name": "Jill Jones",
+                "telephone": "01159788799",
+                "emailAddress": "jill.jone@acme.com"
+              },
+              "filingMemberDetails": {
+                "addNewFilingMember": true,
+                "safeId": "XV5277988337712",
+                "customerIdentification1": "DD17743248",
+                "customerIdentification2": "431234567890",
+                "organisationName": "Acme Upe Ltd"
+              }
+            },
+         "lastUpdated": 1609459200000
+          }
+        """
+      val userAnswersJson = Json.parse(userAnswersJsonString)
+      val userAnswers = UserAnswers(
+        id = (userAnswersJson \ "_id").as[String],
+        data = (userAnswersJson \ "data").as[JsObject],
+        lastUpdated = Instant.ofEpochMilli((userAnswersJson \ "lastUpdated").as[Long])
       )
-
-      val upeCorrespAddressDetails = UpeCorrespAddressDetails(
-        addressLine1 = "123 Test Street",
-        addressLine2 = Some("Suite 100"),
-        addressLine3 = Some("Test Area"),
-        addressLine4 = Some("Test City"),
-        postCode = Some("TST 123"),
-        countryCode = "GB"
-      )
-
-      val primaryContactDetails = PrimaryContactDetails(
-        name = "John Doe",
-        telepphone = Some("1234567890"),
-        emailAddress = "john.doe@test.com"
-      )
-
-      val secondaryContactDetails = SecondaryContactDetails(
-        name = "Jane Doe",
-        telepphone = Some("0987654321"),
-        emailAddress = "jane.doe@test.com"
-      )
-
-      val filingMemberDetails = FilingMemberDetails(
-        addNewFilingMember = Some(true),
-        safeId = "FM123",
-        customerIdentification1 = Some("FMID1"),
-        customerIdentification2 = Some("FMID2"),
-        organisationName = "Filing Member Org"
-      )
-
-      val accountingPeriod = AccountingPeriod(
-        startDate = LocalDate.of(2023, 1, 1),
-        endDate = LocalDate.of(2023, 12, 31),
-        duetDate = Some(LocalDate.of(2023, 6, 30))
-      )
-
-      val accountStatus = AccountStatus(
-        inactive = false
-      )
-
-      // Create the SubscriptionResponse
-      val subscriptionResponse = SubscriptionResponse(
-        success = SubscriptionSuccess(
-          plrReference = Some("PLR12345"),
-          processingDate = Some(LocalDate.now()),
-          formBundleNumber = Some("FB12345"),
-          upeDetails = upeDetails,
-          upeCorrespAddressDetails = upeCorrespAddressDetails,
-          primaryContactDetails = primaryContactDetails,
-          secondaryContactDetails = secondaryContactDetails,
-          filingMemberDetails = filingMemberDetails,
-          accountingPeriod = accountingPeriod,
-          accountStatus = accountStatus
-        )
-      )
-
-      // Convert to JSON (if needed)
-      val subscriptionResponseJson = Json.toJson(subscriptionResponse)
 
       stubPutResponse(
         expectedUrl = "/pillar2/subscription",
         expectedStatus = 200
       )
-//      val subscriptionResponse =
-//        arbitrarySubscriptionResponse.arbitrary.sample.getOrElse(throw new Exception("Unable to generate SubscriptionResponse"))
-//      val subscriptionResponseJson = Json.toJson(subscriptionResponse)
-//      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
-//        .thenReturn(Future.successful(HttpResponse(200, "")))
-//
-//      whenReady(service.extractAndProcess(subscriptionResponseJson)) { result =>
-//        result.status shouldBe 200
-//      }
+
+      when(
+        mockSubscriptionConnector
+          .amendSubscriptionInformation(any())(any(), any())
+      ).thenReturn(
+        Future.successful(
+          HttpResponse.apply(OK, "Success")
+        )
+      )
+
+      whenReady(service.extractAndProcess(Json.toJson(userAnswers))) { result =>
+        result.status shouldBe 200
+      }
     }
 
   }
