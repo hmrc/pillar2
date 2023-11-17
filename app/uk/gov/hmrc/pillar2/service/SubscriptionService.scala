@@ -27,7 +27,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, RegistrationInfo}
-import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
+import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
@@ -426,22 +426,28 @@ class SubscriptionService @Inject() (
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
-    val registrationInfo = RegistrationInfo(
-      crn = sub.upeDetails.customerIdentification1.getOrElse(" "),
-      utr = sub.upeDetails.customerIdentification2.getOrElse(" "),
-      safeId = sub.upeDetails.safeId.getOrElse(""),
-      registrationDate = Option(sub.upeDetails.registrationDate),
-      filingMember = Option(sub.upeDetails.filingMember)
-    )
-
-    val ukAddress = UKAddress(
+    val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
-      addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
-      addressLine4 = sub.upeCorrespAddressDetails.addressLine4,
-      postalCode = sub.upeCorrespAddressDetails.postCode.getOrElse(""),
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.flatMap(str => Option(str).filter(_.nonEmpty)).getOrElse("N/A"),
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
       countryCode = sub.upeCorrespAddressDetails.countryCode
     )
+
+    val crn    = sub.upeDetails.customerIdentification1
+    val utr    = sub.upeDetails.customerIdentification2
+    val safeId = sub.upeDetails.safeId
+
+    val extraSubscription = ExtraSubscription(
+      formBundleNumber = getOptionOrEmpty(sub.formBundleNumber),
+      crn = crn.map(value => if (value.isEmpty) "N/A" else value),
+      utr = utr.map(value => if (value.isEmpty) "N/A" else value),
+      safeId = safeId.map(value => if (value.isEmpty) "N/A" else value)
+    )
+
+    def getOptionOrEmpty(value: String): Option[String] =
+      Option(value).filter(_.nonEmpty)
 
     val filingMemberDetails = FilingMemberDetails(
       safeId = sub.filingMemberDetails.safeId,
@@ -460,24 +466,29 @@ class SubscriptionService @Inject() (
       inactive = sub.accountStatus.inactive
     )
 
-    val result = for {
+    def getOrEmptyString[T](option: Option[T]): String = option match {
+      case Some(value) => value.toString
+      case None        => "N/A"
+    }
 
+    val result = for {
       u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
       u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
       u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
       u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
       u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
-      u6  <- u5.set(upeRegInformationId, registrationInfo)
-      u7  <- u6.set(upeRegisteredAddressId, ukAddress)
-      u8  <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
-      u9  <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
-      u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
-      u11 <- u10.set(subAccountStatusId, accountStatus)
-      u12 <- u11.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+      u6  <- u5.set(subRegisteredAddressId, nonUKAddress)
+      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
+      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
+      u9  <- u8.set(subAccountingPeriodId, accountingPeriod)
+      u10 <- u9.set(subAccountStatusId, accountStatus)
+      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.filingMember)
       telephone: Option[String] = sub.secondaryContactDetails.telepphone
-      telephoneStr = telephone.getOrElse("")
-      u13 <- u12.set(subSecondaryCapturePhoneId, telephoneStr)
-    } yield u13
+      u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
+      u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
+      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
+    } yield u14
 
     result match {
       case Success(userAnswers) =>
@@ -488,4 +499,5 @@ class SubscriptionService @Inject() (
     }
 
   }
+
 }
