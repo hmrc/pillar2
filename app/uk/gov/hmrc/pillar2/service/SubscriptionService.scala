@@ -423,6 +423,22 @@ class SubscriptionService @Inject() (
     Future.successful(Json.obj("error" -> errorMessage))
   }
 
+//  def getOptionOrEmpty(value: String): Option[String] =
+//    Option(value).filter(_.nonEmpty)
+
+//  def getOrEmptyString[T](option: Option[T]): String = option match {
+//    case Some(value) => value.toString
+//    case None => "N/A"
+//  }
+
+  def getOrEmptyString[T](option: Option[T]): String = option match {
+    case Some(value) if !value.toString.isEmpty => value.toString
+    case _                                      => "N/A"
+  }
+
+  def getNonEmptyOrNA(value: String): String =
+    if (value.nonEmpty) value else "N/A"
+
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
@@ -440,14 +456,11 @@ class SubscriptionService @Inject() (
     val safeId = sub.upeDetails.safeId
 
     val extraSubscription = ExtraSubscription(
-      formBundleNumber = getOptionOrEmpty(sub.formBundleNumber),
-      crn = crn.map(value => if (value.isEmpty) "N/A" else value),
-      utr = utr.map(value => if (value.isEmpty) "N/A" else value),
-      safeId = safeId.map(value => if (value.isEmpty) "N/A" else value)
+      formBundleNumber = Some(getNonEmptyOrNA(sub.formBundleNumber)),
+      crn = crn.map(getNonEmptyOrNA),
+      utr = utr.map(getNonEmptyOrNA),
+      safeId = safeId.map(getNonEmptyOrNA)
     )
-
-    def getOptionOrEmpty(value: String): Option[String] =
-      Option(value).filter(_.nonEmpty)
 
     val filingMemberDetails = FilingMemberDetails(
       safeId = sub.filingMemberDetails.safeId,
@@ -466,11 +479,6 @@ class SubscriptionService @Inject() (
       inactive = sub.accountStatus.inactive
     )
 
-    def getOrEmptyString[T](option: Option[T]): String = option match {
-      case Some(value) => value.toString
-      case None        => "N/A"
-    }
-
     val result = for {
       u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
       u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
@@ -488,7 +496,7 @@ class SubscriptionService @Inject() (
       u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
       u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
       u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
-    } yield u14
+    } yield u15
 
     result match {
       case Success(userAnswers) =>
