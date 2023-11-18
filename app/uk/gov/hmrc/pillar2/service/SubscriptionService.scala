@@ -442,6 +442,11 @@ class SubscriptionService @Inject() (
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
+    val dashboardInfo = DashboardInfo(
+      organisationName = sub.upeDetails.organisationName,
+      registrationDate = sub.upeDetails.registrationDate
+    )
+
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
       addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
@@ -479,6 +484,12 @@ class SubscriptionService @Inject() (
       inactive = sub.accountStatus.inactive
     )
 
+    val primaryHasTelephone:   Boolean = sub.primaryContactDetails.telepphone.isDefined
+    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.telepphone.isDefined
+    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.telepphone.exists(
+      _.nonEmpty
+    ) || sub.secondaryContactDetails.emailAddress.nonEmpty || sub.secondaryContactDetails.name.nonEmpty
+
     val result = for {
       u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
       u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
@@ -496,7 +507,13 @@ class SubscriptionService @Inject() (
       u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
       u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
       u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
-    } yield u15
+      u16 <- u15.set(fmDashboardId, dashboardInfo)
+      phone: Option[String] = sub.primaryContactDetails.telepphone
+      u17 <- u16.set(subPrimaryCapturePhoneId, getOrEmptyString(phone))
+      u18 <- u17.set(subPrimaryPhonePreferenceId, primaryHasTelephone)
+      u19 <- u18.set(subSecondaryPhonePreferenceId, secondaryHasTelephone)
+      u20 <- u19.set(subAddSecondaryContactId, hasSecondaryContactData)
+    } yield u20
 
     result match {
       case Success(userAnswers) =>
