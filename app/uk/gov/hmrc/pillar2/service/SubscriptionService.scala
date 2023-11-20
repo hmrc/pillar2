@@ -26,9 +26,9 @@ import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, RegistrationInfo}
+import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
@@ -423,14 +423,6 @@ class SubscriptionService @Inject() (
     Future.successful(Json.obj("error" -> errorMessage))
   }
 
-//  def getOptionOrEmpty(value: String): Option[String] =
-//    Option(value).filter(_.nonEmpty)
-
-//  def getOrEmptyString[T](option: Option[T]): String = option match {
-//    case Some(value) => value.toString
-//    case None => "N/A"
-//  }
-
   def getOrEmptyString[T](option: Option[T]): String = option match {
     case Some(value) if !value.toString.isEmpty => value.toString
     case _                                      => "N/A"
@@ -450,7 +442,11 @@ class SubscriptionService @Inject() (
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
       addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.flatMap(str => Option(str).filter(_.nonEmpty)).getOrElse("N/A"),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3
+        .collect {
+          case str if str.nonEmpty => str
+        }
+        .getOrElse("N/A"),
       addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
       postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
       countryCode = sub.upeCorrespAddressDetails.countryCode
