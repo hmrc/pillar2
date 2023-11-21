@@ -442,11 +442,10 @@ class SubscriptionService @Inject() (
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
       addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3
-        .collect {
-          case str if str.nonEmpty => str
-        }
-        .getOrElse("N/A"),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3 match {
+        case Some(str) if str.nonEmpty => str
+        case _                         => "N/A"
+      },
       addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
       postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
       countryCode = sub.upeCorrespAddressDetails.countryCode
