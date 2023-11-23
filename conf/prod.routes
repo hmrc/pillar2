@@ -2,3 +2,4 @@
 ->         /report-pillar2-top-up-taxes              app.Routes
 ->         /                          health.Routes
 
+GET        /admin/metrics             com.kenshoo.play.metrics.MetricsController.metrics
