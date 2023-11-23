@@ -1,5 +1,8 @@
+import play.core.PlayVersion
+import play.sbt.PlayImport._
+import sbt.Keys.libraryDependencies
 import play.core.PlayVersion.current
-import sbt.*
+import sbt._
 
 object AppDependencies {
 

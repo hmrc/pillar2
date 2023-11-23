@@ -1,4 +1,8 @@
 import scoverage.ScoverageKeys
+import play.sbt.PlayImport.PlayKeys.playDefaultPort
+import uk.gov.hmrc.DefaultBuildSettings._
+import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
+import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "pillar2"
 
@@ -21,7 +25,9 @@ lazy val microservice = Project(appName, file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
+  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
+  .settings(integrationTestSettings(): _*)
   .settings(
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
     unmanagedSourceDirectories in IntegrationTest :=

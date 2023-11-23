@@ -32,13 +32,15 @@
 
 package uk.gov.hmrc.pillar2.generators
 
-import org.scalacheck.Arbitrary.{arbitrary, _}
-import org.scalacheck.Gen._
-import org.scalacheck.{Arbitrary, Gen, Shrink}
-import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
-import wolfendale.scalacheck.regexp.RegexpGen
-
 import java.time.{Instant, LocalDate, ZoneOffset}
+
+import org.scalacheck.Gen._
+import wolfendale.scalacheck.regexp.RegexpGen
+import org.scalacheck.Arbitrary._
+import org.scalacheck.{Arbitrary, Gen, Shrink}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models._
+import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 trait Generators extends ModelGenerators {
 
   implicit val dontShrink: Shrink[String] = Shrink.shrinkAny
