@@ -25,9 +25,7 @@ lazy val microservice = Project(appName, file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
-  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
-  .settings(integrationTestSettings(): _*)
   .settings(
     unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
     unmanagedSourceDirectories in IntegrationTest :=
