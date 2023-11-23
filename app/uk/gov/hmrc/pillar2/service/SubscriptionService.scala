@@ -23,7 +23,7 @@ import play.api.libs.json._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, UpeCorrespAddressDetails, _}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
@@ -518,6 +518,235 @@ class SubscriptionService @Inject() (
         Future.successful(Json.obj("error" -> exception.getMessage))
     }
 
+  }
+
+//  def extractAndProcess(json: JsValue)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+//    json.validate[UserAnswers] match {
+//      case JsSuccess(userAnswers, _) =>
+//        val subscriptionResponse = constructSubscriptionResponse(userAnswers)
+//
+//        subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
+//          response.status match {
+//            case 200 =>
+//              extractSubscriptionData(userAnswers.id, subscriptionResponse.success, 1).flatMap(handleJsObjectResponse)
+//
+//            case 409 =>
+//              Future.successful(HttpResponse(409, "Conflict error"))
+//
+//            case 422 =>
+//              Future.successful(HttpResponse(422, "Unprocessable entity error"))
+//
+//            case 500 =>
+//              Future.successful(HttpResponse(500, "Internal server error"))
+//
+//            case 503 =>
+//              Future.successful(HttpResponse(503, "Service unavailable error"))
+//
+//            case _ =>
+//              Future.successful(HttpResponse(response.status, "Failed to amend subscription information"))
+//          }
+//        }
+//      case JsError(errors) =>
+//        errors.foreach { case (path, validationErrors) =>
+//          logger.error(s"Validation error at path $path: ${validationErrors.mkString(", ")}")
+//        }
+//        Future.successful(HttpResponse(400, "Invalid JSON format"))
+//    }
+
+  def constructSubscriptionResponse(userAnswers: UserAnswers): SubscriptionResponse = {
+
+    /*
+    val dashboardInfo = DashboardInfo(
+      organisationName = sub.upeDetails.organisationName,
+      registrationDate = sub.upeDetails.registrationDate
+    )
+
+    val nonUKAddress = NonUKAddress(
+      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3 match {
+        case Some(str) if str.nonEmpty => str
+        case _                         => "N/A"
+      },
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
+      countryCode = sub.upeCorrespAddressDetails.countryCode
+    )
+
+    val crn    = sub.upeDetails.customerIdentification1
+    val utr    = sub.upeDetails.customerIdentification2
+    val safeId = sub.upeDetails.safeId
+
+    val extraSubscription = ExtraSubscription(
+      formBundleNumber = Some(getNonEmptyOrNA(sub.formBundleNumber)),
+      crn = crn.map(getNonEmptyOrNA),
+      utr = utr.map(getNonEmptyOrNA),
+      safeId = safeId.map(getNonEmptyOrNA)
+    )
+
+    val filingMemberDetails = FilingMemberDetails(
+      safeId = sub.filingMemberDetails.safeId,
+      customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
+      customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
+      organisationName = sub.filingMemberDetails.organisationName
+    )
+
+    val accountingPeriod = AccountingPeriod(
+      startDate = sub.accountingPeriod.startDate,
+      endDate = sub.accountingPeriod.endDate,
+      duetDate = sub.accountingPeriod.duetDate
+    )
+
+    val accountStatus = AccountStatus(
+      inactive = sub.accountStatus.inactive
+    )
+
+    val primaryHasTelephone:   Boolean = sub.primaryContactDetails.telepphone.isDefined
+    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.telepphone.isDefined
+    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.telepphone.exists(
+      _.nonEmpty
+    ) || sub.secondaryContactDetails.emailAddress.nonEmpty || sub.secondaryContactDetails.name.nonEmpty
+
+    val result = for {
+    upeDetails
+    upeDetails.domesticOnly = subMneOrDomesticId
+    upeDetails.organisationName = upeNameRegistrationId
+    upeDetails.filingMember  = NominateFilingMemberId
+    sub.upeDetails.registrationDate  = subRegistrationDateId
+
+    primaryContactDetails
+    primaryContactDetails.name = subPrimaryContactNameId
+    primaryContactDetails.emailAddress = subPrimaryEmailId
+    primaryContactDetails.telepphone = subPrimaryCapturePhoneId
+
+    upeCorrespAddressDetails
+    nonUKAddress
+
+
+    filingMemberDetails
+    filingMemberDetails.safeId = FmSafeId
+    subFilingMemberDetailsId
+
+    accountingPeriod =
+    subAccountingPeriodId
+
+    accountStatus =
+    subAccountStatusId
+
+    secondaryContactDetails
+    secondaryContactDetails.emailAddress  = subSecondaryEmailId
+    secondaryContactDetails.telepphone  = subSecondaryCapturePhoneId
+    secondaryContactDetails.name = subSecondaryContactNameId
+
+    extraSubscription = subExtraSubscriptionId
+
+    dashboardInfo = fmDashboardId
+
+     */
+    val domesticOnly                        = userAnswers.get(subMneOrDomesticId)
+    val upeDetailsOrganisationName          = userAnswers.get(upeNameRegistrationId)
+    val primaryContactDetailsName           = userAnswers.get(subPrimaryContactNameId)
+    val primaryContactDetailsEmailAddress   = userAnswers.get(subPrimaryEmailId)
+    val secondaryContactDetailsName         = userAnswers.get(subSecondaryContactNameId)
+    val nonUKAddress                        = userAnswers.get(subRegisteredAddressId)
+    val safeId                              = userAnswers.get(FmSafeId)
+    val filingMemberDetails                 = userAnswers.get(subFilingMemberDetailsId)
+    val accountingPeriod                    = userAnswers.get(subAccountingPeriodId)
+    val accountStatusOpt                    = userAnswers.get(subAccountStatusId)
+    val secondaryContactDetailsEmailAddress = userAnswers.get(subSecondaryEmailId)
+    val upeDetailsFilingMember              = userAnswers.get(NominateFilingMemberId)
+    val telephoneStr                        = userAnswers.get(subSecondaryCapturePhoneId)
+    val extraSubscription                   = userAnswers.get(subExtraSubscriptionId)
+    val registrationDate                    = userAnswers.get(subRegistrationDateId)
+    val dashboardInfo                       = userAnswers.get(fmDashboardId)
+    val primaryContactDetailsTelepphone     = userAnswers.get(subPrimaryCapturePhoneId)
+    val primaryHasTelephone                 = userAnswers.get(subPrimaryPhonePreferenceId)
+    val secondaryHasTelephone               = userAnswers.get(subSecondaryPhonePreferenceId)
+    val hasSecondaryContactData             = userAnswers.get(subAddSecondaryContactId)
+    val registrationInfo                    = userAnswers.get(upeRegInformationId)
+    val ukAddress                           = userAnswers.get(upeRegisteredAddressId)
+
+    val customerIdentification1: Option[String] = extraSubscription.flatMap(_.crn)
+    val customerIdentification2: Option[String] = extraSubscription.flatMap(_.utr)
+
+    val formBundleNumber: String = extraSubscription.flatMap(_.formBundleNumber) match {
+      case Some(fbNumber) => fbNumber
+      case None           => "N/A"
+    }
+
+    val upeDetails = UpeDetails(
+      safeId = safeId,
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = upeNameRegistrationId,
+      registrationDate = subRegistrationDateId,
+      domesticOnly = subMneOrDomesticId,
+      filingMember = NominateFilingMemberId
+    )
+
+    val nonUKAddressOpt: Option[NonUKAddress] = userAnswers.get(subRegisteredAddressId)
+
+//    val upeCorrespAddressDetailsOpt: Option[UpeCorrespAddressDetails] = nonUKAddressOpt match {
+//      case Some(nonUKAddress) =>
+//        Some(
+//          UpeCorrespAddressDetails(
+//            addressLine1 = nonUKAddress.addressLine1,
+//            addressLine2 = nonUKAddress.addressLine2,
+//            addressLine3 = nonUKAddressOpt match {
+//              case Some(address) => Some(address.addressLine3)
+//              case None          => None
+//            },
+//            addressLine4 = nonUKAddress.addressLine4,
+//            postCode = nonUKAddress.postalCode,
+//            countryCode = nonUKAddress.countryCode
+//          )
+//        )
+//      case None =>
+//        None
+//    }
+
+    val upeCorrespAddressDetails: Option[UpeCorrespAddressDetails] = nonUKAddressOpt match {
+      case Some(nonUKAddress) =>
+        Some(UpeCorrespAddressDetails(
+          addressLine1 = nonUKAddress.addressLine1,
+          addressLine2 = nonUKAddress.addressLine2,
+          addressLine3 = Some(nonUKAddress.addressLine3),
+          addressLine4 = nonUKAddress.addressLine4,
+          postCode = nonUKAddress.postalCode,
+          countryCode = nonUKAddress.countryCode
+        ))
+      case None =>
+        // If UpeCorrespAddressDetails is not mandatory and can be absent, set it to None
+        None
+    }
+
+
+    val primaryContactDetails = ContactDetailsType(
+      name = subPrimaryContactNameId,
+      telephone = subPrimaryCapturePhoneId,
+      emailAddress = subPrimaryEmailId
+    )
+
+    val secondaryContactDetails = ContactDetailsType(
+      name = subSecondaryContactNameId,
+      telephone = subSecondaryCapturePhoneId,
+      emailAddress = subSecondaryEmailId
+    )
+
+    SubscriptionResponse(
+      SubscriptionSuccess(
+        plrReference = "",
+        processingDate = LocalDate.now(),
+        formBundleNumber = formBundleNumber,
+        upeDetails = upeDetails,
+        upeCorrespAddressDetails = upeCorrespAddressDetails,
+        primaryContactDetails = primaryContactDetails,
+        secondaryContactDetails = secondaryContactDetails,
+        filingMemberDetails = filingMemberDetails,
+        accountingPeriod = accountingPeriod,
+        accountStatus = subAccountStatusId
+      )
+    )
   }
 
 }
