@@ -555,6 +555,17 @@ class SubscriptionService @Inject() (
 
   def constructSubscriptionResponse(userAnswers: UserAnswers): SubscriptionResponse = {
 
+    val upeCorrespAddressDetailsOpt: Option[UpeCorrespAddressDetails] = userAnswers.get(subRegisteredAddressId).map { nonUKAddress =>
+      UpeCorrespAddressDetails(
+        addressLine1 = nonUKAddress.addressLine1,
+        addressLine2 = nonUKAddress.addressLine2,
+        addressLine3 = Some(nonUKAddress.addressLine3),
+        addressLine4 = nonUKAddress.addressLine4,
+        postCode = nonUKAddress.postalCode,
+        countryCode = nonUKAddress.countryCode
+      )
+    }
+
     /*
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -686,25 +697,6 @@ class SubscriptionService @Inject() (
 
     val nonUKAddressOpt: Option[NonUKAddress] = userAnswers.get(subRegisteredAddressId)
 
-//    val upeCorrespAddressDetailsOpt: Option[UpeCorrespAddressDetails] = nonUKAddressOpt match {
-//      case Some(nonUKAddress) =>
-//        Some(
-//          UpeCorrespAddressDetails(
-//            addressLine1 = nonUKAddress.addressLine1,
-//            addressLine2 = nonUKAddress.addressLine2,
-//            addressLine3 = nonUKAddressOpt match {
-//              case Some(address) => Some(address.addressLine3)
-//              case None          => None
-//            },
-//            addressLine4 = nonUKAddress.addressLine4,
-//            postCode = nonUKAddress.postalCode,
-//            countryCode = nonUKAddress.countryCode
-//          )
-//        )
-//      case None =>
-//        None
-//    }
-
     val upeCorrespAddressDetails: Option[UpeCorrespAddressDetails] = nonUKAddressOpt match {
       case Some(nonUKAddress) =>
         Some(UpeCorrespAddressDetails(
@@ -716,7 +708,6 @@ class SubscriptionService @Inject() (
           countryCode = nonUKAddress.countryCode
         ))
       case None =>
-        // If UpeCorrespAddressDetails is not mandatory and can be absent, set it to None
         None
     }
 
