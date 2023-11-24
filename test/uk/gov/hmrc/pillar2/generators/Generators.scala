@@ -34,16 +34,10 @@ package uk.gov.hmrc.pillar2.generators
 
 import java.time.{Instant, LocalDate, ZoneOffset}
 
-import org.scalacheck.Arbitrary.{arbitrary, _}
 import org.scalacheck.Gen._
-import org.scalacheck.{Gen, Shrink}
 import wolfendale.scalacheck.regexp.RegexpGen
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
-import wolfendale.scalacheck.regexp.RegexpGen
-import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary._
-import org.scalacheck.Gen._
-import org.scalacheck.{Arbitrary, Gen}
+import org.scalacheck.{Arbitrary, Gen, Shrink}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models._
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
