@@ -21,6 +21,7 @@ import play.api.libs.json.{Json, OFormat}
 import java.time.LocalDate
 
 final case class UpeDetails(
+  plrReference:            Option[String],
   safeId:                  Option[String],
   customerIdentification1: Option[String],
   customerIdentification2: Option[String],

@@ -21,7 +21,7 @@ import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess, JsValue, Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
@@ -44,7 +44,7 @@ class SubscriptionController @Inject() (
         logger.info(s"SubscriptionController - createSubscription called $error")
 
         Future.successful(
-          BadRequest("Subcription parameter is invalid")
+          BadRequest("Subscription parameter is invalid")
         )
       },
       valid = subs =>
@@ -89,4 +89,22 @@ class SubscriptionController @Inject() (
     }
   }
 
+  def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
+    val subscriptionParameters: JsResult[AmendSubscriptionRequestParameters] =
+      request.body.validate[AmendSubscriptionRequestParameters]
+    subscriptionParameters.fold(
+      invalid = error => {
+        logger.info(s"SubscriptionController - amendSubscription called $error")
+
+        Future.successful(
+          BadRequest("Subscription parameter is invalid")
+        )
+      },
+      valid = subs =>
+        for {
+          userAnswer <- getUserAnswers(subs.id)
+          response   <- subscriptionService.extractAndProcess(userAnswer)
+        } yield convertToResult(response)(implicitly[Logger](logger))
+    )
+  }
 }

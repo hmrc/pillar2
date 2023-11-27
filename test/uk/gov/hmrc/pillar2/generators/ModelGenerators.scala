@@ -600,6 +600,7 @@ trait ModelGenerators {
 
   implicit val arbitraryUpeDetails: Arbitrary[UpeDetails] = Arbitrary {
     for {
+      plrReference            <- arbitrary[String]
       safeId                  <- arbitrary[String]
       customerIdentification1 <- Gen.option(arbitrary[String])
       customerIdentification2 <- Gen.option(arbitrary[String])
@@ -608,6 +609,7 @@ trait ModelGenerators {
       domesticOnly            <- arbitrary[Boolean]
       filingMember            <- arbitrary[Boolean]
     } yield UpeDetails(
+      plrReference = Some(plrReference),
       safeId = Some(safeId),
       customerIdentification1 = customerIdentification1,
       customerIdentification2 = customerIdentification2,
