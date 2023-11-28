@@ -97,7 +97,7 @@ class SubscriptionController @Inject() (
         logger.info(s"SubscriptionController - amendSubscription called $error")
 
         Future.successful(
-          BadRequest("Subscription parameter is invalid")
+          BadRequest("Amend Subscription parameter is invalid")
         )
       },
       valid = subs =>

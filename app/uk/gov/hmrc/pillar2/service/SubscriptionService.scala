@@ -538,77 +538,76 @@ class SubscriptionService @Inject() (
     }
 
   def constructSubscriptionResponse(userAnswers: UserAnswers): Option[AmendSubscriptionResponse] =
-    userAnswers.get(subRegisteredAddressId).flatMap { nonUKAddress =>
-      for {
-        domesticOnly                        <- userAnswers.get(subMneOrDomesticId)
-        upeDetailsOrganisationName          <- userAnswers.get(upeNameRegistrationId)
-        primaryContactDetailsName           <- userAnswers.get(subPrimaryContactNameId)
-        primaryContactDetailsEmailAddress   <- userAnswers.get(subPrimaryEmailId)
-        secondaryContactDetailsName         <- userAnswers.get(subSecondaryContactNameId)
-        secondaryContactDetailsEmailAddress <- userAnswers.get(subSecondaryEmailId)
-        filingMemberDetails <- userAnswers.get(subFilingMemberDetailsId)
-        accountingPeriod    <- userAnswers.get(subAccountingPeriodId)
-        upeDetailsFilingMember <- userAnswers.get(NominateFilingMemberId)
-        extraSubscription      <- userAnswers.get(subExtraSubscriptionId)
-        registrationDate       <- userAnswers.get(subRegistrationDateId)
-      } yield {
+    for {
+      nonUKAddress                        <- userAnswers.get(subRegisteredAddressId)
+      domesticOnly                        <- userAnswers.get(subMneOrDomesticId)
+      upeDetailsOrganisationName          <- userAnswers.get(upeNameRegistrationId)
+      primaryContactDetailsName           <- userAnswers.get(subPrimaryContactNameId)
+      primaryContactDetailsEmailAddress   <- userAnswers.get(subPrimaryEmailId)
+      secondaryContactDetailsName         <- userAnswers.get(subSecondaryContactNameId)
+      secondaryContactDetailsEmailAddress <- userAnswers.get(subSecondaryEmailId)
+      filingMemberDetails                 <- userAnswers.get(subFilingMemberDetailsId)
+      accountingPeriod                    <- userAnswers.get(subAccountingPeriodId)
+      upeDetailsFilingMember              <- userAnswers.get(NominateFilingMemberId)
+      extraSubscription                   <- userAnswers.get(subExtraSubscriptionId)
+      registrationDate                    <- userAnswers.get(subRegistrationDateId)
+    } yield {
 
-        val customerIdentification1 = extraSubscription.crn
-        val customerIdentification2 = extraSubscription.utr
+      val customerIdentification1 = extraSubscription.crn
+      val customerIdentification2 = extraSubscription.utr
 
-        val upeDetails = UpeDetails(
-          plrReference = extraSubscription.plrReference,
-          safeId = None,
-          customerIdentification1 = customerIdentification1,
-          customerIdentification2 = customerIdentification2,
-          organisationName = upeDetailsOrganisationName,
-          registrationDate = registrationDate,
-          domesticOnly = if (domesticOnly == MneOrDomestic.UkAndOther) true else false,
-          filingMember = upeDetailsFilingMember
+      val upeDetails = UpeDetails(
+        plrReference = extraSubscription.plrReference,
+        safeId = None,
+        customerIdentification1 = customerIdentification1,
+        customerIdentification2 = customerIdentification2,
+        organisationName = upeDetailsOrganisationName,
+        registrationDate = registrationDate,
+        domesticOnly = if (domesticOnly == MneOrDomestic.UkAndOther) true else false,
+        filingMember = upeDetailsFilingMember
+      )
+
+      val primaryContactDetails = PrimaryContactDetails(
+        name = primaryContactDetailsName,
+        telepphone = None,
+        telephone = userAnswers.get(subPrimaryCapturePhoneId),
+        emailAddress = primaryContactDetailsEmailAddress
+      )
+
+      val secondaryContactDetails = SecondaryContactDetails(
+        name = secondaryContactDetailsName,
+        telepphone = None,
+        telephone = userAnswers.get(subSecondaryCapturePhoneId),
+        emailAddress = secondaryContactDetailsEmailAddress
+      )
+
+      val upeCorrespAddressDetails = UpeCorrespAddressDetails(
+        addressLine1 = nonUKAddress.addressLine1,
+        addressLine2 = nonUKAddress.addressLine2,
+        addressLine3 = Some(nonUKAddress.addressLine3),
+        addressLine4 = nonUKAddress.addressLine4,
+        postCode = nonUKAddress.postalCode,
+        countryCode = nonUKAddress.countryCode
+      )
+
+      val startDate: LocalDate = accountingPeriod.startDate
+      val endDate:   LocalDate = accountingPeriod.endDate
+
+      val accountingPeriodOpt = AccountingPeriod(
+        startDate = startDate,
+        endDate = endDate
+      )
+
+      AmendSubscriptionResponse(
+        AmendSubscriptionSuccess(
+          upeDetails = upeDetails,
+          accountingPeriod = accountingPeriodOpt,
+          upeCorrespAddressDetails = upeCorrespAddressDetails,
+          primaryContactDetails = primaryContactDetails,
+          secondaryContactDetails = secondaryContactDetails,
+          filingMemberDetails = filingMemberDetails
         )
-
-        val primaryContactDetails = PrimaryContactDetails(
-          name = primaryContactDetailsName,
-          telepphone = None,
-          telephone = userAnswers.get(subPrimaryCapturePhoneId),
-          emailAddress = primaryContactDetailsEmailAddress
-        )
-
-        val secondaryContactDetails = SecondaryContactDetails(
-          name = secondaryContactDetailsName,
-          telepphone = None,
-          telephone = userAnswers.get(subSecondaryCapturePhoneId),
-          emailAddress = secondaryContactDetailsEmailAddress
-        )
-
-        val upeCorrespAddressDetails = UpeCorrespAddressDetails(
-          addressLine1 = nonUKAddress.addressLine1,
-          addressLine2 = nonUKAddress.addressLine2,
-          addressLine3 = Some(nonUKAddress.addressLine3),
-          addressLine4 = nonUKAddress.addressLine4,
-          postCode = nonUKAddress.postalCode,
-          countryCode = nonUKAddress.countryCode
-        )
-
-        val startDate: LocalDate = accountingPeriod.startDate
-        val endDate:   LocalDate = accountingPeriod.endDate
-
-        val accountingPeriodOpt = AccountingPeriod(
-          startDate = startDate,
-          endDate = endDate
-        )
-
-        AmendSubscriptionResponse(
-          AmendSubscriptionSuccess(
-            upeDetails = upeDetails,
-            accountingPeriod = accountingPeriodOpt,
-            upeCorrespAddressDetails = upeCorrespAddressDetails,
-            primaryContactDetails = primaryContactDetails,
-            secondaryContactDetails = secondaryContactDetails,
-            filingMemberDetails = filingMemberDetails
-          )
-        )
-      }
+      )
     }
 
 }

@@ -64,7 +64,7 @@ object AmendSubscriptionSuccess {
   implicit val format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
 }
 
-case class AmendSubscriptionResponse(success: AmendSubscriptionSuccess)
+case class AmendSubscriptionResponse(value: AmendSubscriptionSuccess)
 
 object AmendSubscriptionResponse {
   implicit val format: OFormat[AmendSubscriptionResponse] = Json.format[AmendSubscriptionResponse]
