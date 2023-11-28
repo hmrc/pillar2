@@ -90,7 +90,7 @@ class RegistrationCacheRepository @Inject() (
           Indexes.ascending(expireAtKey),
           IndexOptions()
             .name("dataExpiry")
-            .expireAfter(0, TimeUnit.SECONDS)
+            .expireAfter(2419200, TimeUnit.SECONDS)
             .background(true)
         )
       )
