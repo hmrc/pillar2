@@ -20,23 +20,25 @@ import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.when
-import play.api.{Application, Configuration}
+import org.mockito.Mockito.{reset, when}
+import org.scalatest.BeforeAndAfter
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.mvc.ControllerComponents
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import uk.gov.hmrc.auth.core.AuthConnector
+import play.api.{Application, Configuration}
+import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
+import uk.gov.hmrc.auth.core.retrieve.~
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.pillar2.service.RegistrationService
 
 import scala.concurrent.Future
 
-class RegistrationCacheControllerSpec extends BaseSpec {
+class RegistrationCacheControllerSpec extends BaseSpec with BeforeAndAfter {
   trait Setup {
     val controller =
       new RegistrationCacheController(
@@ -50,10 +52,31 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
     .overrides(
       bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
-      bind[RegistrationService].toInstance(mockDataSubmissionsService),
+      bind[AuthConnector].toInstance(mockAuthConnector),
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
+
+  private val externalId = "externalId"
+  private val enrolments = Enrolments(
+    Set(
+      Enrolment(
+        "HMRC-PILLAR2-ORG",
+        Seq(
+          EnrolmentIdentifier("PLRID", "A0000000")
+        ),
+        "Activated",
+        None
+      )
+    )
+  )
+
+  before {
+    reset(mockAuthConnector)
+    when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
+      new ~(Some(externalId), enrolments)
+    )
+  }
 
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
