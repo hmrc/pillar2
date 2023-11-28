@@ -701,17 +701,19 @@ trait ModelGenerators {
   implicit val arbitraryPrimaryContactDetails: Arbitrary[PrimaryContactDetails] = Arbitrary {
     for {
       name         <- nonEmptyString
+      telepphone   <- Gen.option(stringsWithMaxLength(15))
       telephone    <- Gen.option(stringsWithMaxLength(15))
       emailAddress <- arbitrary[String]
-    } yield PrimaryContactDetails(name, telephone, emailAddress)
+    } yield PrimaryContactDetails(name, telepphone, telephone, emailAddress)
   }
 
   implicit val arbitrarySecondaryContactDetails: Arbitrary[SecondaryContactDetails] = Arbitrary {
     for {
       name         <- nonEmptyString
+      telepphone   <- Gen.option(stringsWithMaxLength(15))
       telephone    <- Gen.option(stringsWithMaxLength(15))
       emailAddress <- arbitrary[String]
-    } yield SecondaryContactDetails(name, telephone, emailAddress)
+    } yield SecondaryContactDetails(name, telepphone, telephone, emailAddress)
   }
 
   implicit val arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {

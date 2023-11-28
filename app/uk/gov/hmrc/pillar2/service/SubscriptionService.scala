@@ -400,90 +400,67 @@ class SubscriptionService @Inject() (
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
-    val dashboardInfo = sub.upeDetails match {
-      case Some(upeDetails) =>
-        DashboardInfo(
-          organisationName = upeDetails.organisationName,
-          registrationDate = upeDetails.registrationDate
-        )
-      case None =>
-        DashboardInfo(
-          organisationName = "N/A",
-          registrationDate = LocalDate.now()
-        )
-    }
+    val dashboardInfo = DashboardInfo(
+      organisationName = sub.upeDetails.organisationName,
+      registrationDate = sub.upeDetails.registrationDate
+    )
 
-    val nonUKAddressOpt = sub.upeCorrespAddressDetails.map { addressDetails =>
-      NonUKAddress(
-        addressLine1 = if (addressDetails.addressLine1.nonEmpty) addressDetails.addressLine1 else "N/A",
-        addressLine2 = addressDetails.addressLine2,
-        addressLine3 = addressDetails.addressLine3 match {
-          case Some(line) if line.nonEmpty => line
-          case _                           => "N/A"
-        },
-        addressLine4 = addressDetails.addressLine4,
-        postalCode = addressDetails.postCode,
-        countryCode = addressDetails.countryCode
-      )
-    }
+    val nonUKAddress = NonUKAddress(
+      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3 match {
+        case Some(str) if str.nonEmpty => str
+        case _                         => "N/A"
+      },
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
+      countryCode = sub.upeCorrespAddressDetails.countryCode
+    )
 
-    val extraSubscriptionOpt = sub.upeDetails.map { details =>
-      ExtraSubscription(
-        formBundleNumber = sub.formBundleNumber,
-        crn = details.customerIdentification1,
-        utr = details.customerIdentification2,
-        safeId = details.safeId
-      )
-    }
+    val crn    = sub.upeDetails.customerIdentification1
+    val utr    = sub.upeDetails.customerIdentification2
+    val safeId = sub.upeDetails.safeId
 
-    val filingMemberDetails = sub.filingMemberDetails match {
-      case Some(details) =>
-        FilingMemberDetails(
-          safeId = details.safeId,
-          customerIdentification1 = details.customerIdentification1,
-          customerIdentification2 = details.customerIdentification2,
-          organisationName = details.organisationName
-        )
-      case None =>
-        FilingMemberDetails(
-          safeId = "DefaultSafeId",
-          customerIdentification1 = Some("DefaultID1"),
-          customerIdentification2 = Some("DefaultID2"),
-          organisationName = "DefaultOrgName"
-        )
-    }
+    val extraSubscription = ExtraSubscription(
+      formBundleNumber = Some(getNonEmptyOrNA(sub.formBundleNumber)),
+      crn = crn.map(getNonEmptyOrNA),
+      utr = utr.map(getNonEmptyOrNA),
+      safeId = safeId.map(getNonEmptyOrNA)
+    )
 
-    val filingMemberDetailsOpt = sub.filingMemberDetails.map(identity)
-    val accountingPeriodOpt    = sub.accountingPeriod.map(identity)
-    val accountStatusOpt       = sub.accountStatus.map(identity)
+    val filingMemberDetails = FilingMemberDetails(
+      safeId = sub.filingMemberDetails.safeId,
+      customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
+      customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
+      organisationName = sub.filingMemberDetails.organisationName
+    )
 
-    val primaryHasTelephone: Boolean = sub.primaryContactDetails.flatMap(_.telepphone).isDefined
-    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.flatMap(_.telepphone).isDefined
-    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.map(_.telepphone).exists(_.nonEmpty) ||
-      sub.secondaryContactDetails.map(_.emailAddress).exists(_.nonEmpty) ||
-      sub.secondaryContactDetails.map(_.name).exists(_.nonEmpty)
+    val accountingPeriod = AccountingPeriod(
+      startDate = sub.accountingPeriod.startDate,
+      endDate = sub.accountingPeriod.endDate,
+      duetDate = sub.accountingPeriod.duetDate
+    )
 
+    val accountStatus = AccountStatus(
+      inactive = sub.accountStatus.inactive
+    )
+
+    val primaryHasTelephone:   Boolean = sub.primaryContactDetails.telepphone.isDefined
+    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.telepphone.isDefined
+    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.telepphone.exists(
+      _.nonEmpty
+    ) || sub.secondaryContactDetails.emailAddress.nonEmpty || sub.secondaryContactDetails.name.nonEmpty
 
     val result = for {
-      u1 <- userAnswers.set(subMneOrDomesticId, sub.upeDetails.map(_.domesticOnly).fold(MneOrDomestic.uk)(domesticOnly => if (domesticOnly) MneOrDomestic.ukAndOther else MneOrDomestic.uk))
-      u2 <- u1.set(upeNameRegistrationId, sub.upeDetails.map(_.organisationName) match {
-        case Some(orgName) => orgName
-        case None => "N/A"
-      })
-      u3 <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.map(_.name) match {
-        case Some(contactName) => contactName
-        case None => "N/A"
-      })
-      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.map(_.emailAddress) match {
-        case Some(email) => email
-        case None => "N/A"
-      })
-      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
-      u5 <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
-      u6 <- u5.set(subRegisteredAddressId, nonUKAddress)
-      u7 <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
-      u8 <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
-      u9 <- u8.set(subAccountingPeriodId, accountingPeriod)
+      u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
+      u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
+      u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
+      u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
+      u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
+      u6  <- u5.set(subRegisteredAddressId, nonUKAddress)
+      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
+      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
+      u9  <- u8.set(subAccountingPeriodId, accountingPeriod)
       u10 <- u9.set(subAccountStatusId, accountStatus)
       u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
       u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.filingMember)
@@ -499,42 +476,6 @@ class SubscriptionService @Inject() (
       u20 <- u19.set(subAddSecondaryContactId, hasSecondaryContactData)
     } yield u20
 
-    /*
-    val result = for {
-      u1 <- userAnswers.set(subMneOrDomesticId, sub.upeDetails.map(_.domesticOnly).fold(MneOrDomestic.uk)(domesticOnly => if (domesticOnly) MneOrDomestic.ukAndOther else MneOrDomestic.uk))
-      u2 <- u1.set(upeNameRegistrationId, sub.upeDetails.map(_.organisationName) match {
-        case Some(orgName) => orgName
-        case None => "N/A"
-      })
-      u3 <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.map(_.name) match {
-        case Some(contactName) => contactName
-        case None => "N/A"
-      })
-      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.map(_.emailAddress) match {
-        case Some(email) => email
-        case None => "N/A"
-      })
-      u5 <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.map(_.name) match {
-        case Some(contactName) => contactName
-        case None => "N/A"
-      })
-      u6 <- u5.set(subRegisteredAddressId, nonUKAddressOpt match {
-        case Some(address) => address.
-        case None => NonUKAddress.default // Assuming there's a default value defined in NonUKAddress
-      })
-//      u6  <- u5.set(subRegisteredAddressId, nonUKAddressOpt.fold(NonUKAddress.default)(identity))
-      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.flatMap(_.safeId).fold("N/A")(identity))
-      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetailsOpt.fold(FilingMemberDetails.default)(identity))
-      u9  <- u8.set(subAccountingPeriodId, accountingPeriodOpt.fold(AccountingPeriod.default)(identity))
-      u10 <- u9.set(subAccountStatusId, accountStatusOpt.fold(AccountStatus.default)(identity))
-      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.flatMap(_.emailAddress).fold("N/A")(identity))
-      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.flatMap(_.filingMember).fold("N/A")(identity))
-      telephone = sub.secondaryContactDetails.flatMap(_.telepphone).fold("N/A")(identity)
-      u13 <- u12.set(subSecondaryCapturePhoneId, telephone)
-      u14 <- u13.set(subExtraSubscriptionId, extraSubscriptionOpt.fold(ExtraSubscription.default)(identity))
-      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.flatMap(_.registrationDate).fold(LocalDate.now)(identity))
-    } yield u15
-*/
     result match {
       case Success(userAnswers) =>
         Future.successful(Json.toJson(userAnswers))
@@ -542,7 +483,220 @@ class SubscriptionService @Inject() (
         logger.error("An error occurred while extracting subscription data", exception)
         Future.successful(Json.obj("error" -> exception.getMessage))
     }
+
   }
+
+//  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
+//    val userAnswers = UserAnswers(id, Json.obj())
+//
+//    val dashboardInfo = sub.upeDetails match {
+//      case Some(upeDetails) =>
+//        DashboardInfo(
+//          organisationName = upeDetails.organisationName,
+//          registrationDate = upeDetails.registrationDate
+//        )
+//      case None =>
+//        DashboardInfo(
+//          organisationName = "N/A",
+//          registrationDate = LocalDate.now()
+//        )
+//    }
+//
+//    val nonUKAddressOpt = sub.upeCorrespAddressDetails.map { addressDetails =>
+//      NonUKAddress(
+//        addressLine1 = if (addressDetails.addressLine1.nonEmpty) addressDetails.addressLine1 else "N/A",
+//        addressLine2 = addressDetails.addressLine2,
+//        addressLine3 = addressDetails.addressLine3 match {
+//          case Some(line) if line.nonEmpty => line
+//          case _                           => "N/A"
+//        },
+//        addressLine4 = addressDetails.addressLine4,
+//        postalCode = addressDetails.postCode,
+//        countryCode = addressDetails.countryCode
+//      )
+//    }
+//
+//    val extraSubscriptionOpt = sub.upeDetails.map { details =>
+//      ExtraSubscription(
+//        formBundleNumber = sub.formBundleNumber,
+//        crn = details.customerIdentification1,
+//        utr = details.customerIdentification2,
+//        safeId = details.safeId
+//      )
+//    }
+//
+//    val filingMemberDetails = sub.filingMemberDetails match {
+//      case Some(details) =>
+//        FilingMemberDetails(
+//          safeId = details.safeId,
+//          customerIdentification1 = details.customerIdentification1,
+//          customerIdentification2 = details.customerIdentification2,
+//          organisationName = details.organisationName
+//        )
+//      case None =>
+//        FilingMemberDetails(
+//          safeId = "DefaultSafeId",
+//          customerIdentification1 = Some("DefaultID1"),
+//          customerIdentification2 = Some("DefaultID2"),
+//          organisationName = "DefaultOrgName"
+//        )
+//    }
+//
+//    val filingMemberDetailsOpt = sub.filingMemberDetails.map(identity)
+//    val accountingPeriodOpt    = sub.accountingPeriod.map(identity)
+//    val accountStatusOpt       = sub.accountStatus.map(identity)
+//
+//    val primaryHasTelephone:   Boolean = sub.primaryContactDetails.flatMap(_.telepphone).isDefined
+//    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.flatMap(_.telepphone).isDefined
+//    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.map(_.telepphone).exists(_.nonEmpty) ||
+//      sub.secondaryContactDetails.map(_.emailAddress).exists(_.nonEmpty) ||
+//      sub.secondaryContactDetails.map(_.name).exists(_.nonEmpty)
+//
+////    val primaryContactDetailsEmailAddress = sub.primaryContactDetails.map(_.emailAddress)
+//
+////    sub.secondaryContactDetails.name
+//
+//
+////    val result = for {
+////      u1 <- userAnswers.set(subMneOrDomesticId, sub.upeDetails.map(_.domesticOnly).fold(MneOrDomestic.uk)(domesticOnly => if (domesticOnly) MneOrDomestic.ukAndOther else MneOrDomestic.uk))
+////      u2 <- u1.set(upeNameRegistrationId, sub.upeDetails.map(_.organisationName) match {
+////        case Some(orgName) => orgName
+////        case None => "N/A"
+////      })
+////      u3 <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.map(_.name) match {
+////        case Some(contactName) => contactName
+////        case None => "N/A"
+////      })
+////      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.map(_.emailAddress) match {
+////        case Some(email) => email
+////        case None => "N/A"
+////      })
+////
+////
+////      u4 <- u3.set(subPrimaryEmailId, primaryContactDetailsEmailAddress)
+////
+////      u5 <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
+////      u6 <- u5.set(subRegisteredAddressId, nonUKAddress)
+////      u7 <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
+////      u8 <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
+////      u9 <- u8.set(subAccountingPeriodId, accountingPeriod)
+////      u10 <- u9.set(subAccountStatusId, accountStatus)
+////      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+////      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.filingMember)
+////      telephone: Option[String] = sub.secondaryContactDetails.telepphone
+////      u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
+////      u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
+////      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
+////      u16 <- u15.set(fmDashboardId, dashboardInfo)
+////      phone: Option[String] = sub.primaryContactDetails.telepphone
+////      u17 <- u16.set(subPrimaryCapturePhoneId, getOrEmptyString(phone))
+////      u18 <- u17.set(subPrimaryPhonePreferenceId, primaryHasTelephone)
+////      u19 <- u18.set(subSecondaryPhonePreferenceId, secondaryHasTelephone)
+////      u20 <- u19.set(subAddSecondaryContactId, hasSecondaryContactData)
+////    } yield u20
+//
+//    val organisationName: String = sub.upeDetails match {
+//      case Some(upeDetails) => upeDetails.organisationName
+//      case None => ""
+//    }
+//
+//    val primaryContactName: String = sub.primaryContactDetails match {
+//      case Some(contactDetails) => contactDetails.name
+//      case None => ""
+//    }
+//
+//    val primaryContactEmailAddress: String = sub.primaryContactDetails match {
+//      case Some(contactDetails) => contactDetails.emailAddress
+//      case None => ""
+//    }
+//
+//    val secondaryContactName: String = sub.secondaryContactDetails match {
+//      case Some(contactDetails) => contactDetails.name
+//      case None => ""
+//    }
+//
+//
+//    import uk.gov.hmrc.pillar2.models.NonUKAddress.format
+//
+//
+//
+//
+//    val result = for {
+//      u1 <- userAnswers.set(
+//              subMneOrDomesticId,
+//              sub.upeDetails
+//                .map(_.domesticOnly)
+//                .fold(MneOrDomestic.uk)(domesticOnly => if (domesticOnly) MneOrDomestic.ukAndOther else MneOrDomestic.uk)
+//            )
+//
+//      u2 <- u1.set(upeNameRegistrationId, organisationName)
+//      u3 <- u2.set(subPrimaryContactNameId, primaryContactName)
+//
+//      u4 <- u3.set(subPrimaryEmailId, primaryContactEmailAddress)
+//      u5 <- u4.set(subSecondaryContactNameId, secondaryContactName)
+//      u6  <- u5.set(subRegisteredAddressId, nonUKAddressOpt)
+//      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
+//      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
+//      u9  <- u8.set(subAccountingPeriodId, accountingPeriod)
+//      u10 <- u9.set(subAccountStatusId, accountStatus)
+//      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+//      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.filingMember)
+//      telephone: Option[String] = sub.secondaryContactDetails.telepphone
+//      u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
+//      u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
+//      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
+//      u16 <- u15.set(fmDashboardId, dashboardInfo)
+//      phone: Option[String] = sub.primaryContactDetails.telepphone
+//      u17 <- u16.set(subPrimaryCapturePhoneId, getOrEmptyString(phone))
+//      u18 <- u17.set(subPrimaryPhonePreferenceId, primaryHasTelephone)
+//      u19 <- u18.set(subSecondaryPhonePreferenceId, secondaryHasTelephone)
+//      u20 <- u19.set(subAddSecondaryContactId, hasSecondaryContactData)
+//    } yield u20
+//
+//    /*
+//    val result = for {
+//      u1 <- userAnswers.set(subMneOrDomesticId, sub.upeDetails.map(_.domesticOnly).fold(MneOrDomestic.uk)(domesticOnly => if (domesticOnly) MneOrDomestic.ukAndOther else MneOrDomestic.uk))
+//      u2 <- u1.set(upeNameRegistrationId, sub.upeDetails.map(_.organisationName) match {
+//        case Some(orgName) => orgName
+//        case None => "N/A"
+//      })
+//      u3 <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.map(_.name) match {
+//        case Some(contactName) => contactName
+//        case None => "N/A"
+//      })
+//      u4 <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.map(_.emailAddress) match {
+//        case Some(email) => email
+//        case None => "N/A"
+//      })
+//      u5 <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.map(_.name) match {
+//        case Some(contactName) => contactName
+//        case None => "N/A"
+//      })
+//      u6 <- u5.set(subRegisteredAddressId, nonUKAddressOpt match {
+//        case Some(address) => address.
+//        case None => NonUKAddress.default // Assuming there's a default value defined in NonUKAddress
+//      })
+////      u6  <- u5.set(subRegisteredAddressId, nonUKAddressOpt.fold(NonUKAddress.default)(identity))
+//      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.flatMap(_.safeId).fold("N/A")(identity))
+//      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetailsOpt.fold(FilingMemberDetails.default)(identity))
+//      u9  <- u8.set(subAccountingPeriodId, accountingPeriodOpt.fold(AccountingPeriod.default)(identity))
+//      u10 <- u9.set(subAccountStatusId, accountStatusOpt.fold(AccountStatus.default)(identity))
+//      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.flatMap(_.emailAddress).fold("N/A")(identity))
+//      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.flatMap(_.filingMember).fold("N/A")(identity))
+//      telephone = sub.secondaryContactDetails.flatMap(_.telepphone).fold("N/A")(identity)
+//      u13 <- u12.set(subSecondaryCapturePhoneId, telephone)
+//      u14 <- u13.set(subExtraSubscriptionId, extraSubscriptionOpt.fold(ExtraSubscription.default)(identity))
+//      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.flatMap(_.registrationDate).fold(LocalDate.now)(identity))
+//    } yield u15
+//     */
+//    result match {
+//      case Success(userAnswers) =>
+//        Future.successful(Json.toJson(userAnswers))
+//      case Failure(exception) =>
+//        logger.error("An error occurred while extracting subscription data", exception)
+//        Future.successful(Json.obj("error" -> exception.getMessage))
+//    }
+//  }
 
   //  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
 //    val userAnswers = UserAnswers(id, Json.obj())
@@ -933,7 +1087,7 @@ class SubscriptionService @Inject() (
         Future.successful(HttpResponse(400, "Invalid subscription response"))
     }
 
-  def constructSubscriptionResponse(userAnswers: UserAnswers): Option[SubscriptionResponse] =
+  def constructSubscriptionResponse(userAnswers: UserAnswers): Option[AmendSubscriptionResponse] =
     userAnswers.get(subRegisteredAddressId).flatMap { nonUKAddress =>
       for {
         domesticOnly                        <- userAnswers.get(subMneOrDomesticId)
@@ -1000,18 +1154,14 @@ class SubscriptionService @Inject() (
           endDate = endDate
         )
 
-        SubscriptionResponse(
-          SubscriptionSuccess(
-            plrReference = None,
-            processingDate = None,
-            formBundleNumber = None,
-            upeDetails = Some(upeDetails),
-            upeCorrespAddressDetails = Some(upeCorrespAddressDetails),
-            primaryContactDetails = Some(primaryContactDetails),
-            secondaryContactDetails = Some(secondaryContactDetails),
-            filingMemberDetails = Some(filingMemberDetails),
-            accountingPeriod = Some(accountingPeriodOpt),
-            accountStatus = None
+        AmendSubscriptionResponse(
+          AmendSubscriptionSuccess(
+            upeDetails = upeDetails,
+            accountingPeriod = accountingPeriodOpt,
+            upeCorrespAddressDetails = upeCorrespAddressDetails,
+            primaryContactDetails = primaryContactDetails,
+            secondaryContactDetails = secondaryContactDetails,
+            filingMemberDetails = filingMemberDetails
           )
         )
       }
