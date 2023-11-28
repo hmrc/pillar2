@@ -34,17 +34,33 @@ object SubscriptionResponse {
   implicit val format: OFormat[SubscriptionResponse] = Json.format[SubscriptionResponse]
 }
 
+//case class SubscriptionSuccess(
+//  plrReference:             String,
+//  processingDate:           LocalDate,
+//  formBundleNumber:         String,
+//  upeDetails:               UpeDetails,
+//  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+//  primaryContactDetails:    PrimaryContactDetails,
+//  secondaryContactDetails:  SecondaryContactDetails,
+//  filingMemberDetails:      FilingMemberDetails,
+//  accountingPeriod:         AccountingPeriod,
+//  accountStatus:            AccountStatus
+//)
+
+import java.time.LocalDate
+import uk.gov.hmrc.pillar2.models._
+
 case class SubscriptionSuccess(
-  plrReference:             String,
-  processingDate:           LocalDate,
-  formBundleNumber:         String,
-  upeDetails:               UpeDetails,
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    PrimaryContactDetails,
-  secondaryContactDetails:  SecondaryContactDetails,
-  filingMemberDetails:      FilingMemberDetails,
-  accountingPeriod:         AccountingPeriod,
-  accountStatus:            AccountStatus
+  plrReference:             Option[String],
+  processingDate:           Option[LocalDate],
+  formBundleNumber:         Option[String],
+  upeDetails:               Option[UpeDetails],
+  upeCorrespAddressDetails: Option[UpeCorrespAddressDetails],
+  primaryContactDetails:    Option[PrimaryContactDetails],
+  secondaryContactDetails:  Option[SecondaryContactDetails],
+  filingMemberDetails:      Option[FilingMemberDetails],
+  accountingPeriod:         Option[AccountingPeriod],
+  accountStatus:            Option[AccountStatus]
 )
 
 object SubscriptionSuccess {
@@ -54,6 +70,7 @@ object SubscriptionSuccess {
 case class PrimaryContactDetails(
   name:         String,
   telepphone:   Option[String],
+  telephone:    Option[String],
   emailAddress: String
 )
 
@@ -64,6 +81,7 @@ object PrimaryContactDetails {
 case class SecondaryContactDetails(
   name:         String,
   telepphone:   Option[String],
+  telephone:    Option[String],
   emailAddress: String
 )
 
