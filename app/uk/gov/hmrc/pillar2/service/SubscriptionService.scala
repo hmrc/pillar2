@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -537,77 +537,379 @@ class SubscriptionService @Inject() (
         Future.successful(HttpResponse(400, "Invalid subscription response"))
     }
 
-  def constructSubscriptionResponse(userAnswers: UserAnswers): Option[AmendSubscriptionResponse] =
-    for {
-      nonUKAddress                        <- userAnswers.get(subRegisteredAddressId)
-      domesticOnly                        <- userAnswers.get(subMneOrDomesticId)
-      upeDetailsOrganisationName          <- userAnswers.get(upeNameRegistrationId)
-      primaryContactDetailsName           <- userAnswers.get(subPrimaryContactNameId)
-      primaryContactDetailsEmailAddress   <- userAnswers.get(subPrimaryEmailId)
-      secondaryContactDetailsName         <- userAnswers.get(subSecondaryContactNameId)
-      secondaryContactDetailsEmailAddress <- userAnswers.get(subSecondaryEmailId)
-      filingMemberDetails                 <- userAnswers.get(subFilingMemberDetailsId)
-      accountingPeriod                    <- userAnswers.get(subAccountingPeriodId)
-      upeDetailsFilingMember              <- userAnswers.get(NominateFilingMemberId)
-      extraSubscription                   <- userAnswers.get(subExtraSubscriptionId)
-      registrationDate                    <- userAnswers.get(subRegistrationDateId)
-    } yield {
+  def constructSubscriptionResponse(userAnswers: UserAnswers): Option[AmendSubscriptionResponse] = {
+    val nonUKAddressOpt                        = userAnswers.get(subRegisteredAddressId)
+    val domesticOnlyOpt                        = userAnswers.get(subMneOrDomesticId)
+    val upeDetailsOrganisationNameOpt          = userAnswers.get(upeNameRegistrationId)
+    val primaryContactDetailsNameOpt           = userAnswers.get(subPrimaryContactNameId)
+    val primaryContactDetailsEmailAddressOpt   = userAnswers.get(subPrimaryEmailId)
+    val secondaryContactDetailsNameOpt         = userAnswers.get(subSecondaryContactNameId)
+    val secondaryContactDetailsEmailAddressOpt = userAnswers.get(subSecondaryEmailId)
+    val filingMemberDetailsOpt                 = userAnswers.get(subFilingMemberDetailsId)
+    val accountingPeriodOpt                    = userAnswers.get(subAccountingPeriodId)
+    val upeDetailsFilingMemberOpt              = userAnswers.get(NominateFilingMemberId)
+    val extraSubscriptionOpt                   = userAnswers.get(subExtraSubscriptionId)
+    val registrationDateOpt                    = userAnswers.get(subRegistrationDateId)
 
-      val customerIdentification1 = extraSubscription.crn
-      val customerIdentification2 = extraSubscription.utr
-
-      val upeDetails = UpeDetails(
-        plrReference = extraSubscription.plrReference,
-        safeId = None,
-        customerIdentification1 = customerIdentification1,
-        customerIdentification2 = customerIdentification2,
-        organisationName = upeDetailsOrganisationName,
-        registrationDate = registrationDate,
-        domesticOnly = if (domesticOnly == MneOrDomestic.UkAndOther) true else false,
-        filingMember = upeDetailsFilingMember
-      )
-
-      val primaryContactDetails = PrimaryContactDetails(
-        name = primaryContactDetailsName,
-        telepphone = None,
-        telephone = userAnswers.get(subPrimaryCapturePhoneId),
-        emailAddress = primaryContactDetailsEmailAddress
-      )
-
-      val secondaryContactDetails = SecondaryContactDetails(
-        name = secondaryContactDetailsName,
-        telepphone = None,
-        telephone = userAnswers.get(subSecondaryCapturePhoneId),
-        emailAddress = secondaryContactDetailsEmailAddress
-      )
-
-      val upeCorrespAddressDetails = UpeCorrespAddressDetails(
-        addressLine1 = nonUKAddress.addressLine1,
-        addressLine2 = nonUKAddress.addressLine2,
-        addressLine3 = Some(nonUKAddress.addressLine3),
-        addressLine4 = nonUKAddress.addressLine4,
-        postCode = nonUKAddress.postalCode,
-        countryCode = nonUKAddress.countryCode
-      )
-
-      val startDate: LocalDate = accountingPeriod.startDate
-      val endDate:   LocalDate = accountingPeriod.endDate
-
-      val accountingPeriodOpt = AccountingPeriod(
-        startDate = startDate,
-        endDate = endDate
-      )
-
-      AmendSubscriptionResponse(
-        AmendSubscriptionSuccess(
-          upeDetails = upeDetails,
-          accountingPeriod = accountingPeriodOpt,
-          upeCorrespAddressDetails = upeCorrespAddressDetails,
-          primaryContactDetails = primaryContactDetails,
-          secondaryContactDetails = secondaryContactDetails,
-          filingMemberDetails = filingMemberDetails
+    (
+      nonUKAddressOpt,
+      domesticOnlyOpt,
+      upeDetailsOrganisationNameOpt,
+      primaryContactDetailsNameOpt,
+      primaryContactDetailsEmailAddressOpt,
+      secondaryContactDetailsNameOpt,
+      secondaryContactDetailsEmailAddressOpt,
+      filingMemberDetailsOpt,
+      accountingPeriodOpt,
+      upeDetailsFilingMemberOpt,
+      extraSubscriptionOpt,
+      registrationDateOpt
+    ) match {
+      case (
+            Some(nonUKAddress),
+            Some(domesticOnly),
+            Some(upeDetailsOrganisationName),
+            Some(primaryContactDetailsName),
+            Some(primaryContactDetailsEmailAddress),
+            Some(secondaryContactDetailsName),
+            Some(secondaryContactDetailsEmailAddress),
+            Some(filingMemberDetails),
+            Some(accountingPeriod),
+            Some(upeDetailsFilingMember),
+            Some(extraSubscription),
+            Some(registrationDate)
+          ) =>
+        val upeDetails = UpeDetails(
+          plrReference = extraSubscription.plrReference.orElse(None),
+          safeId = None,
+          customerIdentification1 = extraSubscription.crn.orElse(None),
+          customerIdentification2 = extraSubscription.utr.orElse(None),
+          organisationName = upeDetailsOrganisationName,
+          registrationDate = registrationDate,
+          domesticOnly = domesticOnly == MneOrDomestic.UkAndOther,
+          filingMember = upeDetailsFilingMember
         )
-      )
+
+        val telephonePrimary = userAnswers.get(subPrimaryCapturePhoneId)
+
+        val primaryContactDetails = PrimaryContactDetails(
+          name = primaryContactDetailsName,
+          telepphone = None,
+          telephone = telephonePrimary,
+          emailAddress = primaryContactDetailsEmailAddress
+        )
+
+        val telephoneSecondary = userAnswers.get(subSecondaryCapturePhoneId)
+
+        val secondaryContactDetails = SecondaryContactDetails(
+          name = secondaryContactDetailsName,
+          telepphone = None,
+          telephone = telephoneSecondary,
+          emailAddress = secondaryContactDetailsEmailAddress
+        )
+
+        val upeCorrespAddressDetails = UpeCorrespAddressDetails(
+          addressLine1 = nonUKAddress.addressLine1,
+          addressLine2 = nonUKAddress.addressLine2.orElse(None),
+          addressLine3 = Some(nonUKAddress.addressLine3),
+          addressLine4 = nonUKAddress.addressLine4.orElse(None),
+          postCode = nonUKAddress.postalCode.orElse(None),
+          countryCode = nonUKAddress.countryCode
+        )
+
+        Some(
+          AmendSubscriptionResponse(
+            AmendSubscriptionSuccess(
+              upeDetails = upeDetails,
+              accountingPeriod = accountingPeriod,
+              upeCorrespAddressDetails = upeCorrespAddressDetails,
+              primaryContactDetails = primaryContactDetails,
+              secondaryContactDetails = secondaryContactDetails,
+              filingMemberDetails = filingMemberDetails
+            )
+          )
+        )
+
+      case _ =>
+        None
     }
+  }
+
+  //  def constructSubscriptionResponse(userAnswers: UserAnswers): Option[AmendSubscriptionResponse] =
+//    for {
+//      nonUKAddress                        <- userAnswers.get(subRegisteredAddressId)
+//      domesticOnly                        <- userAnswers.get(subMneOrDomesticId)
+//      upeDetailsOrganisationName          <- userAnswers.get(upeNameRegistrationId)
+//      primaryContactDetailsName           <- userAnswers.get(subPrimaryContactNameId)
+//      primaryContactDetailsEmailAddress   <- userAnswers.get(subPrimaryEmailId)
+//      secondaryContactDetailsName         <- userAnswers.get(subSecondaryContactNameId)
+//      secondaryContactDetailsEmailAddress <- userAnswers.get(subSecondaryEmailId)
+//      filingMemberDetails                 <- userAnswers.get(subFilingMemberDetailsId)
+//      accountingPeriod                    <- userAnswers.get(subAccountingPeriodId)
+//      upeDetailsFilingMember              <- userAnswers.get(NominateFilingMemberId)
+//      extraSubscription                   <- userAnswers.get(subExtraSubscriptionId)
+//      registrationDate                    <- userAnswers.get(subRegistrationDateId)
+//    } yield {
+//
+//      val customerIdentification1 = extraSubscription.crn
+//      val customerIdentification2 = extraSubscription.utr
+//
+//      val upeDetails = UpeDetails(
+//        plrReference = extraSubscription.plrReference,
+//        safeId = None,
+//        customerIdentification1 = customerIdentification1,
+//        customerIdentification2 = customerIdentification2,
+//        organisationName = upeDetailsOrganisationName,
+//        registrationDate = registrationDate,
+//        domesticOnly = if (domesticOnly == MneOrDomestic.UkAndOther) true else false,
+//        filingMember = upeDetailsFilingMember
+//      )
+//
+//      val primaryContactDetails = PrimaryContactDetails(
+//        name = primaryContactDetailsName,
+//        telepphone = None,
+//        telephone = userAnswers.get(subPrimaryCapturePhoneId),
+//        emailAddress = primaryContactDetailsEmailAddress
+//      )
+//
+//      val secondaryContactDetails = SecondaryContactDetails(
+//        name = secondaryContactDetailsName,
+//        telepphone = None,
+//        telephone = userAnswers.get(subSecondaryCapturePhoneId),
+//        emailAddress = secondaryContactDetailsEmailAddress
+//      )
+//
+//      val upeCorrespAddressDetails = UpeCorrespAddressDetails(
+//        addressLine1 = nonUKAddress.addressLine1,
+//        addressLine2 = nonUKAddress.addressLine2,
+//        addressLine3 = Some(nonUKAddress.addressLine3),
+//        addressLine4 = nonUKAddress.addressLine4,
+//        postCode = nonUKAddress.postalCode,
+//        countryCode = nonUKAddress.countryCode
+//      )
+//
+//      val startDate: LocalDate = accountingPeriod.startDate
+//      val endDate:   LocalDate = accountingPeriod.endDate
+//
+//      val accountingPeriodOpt = AccountingPeriod(
+//        startDate = startDate,
+//        endDate = endDate
+//      )
+//
+//      AmendSubscriptionResponse(
+//        AmendSubscriptionSuccess(
+//          upeDetails = upeDetails,
+//          accountingPeriod = accountingPeriodOpt,
+//          upeCorrespAddressDetails = upeCorrespAddressDetails,
+//          primaryContactDetails = primaryContactDetails,
+//          secondaryContactDetails = secondaryContactDetails,
+//          filingMemberDetails = filingMemberDetails
+//        )
+//      )
+//    }
+
+//  def constructSubscriptionResponse(userAnswers: UserAnswers): Option[AmendSubscriptionResponse] = {
+//    val nonUKAddressOpt = userAnswers.get(subRegisteredAddressId)
+//    val domesticOnlyOpt = userAnswers.get(subMneOrDomesticId)
+//
+//    val upeDetailsOrganisationNameOpt          = userAnswers.get(upeNameRegistrationId)
+//    val primaryContactDetailsNameOpt           = userAnswers.get(subPrimaryContactNameId)
+//    val primaryContactDetailsEmailAddressOpt   = userAnswers.get(subPrimaryEmailId)
+//    val secondaryContactDetailsNameOpt         = userAnswers.get(subSecondaryContactNameId)
+//    val secondaryContactDetailsEmailAddressOpt = userAnswers.get(subSecondaryEmailId)
+//    val filingMemberDetailsOpt                 = userAnswers.get(subFilingMemberDetailsId)
+//    val accountingPeriodOpt                    = userAnswers.get(subAccountingPeriodId)
+//    val upeDetailsFilingMemberOpt              = userAnswers.get(NominateFilingMemberId)
+//    val extraSubscriptionOpt                   = userAnswers.get(subExtraSubscriptionId)
+//    val registrationDateOpt                    = userAnswers.get(subRegistrationDateId)
+//
+//    val nonUKAddress = nonUKAddressOpt match {
+//      case Some(address) => address
+//      case None          => None
+//    }
+//
+//    val domesticOnly = domesticOnlyOpt match {
+//      case Some(value) => value
+//      case None        => None
+//    }
+//
+//    val upeDetailsOrganisationName = upeDetailsOrganisationNameOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val primaryContactDetailsName = primaryContactDetailsNameOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val secondaryContactDetailsName = primaryContactDetailsEmailAddressOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val secondaryContactDetailsEmailAddress = secondaryContactDetailsEmailAddressOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val filingMemberDetails = filingMemberDetailsOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val accountingPeriod = accountingPeriodOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val upeDetailsFilingMember = upeDetailsFilingMemberOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val extraSubscription = extraSubscriptionOpt match {
+//      case Some(subscription) => subscription
+//      case None       => None
+//    }
+//
+//    val registrationDate = registrationDateOpt match {
+//      case Some(name) => name
+//      case None       => None
+//    }
+//
+//    val plrReferenceOpt: Option[String] = extraSubscription. plrReference
+//
+//
+//
+//    val upeDetails = UpeDetails(
+//      plrReference = extraSubscription.plrReference,
+//      safeId = None,
+//      customerIdentification1 = customerIdentification1,
+//      customerIdentification2 = customerIdentification2,
+//      organisationName = upeDetailsOrganisationName,
+//      registrationDate = registrationDate,
+//      domesticOnly = if (domesticOnly == MneOrDomestic.UkAndOther) true else false,
+//      filingMember = upeDetailsFilingMember
+//    )
+//
+//    val primaryContactDetails = PrimaryContactDetails(
+//      name = primaryContactDetailsName,
+//      telepphone = None,
+//      telephone = userAnswers.get(subPrimaryCapturePhoneId),
+//      emailAddress = primaryContactDetailsEmailAddress
+//    )
+//
+//    val secondaryContactDetails = SecondaryContactDetails(
+//      name = secondaryContactDetailsName,
+//      telepphone = None,
+//      telephone = userAnswers.get(subSecondaryCapturePhoneId),
+//      emailAddress = secondaryContactDetailsEmailAddress
+//    )
+//
+//    val upeCorrespAddressDetails = UpeCorrespAddressDetails(
+//      addressLine1 = nonUKAddress.addressLine1,
+//      addressLine2 = nonUKAddress.addressLine2,
+//      addressLine3 = Some(nonUKAddress.addressLine3),
+//      addressLine4 = nonUKAddress.addressLine4,
+//      postCode = nonUKAddress.postalCode,
+//      countryCode = nonUKAddress.countryCode
+//    )
+//
+//    val startDate: LocalDate = accountingPeriod.startDate
+//    val endDate: LocalDate = accountingPeriod.endDate
+//
+//    val accountingPeriodOpt = AccountingPeriod(
+//      startDate = startDate,
+//      endDate = endDate
+//    )
+//
+//    AmendSubscriptionResponse(
+//      AmendSubscriptionSuccess(
+//        upeDetails = upeDetails,
+//        accountingPeriod = accountingPeriodOpt,
+//        upeCorrespAddressDetails = upeCorrespAddressDetails,
+//        primaryContactDetails = primaryContactDetails,
+//        secondaryContactDetails = secondaryContactDetails,
+//        filingMemberDetails = filingMemberDetails
+//      )
+//    )
+//
+//
+//
+//    /*
+//    for {
+//
+//      nonUKAddress                        <- nonUKAddressOpt
+//      domesticOnly                        <- domesticOnlyOpt
+//      upeDetailsOrganisationName          <- upeDetailsOrganisationNameOpt
+//      primaryContactDetailsName           <- primaryContactDetailsNameOpt
+//      primaryContactDetailsEmailAddress   <- primaryContactDetailsEmailAddressOpt
+//      secondaryContactDetailsName         <- secondaryContactDetailsNameOpt
+//      secondaryContactDetailsEmailAddress <- secondaryContactDetailsEmailAddressOpt
+//      filingMemberDetails                 <- filingMemberDetailsOpt
+//      accountingPeriod                    <- accountingPeriodOpt
+//      upeDetailsFilingMember              <- upeDetailsFilingMemberOpt
+//      extraSubscription                   <- extraSubscriptionOpt
+//      registrationDate                    <- registrationDateOpt
+//    } yield {
+//
+//      val customerIdentification1 = extraSubscription.crn
+//      val customerIdentification2 = extraSubscription.utr
+//
+//      val upeDetails = UpeDetails(
+//        plrReference = extraSubscription.plrReference,
+//        safeId = None,
+//        customerIdentification1 = customerIdentification1,
+//        customerIdentification2 = customerIdentification2,
+//        organisationName = upeDetailsOrganisationName,
+//        registrationDate = registrationDate,
+//        domesticOnly = if (domesticOnly == MneOrDomestic.UkAndOther) true else false,
+//        filingMember = upeDetailsFilingMember
+//      )
+//
+//      val primaryContactDetails = PrimaryContactDetails(
+//        name = primaryContactDetailsName,
+//        telepphone = None,
+//        telephone = userAnswers.get(subPrimaryCapturePhoneId),
+//        emailAddress = primaryContactDetailsEmailAddress
+//      )
+//
+//      val secondaryContactDetails = SecondaryContactDetails(
+//        name = secondaryContactDetailsName,
+//        telepphone = None,
+//        telephone = userAnswers.get(subSecondaryCapturePhoneId),
+//        emailAddress = secondaryContactDetailsEmailAddress
+//      )
+//
+//      val upeCorrespAddressDetails = UpeCorrespAddressDetails(
+//        addressLine1 = nonUKAddress.addressLine1,
+//        addressLine2 = nonUKAddress.addressLine2,
+//        addressLine3 = Some(nonUKAddress.addressLine3),
+//        addressLine4 = nonUKAddress.addressLine4,
+//        postCode = nonUKAddress.postalCode,
+//        countryCode = nonUKAddress.countryCode
+//      )
+//
+//      val startDate: LocalDate = accountingPeriod.startDate
+//      val endDate:   LocalDate = accountingPeriod.endDate
+//
+//      val accountingPeriodOpt = AccountingPeriod(
+//        startDate = startDate,
+//        endDate = endDate
+//      )
+//
+//      AmendSubscriptionResponse(
+//        AmendSubscriptionSuccess(
+//          upeDetails = upeDetails,
+//          accountingPeriod = accountingPeriodOpt,
+//          upeCorrespAddressDetails = upeCorrespAddressDetails,
+//          primaryContactDetails = primaryContactDetails,
+//          secondaryContactDetails = secondaryContactDetails,
+//          filingMemberDetails = filingMemberDetails
+//        )
+//      )
+//    } */
+//  }
 
 }
