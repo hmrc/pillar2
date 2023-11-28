@@ -51,7 +51,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     .overrides(
       bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
       bind[RegistrationService].toInstance(mockDataSubmissionsService),
-      bind[AuthConnector].toInstance(mockAuthConnector),
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
