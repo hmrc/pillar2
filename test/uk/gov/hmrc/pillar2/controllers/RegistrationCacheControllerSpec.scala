@@ -51,23 +51,10 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
     .overrides(
       bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
+      bind[AuthConnector].toInstance(mockAuthConnector),
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
-
-  private val internalId = "externalId"
-  private val enrolments = Enrolments(
-    Set(
-      Enrolment(
-        "HMRC-PILLAR2-ORG",
-        Seq(
-          EnrolmentIdentifier("PLRID", "A0000000")
-        ),
-        "Activated",
-        None
-      )
-    )
-  )
 
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
