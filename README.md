@@ -24,7 +24,7 @@ This can be started by running:
 
 To run the unit tests:
 
-    Run 'sbt test' from within the project
+    Run 'sbt test' from within the project 
 
 To use testonly route locally .
 
