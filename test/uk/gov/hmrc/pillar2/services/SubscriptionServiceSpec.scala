@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.services
 
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -27,10 +27,12 @@ import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionResponse, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
@@ -162,6 +164,56 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
             result                         shouldBe a[JsObject]
             (result \ "error").asOpt[String] should contain("DB upsert error")
           }
+      }
+    }
+
+  }
+
+  "amendSubscription" - {
+    "process valid UserAnswers and handle successful amendment" in new Setup {
+      val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
+        .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
+      val validUserAnswersData = generatedUserAnswers.data
+
+      val validUserAnswers = UserAnswers(generatedUserAnswers.id, validUserAnswersData, Instant.now)
+
+      val mockResponse = HttpResponse(200, "Amendment successful")
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(mockResponse))
+
+      val result = service.extractAndProcess(validUserAnswers)
+
+      result.futureValue.status shouldBe OK
+    }
+
+    "handle incomplete UserAnswers resulting in no amendment call" in new Setup {
+      val generatedUserAnswers = arbitraryIncompleteAmendSubscriptionUserAnswers.arbitrary.sample
+        .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
+      val validUserAnswersData = generatedUserAnswers.data
+
+      val inValidUserAnswers = UserAnswers(generatedUserAnswers.id, validUserAnswersData, Instant.now)
+
+      val mockResponse = HttpResponse(400, "Amendment successful")
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(mockResponse))
+
+      val result = service.extractAndProcess(inValidUserAnswers)
+
+      result.futureValue.status shouldBe BAD_REQUEST
+    }
+
+    "handle failure response from SubscriptionConnector" in new Setup {
+      forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
+        val failureResponse = HttpResponse(500, "Internal Server Error")
+
+        when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+          .thenReturn(Future.successful(failureResponse))
+
+        val result = service.extractAndProcess(validUserAnswers)
+
+        result.futureValue.status shouldBe 500
       }
     }
 
