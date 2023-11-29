@@ -18,12 +18,7 @@ Navigate to http://localhost:9949/auth-login-stub/gg-sign-in which redirects to 
 
 ***Affinity Group: Organisation***
 
-
 ## Key Terminologies
-
-You can use service manager to provide assets to the piller2 backend. the PILLAR2_ALL service is responsible for starting up all services required by the tax credits service project.
-This can be started by running :
-
 
 ### Ultimate Parent Entity (UPE):
 An ultimate parent is not a subsidiary of any other company and has a controlling interest in one or more other entities.
