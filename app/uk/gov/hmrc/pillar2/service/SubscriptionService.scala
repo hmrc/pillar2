@@ -26,9 +26,9 @@ import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.models.registration.{GrsResponse, RegistrationInfo}
-import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.registration.GrsResponse
+import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
@@ -423,24 +423,43 @@ class SubscriptionService @Inject() (
     Future.successful(Json.obj("error" -> errorMessage))
   }
 
+  def getOrEmptyString[T](option: Option[T]): String = option match {
+    case Some(value) if !value.toString.isEmpty => value.toString
+    case _                                      => "N/A"
+  }
+
+  def getNonEmptyOrNA(value: String): String =
+    if (value.nonEmpty) value else "N/A"
+
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
     val userAnswers = UserAnswers(id, Json.obj())
 
-    val registrationInfo = RegistrationInfo(
-      crn = sub.upeDetails.customerIdentification1.getOrElse(" "),
-      utr = sub.upeDetails.customerIdentification2.getOrElse(" "),
-      safeId = sub.upeDetails.safeId.getOrElse(""),
-      registrationDate = Option(sub.upeDetails.registrationDate),
-      filingMember = Option(sub.upeDetails.filingMember)
+    val dashboardInfo = DashboardInfo(
+      organisationName = sub.upeDetails.organisationName,
+      registrationDate = sub.upeDetails.registrationDate
     )
 
-    val ukAddress = UKAddress(
+    val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
-      addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
-      addressLine4 = sub.upeCorrespAddressDetails.addressLine4,
-      postalCode = sub.upeCorrespAddressDetails.postCode.getOrElse(""),
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3 match {
+        case Some(str) if str.nonEmpty => str
+        case _                         => "N/A"
+      },
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
       countryCode = sub.upeCorrespAddressDetails.countryCode
+    )
+
+    val crn    = sub.upeDetails.customerIdentification1
+    val utr    = sub.upeDetails.customerIdentification2
+    val safeId = sub.upeDetails.safeId
+
+    val extraSubscription = ExtraSubscription(
+      formBundleNumber = Some(getNonEmptyOrNA(sub.formBundleNumber)),
+      crn = crn.map(getNonEmptyOrNA),
+      utr = utr.map(getNonEmptyOrNA),
+      safeId = safeId.map(getNonEmptyOrNA)
     )
 
     val filingMemberDetails = FilingMemberDetails(
@@ -460,24 +479,36 @@ class SubscriptionService @Inject() (
       inactive = sub.accountStatus.inactive
     )
 
-    val result = for {
+    val primaryHasTelephone:   Boolean = sub.primaryContactDetails.telepphone.isDefined
+    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.telepphone.isDefined
+    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.telepphone.exists(
+      _.nonEmpty
+    ) || sub.secondaryContactDetails.emailAddress.nonEmpty || sub.secondaryContactDetails.name.nonEmpty
 
+    val result = for {
       u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
       u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
       u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
       u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
       u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
-      u6  <- u5.set(upeRegInformationId, registrationInfo)
-      u7  <- u6.set(upeRegisteredAddressId, ukAddress)
-      u8  <- u7.set(FmSafeId, sub.filingMemberDetails.safeId)
-      u9  <- u8.set(subFilingMemberDetailsId, filingMemberDetails)
-      u10 <- u9.set(subAccountingPeriodId, accountingPeriod)
-      u11 <- u10.set(subAccountStatusId, accountStatus)
-      u12 <- u11.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+      u6  <- u5.set(subRegisteredAddressId, nonUKAddress)
+      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
+      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
+      u9  <- u8.set(subAccountingPeriodId, accountingPeriod)
+      u10 <- u9.set(subAccountStatusId, accountStatus)
+      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
+      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.filingMember)
       telephone: Option[String] = sub.secondaryContactDetails.telepphone
-      telephoneStr = telephone.getOrElse("")
-      u13 <- u12.set(subSecondaryCapturePhoneId, telephoneStr)
-    } yield u13
+      u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
+      u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
+      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
+      u16 <- u15.set(fmDashboardId, dashboardInfo)
+      phone: Option[String] = sub.primaryContactDetails.telepphone
+      u17 <- u16.set(subPrimaryCapturePhoneId, getOrEmptyString(phone))
+      u18 <- u17.set(subPrimaryPhonePreferenceId, primaryHasTelephone)
+      u19 <- u18.set(subSecondaryPhonePreferenceId, secondaryHasTelephone)
+      u20 <- u19.set(subAddSecondaryContactId, hasSecondaryContactData)
+    } yield u20
 
     result match {
       case Success(userAnswers) =>
@@ -488,4 +519,5 @@ class SubscriptionService @Inject() (
     }
 
   }
+
 }
