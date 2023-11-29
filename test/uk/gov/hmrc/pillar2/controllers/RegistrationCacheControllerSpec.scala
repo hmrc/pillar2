@@ -20,17 +20,16 @@ import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, when}
-import org.scalatest.BeforeAndAfter
+import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
-import play.api.mvc.ControllerComponents
+import play.api.libs.json.{JsObject, JsSuccess, Json, Reads}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
-import uk.gov.hmrc.auth.core.{AuthConnector, Enrolment, EnrolmentIdentifier, Enrolments}
-import uk.gov.hmrc.auth.core.retrieve.~
+import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
+import uk.gov.hmrc.auth.core.retrieve.{Retrieval, SimpleRetrieval, ~}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, CredentialRole, Enrolment, EnrolmentIdentifier, Enrolments, User}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -52,11 +51,11 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
     .overrides(
       bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
-      bind[AuthConnector].toInstance(mockAuthConnector)
+      bind[AuthAction].to[FakeAuthAction]
     )
     .build()
 
-  private val externalId = "externalId"
+  private val internalId = "externalId"
   private val enrolments = Enrolments(
     Set(
       Enrolment(
@@ -70,12 +69,14 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     )
   )
 
-
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
-      when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-        new~(Some(externalId), enrolments))
+//      when(mockAuthConnector.authorise[Option[String] ~ Enrolments ~ AffinityGroup ~ CredentialRole](any(), any())(any(), any())) thenReturn Future.successful(
+//        new ~(Some(internalId), enrolments , Some(AffinityGroup.Organisation) , Some(User))
+//      )
+//      when(mockAuthAction.authorised(eqTo(EmptyPredicate) ,eqTo(AuthProviderId.retrieval))(any(), any()))
+//        .thenReturn(Future.successful("1234"))
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
       val result  = route(application, request).value
       status(result) mustBe OK
@@ -83,8 +84,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
     "return 413 when request is not right" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
-      when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-        new~(Some(externalId), enrolments))
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
       val result  = route(application, request).value
 
@@ -92,8 +91,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     }
     "throw exception when mongo is down" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.failed(new Exception(""))
-      when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-        new~(Some(externalId), enrolments))
+
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
       val result  = route(application, request).value
 
@@ -106,8 +104,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         Some(Json.obj())
       }
-      when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-        new~(Some(externalId), enrolments))
       val request = FakeRequest(GET, routes.RegistrationCacheController.get("id").url)
       val result  = route(application, request).value
 
@@ -119,8 +115,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         None
       }
-      when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-        new~(Some(externalId), enrolments))
+
       val request = FakeRequest(GET, routes.RegistrationCacheController.get("id").url)
       val result  = route(application, request).value
 
@@ -130,8 +125,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
         when(mockRgistrationCacheRepository.remove(eqTo("id"))(any())) thenReturn Future.successful(true)
-        when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-          new~(Some(externalId), enrolments))
+
         val request = FakeRequest(DELETE, routes.RegistrationCacheController.remove("id").url)
         val result  = route(application, request).value
 
@@ -145,8 +139,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
         when(mockRgistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
         }
-        when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-          new~(Some(externalId), enrolments))
 
         val request = FakeRequest(GET, routes.RegistrationCacheController.lastUpdated("foo").url)
         val result  = route(application, request).value
@@ -159,8 +151,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
         when(mockRgistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
-        when(mockAuthConnector.authorise[Option[String] ~ Enrolments](any(), any())(any(), any())) thenReturn Future.successful(
-          new~(Some(externalId), enrolments))
 
         val request = FakeRequest(POST, routes.RegistrationCacheController.lastUpdated("id").url)
         val result  = route(application, request).value
