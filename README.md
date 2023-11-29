@@ -51,6 +51,8 @@ To stop services:
 
     sm2 --stop PILLAR2_ALL
 
+    Run 'sbt test' from within the project 
+
 
 ### License
 
