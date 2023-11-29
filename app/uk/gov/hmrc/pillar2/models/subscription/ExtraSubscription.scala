@@ -20,17 +20,13 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
 
-case class Subscription(
-  formBundleNumber:         Option[String] = None,
-  upeDetails:               Option[UpeDetails] = None,
-  upeCorrespAddressDetails: Option[UpeCorrespAddressDetails] = None,
-  primaryContactDetails:    Option[PrimaryContactDetails] = None,
-  secondaryContactDetails:  Option[SecondaryContactDetails] = None,
-  filingMemberDetails:      Option[FilingMemberDetails] = None,
-  accountingPeriod:         Option[AccountingPeriod] = None,
-  accountStatus:            Option[AccountStatus] = None
+case class ExtraSubscription(
+  formBundleNumber: Option[String] = None,
+  crn:              Option[String] = None,
+  utr:              Option[String] = None,
+  safeId:           Option[String] = None
 )
 
-object Subscription {
-  implicit val format: OFormat[Subscription] = Json.format[Subscription]
+object ExtraSubscription {
+  implicit val format: OFormat[ExtraSubscription] = Json.format[ExtraSubscription]
 }
