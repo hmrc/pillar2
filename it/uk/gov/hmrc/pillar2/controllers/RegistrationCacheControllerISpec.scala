@@ -35,8 +35,8 @@ class RegistrationCacheControllerISpec extends BaseISpec
     await(testService.clearAllData)
   }
 
-  val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
-  val controller: RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
+  val registrationCacheRepository: RegistrationCacheRepository = fakeApplication().injector.instanceOf[RegistrationCacheRepository]
+  val controller: RegistrationCacheController = fakeApplication().injector.instanceOf[RegistrationCacheController]
 
   "save" should {
     "successfully save data" in {
@@ -45,7 +45,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
+      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
       example shouldBe expectedResult
     }
 
@@ -58,7 +58,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
+      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
       example shouldBe expectedResult
     }
 

@@ -30,7 +30,6 @@ import play.api.mvc._
 import play.api.test._
 import play.api.{Application, Mode}
 import uk.gov.hmrc.pillar2.{FakeObjects, ResultAssertions}
-
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -82,6 +81,9 @@ abstract class BaseISpec
     GuiceApplicationBuilder()
       .disable[com.kenshoo.play.metrics.PlayModule]
       .configure(additionalAppConfig.toMap)
+//      .overrides(
+//        bind[AuthAction].to[FakeAuthAction]
+//      )
       .in(Mode.Test)
       .build()
 

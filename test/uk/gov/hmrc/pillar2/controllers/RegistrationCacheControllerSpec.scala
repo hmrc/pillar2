@@ -59,9 +59,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
-//      when(mockAuthConnector.authorise[Option[String] ~ Enrolments ~ AffinityGroup ~ CredentialRole](any(), any())(any(), any())) thenReturn Future.successful(
-//        new ~(Some(internalId), enrolments , Some(AffinityGroup.Organisation) , Some(User))
-//      )
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
       val result  = route(application, request).value
       status(result) mustBe OK
