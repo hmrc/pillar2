@@ -29,7 +29,7 @@ import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
 import uk.gov.hmrc.auth.core.retrieve.{Retrieval, SimpleRetrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, CredentialRole, Enrolment, EnrolmentIdentifier, Enrolments, User}
+import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, CredentialRole, Enrolment, EnrolmentIdentifier, Enrolments, User}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -62,8 +62,6 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 //      when(mockAuthConnector.authorise[Option[String] ~ Enrolments ~ AffinityGroup ~ CredentialRole](any(), any())(any(), any())) thenReturn Future.successful(
 //        new ~(Some(internalId), enrolments , Some(AffinityGroup.Organisation) , Some(User))
 //      )
-//      when(mockAuthAction.authorised(eqTo(EmptyPredicate) ,eqTo(AuthProviderId.retrieval))(any(), any()))
-//        .thenReturn(Future.successful("1234"))
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
       val result  = route(application, request).value
       status(result) mustBe OK
