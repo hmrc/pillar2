@@ -70,3 +70,12 @@ case class SecondaryContactDetails(
 object SecondaryContactDetails {
   implicit val format: OFormat[SecondaryContactDetails] = Json.format[SecondaryContactDetails]
 }
+
+case class DashboardInfo(
+  organisationName: String,
+  registrationDate: LocalDate
+)
+
+object DashboardInfo {
+  implicit val format: OFormat[DashboardInfo] = Json.format[DashboardInfo]
+}
