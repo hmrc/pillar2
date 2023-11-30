@@ -104,8 +104,9 @@ class SubscriptionController @Inject() (
       valid = subs =>
         for {
           userAnswer <- getUserAnswers(subs.id)
-          _ = println(s"userAnswer before extractAndProcess: $userAnswer")
+//          _ = println(s"userAnswer before extractAndProcess: $userAnswer")
           response <- subscriptionService.extractAndProcess(userAnswer)
+//          _ = println(s"userAnswer After extractAndProcess: $userAnswer")
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }
