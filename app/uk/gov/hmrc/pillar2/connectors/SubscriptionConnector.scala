@@ -51,7 +51,7 @@ class SubscriptionConnector @Inject() (
         response
       }
       .recover { case ex: Throwable =>
-        println(s"Error while fetching subscription information: ${ex.getMessage}")
+        logger.warn(s"Error while fetching subscription information: ${ex.getMessage}")
         throw ex
       }
   }
