@@ -576,30 +576,54 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 //
 //      }
 
-      "handle a valid request and successful response" in new Setup {
-        val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-          .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
-        val validUserAnswersData = generatedUserAnswers.data
-        val testId               = generatedUserAnswers.id
+//      "handle a valid request and successful response" in new Setup {
+//        val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
+//          .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
+//        val validUserAnswersData = generatedUserAnswers.data
+//        val testId               = generatedUserAnswers.id
+//
+//        // Mocking the repository to return user answers
+//        when(mockRgistrationCacheRepository.get(eqTo(testId))(any[ExecutionContext]))
+//          .thenReturn(Future.successful(Some(validUserAnswersData)))
+//
+//        // Mocking the service to return a specific response format
+//        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+//          .thenReturn(Future.successful(HttpResponse(200, Json.obj("result" -> "Amendment successful").toString())))
+//
+//        // Creating a request with the generated test ID
+//        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(testId))
+//        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+//          .withJsonBody(requestJson)
+//
+//        // Executing the request
+//        val result = route(application, fakeRequest).value
+//
+//        // Checking the response status
+//        status(result) mustBe OK
+//      }
 
-        // Mocking the repository to return user answers
-        when(mockRgistrationCacheRepository.get(eqTo(testId))(any[ExecutionContext]))
-          .thenReturn(Future.successful(Some(validUserAnswersData)))
+      "return OK when valid data is provided" in new Setup {
+        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers: UserAnswers =>
+          stubPutResponse(
+            s"/pillar2/subscription",
+            OK
+          )
+          val id = userAnswers.id
 
-        // Mocking the service to return a specific response format
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(HttpResponse(200, Json.obj("result" -> "Amendment successful").toString())))
+          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+            .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
 
-        // Creating a request with the generated test ID
-        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(testId))
-        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-          .withJsonBody(requestJson)
+          when(mockRgistrationCacheRepository.get(any[String])(any[ExecutionContext]))
+            .thenReturn(Future.successful(Some(userAnswers.data)))
 
-        // Executing the request
-        val result = route(application, fakeRequest).value
+          val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+            .withJsonBody(requestJson)
 
-        // Checking the response status
-        status(result) mustBe OK
+          val result = route(application, fakeRequest).value
+
+          status(result) mustBe OK
+        }
       }
 
       /*
