@@ -23,13 +23,11 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsObject, JsSuccess, Json, Reads}
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
-import uk.gov.hmrc.auth.core.authorise.EmptyPredicate
-import uk.gov.hmrc.auth.core.retrieve.{Retrieval, SimpleRetrieval, ~}
-import uk.gov.hmrc.auth.core.{AffinityGroup, AuthConnector, AuthorisedFunctions, CredentialRole, Enrolment, EnrolmentIdentifier, Enrolments, User}
+import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.helpers.BaseSpec

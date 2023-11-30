@@ -81,9 +81,6 @@ abstract class BaseISpec
     GuiceApplicationBuilder()
       .disable[com.kenshoo.play.metrics.PlayModule]
       .configure(additionalAppConfig.toMap)
-//      .overrides(
-//        bind[AuthAction].to[FakeAuthAction]
-//      )
       .in(Mode.Test)
       .build()
 

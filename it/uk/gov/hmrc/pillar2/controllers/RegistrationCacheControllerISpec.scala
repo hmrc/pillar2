@@ -17,7 +17,12 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.scalatest.OptionValues
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import play.api.{Application, Configuration}
+import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockHelper, WireMockSupport}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.test.TestService
@@ -35,8 +40,16 @@ class RegistrationCacheControllerISpec extends BaseISpec
     await(testService.clearAllData)
   }
 
-  val registrationCacheRepository: RegistrationCacheRepository = fakeApplication().injector.instanceOf[RegistrationCacheRepository]
-  val controller: RegistrationCacheController = fakeApplication().injector.instanceOf[RegistrationCacheController]
+
+  val application: Application = new GuiceApplicationBuilder()
+    .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
+    .overrides(
+      bind[AuthAction].to[FakeAuthAction]
+    )
+    .build()
+
+  val registrationCacheRepository: RegistrationCacheRepository = application.injector.instanceOf[RegistrationCacheRepository]
+  val controller: RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
 
   "save" should {
     "successfully save data" in {
