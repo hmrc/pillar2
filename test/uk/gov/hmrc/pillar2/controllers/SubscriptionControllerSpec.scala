@@ -520,7 +520,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         implicit val hc: HeaderCarrier    = HeaderCarrier()
 
         stubPutResponse(
-          "/pillar2/subscription/amend-subscription",///subscription/amend-subscription
+          "/pillar2/subscription/amend-subscription", ///subscription/amend-subscription
           OK
         )
 
