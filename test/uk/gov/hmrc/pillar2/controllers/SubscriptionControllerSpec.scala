@@ -16,19 +16,15 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{reset, when}
-import org.mockito.invocation.InvocationOnMock
-import org.mockito.stubbing.Answer
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.{JsObject, JsValue, Json}
+import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{Application, Configuration, Logger}
+import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
@@ -36,13 +32,10 @@ import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
-import uk.gov.hmrc.pillar2.models.hods.{ErrorDetail, ErrorDetails, SourceFaultDetail}
-import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.AmendSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
-import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
@@ -490,24 +483,56 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 //        }
 //      }
 
+//      "handle a valid request and successful response" in new Setup {
+//        // Generate a realistic userAnswersJson
+//        val userAnswersJson = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
+//          .getOrElse(fail("Unable to generate UserAnswers"))
+//          .data
+//
+//        val userAnswers = UserAnswers("testId", userAnswersJson, Instant.now)
+//
+//        when(controller.getUserAnswers(any[String])).thenReturn(Future.successful(userAnswers))
+//
+//        // Mock the repository to return the expected UserAnswers JSON wrapped in an Option
+//        when(mockRgistrationCacheRepository.get("testId"))
+//          .thenReturn(Future.successful(Some(userAnswersJson)))
+//
+//        // Mock the service call with the specific UserAnswers
+//        when(mockSubscriptionService.extractAndProcess(userAnswers))
+//          .thenReturn(Future.successful(HttpResponse(200, "")))
+//
+//        val requestJson = Json.toJson(AmendSubscriptionRequestParameters("testId"))
+//        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url).withJsonBody(requestJson)
+//
+//        val result = route(application, fakeRequest).value
+//
+//        status(result) mustBe OK
+//      }
+
       "handle a valid request and successful response" in new Setup {
-        // Generate a realistic userAnswersJson
-        val userAnswersJson = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-          .getOrElse(fail("Unable to generate UserAnswers"))
-          .data
 
-        val userAnswers = UserAnswers("testId", userAnswersJson, Instant.now)
+        val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
+          .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
+        val validUserAnswersData = generatedUserAnswers.data
+        val testId               = generatedUserAnswers.id
 
-        // Mock the repository to return the expected UserAnswers JSON wrapped in an Option
-        when(mockRgistrationCacheRepository.get("testId"))
-          .thenReturn(Future.successful(Some(userAnswersJson)))
+        implicit val ec: ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+        implicit val hc: HeaderCarrier    = HeaderCarrier()
 
-        // Mock the service call with the specific UserAnswers
-        when(mockSubscriptionService.extractAndProcess(userAnswers))
-          .thenReturn(Future.successful(HttpResponse(200, "")))
+        stubPutResponse(
+          "/pillar2/subscription/amend-subscription",///subscription/amend-subscription
+          OK
+        )
 
-        val requestJson = Json.toJson(AmendSubscriptionRequestParameters("testId"))
-        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url).withJsonBody(requestJson)
+        when(mockRgistrationCacheRepository.get(eqTo(testId))(any[ExecutionContext]))
+          .thenReturn(Future.successful(Some(validUserAnswersData)))
+
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(eqTo(hc), eqTo(ec)))
+          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
+
+        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(testId))
+        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          .withJsonBody(requestJson)
 
         val result = route(application, fakeRequest).value
 

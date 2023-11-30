@@ -777,10 +777,10 @@ trait ModelGenerators {
   val arbitraryAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
 
-      inactive <- Gen.oneOf(true, false)
-      id       <- Gen.uuid.map(_.toString)
-
-      upeNameRegistration     <- stringsWithMaxLength(105)
+      inactive            <- Gen.oneOf(true, false)
+      id                  <- Gen.uuid.map(_.toString)
+      upeNameRegistration <- stringsWithMaxLength(105)
+//      upeNameRegistration     <- stringsWithMaxLength(105)
       primaryContactName      <- stringsWithMaxLength(200)
       primaryEmail            <- stringsWithMaxLength(20)
       secondaryContactName    <- stringsWithMaxLength(200)

@@ -27,6 +27,7 @@ import uk.gov.hmrc.pillar2.service.SubscriptionService
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.Logger
 
 class SubscriptionController @Inject() (
   repository:                RegistrationCacheRepository,
@@ -103,7 +104,8 @@ class SubscriptionController @Inject() (
       valid = subs =>
         for {
           userAnswer <- getUserAnswers(subs.id)
-          response   <- subscriptionService.extractAndProcess(userAnswer)
+          _ = println(s"userAnswer before extractAndProcess: $userAnswer")
+          response <- subscriptionService.extractAndProcess(userAnswer)
         } yield convertToResult(response)(implicitly[Logger](logger))
     )
   }
