@@ -93,7 +93,8 @@ class RegistrationCacheRepository @Inject() (
             .expireAfter(2419200, TimeUnit.SECONDS)
             .background(true)
         )
-      )
+      ),
+      replaceIndexes = true
     )
     with Logging {
 
