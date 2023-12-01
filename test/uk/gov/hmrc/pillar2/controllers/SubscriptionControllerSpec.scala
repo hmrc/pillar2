@@ -693,91 +693,101 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         status(resultFuture) mustBe INTERNAL_SERVER_ERROR
       }
 
-//      "return NotFound when UserAnswers not found" in new Setup {
-//        val userAnswers = UserAnswers(id, Json.obj())
-//        val updatedUserAnswers = for {
-//          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
-//          u2 <- u1.set(upeNameRegistrationId, "International Organisation Inc.")
-//          u3 <- u2.set(subPrimaryContactNameId, "Fred Flintstone")
-//          u4 <- u3.set(subPrimaryEmailId, "fred.flintstone@aol.com")
-//          u5 <- u4.set(subSecondaryContactNameId, "Donald Trump")
-//          u6 <- u5.set(
-//                  subRegisteredAddressId,
-//                  NonUKAddress(
-//                    addressLine1 = "1 High Street",
-//                    addressLine2 = Some("Egham"),
-//                    addressLine3 = "Surrey",
-//                    addressLine4 = Some("N/A"),
-//                    postalCode = Some("HP13 6TT"),
-//                    countryCode = "GB"
-//                  )
-//                )
-//          u7 <- u6.set(FmSafeId, "XL6967739016188")
-//          u8 <- u7.set(
-//                  subFilingMemberDetailsId,
-//                  FilingMemberDetails(
-//                    safeId = "XL6967739016188",
-//                    customerIdentification1 = Some("1234Z678"),
-//                    customerIdentification2 = Some("1234567Y"),
-//                    organisationName = "Domestic Operations Ltd"
-//                  )
-//                )
-//          u9 <- u8.set(
-//                  subAccountingPeriodId,
-//                  AccountingPeriod(
-//                    startDate = LocalDate.parse("2024-01-06"),
-//                    endDate = LocalDate.parse("2025-04-06"),
-//                    duetDate = Some(LocalDate.parse("2024-04-06"))
-//                  )
-//                )
-//          u10 <- u9.set(subAccountStatusId, AccountStatus(inactive = true))
-//          u11 <- u10.set(subSecondaryEmailId, "fred.flintstone@potus.com")
-//          u12 <- u11.set(NominateFilingMemberId, false)
-//          u13 <- u12.set(subSecondaryCapturePhoneId, "0115 9700 700")
-//          u14 <- u13.set(
-//                   subExtraSubscriptionId,
-//                   ExtraSubscription(
-//                     formBundleNumber = Some("119000004320"),
-//                     crn = Some("12345678"),
-//                     utr = Some("12345678"),
-//                     safeId = None,
-//                     plrReference = None
-//                   )
-//                 )
-//          u15 <- u14.set(subRegistrationDateId, LocalDate.parse("2022-01-31"))
-//          u16 <- u15.set(
-//                   fmDashboardId,
-//                   DashboardInfo(
-//                     organisationName = "International Organisation Inc.",
-//                     registrationDate = LocalDate.parse("2022-01-31")
-//                   )
-//                 )
-//          u17 <- u16.set(subPrimaryCapturePhoneId, "0115 9700 700")
-//          u18 <- u17.set(subPrimaryPhonePreferenceId, true)
-//          u19 <- u18.set(subSecondaryPhonePreferenceId, true)
-//          u20 <- u19.set(subAddSecondaryContactId, true)
-//        } yield u20
-//
-//        val id = "123"
-//
-//        updatedUserAnswers match {
-//          case Success(updatedAnswers) =>
-//            when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-//              .thenReturn(Future.successful(None))
-//
-//          case Failure(exception) =>
-//            logger.error("Error creating updated UserAnswers", exception)
-//        }
-//
-//        val validJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-//        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-//          .withJsonBody(validJson)
-//
-//        val resultFuture = route(application, fakeRequest).value
-//
-//        status(resultFuture) mustBe NOT_FOUND
-//      }
+      "return BadRequest when given invalid subscription parameters" in new Setup {
 
+        val userAnswers = UserAnswers(id, Json.obj())
+        val updatedUserAnswers = for {
+          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
+          u2 <- u1.set(upeNameRegistrationId, "International Organisation Inc.")
+          u3 <- u2.set(subPrimaryContactNameId, "Fred Flintstone")
+          u4 <- u3.set(subPrimaryEmailId, "fred.flintstone@aol.com")
+          u5 <- u4.set(subSecondaryContactNameId, "Donald Trump")
+          u6 <- u5.set(
+                  subRegisteredAddressId,
+                  NonUKAddress(
+                    addressLine1 = "1 High Street",
+                    addressLine2 = Some("Egham"),
+                    addressLine3 = "Surrey",
+                    addressLine4 = Some("N/A"),
+                    postalCode = Some("HP13 6TT"),
+                    countryCode = "GB"
+                  )
+                )
+          u7 <- u6.set(FmSafeId, "XL6967739016188")
+          u8 <- u7.set(
+                  subFilingMemberDetailsId,
+                  FilingMemberDetails(
+                    safeId = "XL6967739016188",
+                    customerIdentification1 = Some("1234Z678"),
+                    customerIdentification2 = Some("1234567Y"),
+                    organisationName = "Domestic Operations Ltd"
+                  )
+                )
+          u9 <- u8.set(
+                  subAccountingPeriodId,
+                  AccountingPeriod(
+                    startDate = LocalDate.parse("2024-01-06"),
+                    endDate = LocalDate.parse("2025-04-06"),
+                    duetDate = Some(LocalDate.parse("2024-04-06"))
+                  )
+                )
+          u10 <- u9.set(subAccountStatusId, AccountStatus(inactive = true))
+          u11 <- u10.set(subSecondaryEmailId, "fred.flintstone@potus.com")
+          u12 <- u11.set(NominateFilingMemberId, false)
+          u13 <- u12.set(subSecondaryCapturePhoneId, "0115 9700 700")
+          u14 <- u13.set(
+                   subExtraSubscriptionId,
+                   ExtraSubscription(
+                     formBundleNumber = Some("119000004320"),
+                     crn = Some("12345678"),
+                     utr = Some("12345678"),
+                     safeId = None,
+                     plrReference = None
+                   )
+                 )
+          u15 <- u14.set(subRegistrationDateId, LocalDate.parse("2022-01-31"))
+          u16 <- u15.set(
+                   fmDashboardId,
+                   DashboardInfo(
+                     organisationName = "International Organisation Inc.",
+                     registrationDate = LocalDate.parse("2022-01-31")
+                   )
+                 )
+          u17 <- u16.set(subPrimaryCapturePhoneId, "0115 9700 700")
+          u18 <- u17.set(subPrimaryPhonePreferenceId, true)
+          u19 <- u18.set(subSecondaryPhonePreferenceId, true)
+          u20 <- u19.set(subAddSecondaryContactId, true)
+        } yield u20
+
+        stubPutResponse(
+          s"/pillar2/subscription",
+          OK
+        )
+        val id = "123"
+
+        updatedUserAnswers match {
+          case Success(updatedAnswers) =>
+            val jsonUpdatedAnswers = Json.toJson(updatedAnswers)(UserAnswers.format)
+            when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
+              .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
+
+          case Failure(exception) =>
+            logger.error("Error creating updated UserAnswers", exception)
+        }
+
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
+
+        val invalidJson = Json.obj("invalidField" -> "invalidValue")
+        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          .withJsonBody(invalidJson)
+
+        val resultFuture = route(application, fakeRequest).value
+
+        status(resultFuture) mustBe BAD_REQUEST
+        contentAsString(resultFuture) must include("Amend Subscription parameter is invalid")
+      }
     }
+
   }
 }
