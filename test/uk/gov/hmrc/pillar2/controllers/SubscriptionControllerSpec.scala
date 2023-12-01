@@ -23,6 +23,7 @@ import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.i18n.Lang.logger
 import play.api.inject.bind
@@ -786,6 +787,28 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
         status(resultFuture) mustBe BAD_REQUEST
         contentAsString(resultFuture) must include("Amend Subscription parameter is invalid")
+      }
+
+      "fail with IllegalArgumentException when UserAnswers is null" in {
+
+        stubPutResponse(
+          s"/pillar2/subscription",
+          OK
+        )
+        val id = "123"
+
+        when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
+          .thenReturn(Future.successful(None))
+
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
+
+        val result = service.extractAndProcess(null)
+
+        whenReady(result.failed, timeout(Span(5, Seconds)), interval(Span(500, Millis))) { e =>
+          e mustBe a[IllegalArgumentException]
+          e.getMessage must include("UserAnswers cannot be null")
+        }
       }
     }
 
