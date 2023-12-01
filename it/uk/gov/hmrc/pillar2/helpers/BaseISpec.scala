@@ -70,7 +70,9 @@ abstract class BaseISpec
 
   additionalAppConfig ++= Map(
     "mongodb.uri"      -> "mongodb://localhost:27017/pillar2-test",
-    "metrics.enabled"  -> false,
+    "microservice.services.auth.host" -> "localhost",
+    "microservice.services.auth.port"   -> 8500,
+    "metrics.enabled"  -> true,
     "auditing.enabled" -> false
   )
 
