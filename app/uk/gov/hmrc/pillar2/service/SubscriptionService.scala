@@ -520,29 +520,7 @@ class SubscriptionService @Inject() (
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
-//  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
-//    constructSubscriptionResponse(userAnswers) match {
-//      case Some(subscriptionResponse) =>
-//        subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
-//          response.status match {
-//            case 200 =>
-//              Future.successful(
-//                HttpResponse(
-//                  status = 200,
-//                  json = Json.toJson(Map("message" -> "Amendment successful")),
-//                  headers = Map("Content-Type" -> Seq("application/json"))
-//                )
-//              )
-//            case status =>
-//              Future.successful(HttpResponse(status, s"Error with status: $status"))
-//          }
-//        }
-//      case None =>
-//        Future.successful(HttpResponse(400, "Invalid subscription response"))
-//    }
-
   def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    // Log the received UserAnswers
     logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
 
     Option(userAnswers) match {
