@@ -21,7 +21,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.{Application, Configuration}
-import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockHelper, WireMockSupport}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository

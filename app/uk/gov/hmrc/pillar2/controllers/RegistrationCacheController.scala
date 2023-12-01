@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.controllers
 import org.joda.time.DateTime
 import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.{Inject, Singleton}
