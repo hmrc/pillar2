@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
-import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess, JsValue, Json}
+import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
@@ -27,7 +27,6 @@ import uk.gov.hmrc.pillar2.service.SubscriptionService
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.Logger
 
 class SubscriptionController @Inject() (
   repository:                RegistrationCacheRepository,
@@ -91,23 +90,26 @@ class SubscriptionController @Inject() (
   }
 
   def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
-    val subscriptionParameters: JsResult[AmendSubscriptionRequestParameters] =
-      request.body.validate[AmendSubscriptionRequestParameters]
+    val subscriptionParameters = request.body.validate[AmendSubscriptionRequestParameters]
+
     subscriptionParameters.fold(
       invalid = error => {
-        logger.info(s"SubscriptionController - amendSubscription called $error")
-
-        Future.successful(
-          BadRequest("Amend Subscription parameter is invalid")
-        )
+        logger.info(s"SubscriptionController - amendSubscription called with error: $error")
+        Future.successful(BadRequest("Amend Subscription parameter is invalid"))
       },
       valid = subs =>
-        for {
-          userAnswer <- getUserAnswers(subs.id)
-//          _ = println(s"userAnswer before extractAndProcess: $userAnswer")
-          response <- subscriptionService.extractAndProcess(userAnswer)
-//          _ = println(s"userAnswer After extractAndProcess: $userAnswer")
-        } yield convertToResult(response)(implicitly[Logger](logger))
+        getUserAnswers(subs.id).flatMap { typedUserAnswers =>
+          subscriptionService
+            .extractAndProcess(typedUserAnswers)
+            .map { response =>
+              convertToResult(response)(implicitly[Logger](logger))
+            }
+            .recover { case ex: Throwable =>
+              logger.error("An error occurred during subscription processing", ex)
+              InternalServerError("Internal server error occurred")
+            }
+        }
     )
   }
+
 }

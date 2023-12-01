@@ -125,27 +125,11 @@ class RegistrationCacheRepository @Inject() (
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
-    collection
-      .find[JsonDataEntry](Filters.equal(idField, id))
-      .headOption()
-      .map {
-        case Some(dataEntry) =>
-          println(s"Fetched data for id: $id, data: ${dataEntry.data}")
-          Some(dataEntry.data)
-        case None =>
-          println(s"No data found for id: $id")
-          None
+    collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
+      _.map { dataEntry =>
+        dataEntry.data
       }
-      .recover { case ex: Throwable =>
-        println(s"Error fetching data for id: $id", ex)
-        None
-      }
-//  def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
-//    collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
-//      _.map { dataEntry =>
-//        dataEntry.data
-//      }
-//    }
+    }
 
   def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] =
     collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {

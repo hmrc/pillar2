@@ -774,16 +774,6 @@ trait ModelGenerators {
     arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionResponse(_))
   }
 
-  /*
-  case class ExtraSubscription(
-    formBundleNumber: Option[String] = None,
-    crn:              Option[String] = None,
-    utr:              Option[String] = None,
-    safeId:           Option[String] = None,
-    plrReference:     Option[String] = None
-  )
-   */
-
   implicit val arbitraryExtraSubscription: Arbitrary[ExtraSubscription] = Arbitrary {
     for {
       formBundleNumber <- arbitrary[String]
@@ -802,15 +792,6 @@ trait ModelGenerators {
 
   val arbitraryAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
-
-//      val filingMemberDetailsOpt = userAnswers.get(subFilingMemberDetailsId)
-//      val accountingPeriodOpt = userAnswers.get(subAccountingPeriodId)
-//      val upeDetailsFilingMemberOpt = userAnswers.get(NominateFilingMemberId)
-//      val extraSubscriptionOpt = userAnswers.get(subExtraSubscriptionId)
-//      val registrationDateOpt = userAnswers.get(subRegistrationDateId)
-//                                  */
-
-      inactive             <- Gen.oneOf(true, false)
       id                   <- Gen.uuid.map(_.toString)
       upeNameRegistration  <- stringsWithMaxLength(105)
       primaryContactName   <- stringsWithMaxLength(200)
@@ -818,17 +799,9 @@ trait ModelGenerators {
       secondaryContactName <- stringsWithMaxLength(200)
       secondaryEmail       <- stringsWithMaxLength(20)
       secondaryPhone       <- arbitrary[Int]
-      filingMemberSafeId   <- arbitrary[String]
-//      customerIdentification1 <- Gen.option(arbitrary[String])
-//      customerIdentification2 <- Gen.option(arbitrary[String])
-//      organisationName        <- arbitrary[String]
-//      startDate               <- arbitrary[LocalDate]
-//      endDate                 <- arbitrary[LocalDate]
-//      duetDate                <- arbitrary[LocalDate]
+      filingMemberSafeId   <- stringsWithMaxLength(200)
+
       registrationDate     <- arbitrary[LocalDate]
-      formBundleNumber     <- arbitrary[String]
-      crn                  <- arbitrary[String]
-      utr                  <- arbitrary[String]
       subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
 
       filingMember      <- arbitraryFilingMemberDetails.arbitrary
@@ -859,55 +832,18 @@ trait ModelGenerators {
 
   val arbitraryIncompleteAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
-      inactive <- Gen.oneOf(true, false)
-      id       <- Gen.uuid.map(_.toString)
+      id <- Gen.uuid.map(_.toString)
 
       primaryContactName   <- stringsWithMaxLength(200)
       primaryEmail         <- stringsWithMaxLength(20)
       secondaryContactName <- stringsWithMaxLength(200)
       secondaryEmail       <- stringsWithMaxLength(20)
-//      secondaryPhone          <- arbitrary[Int]
-//      filingMemberSafeId      <- arbitrary[String]
-//      customerIdentification1 <- Gen.option(arbitrary[String])
-//      customerIdentification2 <- Gen.option(arbitrary[String])
-//      organisationName        <- arbitrary[String]
-//      startDate               <- arbitrary[LocalDate]
-//      endDate                 <- arbitrary[LocalDate]
-//      duetDate                <- arbitrary[LocalDate]
-//      registrationDate        <- arbitrary[LocalDate]
-//      formBundleNumber        <- arbitrary[String]
-//      crn                     <- arbitrary[String]
-//      utr                     <- arbitrary[String]
-//      subRegisteredAddress    <- arbitraryNonUKAddressDetails.arbitrary
-//      acountPeriod <- arbitraryAccountingPeriod.arbitrary
       data = Json.obj(
                "subMneOrDomestic"        -> "ukAndOther",
                "subPrimaryContactName"   -> primaryContactName,
                "subPrimaryEmail"         -> primaryEmail,
                "subSecondaryContactName" -> secondaryContactName,
                "subSecondaryEmail"       -> secondaryEmail
-//               "subSecondaryCapturePhone" -> secondaryPhone,
-//               "FmSafeID"                 -> filingMemberSafeId,
-//               "subFilingMemberDetails" -> Json.obj(
-//                 "safeId"                  -> filingMemberSafeId,
-//                 "customerIdentification1" -> customerIdentification1,
-//                 "customerIdentification2" -> customerIdentification2,
-//                 "organisationName"        -> organisationName
-//               ),
-//               "subAccountingPeriod" -> acountPeriod,
-//               "subAccountStatus"            -> Json.obj("inactive" -> inactive),
-//               "subRegistrationDate"         -> registrationDate,
-//               "subPrimaryCapturePhone"      -> secondaryPhone,
-//               "subPrimaryPhonePreference"   -> true,
-//               "subSecondaryPhonePreference" -> true,
-//               "subAddSecondaryContact"      -> true,
-//               "subExtraSubscription" -> Json.obj(
-//                 "formBundleNumber" -> formBundleNumber,
-//                 "crn"              -> crn,
-//                 "utr"              -> utr
-//               ),
-//               "subRegisteredAddress" -> subRegisteredAddress,
-//               "NominateFilingMember" -> true
              )
     } yield UserAnswers(id, data, Instant.now)
   }

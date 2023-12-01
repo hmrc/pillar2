@@ -20,7 +20,6 @@ import play.api.libs.json.JsPath
 
 import scala.util.Try
 
-//REDUNDANT
 case object subPrimaryPhonePreferenceId extends TypedIdentifier[Boolean] {
 
   override def path: JsPath = JsPath \ toString

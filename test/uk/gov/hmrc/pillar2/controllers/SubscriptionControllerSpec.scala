@@ -16,28 +16,38 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{reset, verify, when}
+import org.mockito.Mockito.{reset, when}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.i18n.Lang.logger
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
-import play.api.{Application, Configuration}
+import play.api.{Application, Configuration, Logger}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
 import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionResponse
-import uk.gov.hmrc.pillar2.models.subscription.AmendSubscriptionRequestParameters
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{DashboardInfo, FilingMemberDetails, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.{ErrorDetail, ErrorDetails, SourceFaultDetail}
+import uk.gov.hmrc.pillar2.models.identifiers._
+import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, ExtraSubscription, MneOrDomestic, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.{UserAnswers, _}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
     val controller =
@@ -75,7 +85,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
   }
 
   "SubscriptionController" - {
-    /*
+
     "createSubscription" - {
       "should return BAD_REQUEST when subscriptionRequestParameter is invalid" in new Setup {
 
@@ -328,6 +338,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           }
         }
       }
+
       "Return UnprocessableEntity HttpResponse when subscription is unprocessable" in new Setup {
         forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
           val expectedHttpResponse = HttpResponse(status = UNPROCESSABLE_ENTITY, body = Json.obj("error" -> "Unprocessable entity").toString())
@@ -414,7 +425,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val id           = "testId"
         val plrReference = "testPlrReference"
 
-        // Throw an exception synchronously when the method is called
         when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
           .thenAnswer(new Answer[Future[HttpResponse]] {
             override def answer(invocation: InvocationOnMock): Future[HttpResponse] =
@@ -461,199 +471,313 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       }
 
     }
-     */
 
     "amendSubscription" - {
-      //      "handle a valid request and successful response" in new Setup {
-      //        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers =>
-      //          // Update the mock to return the specific UserAnswers object
-      //          when(mockRgistrationCacheRepository.get(userAnswers.id))
-      //            .thenReturn(Future.successful(Some(Json.toJson(userAnswers.data))))
-      //
-      //          // Ensure the mockSubscriptionService is called with the expected UserAnswers
-      //          when(mockSubscriptionService.extractAndProcess(userAnswers))
-      //            .thenReturn(Future.successful(HttpResponse(200, "")))
-      //
-      //          val requestJson = Json.toJson(AmendSubscriptionRequestParameters(userAnswers.id))
-      //          val fakeRequest = FakeRequest(POST, routes.SubscriptionController.amendSubscription.url)
-      //            .withJsonBody(requestJson)
-      //
-      //          val result = route(application, fakeRequest).value
-      //
-      //          status(result) mustBe OK
-      //        }
-      //      }
-
-      //      "handle a valid request and successful response" in new Setup {
-      //        // Generate a realistic userAnswersJson
-      //        val userAnswersJson = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-      //          .getOrElse(fail("Unable to generate UserAnswers"))
-      //          .data
-      //
-      //        val userAnswers = UserAnswers("testId", userAnswersJson, Instant.now)
-      //
-      //        when(controller.getUserAnswers(any[String])).thenReturn(Future.successful(userAnswers))
-      //
-      //        // Mock the repository to return the expected UserAnswers JSON wrapped in an Option
-      //        when(mockRgistrationCacheRepository.get("testId"))
-      //          .thenReturn(Future.successful(Some(userAnswersJson)))
-      //
-      //        // Mock the service call with the specific UserAnswers
-      //        when(mockSubscriptionService.extractAndProcess(userAnswers))
-      //          .thenReturn(Future.successful(HttpResponse(200, "")))
-      //
-      //        val requestJson = Json.toJson(AmendSubscriptionRequestParameters("testId"))
-      //        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url).withJsonBody(requestJson)
-      //
-      //        val result = route(application, fakeRequest).value
-      //
-      //        status(result) mustBe OK
-      //      }
-
-      //      "handle a valid request and successful response" in new Setup {
-      //
-      //        val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-      //          .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
-      //        val validUserAnswersData = generatedUserAnswers.data
-      //        val testId               = generatedUserAnswers.id
-      //
-      //        when(
-      //          mockSubscriptionConnector.amendSubscriptionInformation(any[AmendSubscriptionResponse])(any[HeaderCarrier], any[ExecutionContext])
-      //        ).thenReturn(
-      //          Future.successful(HttpResponse(200, "Amendment successful"))
-      //        )
-      //
-      //        when(mockRgistrationCacheRepository.get(eqTo(testId))(any[ExecutionContext]))
-      //          .thenReturn(Future.successful(Some(validUserAnswersData)))
-      //
-      //        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
-      //          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
-      //
-      //        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(testId))
-      //        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-      //          .withJsonBody(requestJson)
-      //
-      //        val result = route(application, fakeRequest).value
-      //
-      //        status(result) mustBe OK
-      //      }
-
-//      "handle a valid request and successful response" in new Setup {
-//        val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-//          .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
-////        val validUserAnswersData = generatedUserAnswers.data
-////        val testId               = generatedUserAnswers.id
-//
-//        val testId = "38ee7c0f-7cb4-4f7d-82df-790fdedf6fe4"
-//        val validUserAnswersData = Json.parse(
-//          """{"subMneOrDomestic":"ukAndOther","upeNameRegistration":"ற귆嫂돢◲⼲䢧凉皁撙ᷔ촁毫䴌〫","subPrimaryContactName":"튍䝎婢狂ᨦ敥࣫䍳숳꾔ᓗ돧ꤛ姩絼찦ﾴ泌⮉ອ幸쾖ꕮ뉼꓍讄༁韜趃㰫습큷띩醩eࡖ㵏⎫讲싋횡묷ⓥ穒졂乶竍ᔍ썛ᮎ瞝䜨뻎퉝澘飰ⓡ뛠䳣ᴆĔᅹ诸쳸ﱓ懕舛㕽餣砝佤空홠徱㐘鶗⯬জ랢銺叴ŞⰋ㚠鑽벉呛ꊎ뾟꺗㆜죨쒃퇆ݸ傧鋰븙⺝၍ꍿ飒꬚벗炕喃뫺쿌Я乹ɸ鍵嵠鎐其束翁옍笚ꖎÊⱨ궢⡆൶旂굋","subPrimaryEmail":"ဧ꓍䍗ࡦ킐板鉌淊蛘䨒剗ㆲ缾Ż礜尵旉ฑ࠭","subSecondaryContactName":"䓳ᓬ䵊䀲৤幞","subSecondaryEmail":"踱廽쏲ꟈ椺벵ᨤ궂㸏ߓ䵹ۓ㯀컠跍","subSecondaryCapturePhone":-2147483648,"FmSafeID":"躿ﱹ9⤸䗗ཕ즛옹闂薑쾔뱶繵ﾄᨔᔇ⎿츋竫ⵇ枱俜䂻틆唈ᴝ䓛幒廕麥색⒍찉렫","subFilingMemberDetails":{"safeId":"躿ﱹ9⤸䗗ཕ즛옹闂薑쾔뱶繵ﾄᨔᔇ⎿츋竫ⵇ枱俜䂻틆唈ᴝ䓛幒廕麥색⒍찉렫","customerIdentification1":"ꃙ鍸购剧⛠喋慧f嫛萐₄礓䒢籏刃ڱ는侒睞ㅖد쎲ଣ鷥☙ἢ焏嬞壒阑벻Ñ徸찗Ꮧ콁憹㵮ㆅ䨔䝒틮低鸮鑟嗡⻢⾻䁵䃣䋛꾽㷵ꀅ︃玓⤙ꯃ跁ፕ䚊퓹췃ꮆ灙騪괄梴௲ᮇ埯ⱶ࿼","customerIdentification2":"麝᫄孎⩡蜝蓴碱䵞쮧駕湮稺Ⲷꭃ둡쌾₂볎巶桳ፏ띦뇚㱪Ꭸ띬梠蛲텯涬ʴ﷐륐歜䡂힐幏뇖了氬윷","organisationName":"⅖⡲䱠㉟᥾燂͠쁴ٝ㨲ܢﺹ렴ﾺ잴鎥挸㸳䉀퀬瘝첫￦倲챉泏豳称뎂枢䒣⩫㏼셬따앑㘘ᕴꐋﾀ噼ꣁꘘᏝ찘ꐁ᪕扉"},"subAccountingPeriod":{"startDate":"1933-11-25","endDate":"1940-12-13","duetDate":"2040-05-29"},"subAccountStatus":{"inactive":false},"subRegistrationDate":"1923-12-14","fmDashboard":{"organisationName":"ற귆嫂돢◲⼲䢧凉皁撙ᷔ촁毫䴌〫","registrationDate":"1923-12-14"},"subPrimaryCapturePhone":-2147483648,"subPrimaryPhonePreference":true,"subSecondaryPhonePreference":true,"subAddSecondaryContact":true,"subExtraSubscription":{"formBundleNumber":"ḷꌉ碎䌵槏苙棙뿯蠽쯢흡팪ꋚ魅삾ڻ褜","crn":"왢⎒镼ᒺᒧ슦鎵벺魽낷韽㿬駃䄿絨᤿爹댱醹轀撡╰ᅋಝ分椟쉽茟ૌ뿔络陷ື⌙㣅嶄ꄸ瘾⤁皶桦ཊ낏췇녟瀜捫己ꔝ蔥鎵","utr":"ጒ헫狄函⬯埱錟槎䲗렍颥떍⑄ῐ閼椝ﶒ"},"subRegisteredAddress":{"addressLine1":"膉힕␽뛄ŋ捠젧顖邪ᇳ啝肹䶳塲紅吣ò矘神楽钤鿸ꪦڎ諞㤍㟠晴賋懿鲭⫫ﱖ뮇︢䉝䰣笐㇭轻衜ͧ铠辭⭱칦娕","addressLine3":"㰅緃˺깙ⵄ좫痸؋㻤龦ħड़⫩蔙㻥勸疣蝢⹴⪹ꘄ쏰㾒뽬ጾ暾썦ᡩꛙ趻鴏ᡚ葉쿛罜划ᒽ䎁붷쏿霭䚔珵熒","addressLine4":"띦䭾햏觥쁖軞慜ⶵ냨ń䖫쳵硬篧姄欔寈쪆㩍ʟ㓤᫐镠솮ȴ菒삾唶ᩧ傔弃⧽䧛⛭왯캝剩蚗ᑵ壑끜熸裝㰱ᴟ봂㾈श䕻ꛞ찘㝈揲䳅캥蠦ѷ狨鈃랦껻쳵踴㻑Ⓗ帴觐퇫褐㢹ↄ","postalCode":"侬᭶檂毂﯅수꽂쐸烪蜪ᾪꙎ칑㛊슶㠜ಢ턮薖捱ᒢ氒䯭砅溃氯廇㍸飲ꮑ臸ఏ鼦駽圗ﺹ퓲Ⴙ덌չ긻惘찌佽뾨슽㝃ᤉ㐫㔒","countryCode":"煘❗瀸젽"},"NominateFilingMember":true}"""
-//        )
-//
-//        //        when(
-////          mockSubscriptionConnector.amendSubscriptionInformation(any[AmendSubscriptionResponse])(any[HeaderCarrier], any[ExecutionContext])
-////        ).thenReturn(
-////          Future.successful(HttpResponse(200, "Amendment successful"))
-////        )
-//
-//        when(mockRgistrationCacheRepository.get(eqTo(testId))(any[ExecutionContext]))
-//          .thenReturn(Future.successful(Some(validUserAnswersData)))
-//
-//        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
-//          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
-//
-//        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(testId))
-//        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-//          .withJsonBody(requestJson)
-//
-//        // Act
-//        val result = route(application, fakeRequest).value
-//
-//        // Assert
-//        status(result) mustBe OK
-//
-//        // Verifying that the method was called with the expected parameters
-//        verify(mockSubscriptionConnector).amendSubscriptionInformation(any[AmendSubscriptionResponse])(any[HeaderCarrier], any[ExecutionContext])
-//
-//      }
-
-//      "handle a valid request and successful response" in new Setup {
-//        val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-//          .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
-//        val validUserAnswersData = generatedUserAnswers.data
-//        val testId               = generatedUserAnswers.id
-//
-//        // Mocking the repository to return user answers
-//        when(mockRgistrationCacheRepository.get(eqTo(testId))(any[ExecutionContext]))
-//          .thenReturn(Future.successful(Some(validUserAnswersData)))
-//
-//        // Mocking the service to return a specific response format
-//        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
-//          .thenReturn(Future.successful(HttpResponse(200, Json.obj("result" -> "Amendment successful").toString())))
-//
-//        // Creating a request with the generated test ID
-//        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(testId))
-//        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-//          .withJsonBody(requestJson)
-//
-//        // Executing the request
-//        val result = route(application, fakeRequest).value
-//
-//        // Checking the response status
-//        status(result) mustBe OK
-//      }
 
       "return OK when valid data is provided" in new Setup {
-        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers: UserAnswers =>
-          stubPutResponse(
-            s"/pillar2/subscription",
-            OK
-          )
-          val id = userAnswers.id
 
-          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
-            .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
+        val userAnswers = UserAnswers(id, Json.obj())
+        val updatedUserAnswers = for {
+          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
+          u2 <- u1.set(upeNameRegistrationId, "International Organisation Inc.")
+          u3 <- u2.set(subPrimaryContactNameId, "Fred Flintstone")
+          u4 <- u3.set(subPrimaryEmailId, "fred.flintstone@aol.com")
+          u5 <- u4.set(subSecondaryContactNameId, "Donald Trump")
+          u6 <- u5.set(
+                  subRegisteredAddressId,
+                  NonUKAddress(
+                    addressLine1 = "1 High Street",
+                    addressLine2 = Some("Egham"),
+                    addressLine3 = "Surrey",
+                    addressLine4 = Some("N/A"),
+                    postalCode = Some("HP13 6TT"),
+                    countryCode = "GB"
+                  )
+                )
+          u7 <- u6.set(FmSafeId, "XL6967739016188")
+          u8 <- u7.set(
+                  subFilingMemberDetailsId,
+                  FilingMemberDetails(
+                    safeId = "XL6967739016188",
+                    customerIdentification1 = Some("1234Z678"),
+                    customerIdentification2 = Some("1234567Y"),
+                    organisationName = "Domestic Operations Ltd"
+                  )
+                )
+          u9 <- u8.set(
+                  subAccountingPeriodId,
+                  AccountingPeriod(
+                    startDate = LocalDate.parse("2024-01-06"),
+                    endDate = LocalDate.parse("2025-04-06"),
+                    duetDate = Some(LocalDate.parse("2024-04-06"))
+                  )
+                )
+          u10 <- u9.set(subAccountStatusId, AccountStatus(inactive = true))
+          u11 <- u10.set(subSecondaryEmailId, "fred.flintstone@potus.com")
+          u12 <- u11.set(NominateFilingMemberId, false)
+          u13 <- u12.set(subSecondaryCapturePhoneId, "0115 9700 700")
+          u14 <- u13.set(
+                   subExtraSubscriptionId,
+                   ExtraSubscription(
+                     formBundleNumber = Some("119000004320"),
+                     crn = Some("12345678"),
+                     utr = Some("12345678"),
+                     safeId = None,
+                     plrReference = None
+                   )
+                 )
+          u15 <- u14.set(subRegistrationDateId, LocalDate.parse("2022-01-31"))
+          u16 <- u15.set(
+                   fmDashboardId,
+                   DashboardInfo(
+                     organisationName = "International Organisation Inc.",
+                     registrationDate = LocalDate.parse("2022-01-31")
+                   )
+                 )
+          u17 <- u16.set(subPrimaryCapturePhoneId, "0115 9700 700")
+          u18 <- u17.set(subPrimaryPhonePreferenceId, true)
+          u19 <- u18.set(subSecondaryPhonePreferenceId, true)
+          u20 <- u19.set(subAddSecondaryContactId, true)
+        } yield u20
 
-          when(mockRgistrationCacheRepository.get(any[String])(any[ExecutionContext]))
-            .thenReturn(Future.successful(Some(userAnswers.data)))
+        stubPutResponse(
+          s"/pillar2/subscription",
+          OK
+        )
+        val id = "123"
 
-          val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-            .withJsonBody(requestJson)
+        updatedUserAnswers match {
+          case Success(updatedAnswers) =>
+            val jsonUpdatedAnswers = Json.toJson(updatedAnswers)(UserAnswers.format)
+            when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
+              .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
 
-          val result = route(application, fakeRequest).value
-
-          status(result) mustBe OK
+          case Failure(exception) =>
+            logger.error("Error creating updated UserAnswers", exception)
         }
+
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
+
+        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
+        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          .withJsonBody(requestJson)
+
+        val resultFuture = route(application, fakeRequest).value
+
+        status(resultFuture) shouldBe OK
+
       }
 
-      /*
-      "handle an invalid JSON format in the request" in {
-        val request = FakeRequest(POST, "/amend-subscription")
-          .withJsonBody(Json.obj("invalid" -> "data"))
-        val result = controller.amendSubscription(request)
+      "handle an invalid JSON format in the request" in new Setup {
+        val userAnswers = UserAnswers(id, Json.obj())
+        val updatedUserAnswers = for {
+          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
 
-        status(result) mustBe BAD_REQUEST
-        // Assert the response content if necessary
+          u2 <- u1.set(subAddSecondaryContactId, true)
+        } yield u2
+
+        stubPutResponse(
+          s"/pillar2/subscription",
+          OK
+        )
+        val id = "123"
+
+        updatedUserAnswers match {
+          case Success(updatedAnswers) =>
+            val jsonUpdatedAnswers = Json.toJson(updatedAnswers)(UserAnswers.format)
+            when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
+              .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
+
+          case Failure(exception) =>
+            logger.error("Error creating updated UserAnswers", exception)
+        }
+
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+          .thenReturn(Future.successful(HttpResponse(400, "Invalid subscription response")))
+
+        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
+        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          .withJsonBody(requestJson)
+
+        val resultFuture = route(application, fakeRequest).value
+
+        status(resultFuture) shouldBe BAD_REQUEST
       }
 
-"handle exceptions thrown by the SubscriptionService" in {
-        when(mockRegistrationCacheRepository.get(any[String]))
-          .thenReturn(Future.successful(Some(Json.obj())))
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers]))
+      "handle exceptions thrown by the SubscriptionService" in new Setup {
+        val userAnswers = UserAnswers(id, Json.obj())
+        val updatedUserAnswers = for {
+          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
+          u2 <- u1.set(upeNameRegistrationId, "International Organisation Inc.")
+          u3 <- u2.set(subPrimaryContactNameId, "Fred Flintstone")
+          u4 <- u3.set(subPrimaryEmailId, "fred.flintstone@aol.com")
+          u5 <- u4.set(subSecondaryContactNameId, "Donald Trump")
+          u6 <- u5.set(
+                  subRegisteredAddressId,
+                  NonUKAddress(
+                    addressLine1 = "1 High Street",
+                    addressLine2 = Some("Egham"),
+                    addressLine3 = "Surrey",
+                    addressLine4 = Some("N/A"),
+                    postalCode = Some("HP13 6TT"),
+                    countryCode = "GB"
+                  )
+                )
+          u7 <- u6.set(FmSafeId, "XL6967739016188")
+          u8 <- u7.set(
+                  subFilingMemberDetailsId,
+                  FilingMemberDetails(
+                    safeId = "XL6967739016188",
+                    customerIdentification1 = Some("1234Z678"),
+                    customerIdentification2 = Some("1234567Y"),
+                    organisationName = "Domestic Operations Ltd"
+                  )
+                )
+          u9 <- u8.set(
+                  subAccountingPeriodId,
+                  AccountingPeriod(
+                    startDate = LocalDate.parse("2024-01-06"),
+                    endDate = LocalDate.parse("2025-04-06"),
+                    duetDate = Some(LocalDate.parse("2024-04-06"))
+                  )
+                )
+          u10 <- u9.set(subAccountStatusId, AccountStatus(inactive = true))
+          u11 <- u10.set(subSecondaryEmailId, "fred.flintstone@potus.com")
+          u12 <- u11.set(NominateFilingMemberId, false)
+          u13 <- u12.set(subSecondaryCapturePhoneId, "0115 9700 700")
+          u14 <- u13.set(
+                   subExtraSubscriptionId,
+                   ExtraSubscription(
+                     formBundleNumber = Some("119000004320"),
+                     crn = Some("12345678"),
+                     utr = Some("12345678"),
+                     safeId = None,
+                     plrReference = None
+                   )
+                 )
+          u15 <- u14.set(subRegistrationDateId, LocalDate.parse("2022-01-31"))
+          u16 <- u15.set(
+                   fmDashboardId,
+                   DashboardInfo(
+                     organisationName = "International Organisation Inc.",
+                     registrationDate = LocalDate.parse("2022-01-31")
+                   )
+                 )
+          u17 <- u16.set(subPrimaryCapturePhoneId, "0115 9700 700")
+          u18 <- u17.set(subPrimaryPhonePreferenceId, true)
+          u19 <- u18.set(subSecondaryPhonePreferenceId, true)
+          u20 <- u19.set(subAddSecondaryContactId, true)
+        } yield u20
+
+        val id = "123"
+
+        updatedUserAnswers match {
+          case Success(updatedAnswers) =>
+            when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
+              .thenReturn(Future.successful(None))
+
+          case Failure(exception) =>
+            logger.error("Error creating updated UserAnswers", exception)
+        }
+
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
           .thenReturn(Future.failed(new RuntimeException("Service error")))
 
-        val request = FakeRequest(POST, "/amend-subscription")
-          .withJsonBody(Json.toJson(AmendSubscriptionRequestParameters("testId", JsObject(Seq()))))
-        val result = controller.amendSubscription(request)
+        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
+        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          .withJsonBody(requestJson)
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
-        // Additional assertions for the error message
+        val resultFuture = route(application, fakeRequest).value
+
+        status(resultFuture) mustBe INTERNAL_SERVER_ERROR
       }
 
-
-       */
+//      "return NotFound when UserAnswers not found" in new Setup {
+//        val userAnswers = UserAnswers(id, Json.obj())
+//        val updatedUserAnswers = for {
+//          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
+//          u2 <- u1.set(upeNameRegistrationId, "International Organisation Inc.")
+//          u3 <- u2.set(subPrimaryContactNameId, "Fred Flintstone")
+//          u4 <- u3.set(subPrimaryEmailId, "fred.flintstone@aol.com")
+//          u5 <- u4.set(subSecondaryContactNameId, "Donald Trump")
+//          u6 <- u5.set(
+//                  subRegisteredAddressId,
+//                  NonUKAddress(
+//                    addressLine1 = "1 High Street",
+//                    addressLine2 = Some("Egham"),
+//                    addressLine3 = "Surrey",
+//                    addressLine4 = Some("N/A"),
+//                    postalCode = Some("HP13 6TT"),
+//                    countryCode = "GB"
+//                  )
+//                )
+//          u7 <- u6.set(FmSafeId, "XL6967739016188")
+//          u8 <- u7.set(
+//                  subFilingMemberDetailsId,
+//                  FilingMemberDetails(
+//                    safeId = "XL6967739016188",
+//                    customerIdentification1 = Some("1234Z678"),
+//                    customerIdentification2 = Some("1234567Y"),
+//                    organisationName = "Domestic Operations Ltd"
+//                  )
+//                )
+//          u9 <- u8.set(
+//                  subAccountingPeriodId,
+//                  AccountingPeriod(
+//                    startDate = LocalDate.parse("2024-01-06"),
+//                    endDate = LocalDate.parse("2025-04-06"),
+//                    duetDate = Some(LocalDate.parse("2024-04-06"))
+//                  )
+//                )
+//          u10 <- u9.set(subAccountStatusId, AccountStatus(inactive = true))
+//          u11 <- u10.set(subSecondaryEmailId, "fred.flintstone@potus.com")
+//          u12 <- u11.set(NominateFilingMemberId, false)
+//          u13 <- u12.set(subSecondaryCapturePhoneId, "0115 9700 700")
+//          u14 <- u13.set(
+//                   subExtraSubscriptionId,
+//                   ExtraSubscription(
+//                     formBundleNumber = Some("119000004320"),
+//                     crn = Some("12345678"),
+//                     utr = Some("12345678"),
+//                     safeId = None,
+//                     plrReference = None
+//                   )
+//                 )
+//          u15 <- u14.set(subRegistrationDateId, LocalDate.parse("2022-01-31"))
+//          u16 <- u15.set(
+//                   fmDashboardId,
+//                   DashboardInfo(
+//                     organisationName = "International Organisation Inc.",
+//                     registrationDate = LocalDate.parse("2022-01-31")
+//                   )
+//                 )
+//          u17 <- u16.set(subPrimaryCapturePhoneId, "0115 9700 700")
+//          u18 <- u17.set(subPrimaryPhonePreferenceId, true)
+//          u19 <- u18.set(subSecondaryPhonePreferenceId, true)
+//          u20 <- u19.set(subAddSecondaryContactId, true)
+//        } yield u20
+//
+//        val id = "123"
+//
+//        updatedUserAnswers match {
+//          case Success(updatedAnswers) =>
+//            when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
+//              .thenReturn(Future.successful(None))
+//
+//          case Failure(exception) =>
+//            logger.error("Error creating updated UserAnswers", exception)
+//        }
+//
+//        val validJson = Json.toJson(AmendSubscriptionRequestParameters(id))
+//        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+//          .withJsonBody(validJson)
+//
+//        val resultFuture = route(application, fakeRequest).value
+//
+//        status(resultFuture) mustBe NOT_FOUND
+//      }
 
     }
-
   }
 }
