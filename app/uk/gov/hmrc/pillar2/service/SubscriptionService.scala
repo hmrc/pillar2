@@ -49,10 +49,12 @@ class SubscriptionService @Inject() (
   ): Future[HttpResponse] = {
     userAnswers.get(NominateFilingMemberId) match {
       case Some(true) =>
+        logging.info("NominateFilingMemberId is present")
         {
           (userAnswers.get(upeRegisteredInUKId), userAnswers.get(fmRegisteredInUKId)) match {
 
             case (Some(true), Some(true)) =>
+              logging.info("Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId")
               for {
                 upeOrgType            <- userAnswers.get(upeEntityTypeId)
                 subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -78,6 +80,7 @@ class SubscriptionService @Inject() (
               }
 
             case (Some(false), Some(false)) =>
+              logging.info("Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId")
               for {
                 upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
                 subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -100,6 +103,7 @@ class SubscriptionService @Inject() (
                 sendSubmissionRequest(subscriptionRequest)
               }
             case (Some(true), Some(false)) =>
+              logging.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
               for {
                 upeOrgType            <- userAnswers.get(upeEntityTypeId)
                 subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -123,6 +127,7 @@ class SubscriptionService @Inject() (
                 sendSubmissionRequest(subscriptionRequest)
               }
             case (Some(false), Some(true)) =>
+              logging.info("Calling sendSubmissionRequest with fmRegisteredInUKId")
               for {
                 upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
                 subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -152,9 +157,11 @@ class SubscriptionService @Inject() (
         }
 
       case Some(false) =>
+        logging.info("NominateFilingMemberId is not present")
         {
           userAnswers.get(upeRegisteredInUKId) match {
             case Some(true) =>
+              logging.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
               for {
                 upeOrgType            <- userAnswers.get(upeEntityTypeId)
                 subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -177,6 +184,7 @@ class SubscriptionService @Inject() (
                 sendSubmissionRequest(subscriptionRequest)
               }
             case Some(false) =>
+              logging.info("Calling sendSubmissionRequest without upeRegisteredInUKId")
               for {
                 upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
                 subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -223,6 +231,7 @@ class SubscriptionService @Inject() (
     val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
     upeOrgType match {
       case EntityType.UKLimitedCompany =>
+        logging.info("UK Limited Company selected as Entity")
         val incorporatedEntityRegistrationData =
           upeGrsResponse.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Incorporation Registration Data"))
         val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
@@ -232,6 +241,7 @@ class SubscriptionService @Inject() (
         UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
       case EntityType.LimitedLiabilityPartnership =>
+        logging.info("Limited Liability Partnership selected as Entity")
         val partnershipEntityRegistrationData =
           upeGrsResponse.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
         val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
@@ -264,10 +274,13 @@ class SubscriptionService @Inject() (
   ): Option[FilingMemberDetails] =
     filingMemberSafeId match {
       case Some(fmSafeId) =>
+        logging.info("filingMemberSafeId is matched")
         nominateFm match {
           case true =>
+            logging.info("nominateFm value is True")
             fmEntityTypeId match {
               case EntityType.UKLimitedCompany =>
+                logging.info("UK Limited Company selected as Entity")
                 val incorporatedEntityRegistrationData =
                   fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
                     throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
@@ -278,6 +291,7 @@ class SubscriptionService @Inject() (
 
                 Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
               case EntityType.LimitedLiabilityPartnership =>
+                logging.info("Limited Liability Corporation selected as Entity")
                 val partnershipEntityRegistrationData =
                   fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
                     throw new Exception("Malformed partnershipEntityRegistrationData data for Filing Member")
@@ -292,6 +306,8 @@ class SubscriptionService @Inject() (
             }
 
           case false => None
+            logging.info("nominateFm value is False")
+
         }
       case _ => None
     }
@@ -332,6 +348,7 @@ class SubscriptionService @Inject() (
       case Some(fmSafeId) =>
         nominateFm match {
           case true =>
+            logging.info("Calling FilingMemberDetails with fmSafeId and fmNameRegistration")
             Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
           case false => None
         }
