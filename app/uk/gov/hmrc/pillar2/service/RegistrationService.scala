@@ -33,6 +33,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
 ) extends Logging {
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    logging.info("RegistrationService - Processing Upe Registration Details")
     for {
       upeName      <- userAnswers.get(upeNameRegistrationId)
       emailAddress <- userAnswers.get(upeContactEmailId)
@@ -48,6 +49,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
   }
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    logging.info("RegistrationService - Processing Filing Member Registration Details")
     for {
       fmName       <- userAnswers.get(fmNameRegistrationId)
       emailAddress <- userAnswers.get(fmContactEmailId)
