@@ -24,7 +24,6 @@ import uk.gov.hmrc.pillar2.service.test.TestService
 
 
 class RegistrationCacheControllerISpec extends BaseISpec
-  with WireMockHelper
   with WireMockSupport
   with WireMockConfig
   with OptionValues {
@@ -41,6 +40,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
 
   "save" should {
     "successfully save data" in {
+      stubAuthenticate()
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
@@ -54,6 +54,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
 
   "get" should {
     "successfully get the record" in {
+      stubAuthenticate()
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
@@ -66,6 +67,7 @@ class RegistrationCacheControllerISpec extends BaseISpec
   }
   "remove" should {
     "successfully remove the record" in {
+      stubAuthenticate()
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
