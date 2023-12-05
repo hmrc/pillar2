@@ -51,13 +51,20 @@ object SubscriptionSuccess {
   implicit val format: OFormat[SubscriptionSuccess] = Json.format[SubscriptionSuccess]
 }
 
+case class AmendSubscriptionSuccess(
+  upeDetails:               UpeDetails,
+  accountingPeriod:         AccountingPeriod,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    PrimaryContactDetails,
+  secondaryContactDetails:  SecondaryContactDetails,
+  filingMemberDetails:      FilingMemberDetails
+)
 
-case class AmendSubscriptionResponse(upeDetails: UpeDetailsAmend,
-                                     accountingPeriod: AccountingPeriod,
-                                     upeCorrespAddressDetails: UpeCorrespAddressDetails,
-                                     primaryContactDetails: ContactDetailsType,
-                                     secondaryContactDetails: Option[ContactDetailsType],
-                                     filingMemberDetails: Option[FilingMemberAmendDetails])
+object AmendSubscriptionSuccess {
+  implicit val format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
+}
+
+case class AmendSubscriptionResponse(value: AmendSubscriptionSuccess)
 
 object AmendSubscriptionResponse {
   implicit val format: OFormat[AmendSubscriptionResponse] = Json.format[AmendSubscriptionResponse]
