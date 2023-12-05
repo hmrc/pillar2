@@ -16,17 +16,22 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import akka.stream.Materializer
 import akka.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.test.Helpers.{call, contentAsJson, contentAsString, status, stubControllerComponents}
-import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import org.mockito.ArgumentMatchers.{eq => eqTo, _}
 import play.api.test.FakeRequest
+import play.api.test.Helpers._
+import play.api.{Application, Configuration}
+import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import scala.concurrent.Future
 
@@ -35,29 +40,42 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     val controller =
       new RegistrationCacheController(
         mockRgistrationCacheRepository,
+        mockAuthAction,
         stubControllerComponents()
       )
   }
 
+  val application: Application = new GuiceApplicationBuilder()
+    .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
+    .overrides(
+      bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
+      bind[AuthConnector].toInstance(mockAuthConnector),
+      bind[AuthAction].to[FakeAuthAction]
+    )
+    .build()
+
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
-
-      val result = controller.save("id")(FakeRequest("POST", "/").withJsonBody(Json.obj("abc" -> "def")))
+      val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
+      val result  = route(application, request).value
       status(result) mustBe OK
     }
 
     "return 413 when request is not right" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
-
-      val result = controller.save("foo")(FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+      val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
+      val result  = route(application, request).value
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
     }
     "throw exception when mongo is down" in new Setup {
       when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.failed(new Exception(""))
 
-      val result = controller.save("foo")(FakeRequest().withRawBody(ByteString(RandomUtils.nextBytes(512001))))
+      val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
+      val result  = route(application, request).value
+
+      status(result) mustBe REQUEST_ENTITY_TOO_LARGE
 
     }
   }
@@ -66,7 +84,8 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         Some(Json.obj())
       }
-      val result = controller.get("id")(FakeRequest())
+      val request = FakeRequest(GET, routes.RegistrationCacheController.get("id").url)
+      val result  = route(application, request).value
 
       status(result) mustBe OK
       contentAsString(result) mustBe "{}"
@@ -76,7 +95,9 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         None
       }
-      val result = controller.get("id")(FakeRequest())
+
+      val request = FakeRequest(GET, routes.RegistrationCacheController.get("id").url)
+      val result  = route(application, request).value
 
       status(result) mustBe NOT_FOUND
 
@@ -85,7 +106,8 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       "return 200 when the record is removed successfully" in new Setup {
         when(mockRgistrationCacheRepository.remove(eqTo("id"))(any())) thenReturn Future.successful(true)
 
-        val result = controller.remove("id")(FakeRequest())
+        val request = FakeRequest(DELETE, routes.RegistrationCacheController.remove("id").url)
+        val result  = route(application, request).value
 
         status(result) mustBe OK
       }
@@ -98,7 +120,8 @@ class RegistrationCacheControllerSpec extends BaseSpec {
           Some(date)
         }
 
-        val result = controller.lastUpdated("foo")(FakeRequest())
+        val request = FakeRequest(GET, routes.RegistrationCacheController.lastUpdated("foo").url)
+        val result  = route(application, request).value
 
         status(result) mustBe OK
         contentAsJson(result) mustBe Json.toJson(date.getMillis)
@@ -109,7 +132,8 @@ class RegistrationCacheControllerSpec extends BaseSpec {
           None
         }
 
-        val result = controller.lastUpdated("foo")(FakeRequest())
+        val request = FakeRequest(POST, routes.RegistrationCacheController.lastUpdated("id").url)
+        val result  = route(application, request).value
 
         status(result) mustBe NOT_FOUND
       }

@@ -30,7 +30,6 @@ import play.api.mvc._
 import play.api.test._
 import play.api.{Application, Mode}
 import uk.gov.hmrc.pillar2.{FakeObjects, ResultAssertions}
-
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -39,6 +38,7 @@ import scala.util.control.NonFatal
 
 abstract class BaseISpec
     extends AnyWordSpec
+    with WireMockStubs
     with CleanMongo
     with GuiceOneAppPerSuite
     with BeforeAndAfterEach
@@ -71,7 +71,9 @@ abstract class BaseISpec
 
   additionalAppConfig ++= Map(
     "mongodb.uri"      -> "mongodb://localhost:27017/pillar2-test",
-    "metrics.enabled"  -> false,
+    "microservice.services.auth.host" -> "localhost",
+    "microservice.services.auth.port"   -> 1234,
+    "metrics.enabled"  -> true,
     "auditing.enabled" -> false
   )
 
@@ -91,9 +93,9 @@ abstract class BaseISpec
     FakeRequest(call).withHeaders(uk.gov.hmrc.http.HeaderNames.authorisation -> "some bearer token")
 
 
-  def callRoute[A](req: Request[A])(implicit app: Application, w: Writeable[A]): Future[Result] = {
+  def callRoute[A](request: FakeRequest[A],  requiresAuth: Boolean = true)(implicit app: Application, w: Writeable[A]): Future[Result] = {
     val errorHandler = app.errorHandler
-
+    val req = if (requiresAuth) request.withHeaders("Authorization" -> "test") else request
     route(app, req) match {
       case None => fail("Route does not exist")
       case Some(fResult) =>

@@ -23,7 +23,7 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
 import scala.collection.JavaConverters._
 
-trait WireMockHelper {
+object WireMockHelper {
   this: BaseISpec =>
 
   def stub(method: MappingBuilder, response: ResponseDefinitionBuilder): StubMapping =

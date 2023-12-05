@@ -20,11 +20,11 @@ import akka.actor.ActorSystem
 import org.mockito.Mockito
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
-import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.connectors.{RegistrationConnector, SubscriptionConnector}
-import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.{RegistrationService, SubscriptionService}
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
@@ -45,7 +45,7 @@ trait AllMocks extends MockitoSugar {
   val mockSubscriptionService:        SubscriptionService         = mock[SubscriptionService]
   val mockCountryOptions:             CountryOptions              = mock[CountryOptions]
   val mockAuthAction:                 AuthAction                  = mock[AuthAction]
-
+  val mockAuthorisedFunctions:        AuthorisedFunctions         = mock[AuthorisedFunctions]
   override protected def beforeEach(): Unit =
     Seq(
       mockActorSystem,
@@ -59,6 +59,7 @@ trait AllMocks extends MockitoSugar {
       mockSubscriptionConnector,
       mockSubscriptionService,
       mockCountryOptions,
-      mockAuthAction
+      mockAuthAction,
+      mockAuthorisedFunctions
     ).foreach(Mockito.reset(_))
 }
