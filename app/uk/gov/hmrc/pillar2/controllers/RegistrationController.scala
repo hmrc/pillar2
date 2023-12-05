@@ -39,6 +39,7 @@ class RegistrationController @Inject() (
     extends BasePillar2Controller(cc) {
 
   def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+    logger.info("Calling Registration Submission without UpeId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdUpeRegistration(userAnswer)
@@ -47,6 +48,7 @@ class RegistrationController @Inject() (
   }
 
   def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+    logger.info("Calling Registration Submission without FmId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdFmRegistration(userAnswer)
