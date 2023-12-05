@@ -50,7 +50,6 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     logging.info("RegistrationService - Processing Filing Member Registration Details")
-
     for {
       fmName       <- userAnswers.get(fmNameRegistrationId)
       emailAddress <- userAnswers.get(fmContactEmailId)
