@@ -470,7 +470,7 @@ class SubscriptionService @Inject() (
     val accountingPeriod = AccountingPeriod(
       startDate = sub.accountingPeriod.startDate,
       endDate = sub.accountingPeriod.endDate,
-      duetDate = sub.accountingPeriod.duetDate
+      dueDate = sub.accountingPeriod.dueDate
     )
 
     val accountStatus = sub.accountStatus.map { acStatus =>
