@@ -229,7 +229,7 @@ class SubscriptionService @Inject() (
         val name = incorporatedEntityRegistrationData.companyProfile.companyName
         val utr  = incorporatedEntityRegistrationData.ctutr
 
-        UpeDetails(None, Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
       case EntityType.LimitedLiabilityPartnership =>
         val partnershipEntityRegistrationData =
@@ -239,7 +239,7 @@ class SubscriptionService @Inject() (
         val name           = companyProfile.companyName
         val utr            = partnershipEntityRegistrationData.sautr
 
-        UpeDetails(None, Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
+        UpeDetails(Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
 
       case _ => throw new Exception("Invalid Org Type")
     }
@@ -252,7 +252,7 @@ class SubscriptionService @Inject() (
     upeNameRegistration: String
   ): UpeDetails = {
     val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
-    UpeDetails(None, Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
+    UpeDetails( Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
 
   }
 
@@ -523,9 +523,8 @@ class SubscriptionService @Inject() (
   def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
 
-    Option(userAnswers) match {
-      case Some(ua) =>
-        constructSubscriptionResponse(ua) match {
+
+        constructSubscriptionResponse(userAnswers) match {
           case Some(subscriptionResponse) =>
             subscriptionConnectors.amendSubscriptionInformation(subscriptionResponse).flatMap { response =>
               response.status match {
@@ -566,7 +565,7 @@ class SubscriptionService @Inject() (
     val upeDetailsFilingMemberOpt              = userAnswers.get(NominateFilingMemberId)
     val extraSubscriptionOpt                   = userAnswers.get(subExtraSubscriptionId)
     val registrationDateOpt                    = userAnswers.get(subRegistrationDateId)
-
+//    val prlRef = request.session.get(Pillar2SessionKeys.plrId)
     (
       nonUKAddressOpt,
       domesticOnlyOpt,
@@ -595,8 +594,8 @@ class SubscriptionService @Inject() (
             Some(extraSubscription),
             Some(registrationDate)
           ) =>
-        val upeDetails = UpeDetails(
-          plrReference = extraSubscription.plrReference.orElse(None),
+        val upeDetails = UpeDetailsAmend(
+          plrReference= ???,
           safeId = None,
           customerIdentification1 = extraSubscription.crn.orElse(None),
           customerIdentification2 = extraSubscription.utr.orElse(None),
@@ -608,18 +607,16 @@ class SubscriptionService @Inject() (
 
         val telephonePrimary = userAnswers.get(subPrimaryCapturePhoneId)
 
-        val primaryContactDetails = PrimaryContactDetails(
+        val primaryContactDetails = ContactDetailsType(
           name = primaryContactDetailsName,
-          telepphone = None,
           telephone = telephonePrimary,
           emailAddress = primaryContactDetailsEmailAddress
         )
 
         val telephoneSecondary = userAnswers.get(subSecondaryCapturePhoneId)
 
-        val secondaryContactDetails = SecondaryContactDetails(
+        val secondaryContactDetails = ContactDetailsType(
           name = secondaryContactDetailsName,
-          telepphone = None,
           telephone = telephoneSecondary,
           emailAddress = secondaryContactDetailsEmailAddress
         )
@@ -635,15 +632,19 @@ class SubscriptionService @Inject() (
 
         Some(
           AmendSubscriptionResponse(
-            AmendSubscriptionSuccess(
               upeDetails = upeDetails,
               accountingPeriod = accountingPeriod,
               upeCorrespAddressDetails = upeCorrespAddressDetails,
               primaryContactDetails = primaryContactDetails,
-              secondaryContactDetails = secondaryContactDetails,
-              filingMemberDetails = filingMemberDetails
+              secondaryContactDetails = Some(secondaryContactDetails),
+              filingMemberDetails = Some(
+                FilingMemberAmendDetails(
+                  addNewFm = false,
+                  safeId = filingMemberDetails.safeId,
+                  customerIdentification1 = filingMemberDetails.customerIdentification1,
+                  customerIdentification2 = filingMemberDetails.customerIdentification2,
+                  organisationName = filingMemberDetails.organisationName))
             )
-          )
         )
 
       case _ =>
