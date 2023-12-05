@@ -1,38 +1,47 @@
-
 # pillar2
 
-
-This service provides a means for users to ensure that large multinational businesses pay a minimum
+This service provides the users with means to ensure the large multinational businesses pay a minimum
 level of corporate income tax (15%) on the profits.
 
-## Using Service Manager
+## Running the service locally
+`sbt clean update compile`
 
-You can use service manager to provide assets to the piller2 backend. the PILLAR2_ALL service is responsible for starting up all services required by the tax credits service project.
-This can be started by running:
+The above command ensures the compilation is successful without any errors.
 
-    sm --start PILLAR2_ALL
+`sbt run`
 
-##  To run the locally:
+By default, the service runs locally on port **10051**
 
-    Run 'sbt run' from within the project and it will run at port 10051
+To use test-only route locally, run the below:
 
-## To check code coverage:
+`sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051'`
+
+#### Using Service Manager
+
+You can use service manager to provide necessary assets to the pillar2 backend. 
+**PILLAR2_ALL** service is responsible for starting up all the services required by the tax credits service project.
+
+This can be started by running the below in a new terminal:
+
+    sm2 --start PILLAR2_ALL
+
+#### Using sbt 
+
+For local development, use `sbt run` but if its already running in sm2, execute below command to stop the
+service before running sbt commands.
+
+    sm2 --stop PILLAR_2
+
+#### To check code coverage:
 
     sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport
 
-## Integration and unit tests
+#### Integration and unit tests
 
-To run the unit tests:
+To run the unit tests within the project:
 
-    Run 'sbt test' from within the project 
-
-To use testonly route locally .
-
-    sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051' 
-
-
+    `sbt test`
 
 ### License
 
 This code is open source software licensed under the [Apache 2.0 License]("http://www.apache.org/licenses/LICENSE-2.0.html").
-### License
