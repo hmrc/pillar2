@@ -423,16 +423,11 @@ class SubscriptionService @Inject() (
     Future.successful(Json.obj("error" -> errorMessage))
   }
 
-  def getOrEmptyString[T](option: Option[T]): String = option match {
-    case Some(value) if !value.toString.isEmpty => value.toString
-    case _                                      => "N/A"
-  }
-
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
-    val userAnswers = UserAnswers(id, Json.obj())
+    // val userAnswers = UserAnswers(id, Json.obj())
 
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -462,12 +457,14 @@ class SubscriptionService @Inject() (
       safeId = safeId.map(getNonEmptyOrNA)
     )
 
-    val filingMemberDetails = FilingMemberDetails(
-      safeId = sub.filingMemberDetails.safeId,
-      customerIdentification1 = sub.filingMemberDetails.customerIdentification1,
-      customerIdentification2 = sub.filingMemberDetails.customerIdentification2,
-      organisationName = sub.filingMemberDetails.organisationName
-    )
+    val filingMemberDetails = sub.filingMemberDetails.map { fMember =>
+      FilingMemberDetails(
+        safeId = fMember.safeId,
+        customerIdentification1 = fMember.customerIdentification1,
+        customerIdentification2 = fMember.customerIdentification2,
+        organisationName = fMember.organisationName
+      )
+    }
 
     val accountingPeriod = AccountingPeriod(
       startDate = sub.accountingPeriod.startDate,
@@ -475,48 +472,50 @@ class SubscriptionService @Inject() (
       duetDate = sub.accountingPeriod.duetDate
     )
 
-    val accountStatus = AccountStatus(
-      inactive = sub.accountStatus.inactive
-    )
-
-    val primaryHasTelephone:   Boolean = sub.primaryContactDetails.telepphone.isDefined
-    val secondaryHasTelephone: Boolean = sub.secondaryContactDetails.telepphone.isDefined
-    val hasSecondaryContactData: Boolean = sub.secondaryContactDetails.telepphone.exists(
-      _.nonEmpty
-    ) || sub.secondaryContactDetails.emailAddress.nonEmpty || sub.secondaryContactDetails.name.nonEmpty
-
-    val result = for {
-      u1  <- userAnswers.set(subMneOrDomesticId, if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk)
-      u2  <- u1.set(upeNameRegistrationId, sub.upeDetails.organisationName)
-      u3  <- u2.set(subPrimaryContactNameId, sub.primaryContactDetails.name)
-      u4  <- u3.set(subPrimaryEmailId, sub.primaryContactDetails.emailAddress)
-      u5  <- u4.set(subSecondaryContactNameId, sub.secondaryContactDetails.name)
-      u6  <- u5.set(subRegisteredAddressId, nonUKAddress)
-      u7  <- u6.set(FmSafeId, sub.filingMemberDetails.safeId)
-      u8  <- u7.set(subFilingMemberDetailsId, filingMemberDetails)
-      u9  <- u8.set(subAccountingPeriodId, accountingPeriod)
-      u10 <- u9.set(subAccountStatusId, accountStatus)
-      u11 <- u10.set(subSecondaryEmailId, sub.secondaryContactDetails.emailAddress)
-      u12 <- u11.set(NominateFilingMemberId, sub.upeDetails.filingMember)
-      telephone: Option[String] = sub.secondaryContactDetails.telepphone
-      u13 <- u12.set(subSecondaryCapturePhoneId, getOrEmptyString(telephone))
-      u14 <- u13.set(subExtraSubscriptionId, extraSubscription)
-      u15 <- u14.set(subRegistrationDateId, sub.upeDetails.registrationDate)
-      u16 <- u15.set(fmDashboardId, dashboardInfo)
-      phone: Option[String] = sub.primaryContactDetails.telepphone
-      u17 <- u16.set(subPrimaryCapturePhoneId, getOrEmptyString(phone))
-      u18 <- u17.set(subPrimaryPhonePreferenceId, primaryHasTelephone)
-      u19 <- u18.set(subSecondaryPhonePreferenceId, secondaryHasTelephone)
-      u20 <- u19.set(subAddSecondaryContactId, hasSecondaryContactData)
-    } yield u20
-
-    result match {
-      case Success(userAnswers) =>
-        Future.successful(Json.toJson(userAnswers))
-      case Failure(exception) =>
-        logger.error("An error occurred while extracting subscription data", exception)
-        Future.successful(Json.obj("error" -> exception.getMessage))
+    val accountStatus = sub.accountStatus.map { acStatus =>
+      AccountStatus(
+        inactive = acStatus.inactive
+      )
     }
+
+    val primaryHasTelephone: Boolean = sub.primaryContactDetails.telephone.isDefined
+
+    val secContactTel: (Boolean, Boolean) = sub.secondaryContactDetails
+      .map { sContact =>
+        (sContact.telephone.isDefined, sContact.telephone.exists(_.nonEmpty) || sContact.emailAddress.nonEmpty || sContact.name.nonEmpty)
+      }
+      .getOrElse(false, false)
+
+    val secDetails: (Option[String], Option[String], Option[String]) = sub.secondaryContactDetails
+      .map { sec =>
+        (Some(sec.name), sec.telephone, Some(sec.emailAddress))
+      }
+      .getOrElse(None, None, None)
+
+    val subscriptionLocalData = SubscriptionLocalData(
+      subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
+      upeNameRegistration = sub.upeDetails.organisationName,
+      subPrimaryContactName = sub.primaryContactDetails.name,
+      subPrimaryEmail = sub.primaryContactDetails.emailAddress,
+      subPrimaryCapturePhone = sub.primaryContactDetails.telephone,
+      subPrimaryPhonePreference = primaryHasTelephone,
+      subSecondaryContactName = secDetails._1,
+      subAddSecondaryContact = secContactTel._2,
+      subSecondaryEmail = secDetails._3,
+      subSecondaryCapturePhone = secDetails._2,
+      subSecondaryPhonePreference = secContactTel._1,
+      subRegisteredAddress = nonUKAddress,
+      subFilingMemberDetails = filingMemberDetails,
+      subAccountingPeriod = accountingPeriod,
+      subAccountStatus = accountStatus,
+      NominateFilingMember = sub.upeDetails.filingMember,
+      subExtraSubscription = extraSubscription,
+      subRegistrationDate = sub.upeDetails.registrationDate,
+      fmDashboard = dashboardInfo
+    )
+    // TODO - this need refactoring. Best to save at backend only
+    val userAnswers = UserAnswers(id, Json.toJsObject(subscriptionLocalData))
+    Future.successful(Json.toJson(userAnswers))
 
   }
 
