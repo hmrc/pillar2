@@ -358,7 +358,8 @@ class SubscriptionService @Inject() (
     ec:     ExecutionContext,
     reads:  Reads[SubscriptionResponse],
     writes: Writes[UserAnswers]
-  ): Future[JsValue] =
+  ): Future[JsValue] = {
+    logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
         extractSubscriptionData(id, subscriptionResponse.success)
@@ -396,6 +397,7 @@ class SubscriptionService @Inject() (
         logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
         Future.successful(Json.obj("error" -> "Invalid subscription response format"))
     }
+  }
 
   def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
     subscriptionConnectors
