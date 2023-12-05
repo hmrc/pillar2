@@ -429,7 +429,6 @@ class SubscriptionService @Inject() (
     if (value.nonEmpty) value else "N/A"
 
   private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
-    // val userAnswers = UserAnswers(id, Json.obj())
 
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -451,7 +450,7 @@ class SubscriptionService @Inject() (
     val crn    = sub.upeDetails.customerIdentification1
     val utr    = sub.upeDetails.customerIdentification2
     val safeId = sub.upeDetails.safeId
-
+    //TODO - This needs refactoring
     val extraSubscription = ExtraSubscription(
       formBundleNumber = Some(getNonEmptyOrNA(sub.formBundleNumber)),
       crn = crn.map(getNonEmptyOrNA),
