@@ -35,40 +35,18 @@ object SubscriptionResponse {
 }
 
 case class SubscriptionSuccess(
-  plrReference:             String,
-  processingDate:           LocalDate,
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    PrimaryContactDetails,
-  secondaryContactDetails:  SecondaryContactDetails,
-  filingMemberDetails:      FilingMemberDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberDetails],
   accountingPeriod:         AccountingPeriod,
-  accountStatus:            AccountStatus
+  accountStatus:            Option[AccountStatus]
 )
 
 object SubscriptionSuccess {
   implicit val format: OFormat[SubscriptionSuccess] = Json.format[SubscriptionSuccess]
-}
-
-case class PrimaryContactDetails(
-  name:         String,
-  telepphone:   Option[String],
-  emailAddress: String
-)
-
-object PrimaryContactDetails {
-  implicit val format: OFormat[PrimaryContactDetails] = Json.format[PrimaryContactDetails]
-}
-
-case class SecondaryContactDetails(
-  name:         String,
-  telepphone:   Option[String],
-  emailAddress: String
-)
-
-object SecondaryContactDetails {
-  implicit val format: OFormat[SecondaryContactDetails] = Json.format[SecondaryContactDetails]
 }
 
 case class DashboardInfo(

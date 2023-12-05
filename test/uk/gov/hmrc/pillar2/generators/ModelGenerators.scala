@@ -26,8 +26,10 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
-
+import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import java.time.{Instant, LocalDate}
+
 trait ModelGenerators {
   self: Generators =>
 
@@ -696,37 +698,17 @@ trait ModelGenerators {
     } yield SubscriptionResponse(success)
   }
 
-  implicit val arbitraryPrimaryContactDetails: Arbitrary[PrimaryContactDetails] = Arbitrary {
-    for {
-      name         <- nonEmptyString
-      telephone    <- Gen.option(stringsWithMaxLength(15))
-      emailAddress <- arbitrary[String]
-    } yield PrimaryContactDetails(name, telephone, emailAddress)
-  }
-
-  implicit val arbitrarySecondaryContactDetails: Arbitrary[SecondaryContactDetails] = Arbitrary {
-    for {
-      name         <- nonEmptyString
-      telephone    <- Gen.option(stringsWithMaxLength(15))
-      emailAddress <- arbitrary[String]
-    } yield SecondaryContactDetails(name, telephone, emailAddress)
-  }
-
   implicit val arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {
     for {
-      plrReference             <- plrReferenceGen
-      processingDate           <- datesBetween(LocalDate.now().minusYears(10), LocalDate.now())
       formBundleNumber         <- stringsWithMaxLength(20)
       upeDetails               <- arbitrary[UpeDetails]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
-      primaryContactDetails    <- arbitrary[PrimaryContactDetails]
-      secondaryContactDetails  <- arbitrary[SecondaryContactDetails]
-      filingMemberDetails      <- arbitrary[FilingMemberDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
       accountingPeriod         <- arbitrary[AccountingPeriod]
-      accountStatus            <- arbitrary[AccountStatus]
+      accountStatus            <- Gen.option(arbitrary[AccountStatus])
     } yield SubscriptionSuccess(
-      plrReference,
-      processingDate,
       formBundleNumber,
       upeDetails,
       upeCorrespAddressDetails,
@@ -737,9 +719,6 @@ trait ModelGenerators {
       accountStatus
     )
   }
-
-  import org.scalacheck.{Arbitrary, Gen}
-  import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 
   implicit val readSubscriptionRequestParametersArbitrary: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary {
     for {
