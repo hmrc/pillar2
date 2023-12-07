@@ -177,7 +177,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       val validUserAnswers = UserAnswers(generatedUserAnswers.id, validUserAnswersData, Instant.now)
 
-      val mockResponse = HttpResponse(200, "Amendment successful")
+      val mockResponse = HttpResponse(200)
 
       when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
         .thenReturn(Future.successful(mockResponse))

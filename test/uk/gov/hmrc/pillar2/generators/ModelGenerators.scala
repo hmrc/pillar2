@@ -675,6 +675,22 @@ trait ModelGenerators {
     )
   }
 
+  implicit val arbitraryFilingMemberAmendDetails: Arbitrary[FilingMemberAmendDetails] = Arbitrary {
+    for {
+      addNewFm                <- arbitrary[Boolean]
+      safeId                  <- arbitrary[String]
+      customerIdentification1 <- Gen.option(arbitrary[String])
+      customerIdentification2 <- Gen.option(arbitrary[String])
+      organisationName        <- arbitrary[String]
+    } yield FilingMemberAmendDetails(
+      addNewFm,
+      safeId = safeId,
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = organisationName
+    )
+  }
+
   implicit val arbitrarySubscriptionRequestParameters: Arbitrary[SubscriptionRequestParameters] = Arbitrary {
     for {
       id        <- arbitrary[String]
@@ -727,14 +743,35 @@ trait ModelGenerators {
     } yield ReadSubscriptionRequestParameters(id, plrReference)
   }
 
+  implicit val arbitraryUpeDetailsAmend: Arbitrary[UpeDetailsAmend] = Arbitrary {
+    for {
+      plrReference            <- arbitrary[String]
+      safeId                  <- arbitrary[String]
+      customerIdentification1 <- Gen.option(arbitrary[String])
+      customerIdentification2 <- Gen.option(arbitrary[String])
+      organisationName        <- arbitrary[String]
+      registrationDate        <- arbitrary[LocalDate]
+      domesticOnly            <- arbitrary[Boolean]
+      filingMember            <- arbitrary[Boolean]
+    } yield UpeDetailsAmend(
+      plrReference = plrReference,
+      safeId = Some(safeId),
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = organisationName,
+      registrationDate = registrationDate,
+      domesticOnly = domesticOnly,
+      filingMember = filingMember
+    )
+  }
   implicit val arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
     for {
-      upeDetails               <- arbitrary[UpeDetails]
+      upeDetails               <- arbitrary[UpeDetailsAmend]
       accountingPeriod         <- arbitrary[AccountingPeriod]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
-      primaryContactDetails    <- arbitrary[PrimaryContactDetails]
-      secondaryContactDetails  <- arbitrary[SecondaryContactDetails]
-      filingMemberDetails      <- arbitrary[FilingMemberDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
     } yield AmendSubscriptionSuccess(
       upeDetails,
       accountingPeriod,
@@ -745,8 +782,8 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAmendSubscriptionResponse: Arbitrary[AmendSubscriptionResponse] = Arbitrary {
-    arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionResponse(_))
+  implicit val arbitraryAmendSubscriptionInput: Arbitrary[AmendSubscriptionInput] = Arbitrary {
+    arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput)
   }
 
   implicit val arbitraryExtraSubscription: Arbitrary[ExtraSubscription] = Arbitrary {
@@ -767,6 +804,7 @@ trait ModelGenerators {
 
   val arbitraryAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
+      plrRef               <- stringsWithMaxLength(20)
       id                   <- Gen.uuid.map(_.toString)
       upeNameRegistration  <- stringsWithMaxLength(105)
       primaryContactName   <- stringsWithMaxLength(200)
@@ -775,14 +813,14 @@ trait ModelGenerators {
       secondaryEmail       <- stringsWithMaxLength(20)
       secondaryPhone       <- arbitrary[Int]
       filingMemberSafeId   <- stringsWithMaxLength(200)
-
       registrationDate     <- arbitrary[LocalDate]
       subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
 
-      filingMember      <- arbitraryFilingMemberDetails.arbitrary
+      filingMember      <- arbitraryFilingMemberAmendDetails.arbitrary
       acountPeriod      <- arbitraryAccountingPeriod.arbitrary
       extraSubscription <- arbitraryExtraSubscription.arbitrary
       data = Json.obj(
+               "plrReference"                -> plrRef,
                "subMneOrDomestic"            -> "ukAndOther",
                "upeNameRegistration"         -> upeNameRegistration,
                "subPrimaryContactName"       -> primaryContactName,
@@ -807,18 +845,28 @@ trait ModelGenerators {
 
   val arbitraryIncompleteAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
-      id <- Gen.uuid.map(_.toString)
-
+      plrRef               <- stringsWithMaxLength(20)
+      id                   <- Gen.uuid.map(_.toString)
+      upeNameRegistration  <- stringsWithMaxLength(105)
       primaryContactName   <- stringsWithMaxLength(200)
       primaryEmail         <- stringsWithMaxLength(20)
       secondaryContactName <- stringsWithMaxLength(200)
-      secondaryEmail       <- stringsWithMaxLength(20)
+      registrationDate     <- arbitrary[LocalDate]
+      subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
+      acountPeriod         <- arbitraryAccountingPeriod.arbitrary
       data = Json.obj(
-               "subMneOrDomestic"        -> "ukAndOther",
-               "subPrimaryContactName"   -> primaryContactName,
-               "subPrimaryEmail"         -> primaryEmail,
-               "subSecondaryContactName" -> secondaryContactName,
-               "subSecondaryEmail"       -> secondaryEmail
+               "plrReference"                -> plrRef,
+               "subMneOrDomestic"            -> "ukAndOther",
+               "upeNameRegistration"         -> upeNameRegistration,
+               "subPrimaryContactName"       -> primaryContactName,
+               "subPrimaryEmail"             -> primaryEmail,
+               "subAccountingPeriod"         -> acountPeriod,
+               "subRegistrationDate"         -> registrationDate,
+               "subPrimaryPhonePreference"   -> true,
+               "subSecondaryPhonePreference" -> true,
+               "subAddSecondaryContact"      -> false,
+               "subRegisteredAddress"        -> subRegisteredAddress,
+               "NominateFilingMember"        -> false
              )
     } yield UserAnswers(id, data, Instant.now)
   }

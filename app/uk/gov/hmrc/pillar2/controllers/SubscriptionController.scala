@@ -62,7 +62,7 @@ class SubscriptionController @Inject() (
 
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
-
+    repository.upsert(id, Json.toJson(plrReference))
     val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
 
     paramsJson.validate[ReadSubscriptionRequestParameters] match {

@@ -23,9 +23,9 @@ import play.api.libs.json._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, UpeCorrespAddressDetails, _}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
-import uk.gov.hmrc.pillar2.models.identifiers.{subSecondaryCapturePhoneId, subSecondaryEmailId, _}
+import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UserAnswers}
@@ -35,7 +35,6 @@ import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -533,82 +532,95 @@ class SubscriptionService @Inject() (
     val userAnswers = UserAnswers(id, Json.toJsObject(subscriptionLocalData))
     Future.successful(Json.toJson(userAnswers))
 
-    }
+  }
 
-    def amendSubscriptionParameters(userAnswers:UserAnswers) : AmendSubscriptionSuccess= {
+  private def createAmendSubscriptionParameters(userAnswers: UserAnswers): AmendSubscriptionSuccess = {
     logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
-    for {
-      subAddress                       <- userAnswers.get(subRegisteredAddressId)
-      mneOrDom                         <- userAnswers.get(subMneOrDomesticId)
-      companyName                      <- userAnswers.get(upeNameRegistrationId)
-      pContactName                     <- userAnswers.get(subPrimaryContactNameId)
-      pContactEmail                    <- userAnswers.get(subPrimaryEmailId)
-      sContactNominated                <- userAnswers.get(subAddSecondaryContactId)
-      accountingPeriod                 <- userAnswers.get(subAccountingPeriodId)
-      nominatedFm                      <- userAnswers.get(NominateFilingMemberId)
-      registrationDate                 <- userAnswers.get(subRegistrationDateId)
-    }yield{
+    (for {
+      subAddress        <- userAnswers.get(subRegisteredAddressId)
+      mneOrDom          <- userAnswers.get(subMneOrDomesticId)
+      companyName       <- userAnswers.get(upeNameRegistrationId)
+      pContactName      <- userAnswers.get(subPrimaryContactNameId)
+      pContactEmail     <- userAnswers.get(subPrimaryEmailId)
+      sContactNominated <- userAnswers.get(subAddSecondaryContactId)
+      accountingPeriod  <- userAnswers.get(subAccountingPeriodId)
+      nominatedFm       <- userAnswers.get(NominateFilingMemberId)
+      registrationDate  <- userAnswers.get(subRegistrationDateId)
+      plrReference      <- userAnswers.get(plrReferenceId)
+    } yield {
       val upeDetail = UpeDetailsAmend(
-        plrReference = ???,
+        plrReference = plrReference,
         safeId = userAnswers.get(upeRegInformationId).map(_.safeId),
-        customerIdentification1 =  userAnswers.get(upeRegInformationId).map(_.crn),
-        customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr), organisationName = companyName,
+        customerIdentification1 = userAnswers.get(upeRegInformationId).map(_.crn),
+        customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr),
+        organisationName = companyName,
         registrationDate = registrationDate,
-        domesticOnly = if (mneOrDom== MneOrDomestic.uk) true else false,
+        domesticOnly = if (mneOrDom == MneOrDomestic.uk) true else false,
         filingMember = nominatedFm
       )
-      val primaryContact = ContactDetailsType(name = pContactName,
-        telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = pContactEmail)
-      val secondaryContact = if (sContactNominated){
-        for{
-          name <- userAnswers.get(subSecondaryCapturePhoneId)
+      val primaryContact =
+        ContactDetailsType(name = pContactName, telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = pContactEmail)
+      val secondaryContact = if (sContactNominated) {
+        for {
+          name         <- userAnswers.get(subSecondaryCapturePhoneId)
           emailAddress <- userAnswers.get(subSecondaryEmailId)
-        } yield
-          ContactDetailsType(name =name, telephone = userAnswers.get(subSecondaryCapturePhoneId),emailAddress = emailAddress))
-      }
-      else{
+        } yield ContactDetailsType(name = name, telephone = userAnswers.get(subSecondaryCapturePhoneId), emailAddress = emailAddress)
+      } else {
         None
       }
 
-      val filingMember= if(nominatedFm){
-        userAnswers.get(subFilingMemberDetailsId).map( det =>
-          FilingMemberAmendDetails(safeId =det.safeId, customerIdentification1 = det.customerIdentification1,
-            customerIdentification2 = det.customerIdentification2, organisationName = det.organisationName)
-        )
-      }else{
+      val filingMember = if (nominatedFm) {
+        userAnswers
+          .get(subFilingMemberDetailsId)
+          .map(det =>
+            FilingMemberAmendDetails(
+              safeId = det.safeId,
+              customerIdentification1 = det.customerIdentification1,
+              customerIdentification2 = det.customerIdentification2,
+              organisationName = det.organisationName
+            )
+          )
+      } else {
         None
       }
       AmendSubscriptionSuccess(
         upeDetails = upeDetail,
         accountingPeriod = accountingPeriod,
-        upeCorrespAddressDetails = UpeCorrespAddressDetails(subAddress.addressLine1,subAddress.addressLine2,
-          Some(subAddress.addressLine3), subAddress.addressLine4,subAddress.postalCode, subAddress.countryCode),
+        upeCorrespAddressDetails = UpeCorrespAddressDetails(
+          subAddress.addressLine1,
+          subAddress.addressLine2,
+          Some(subAddress.addressLine3),
+          subAddress.addressLine4,
+          subAddress.postalCode,
+          subAddress.countryCode
+        ),
         primaryContactDetails = primaryContact,
         secondaryContactDetails = secondaryContact,
         filingMemberDetails = filingMember
       )
-    }}
-def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-              val sub = amendSubscriptionParameters(userAnswers)
-            subscriptionConnectors.amendSubscriptionInformation(AmendSubscriptionInput(value =sub)).flatMap { response =>
-              if (response.status == 200) {
-                response.json.validate[AmendSubscriptionSuccessResponse] match {
-                  case JsSuccess(result, _) =>
-                    logger.info(s"Successful response received for amend subscription for form ${result.formBundle} at ${result.processingDate}")
-                    Future.successful(response)
-                  case _ => throw new Exception("Could not parse response received from ETMP")
-                }
-              }
-              else {
-                response.json.validate[AmendSubscriptionFailureResponse]match {
-                  case JsSuccess(reason,_) =>
-                    logger.info(s"Call failed to ETMP with the code ${response.status} due to ${reason.reason}")
-                    Future.successful(response)
-                  case _ => throw new Exception ("Could not parse error response received from ETMP")
+    }).getOrElse(throw new Exception("Expected data missing from user answers"))
+  }
+  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val sub = createAmendSubscriptionParameters(userAnswers)
+    subscriptionConnectors.amendSubscriptionInformation(AmendSubscriptionInput(value = sub)).flatMap { response =>
+      if (response.status == 200) {
+        response.json.validate[AmendSubscriptionSuccessResponse] match {
+          case JsSuccess(result, _) =>
+            logger.info(s"Successful response received for amend subscription for form ${result.formBundle} at ${result.processingDate}")
+            Future.successful(response)
+          case _ => throw new Exception("Could not parse response received from ETMP")
+        }
+      } else {
+        response.json.validate[AmendSubscriptionFailureResponse] match {
+          case JsSuccess(failure, _) =>
+            logger.info(s"Call failed to ETMP with the code ${failure.failure.code} due to ${failure.failure.reason}")
+            Future.successful(response)
+          case _ => throw new Exception("Could not parse error response received from ETMP")
 
-              }
-            }
+        }
+      }
 
-  }}
+    }
+  }
 
 }
