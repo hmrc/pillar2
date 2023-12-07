@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.controllers
 import org.joda.time.DateTime
 import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.{Inject, Singleton}
@@ -27,17 +28,18 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class RegistrationCacheController @Inject() (
   repository:                RegistrationCacheRepository,
+  authenticate:              AuthAction,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
-  def save(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def save(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     request.body.asJson.map { jsValue =>
       repository.upsert(id, jsValue).map(_ => Ok)
     } getOrElse Future.successful(EntityTooLarge)
   }
 
-  def get(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.debug("controllers.RegistrationCacheController.get: Authorised Request " + id)
     repository.get(id).map { response =>
       logger.debug(s"controllers.RegistrationCacheController.get: Response for request Id $id is $response")
@@ -45,7 +47,7 @@ class RegistrationCacheController @Inject() (
     }
   }
 
-  def remove(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def remove(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.remove(id).map(_ => Ok)
   }
 
@@ -53,7 +55,7 @@ class RegistrationCacheController @Inject() (
     def writes(d: DateTime): JsValue = JsNumber(d.getMillis)
   }
 
-  def lastUpdated(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def lastUpdated(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.debug("controllers.RegistrationCacheController.lastUpdated: Authorised Request " + id)
     repository.getLastUpdated(id).map { response =>
       logger.debug("controllers.RegistrationCacheController.lastUpdated: Response " + response)

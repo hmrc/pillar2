@@ -33,7 +33,7 @@ import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}

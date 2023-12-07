@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.controllers.auth
 
 import com.google.inject.Inject
 import play.api.mvc.{BodyParsers, Request, Result}
-import uk.gov.hmrc.pillar2.controllers.Auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 
 import scala.concurrent.{ExecutionContext, Future}
 

@@ -35,15 +35,15 @@ object UpeDetails {
 }
 
 final case class UpeDetailsAmend(
-                             plrReference:            String,
-                             safeId:                  Option[String],
-                             customerIdentification1: Option[String],
-                             customerIdentification2: Option[String],
-                             organisationName:        String,
-                             registrationDate:        LocalDate,
-                             domesticOnly:            Boolean,
-                             filingMember:            Boolean
-                           )
+  plrReference:            String,
+  safeId:                  Option[String],
+  customerIdentification1: Option[String],
+  customerIdentification2: Option[String],
+  organisationName:        String,
+  registrationDate:        LocalDate,
+  domesticOnly:            Boolean,
+  filingMember:            Boolean
+)
 
 object UpeDetailsAmend {
   implicit val format: OFormat[UpeDetailsAmend] = Json.format[UpeDetailsAmend]
@@ -84,12 +84,12 @@ object FilingMemberDetails {
 }
 
 final case class FilingMemberAmendDetails(
-                                      addNewFm:                Boolean= false,
-                                      safeId:                  String,
-                                      customerIdentification1: Option[String],
-                                      customerIdentification2: Option[String],
-                                      organisationName:        String
-                                    )
+  addNewFm:                Boolean = false,
+  safeId:                  String,
+  customerIdentification1: Option[String],
+  customerIdentification2: Option[String],
+  organisationName:        String
+)
 
 object FilingMemberAmendDetails {
   implicit val format: OFormat[FilingMemberAmendDetails] = Json.format[FilingMemberAmendDetails]

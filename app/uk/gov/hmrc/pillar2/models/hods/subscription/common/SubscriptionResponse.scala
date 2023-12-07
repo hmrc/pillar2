@@ -35,61 +35,50 @@ object SubscriptionResponse {
 }
 
 case class SubscriptionSuccess(
-  plrReference:             String,
-  processingDate:           LocalDate,
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    PrimaryContactDetails,
-  secondaryContactDetails:  SecondaryContactDetails,
-  filingMemberDetails:      FilingMemberDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberDetails],
   accountingPeriod:         AccountingPeriod,
-  accountStatus:            AccountStatus
+  accountStatus:            Option[AccountStatus]
 )
 
 object SubscriptionSuccess {
   implicit val format: OFormat[SubscriptionSuccess] = Json.format[SubscriptionSuccess]
 }
 
-case class AmendSubscriptionSuccess(upeDetails: UpeDetailsAmend,
-                                    accountingPeriod: AccountingPeriod,
-                                    upeCorrespAddressDetails: UpeCorrespAddressDetails,
-                                    primaryContactDetails: ContactDetailsType,
-                                    secondaryContactDetails: Option[ContactDetailsType],
-                                    filingMemberDetails: Option[FilingMemberAmendDetails])
+final case class AmendSubscriptionSuccess(
+  upeDetails:               UpeDetailsAmend,
+  accountingPeriod:         AccountingPeriod,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberAmendDetails]
+)
 
 object AmendSubscriptionSuccess {
   implicit val format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
 }
 
-case class AmendSubscriptionResponse(value: AmendSubscriptionSuccess)
+final case class AmendSubscriptionInput(value: AmendSubscriptionSuccess)
 
 object AmendSubscriptionResponse {
-  implicit val format: OFormat[AmendSubscriptionResponse] = Json.format[AmendSubscriptionResponse]
+  implicit val format: OFormat[AmendSubscriptionInput] = Json.format[AmendSubscriptionInput]
 }
 
-case class PrimaryContactDetails(
-  name:         String,
-  telepphone:   Option[String],
-  telephone:    Option[String],
-  emailAddress: String
-)
+final case class AmendSubscriptionSuccessResponse(processingDate: String, formBundle: String)
 
-object PrimaryContactDetails {
-  implicit val format: OFormat[PrimaryContactDetails] = Json.format[PrimaryContactDetails]
+object AmendSubscriptionSuccessResponse {
+  implicit val format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }
 
-case class SecondaryContactDetails(
-  name:         String,
-  telepphone:   Option[String],
-  telephone:    Option[String],
-  emailAddress: String
-)
+final case class AmendSubscriptionFailureResponse(reason: String)
 
-object SecondaryContactDetails {
-  implicit val format: OFormat[SecondaryContactDetails] = Json.format[SecondaryContactDetails]
+object AmendSubscriptionFailureResponse {
+  implicit val format: OFormat[AmendSubscriptionFailureResponse] = Json.format[AmendSubscriptionFailureResponse]
 }
-
 case class DashboardInfo(
   organisationName: String,
   registrationDate: LocalDate

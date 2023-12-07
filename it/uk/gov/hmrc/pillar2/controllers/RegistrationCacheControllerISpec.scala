@@ -24,7 +24,6 @@ import uk.gov.hmrc.pillar2.service.test.TestService
 
 
 class RegistrationCacheControllerISpec extends BaseISpec
-  with WireMockHelper
   with WireMockSupport
   with WireMockConfig
   with OptionValues {
@@ -35,17 +34,19 @@ class RegistrationCacheControllerISpec extends BaseISpec
     await(testService.clearAllData)
   }
 
+
   val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
   val controller: RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
 
   "save" should {
     "successfully save data" in {
+      stubAuthenticate()
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
+      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
       example shouldBe expectedResult
     }
 
@@ -53,18 +54,20 @@ class RegistrationCacheControllerISpec extends BaseISpec
 
   "get" should {
     "successfully get the record" in {
+      stubAuthenticate()
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
           .withBody(example))
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
+      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
       example shouldBe expectedResult
     }
 
   }
   "remove" should {
     "successfully remove the record" in {
+      stubAuthenticate()
       val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
         fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
