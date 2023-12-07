@@ -1,11 +1,12 @@
-# pillar2
+# pillar2-frontend
 
 This service provides the users with means to ensure the large multinational businesses pay a minimum
 level of corporate income tax (15%) on the profits.
 
 ## Running the service locally
 
-The below command ensures the compilation is successful without any errors
+#### To compile the project:
+The below command ensures the project is compiled without any errors
 
 `sbt clean update compile`
 
@@ -30,18 +31,14 @@ To use test-only route locally, run the below:
 
 ### Using Service Manager
 
-You can use service manager to provide necessary assets to the pillar2 backend. 
+You can use service manager to provide necessary assets to the pillar2 backend.
 **PILLAR2_ALL** service is responsible for starting up all the services required by the tax credits service project.
 
 This can be started by running the below in a new terminal:
 
     sm2 --start PILLAR2_ALL
 
-The logs can be viewed by running the below command in a new terminal window
-
-    sm2 --logs PILLAR_2
-
-#### Using sbt 
+#### Using sbt
 
 For local development, use `sbt run` but if it is already running in sm2, execute below command to stop the
 service before running sbt commands.
@@ -57,7 +54,7 @@ Make sure to fill in the fields as below:
 ***Redirect URL: http://localhost:10050/report-pillar2-top-up-taxes***
 
 ***Affinity Group: Organisation***
-<br><br><br>
+<br><br>
 
 ### License
 
