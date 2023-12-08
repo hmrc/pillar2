@@ -68,7 +68,13 @@ object AmendSubscriptionResponse {
   implicit val format: OFormat[AmendSubscriptionInput] = Json.format[AmendSubscriptionInput]
 }
 
-final case class AmendSubscriptionSuccessResponse(processingDate: String, formBundle: String)
+final case class AmendResponse(success: AmendSubscriptionSuccessResponse)
+
+object AmendResponse {
+  implicit val format: OFormat[AmendResponse] = Json.format[AmendResponse]
+}
+
+final case class AmendSubscriptionSuccessResponse(processingDate: String, formBundleNumber: String)
 
 object AmendSubscriptionSuccessResponse {
   implicit val format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]

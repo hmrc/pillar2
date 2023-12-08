@@ -367,6 +367,7 @@ class SubscriptionService @Inject() (
 
   def processSuccessfulResponse(
     id:           String,
+    plrReference: String,
     httpResponse: HttpResponse
   )(implicit
     ec:     ExecutionContext,
@@ -376,7 +377,7 @@ class SubscriptionService @Inject() (
     logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
-        extractSubscriptionData(id, subscriptionResponse.success)
+        extractSubscriptionData(id, plrReference, subscriptionResponse.success)
           .flatMap {
             case jsValue: JsObject =>
               jsValue.validate[UserAnswers] match {
@@ -418,7 +419,7 @@ class SubscriptionService @Inject() (
       .getSubscriptionInformation(plrReference)
       .flatMap { httpResponse =>
         httpResponse.status match {
-          case OK => processSuccessfulResponse(id, httpResponse)
+          case OK => processSuccessfulResponse(id, plrReference, httpResponse)
           case _  => processErrorResponse(httpResponse)
         }
       }
@@ -442,7 +443,7 @@ class SubscriptionService @Inject() (
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
-  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
+  private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[JsValue] = {
 
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -508,6 +509,7 @@ class SubscriptionService @Inject() (
       .getOrElse(None, None, None)
 
     val subscriptionLocalData = SubscriptionLocalData(
+      plrReference = plrReference,
       subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
       upeNameRegistration = sub.upeDetails.organisationName,
       subPrimaryContactName = sub.primaryContactDetails.name,
@@ -550,7 +552,6 @@ class SubscriptionService @Inject() (
     } yield {
       val upeDetail = UpeDetailsAmend(
         plrReference = plrReference,
-        safeId = userAnswers.get(upeRegInformationId).map(_.safeId),
         customerIdentification1 = userAnswers.get(upeRegInformationId).map(_.crn),
         customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr),
         organisationName = companyName,
@@ -603,10 +604,15 @@ class SubscriptionService @Inject() (
   def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val sub = createAmendSubscriptionParameters(userAnswers)
     subscriptionConnectors.amendSubscriptionInformation(AmendSubscriptionInput(value = sub)).flatMap { response =>
+      println(s"Whatis response ------ ---------------------------------$response")
       if (response.status == 200) {
-        response.json.validate[AmendSubscriptionSuccessResponse] match {
+        println(s"am i coming here ---------------------------------${response.json}")
+        response.json.validate[AmendResponse] match {
           case JsSuccess(result, _) =>
-            logger.info(s"Successful response received for amend subscription for form ${result.formBundle} at ${result.processingDate}")
+            logger
+              .info(
+                s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
+              )
             Future.successful(response)
           case _ => throw new Exception("Could not parse response received from ETMP")
         }

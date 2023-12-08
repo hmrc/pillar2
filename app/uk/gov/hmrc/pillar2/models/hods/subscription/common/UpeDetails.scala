@@ -36,7 +36,6 @@ object UpeDetails {
 
 final case class UpeDetailsAmend(
   plrReference:            String,
-  safeId:                  Option[String],
   customerIdentification1: Option[String],
   customerIdentification2: Option[String],
   organisationName:        String,
@@ -84,7 +83,7 @@ object FilingMemberDetails {
 }
 
 final case class FilingMemberAmendDetails(
-  addNewFm:                Boolean = false,
+  addNewFilingMember:      Boolean = true,
   safeId:                  String,
   customerIdentification1: Option[String],
   customerIdentification2: Option[String],
