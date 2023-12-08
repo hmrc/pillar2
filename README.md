@@ -1,7 +1,7 @@
-# pillar2-frontend
+# pillar2
 
-This service provides the users with means to ensure the large multinational businesses pay a minimum
-level of corporate income tax (15%) on the profits.
+The Pillar2 backend service provide the users with means to ensure the large multinational businesses pay a minimum
+level of corporate income tax (15%) on their profits.
 
 ## Running the service locally
 
@@ -54,6 +54,44 @@ Make sure to fill in the fields as below:
 ***Redirect URL: http://localhost:10050/report-pillar2-top-up-taxes***
 
 ***Affinity Group: Organisation***
+
+## Testing Endpoints
+
+This backend service provides a few test-only endpoints, exposed via the **GET** HTTP method in order to be operated by the browser.
+
+---------------------
+
+```GET /get-all```
+
+Gets all the records from the Mongo DB in the backend
+
+> Response status: 200
+
+---------------------
+
+```GET /clear-all```
+
+Clears all the record from the Mongo DB in the backend
+
+> Response status: 200
+
+---------------------
+
+```GET /clear-current/:id```
+
+Clears the current records with a specific ID from the Mongo DB in the backend
+
+> Response status: 200
+
+---------------------
+
+```GET /registration-data/:id```
+
+Gets the registration data of a specific ID from the Mongo DB in the backend
+
+> Response status: 200
+
+---------------------
 <br><br>
 
 ### License
