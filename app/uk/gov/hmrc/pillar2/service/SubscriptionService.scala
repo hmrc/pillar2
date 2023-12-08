@@ -602,11 +602,11 @@ class SubscriptionService @Inject() (
     }).getOrElse(throw new Exception("Expected data missing from user answers"))
   }
   def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val sub = createAmendSubscriptionParameters(userAnswers)
-    subscriptionConnectors.amendSubscriptionInformation(AmendSubscriptionInput(value = sub)).flatMap { response =>
-      println(s"Whatis response ------ ---------------------------------$response")
+    val amendSub = AmendSubscriptionInput(value = createAmendSubscriptionParameters(userAnswers))
+    logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
+
+    subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
       if (response.status == 200) {
-        println(s"am i coming here ---------------------------------${response.json}")
         response.json.validate[AmendResponse] match {
           case JsSuccess(result, _) =>
             logger

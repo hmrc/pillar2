@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, AmendSubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionInput
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,7 +63,7 @@ class SubscriptionConnector @Inject() (
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}"
 
-    implicit val writes: Writes[AmendSubscriptionInput] = AmendSubscriptionResponse.format
+    implicit val writes: Writes[AmendSubscriptionInput] = AmendSubscriptionInput.format
     http.PUT[AmendSubscriptionInput, HttpResponse](
       url,
       amendRequest,
