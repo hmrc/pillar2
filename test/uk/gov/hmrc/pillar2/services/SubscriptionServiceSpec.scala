@@ -171,50 +171,40 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
   "amendSubscription" - {
     "process valid UserAnswers and handle successful amendment" in new Setup {
-      val generatedUserAnswers = arbitraryAmendSubscriptionUserAnswers.arbitrary.sample
-        .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
-      val validUserAnswersData = generatedUserAnswers.data
-
-      val validUserAnswers = UserAnswers(generatedUserAnswers.id, validUserAnswersData, Instant.now)
-
-      val mockResponse = HttpResponse(200)
 
       when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
-        .thenReturn(Future.successful(mockResponse))
+        .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
 
-      val result = service.extractAndProcess(validUserAnswers)
-
-      result.futureValue.status shouldBe OK
+      forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
+        service.extractAndProcess(validUserAnswers).map { response =>
+          response.status mustBe OK
+        }
+      }
     }
 
     "handle incomplete UserAnswers resulting in no amendment call" in new Setup {
-      val generatedUserAnswers = arbitraryIncompleteAmendSubscriptionUserAnswers.arbitrary.sample
-        .getOrElse(fail("Failed to generate valid UserAnswers for testing"))
-      val validUserAnswersData = generatedUserAnswers.data
-
-      val inValidUserAnswers = UserAnswers(generatedUserAnswers.id, validUserAnswersData, Instant.now)
-
-      val mockResponse = HttpResponse(400, "Amendment successful")
 
       when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
-        .thenReturn(Future.successful(mockResponse))
+        .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
 
-      val result = service.extractAndProcess(inValidUserAnswers)
-
-      result.futureValue.status shouldBe BAD_REQUEST
+      forAll(arbitraryIncompleteAmendSubscriptionUserAnswers.arbitrary) { invalidUserAnswers =>
+        service.extractAndProcess(invalidUserAnswers).map { response =>
+          response.status mustBe BAD_REQUEST
+        }
+      }
     }
 
     "handle failure response from SubscriptionConnector" in new Setup {
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")))
+
       forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
-        val failureResponse = HttpResponse(500, "Internal Server Error")
-
-        when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
-          .thenReturn(Future.successful(failureResponse))
-
-        val result = service.extractAndProcess(validUserAnswers)
-
-        result.futureValue.status shouldBe 500
+        service.extractAndProcess(validUserAnswers).map { response =>
+          response.status mustBe INTERNAL_SERVER_ERROR
+        }
       }
+
     }
 
   }

@@ -746,7 +746,6 @@ trait ModelGenerators {
   implicit val arbitraryUpeDetailsAmend: Arbitrary[UpeDetailsAmend] = Arbitrary {
     for {
       plrReference            <- arbitrary[String]
-      safeId                  <- arbitrary[String]
       customerIdentification1 <- Gen.option(arbitrary[String])
       customerIdentification2 <- Gen.option(arbitrary[String])
       organisationName        <- arbitrary[String]
@@ -755,7 +754,6 @@ trait ModelGenerators {
       filingMember            <- arbitrary[Boolean]
     } yield UpeDetailsAmend(
       plrReference = plrReference,
-      safeId = Some(safeId),
       customerIdentification1 = customerIdentification1,
       customerIdentification2 = customerIdentification2,
       organisationName = organisationName,
@@ -783,7 +781,7 @@ trait ModelGenerators {
   }
 
   implicit val arbitraryAmendSubscriptionInput: Arbitrary[AmendSubscriptionInput] = Arbitrary {
-    arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput)
+    arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput(_))
   }
 
   implicit val arbitraryExtraSubscription: Arbitrary[ExtraSubscription] = Arbitrary {

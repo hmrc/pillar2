@@ -32,13 +32,13 @@ class SubscriptionConnector @Inject() (
 ) {
   implicit val logger: Logger = Logger(this.getClass.getName)
   def sendCreateSubscriptionInformation(
-    suscription: RequestDetail
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    subscription: RequestDetail
+  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
-    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(suscription)}")
+    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}")
     http.POST[RequestDetail, HttpResponse](
       config.baseUrl(serviceName),
-      suscription,
+      subscription,
       headers = extraHeaders(config, serviceName)
     )(wts = RequestDetail.format, rds = httpReads, hc = hc, ec = ec)
   }
