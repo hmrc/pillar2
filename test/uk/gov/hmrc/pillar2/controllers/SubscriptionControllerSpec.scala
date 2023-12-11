@@ -583,18 +583,10 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       }
 
       "fail with IllegalArgumentException when UserAnswers is null" in {
-
-        stubPutResponse(
-          s"/pillar2/subscription",
-          OK
-        )
         val id = "123"
 
         when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
           .thenReturn(Future.successful(None))
-
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
 
         val result = service.extractAndProcess(null)
 

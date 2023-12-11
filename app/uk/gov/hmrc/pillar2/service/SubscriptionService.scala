@@ -601,32 +601,36 @@ class SubscriptionService @Inject() (
       )
     }).getOrElse(throw new Exception("Expected data missing from user answers"))
   }
-  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val amendSub = AmendSubscriptionInput(value = createAmendSubscriptionParameters(userAnswers))
-    logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
+  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    if (userAnswers == null) {
+      logger.error("UserAnswers is null")
+      Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))
+    } else {
+      val amendSub = AmendSubscriptionInput(value = createAmendSubscriptionParameters(userAnswers))
+      logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
 
-    subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
-      if (response.status == 200) {
-        response.json.validate[AmendResponse] match {
-          case JsSuccess(result, _) =>
-            logger
-              .info(
-                s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
-              )
-            Future.successful(response)
-          case _ => throw new Exception("Could not parse response received from ETMP")
-        }
-      } else {
-        response.json.validate[AmendSubscriptionFailureResponse] match {
-          case JsSuccess(failure, _) =>
-            logger.info(s"Call failed to ETMP with the code ${failure.failure.code} due to ${failure.failure.reason}")
-            Future.successful(response)
-          case _ => throw new Exception("Could not parse error response received from ETMP")
+      subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
+        if (response.status == 200) {
+          response.json.validate[AmendResponse] match {
+            case JsSuccess(result, _) =>
+              logger
+                .info(
+                  s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
+                )
+              Future.successful(response)
+            case _ => throw new Exception("Could not parse response received from ETMP")
+          }
+        } else {
+          response.json.validate[AmendSubscriptionFailureResponse] match {
+            case JsSuccess(failure, _) =>
+              logger.info(s"Call failed to ETMP with the code ${failure.failure.code} due to ${failure.failure.reason}")
+              Future.successful(response)
+            case _ => throw new Exception("Could not parse error response received from ETMP")
 
+          }
         }
+
       }
-
     }
-  }
 
 }
