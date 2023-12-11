@@ -39,7 +39,7 @@ class RegistrationCacheController @Inject() (
     } getOrElse Future.successful(EntityTooLarge)
   }
 
-  def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def get(id: String): Action[AnyContent] = authenticate.async {
     logger.debug("controllers.RegistrationCacheController.get: Authorised Request " + id)
     repository.get(id).map { response =>
       logger.debug(s"controllers.RegistrationCacheController.get: Response for request Id $id is $response")
@@ -47,7 +47,7 @@ class RegistrationCacheController @Inject() (
     }
   }
 
-  def remove(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def remove(id: String): Action[AnyContent] = authenticate.async {
     repository.remove(id).map(_ => Ok)
   }
 
@@ -55,7 +55,7 @@ class RegistrationCacheController @Inject() (
     def writes(d: DateTime): JsValue = JsNumber(d.getMillis)
   }
 
-  def lastUpdated(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def lastUpdated(id: String): Action[AnyContent] = authenticate.async {
     logger.debug("controllers.RegistrationCacheController.lastUpdated: Authorised Request " + id)
     repository.getLastUpdated(id).map { response =>
       logger.debug("controllers.RegistrationCacheController.lastUpdated: Response " + response)

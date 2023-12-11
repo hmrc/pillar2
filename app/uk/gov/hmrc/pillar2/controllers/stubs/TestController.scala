@@ -31,23 +31,23 @@ class TestController @Inject() (
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
-  def getAllRecords(max: Int): Action[AnyContent] = Action.async { implicit request =>
+  def getAllRecords(max: Int): Action[AnyContent] = Action.async {
     repository.getAll(max).map { response =>
       Ok(Json.toJson(response))
     }
   }
 
-  def getRegistrationData(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def getRegistrationData(id: String): Action[AnyContent] = Action.async {
     repository.get(id).map { response =>
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
 
-  def clearCurrentData(id: String): Action[AnyContent] = Action.async { implicit request =>
+  def clearCurrentData(id: String): Action[AnyContent] = Action.async {
     repository.remove(id).map(_ => Ok)
   }
 
-  def clearAllData(): Action[AnyContent] = Action.async { implicit request =>
+  def clearAllData(): Action[AnyContent] = Action.async {
     repository.clearAllData().map(_ => Ok)
   }
 
