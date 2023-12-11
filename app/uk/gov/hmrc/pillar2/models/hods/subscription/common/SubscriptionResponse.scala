@@ -91,6 +91,7 @@ final case class Failure(reason: String, code: String)
 object Failure {
   implicit val format: OFormat[Failure] = Json.format[Failure]
 }
+
 case class DashboardInfo(
   organisationName: String,
   registrationDate: LocalDate
