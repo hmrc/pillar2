@@ -56,6 +56,10 @@ package object controllers {
         logDownStreamError(httpResponse.body)
         Conflict(httpResponse.body)
 
+      case OK =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
+        Ok(httpResponse.body)
+
       case _ =>
         logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)

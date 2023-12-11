@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.config
 
 import javax.inject.{Inject, Singleton}
-import play.api.{Configuration, Environment}
+import play.api.Configuration
 import uk.gov.hmrc.play.bootstrap.config.ServicesConfig
 
 @Singleton

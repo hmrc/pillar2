@@ -17,11 +17,11 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logger
-import play.api.libs.json.{JsError, JsObject, JsResult, JsSuccess, JsValue, Json}
+import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
@@ -44,7 +44,7 @@ class SubscriptionController @Inject() (
         logger.info(s"SubscriptionController - createSubscription called $error")
 
         Future.successful(
-          BadRequest("Subcription parameter is invalid")
+          BadRequest("Subscription parameter is invalid")
         )
       },
       valid = subs =>
@@ -62,7 +62,6 @@ class SubscriptionController @Inject() (
 
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     logger.info(s"readSubscription called with id: $id, plrReference: $plrReference")
-
     val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
 
     paramsJson.validate[ReadSubscriptionRequestParameters] match {
@@ -87,6 +86,29 @@ class SubscriptionController @Inject() (
         logger.warn(s"Validation failed for parameters: $paramsJson with errors: $errors")
         Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
     }
+  }
+
+  def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
+    val subscriptionParameters = request.body.validate[AmendSubscriptionRequestParameters]
+
+    subscriptionParameters.fold(
+      invalid = error => {
+        logger.info(s"SubscriptionController - amendSubscription called with error: $error")
+        Future.successful(BadRequest("Amend Subscription parameter is invalid"))
+      },
+      valid = subs =>
+        getUserAnswers(subs.id).flatMap { typedUserAnswers =>
+          subscriptionService
+            .extractAndProcess(typedUserAnswers)
+            .map { response =>
+              convertToResult(response)(implicitly[Logger](logger))
+            }
+            .recover { case ex: Throwable =>
+              logger.error("An error occurred during subscription processing", ex)
+              InternalServerError("Internal server error occurred")
+            }
+        }
+    )
   }
 
 }

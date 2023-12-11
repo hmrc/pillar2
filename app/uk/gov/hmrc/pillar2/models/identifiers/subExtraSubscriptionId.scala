@@ -17,7 +17,6 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.NonUKAddress
 import uk.gov.hmrc.pillar2.models.subscription.ExtraSubscription
 
 case object subExtraSubscriptionId extends TypedIdentifier[ExtraSubscription] {

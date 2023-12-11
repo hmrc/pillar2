@@ -24,7 +24,7 @@ import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
-import uk.gov.hmrc.pillar2.models.subscription.{SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
@@ -675,6 +675,22 @@ trait ModelGenerators {
     )
   }
 
+  implicit val arbitraryFilingMemberAmendDetails: Arbitrary[FilingMemberAmendDetails] = Arbitrary {
+    for {
+      addNewFm                <- arbitrary[Boolean]
+      safeId                  <- arbitrary[String]
+      customerIdentification1 <- Gen.option(arbitrary[String])
+      customerIdentification2 <- Gen.option(arbitrary[String])
+      organisationName        <- arbitrary[String]
+    } yield FilingMemberAmendDetails(
+      addNewFm,
+      safeId = safeId,
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = organisationName
+    )
+  }
+
   implicit val arbitrarySubscriptionRequestParameters: Arbitrary[SubscriptionRequestParameters] = Arbitrary {
     for {
       id        <- arbitrary[String]
@@ -725,6 +741,132 @@ trait ModelGenerators {
       id           <- Gen.alphaStr
       plrReference <- Gen.alphaStr
     } yield ReadSubscriptionRequestParameters(id, plrReference)
+  }
+
+  implicit val arbitraryUpeDetailsAmend: Arbitrary[UpeDetailsAmend] = Arbitrary {
+    for {
+      plrReference            <- arbitrary[String]
+      customerIdentification1 <- Gen.option(arbitrary[String])
+      customerIdentification2 <- Gen.option(arbitrary[String])
+      organisationName        <- arbitrary[String]
+      registrationDate        <- arbitrary[LocalDate]
+      domesticOnly            <- arbitrary[Boolean]
+      filingMember            <- arbitrary[Boolean]
+    } yield UpeDetailsAmend(
+      plrReference = plrReference,
+      customerIdentification1 = customerIdentification1,
+      customerIdentification2 = customerIdentification2,
+      organisationName = organisationName,
+      registrationDate = registrationDate,
+      domesticOnly = domesticOnly,
+      filingMember = filingMember
+    )
+  }
+  implicit val arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
+    for {
+      upeDetails               <- arbitrary[UpeDetailsAmend]
+      accountingPeriod         <- arbitrary[AccountingPeriod]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
+    } yield AmendSubscriptionSuccess(
+      upeDetails,
+      accountingPeriod,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails
+    )
+  }
+
+  implicit val arbitraryAmendSubscriptionInput: Arbitrary[AmendSubscriptionInput] = Arbitrary {
+    arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput(_))
+  }
+
+  implicit val arbitraryExtraSubscription: Arbitrary[ExtraSubscription] = Arbitrary {
+    for {
+      formBundleNumber <- arbitrary[String]
+      crn              <- arbitrary[String]
+      utr              <- arbitrary[String]
+      safeId           <- arbitrary[String]
+      plrReference     <- arbitrary[String]
+    } yield ExtraSubscription(
+      Some(formBundleNumber),
+      Some(crn),
+      Some(utr),
+      Some(safeId),
+      Some(plrReference)
+    )
+  }
+
+  val arbitraryAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      plrRef               <- stringsWithMaxLength(20)
+      id                   <- Gen.uuid.map(_.toString)
+      upeNameRegistration  <- stringsWithMaxLength(105)
+      primaryContactName   <- stringsWithMaxLength(200)
+      primaryEmail         <- stringsWithMaxLength(20)
+      secondaryContactName <- stringsWithMaxLength(200)
+      secondaryEmail       <- stringsWithMaxLength(20)
+      secondaryPhone       <- arbitrary[Int]
+      filingMemberSafeId   <- stringsWithMaxLength(200)
+      registrationDate     <- arbitrary[LocalDate]
+      subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
+
+      filingMember      <- arbitraryFilingMemberAmendDetails.arbitrary
+      acountPeriod      <- arbitraryAccountingPeriod.arbitrary
+      extraSubscription <- arbitraryExtraSubscription.arbitrary
+      data = Json.obj(
+               "plrReference"                -> plrRef,
+               "subMneOrDomestic"            -> "ukAndOther",
+               "upeNameRegistration"         -> upeNameRegistration,
+               "subPrimaryContactName"       -> primaryContactName,
+               "subPrimaryEmail"             -> primaryEmail,
+               "subSecondaryContactName"     -> secondaryContactName,
+               "subSecondaryEmail"           -> secondaryEmail,
+               "subSecondaryCapturePhone"    -> secondaryPhone,
+               "FmSafeID"                    -> filingMemberSafeId,
+               "subFilingMemberDetails"      -> filingMember,
+               "subAccountingPeriod"         -> acountPeriod,
+               "subRegistrationDate"         -> registrationDate,
+               "subPrimaryCapturePhone"      -> secondaryPhone,
+               "subPrimaryPhonePreference"   -> true,
+               "subSecondaryPhonePreference" -> true,
+               "subAddSecondaryContact"      -> true,
+               "subExtraSubscription"        -> extraSubscription,
+               "subRegisteredAddress"        -> subRegisteredAddress,
+               "NominateFilingMember"        -> true
+             )
+    } yield UserAnswers(id, data, Instant.now)
+  }
+
+  val arbitraryIncompleteAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      plrRef               <- stringsWithMaxLength(20)
+      id                   <- Gen.uuid.map(_.toString)
+      upeNameRegistration  <- stringsWithMaxLength(105)
+      primaryContactName   <- stringsWithMaxLength(200)
+      primaryEmail         <- stringsWithMaxLength(20)
+      secondaryContactName <- stringsWithMaxLength(200)
+      registrationDate     <- arbitrary[LocalDate]
+      subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
+      acountPeriod         <- arbitraryAccountingPeriod.arbitrary
+      data = Json.obj(
+               "plrReference"                -> plrRef,
+               "subMneOrDomestic"            -> "ukAndOther",
+               "upeNameRegistration"         -> upeNameRegistration,
+               "subPrimaryContactName"       -> primaryContactName,
+               "subPrimaryEmail"             -> primaryEmail,
+               "subAccountingPeriod"         -> acountPeriod,
+               "subRegistrationDate"         -> registrationDate,
+               "subPrimaryPhonePreference"   -> true,
+               "subSecondaryPhonePreference" -> true,
+               "subAddSecondaryContact"      -> false,
+               "subRegisteredAddress"        -> subRegisteredAddress,
+               "NominateFilingMember"        -> false
+             )
+    } yield UserAnswers(id, data, Instant.now)
   }
 
 }

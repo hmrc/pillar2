@@ -23,6 +23,7 @@ import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress}
 
 case class SubscriptionLocalData(
+  plrReference:                String,
   subMneOrDomestic:            MneOrDomestic,
   upeNameRegistration:         String,
   subPrimaryContactName:       String,

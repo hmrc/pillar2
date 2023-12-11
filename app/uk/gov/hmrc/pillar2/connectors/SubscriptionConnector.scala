@@ -18,9 +18,10 @@ package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
 import play.api.Logger
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionInput
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,13 +32,13 @@ class SubscriptionConnector @Inject() (
 ) {
   implicit val logger: Logger = Logger(this.getClass.getName)
   def sendCreateSubscriptionInformation(
-    suscription: RequestDetail
-  )(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    subscription: RequestDetail
+  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
-    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(suscription)}")
+    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}")
     http.POST[RequestDetail, HttpResponse](
       config.baseUrl(serviceName),
-      suscription,
+      subscription,
       headers = extraHeaders(config, serviceName)
     )(wts = RequestDetail.format, rds = httpReads, hc = hc, ec = ec)
   }
@@ -54,6 +55,20 @@ class SubscriptionConnector @Inject() (
         logger.warn(s"Error while fetching subscription information: ${ex.getMessage}")
         throw ex
       }
+  }
+
+  def amendSubscriptionInformation(
+    amendRequest: AmendSubscriptionInput
+  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val serviceName = "create-subscription"
+    val url         = s"${config.baseUrl(serviceName)}"
+
+    implicit val writes: Writes[AmendSubscriptionInput] = AmendSubscriptionInput.format
+    http.PUT[AmendSubscriptionInput, HttpResponse](
+      url,
+      amendRequest,
+      extraHeaders(config, serviceName)
+    )(writes, httpReads, hc, ec)
   }
 
 }

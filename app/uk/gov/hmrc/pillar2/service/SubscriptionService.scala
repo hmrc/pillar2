@@ -35,7 +35,6 @@ import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -368,6 +367,7 @@ class SubscriptionService @Inject() (
 
   def processSuccessfulResponse(
     id:           String,
+    plrReference: String,
     httpResponse: HttpResponse
   )(implicit
     ec:     ExecutionContext,
@@ -377,7 +377,7 @@ class SubscriptionService @Inject() (
     logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
-        extractSubscriptionData(id, subscriptionResponse.success)
+        extractSubscriptionData(id, plrReference, subscriptionResponse.success)
           .flatMap {
             case jsValue: JsObject =>
               jsValue.validate[UserAnswers] match {
@@ -419,7 +419,7 @@ class SubscriptionService @Inject() (
       .getSubscriptionInformation(plrReference)
       .flatMap { httpResponse =>
         httpResponse.status match {
-          case OK => processSuccessfulResponse(id, httpResponse)
+          case OK => processSuccessfulResponse(id, plrReference, httpResponse)
           case _  => processErrorResponse(httpResponse)
         }
       }
@@ -443,7 +443,7 @@ class SubscriptionService @Inject() (
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
-  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
+  private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[JsValue] = {
 
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -509,6 +509,7 @@ class SubscriptionService @Inject() (
       .getOrElse(None, None, None)
 
     val subscriptionLocalData = SubscriptionLocalData(
+      plrReference = plrReference,
       subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
       upeNameRegistration = sub.upeDetails.organisationName,
       subPrimaryContactName = sub.primaryContactDetails.name,
@@ -534,5 +535,102 @@ class SubscriptionService @Inject() (
     Future.successful(Json.toJson(userAnswers))
 
   }
+
+  private def createAmendSubscriptionParameters(userAnswers: UserAnswers): AmendSubscriptionSuccess = {
+    logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
+    (for {
+      subAddress        <- userAnswers.get(subRegisteredAddressId)
+      mneOrDom          <- userAnswers.get(subMneOrDomesticId)
+      companyName       <- userAnswers.get(upeNameRegistrationId)
+      pContactName      <- userAnswers.get(subPrimaryContactNameId)
+      pContactEmail     <- userAnswers.get(subPrimaryEmailId)
+      sContactNominated <- userAnswers.get(subAddSecondaryContactId)
+      accountingPeriod  <- userAnswers.get(subAccountingPeriodId)
+      nominatedFm       <- userAnswers.get(NominateFilingMemberId)
+      registrationDate  <- userAnswers.get(subRegistrationDateId)
+      plrReference      <- userAnswers.get(plrReferenceId)
+    } yield {
+      val upeDetail = UpeDetailsAmend(
+        plrReference = plrReference,
+        customerIdentification1 = userAnswers.get(upeRegInformationId).map(_.crn),
+        customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr),
+        organisationName = companyName,
+        registrationDate = registrationDate,
+        domesticOnly = if (mneOrDom == MneOrDomestic.uk) true else false,
+        filingMember = nominatedFm
+      )
+      val primaryContact =
+        ContactDetailsType(name = pContactName, telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = pContactEmail)
+      val secondaryContact = if (sContactNominated) {
+        for {
+          name         <- userAnswers.get(subSecondaryCapturePhoneId)
+          emailAddress <- userAnswers.get(subSecondaryEmailId)
+        } yield ContactDetailsType(name = name, telephone = userAnswers.get(subSecondaryCapturePhoneId), emailAddress = emailAddress)
+      } else {
+        None
+      }
+
+      val filingMember = if (nominatedFm) {
+        userAnswers
+          .get(subFilingMemberDetailsId)
+          .map(det =>
+            FilingMemberAmendDetails(
+              safeId = det.safeId,
+              customerIdentification1 = det.customerIdentification1,
+              customerIdentification2 = det.customerIdentification2,
+              organisationName = det.organisationName
+            )
+          )
+      } else {
+        None
+      }
+      AmendSubscriptionSuccess(
+        upeDetails = upeDetail,
+        accountingPeriod = accountingPeriod,
+        upeCorrespAddressDetails = UpeCorrespAddressDetails(
+          subAddress.addressLine1,
+          subAddress.addressLine2,
+          Some(subAddress.addressLine3),
+          subAddress.addressLine4,
+          subAddress.postalCode,
+          subAddress.countryCode
+        ),
+        primaryContactDetails = primaryContact,
+        secondaryContactDetails = secondaryContact,
+        filingMemberDetails = filingMember
+      )
+    }).getOrElse(throw new Exception("Expected data missing from user answers"))
+  }
+  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    if (userAnswers == null) {
+      logger.error("UserAnswers is null")
+      Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))
+    } else {
+      val amendSub = AmendSubscriptionInput(value = createAmendSubscriptionParameters(userAnswers))
+      logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
+
+      subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
+        if (response.status == 200) {
+          response.json.validate[AmendResponse] match {
+            case JsSuccess(result, _) =>
+              logger
+                .info(
+                  s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
+                )
+              Future.successful(response)
+            case _ => throw new Exception("Could not parse response received from ETMP")
+          }
+        } else {
+          response.json.validate[AmendSubscriptionFailureResponse] match {
+            case JsSuccess(failure, _) =>
+              logger.info(s"Call failed to ETMP with the code ${failure.failure.code} due to ${failure.failure.reason}")
+              Future.successful(response)
+            case _ => throw new Exception("Could not parse error response received from ETMP")
+
+          }
+        }
+
+      }
+    }
 
 }

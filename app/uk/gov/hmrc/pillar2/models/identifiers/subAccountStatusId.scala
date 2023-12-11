@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
+import uk.gov.hmrc.pillar2.models.AccountStatus
 
 case object subAccountStatusId extends TypedIdentifier[AccountStatus] {
 
