@@ -99,7 +99,6 @@ class SubscriptionController @Inject() (
       },
       valid = subs =>
         getUserAnswers(subs.id).flatMap { typedUserAnswers =>
-          println("********** typedUserAnswers = " + typedUserAnswers)
           subscriptionService
             .extractAndProcess(typedUserAnswers)
             .map { response =>
