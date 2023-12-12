@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat, Reads, Writes}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend}
 
 import java.time.LocalDate
 
@@ -51,7 +51,7 @@ object SubscriptionSuccess {
 
 final case class AmendSubscriptionSuccess(
   upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriod,
+  accountingPeriod:         AccountingPeriodAmend,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],

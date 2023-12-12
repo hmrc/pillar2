@@ -25,9 +25,10 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, RowStatus, UKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
+
 import java.time.{Instant, LocalDate}
 
 trait ModelGenerators {
@@ -630,6 +631,16 @@ trait ModelGenerators {
     )
   }
 
+  implicit val arbitraryAccountingPeriodAmend: Arbitrary[AccountingPeriodAmend] = Arbitrary {
+    for {
+      startDate <- arbitrary[LocalDate]
+      endDate   <- arbitrary[LocalDate]
+    } yield AccountingPeriodAmend(
+      startDate = startDate,
+      endDate = endDate
+    )
+  }
+
   implicit val arbitraryUpeCorrespAddressDetails: Arbitrary[UpeCorrespAddressDetails] = Arbitrary {
 
     for {
@@ -765,7 +776,7 @@ trait ModelGenerators {
   implicit val arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetailsAmend]
-      accountingPeriod         <- arbitrary[AccountingPeriod]
+      accountingPeriod         <- arbitrary[AccountingPeriodAmend]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
