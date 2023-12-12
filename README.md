@@ -12,11 +12,11 @@ This can be started by running:
 
     sm --start PILLAR2_ALL
 
-##  To run the locally:
+##  To run the locally :
 
     Run 'sbt run' from within the project and it will run at port 10051
 
-## To check code coverage:
+## To check code coverage :
 
     sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport
 
