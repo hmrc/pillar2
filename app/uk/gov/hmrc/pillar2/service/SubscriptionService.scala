@@ -606,7 +606,7 @@ class SubscriptionService @Inject() (
       logger.error("UserAnswers is null")
       Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))
     } else {
-      val amendSub = AmendSubscriptionInput(value = createAmendSubscriptionParameters(userAnswers))
+      val amendSub = createAmendSubscriptionParameters(userAnswers)
       logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
 
       subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>

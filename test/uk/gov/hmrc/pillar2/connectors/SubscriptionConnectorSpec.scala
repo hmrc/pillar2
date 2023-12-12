@@ -22,7 +22,7 @@ import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionInput
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, AmendSubscriptionSuccess}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -133,7 +133,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
     "amendSubscriptionInformation" - {
 
       "must return status as OK for a successful amendment" in {
-        forAll(arbitrary[AmendSubscriptionInput]) { amendRequest =>
+        forAll(arbitrary[AmendSubscriptionSuccess]) { amendRequest =>
           stubPutResponse(
             s"/pillar2/subscription",
             OK
@@ -145,7 +145,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
 
       "should handle 400 Bad Request" in {
-        forAll { amendRequest: AmendSubscriptionInput =>
+        forAll { amendRequest: AmendSubscriptionSuccess =>
           stubPutResponse("/pillar2/subscription", BAD_REQUEST)
 
           val result = await(connector.amendSubscriptionInformation(amendRequest))
@@ -155,7 +155,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
 
       "should handle exceptions" in {
-        forAll { amendRequest: AmendSubscriptionInput =>
+        forAll { amendRequest: AmendSubscriptionSuccess =>
           server.stop()
 
           val exception = intercept[Throwable] {
