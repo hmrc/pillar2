@@ -28,7 +28,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
@@ -586,7 +586,7 @@ class SubscriptionService @Inject() (
       }
       AmendSubscriptionSuccess(
         upeDetails = upeDetail,
-        accountingPeriod = accountingPeriod,
+        accountingPeriod = AccountingPeriodAmend(accountingPeriod.startDate, accountingPeriod.endDate),
         upeCorrespAddressDetails = UpeCorrespAddressDetails(
           subAddress.addressLine1,
           subAddress.addressLine2,
