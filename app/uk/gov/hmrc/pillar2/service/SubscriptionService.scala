@@ -623,7 +623,7 @@ class SubscriptionService @Inject() (
         } else {
           response.json.validate[AmendSubscriptionFailureResponse] match {
             case JsSuccess(failure, _) =>
-              logger.info(s"Call failed to ETMP with the code ${failure.failure.code} due to ${failure.failure.reason}")
+              logger.info(s"Call failed to ETMP with the code ${failure.failures.code} due to ${failure.failures.reason}")
               Future.successful(response)
             case _ => throw new Exception("Could not parse error response received from ETMP")
 
