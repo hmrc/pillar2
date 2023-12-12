@@ -618,14 +618,14 @@ class SubscriptionService @Inject() (
                   s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
                 )
               Future.successful(response)
-            case _ => throw new Exception("Could not parse response received from ETMP")
+            case _ => throw new Exception("Could not parse response received from ETMP in success response")
           }
         } else {
           response.json.validate[AmendSubscriptionFailureResponse] match {
             case JsSuccess(failure, _) =>
-              logger.info(s"Call failed to ETMP with the code ${failure.failures.code} due to ${failure.failures.reason}")
+              logger.info(s"Call failed to ETMP with the code ${failure.failures(0).code} due to ${failure.failures(0).reason}")
               Future.successful(response)
-            case _ => throw new Exception("Could not parse error response received from ETMP")
+            case _ => throw new Exception(s"Could not parse error response received from ETMP in failure response")
 
           }
         }

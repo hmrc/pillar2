@@ -80,7 +80,7 @@ object AmendSubscriptionSuccessResponse {
   implicit val format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }
 
-final case class AmendSubscriptionFailureResponse(failures: Failure)
+final case class AmendSubscriptionFailureResponse(failures: Array[Failure])
 
 object AmendSubscriptionFailureResponse {
   implicit val format: OFormat[AmendSubscriptionFailureResponse] = Json.format[AmendSubscriptionFailureResponse]
