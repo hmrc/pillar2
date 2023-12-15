@@ -510,7 +510,7 @@ class SubscriptionService @Inject() (
 
     val subscriptionLocalData = SubscriptionLocalData(
       plrReference = plrReference,
-      subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
+      subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
       upeNameRegistration = sub.upeDetails.organisationName,
       subPrimaryContactName = sub.primaryContactDetails.name,
       subPrimaryEmail = sub.primaryContactDetails.emailAddress,
@@ -556,7 +556,7 @@ class SubscriptionService @Inject() (
         customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr),
         organisationName = companyName,
         registrationDate = registrationDate,
-        domesticOnly = if (mneOrDom == MneOrDomestic.uk) true else false,
+        domesticOnly = if (mneOrDom == MneOrDomestic.Uk) true else false,
         filingMember = nominatedFm
       )
       val primaryContact =
