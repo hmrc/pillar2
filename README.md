@@ -1,97 +1,51 @@
-# pillar2
+# pillar2-frontend
+Backend microservice for Pillar 2  project. Pillar 2 refers to the Global Minimum Tax being introduced by the Organisation for Economic Cooperation and Development (OECD).
 
-The Pillar2 backend service provide the users with means to ensure the large multinational businesses pay a minimum
-level of corporate income tax (15%) on their profits.
+The Pillar 2 Tax will ensure that global Multinational Enterprises (MNEs) with a turnover of >€750m are subject to a minimum Effective Tax Rate of 15%, i.e. a top-up tax for Medium to Large MNEs.
 
 ## Running the service locally
 
-#### To compile the project:
+    sbt run
+Test-only route:
 
-`sbt clean update compile`
-
-#### To check code coverage:
-
-`sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport`
-
-#### Integration and unit tests
-
-To run the unit tests within the project:
-
-`sbt test`
-
-#### Starting the server in local
-`sbt run`
-
-By default, the service runs locally on port **10051**
-
-To use test-only route locally, run the below:
-
-`sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051'`
-
-### Using Service Manager
-
-You can use service manager to provide necessary assets to the pillar2 backend.
-**PILLAR2_ALL** service is responsible for starting up all the services required by the tax credits service project.
-
-This can be started by running the below in a new terminal:
-
-    sm2 --start PILLAR2_ALL
-
-#### Using sbt
-
-For local development, use `sbt run` but if it is already running in sm2, execute below command to stop the
-service before running sbt commands.
-
-    sm2 --stop PILLAR_2
-
-This is an authenticated service, so users first need to be authenticated via GG in order to use the service.
+    sbt 'run -Dplay.http.router=testOnlyDoNotUseInAppConf.Routes 10051'
+To run locally:
 
 Navigate to http://localhost:9949/auth-login-stub/gg-sign-in which redirects to auth-login-stub page.
 
-Make sure to fill in the fields as below:
 
 ***Redirect URL: http://localhost:10050/report-pillar2-top-up-taxes***
 
 ***Affinity Group: Organisation***
 
-## Testing Endpoints
+## Key Terminologies
 
-This backend service provides a few test-only endpoints, exposed via the **GET** HTTP method in order to be operated by the browser.
+### Ultimate Parent Entity (UPE):
+An ultimate parent is not a subsidiary of any other company and has a controlling interest in one or more other entities.
+### Nominated Filing Member (NFM):
+The nominated filing member is responsible for managing the group's tax returns and keeping business records.
+### To check test coverage:
 
----------------------
+`sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport`
 
-```GET /get-all```
+### Integration and unit tests
 
-Gets all the record from the Mongo DB in the backend
+To run unit tests:
 
-> Response status: 200
+    Run 'sbt test' from directory the project is stored in
+To run Integration tests:
 
----------------------
+    sbt it:test
 
-```GET /clear-all```
+### Using Service Manager
 
-Clears all the record from the Mongo DB in the backend
+You can use service manage to run all dependent microservices using the command below
 
-> Response status: 200
+    sm2 --start PILLAR2_ALL
+To stop services:
 
----------------------
+    sm2 --stop PILLAR2_ALL
 
-```GET /clear-current/:id```
-
-Clears the current record with a specific ID from the Mongo DB in the backend
-
-> Response status: 200
-
----------------------
-
-```GET /registration-data/:id```
-
-Gets the registration data of a specific ID from the Mongo DB in the backend
-
-> Response status: 200
-
----------------------
-<br><br>
 
 ### License
 
