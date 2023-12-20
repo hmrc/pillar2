@@ -22,6 +22,7 @@ import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, AmendSubscriptionSuccess}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -35,6 +36,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
     app.injector.instanceOf[SubscriptionConnector]
 
   "SubscriptionConnector" - {
+
     "for a Create Subscription" - {
       "must return status as OK" in {
 
@@ -124,6 +126,44 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
           val result = connector.getSubscriptionInformation(plrReference).futureValue
           result.status mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+    }
+
+    "amendSubscriptionInformation" - {
+
+      "must return status as OK for a successful amendment" in {
+        forAll(arbitrary[AmendSubscriptionSuccess]) { amendRequest =>
+          stubPutResponse(
+            s"/pillar2/subscription",
+            OK
+          )
+
+          val result = await(connector.amendSubscriptionInformation(amendRequest))
+          result.status mustBe OK
+        }
+      }
+
+      "should handle 400 Bad Request" in {
+        forAll { amendRequest: AmendSubscriptionSuccess =>
+          stubPutResponse("/pillar2/subscription", BAD_REQUEST)
+
+          val result = await(connector.amendSubscriptionInformation(amendRequest))
+
+          result.status mustBe BAD_REQUEST
+        }
+      }
+
+      "should handle exceptions" in {
+        forAll { amendRequest: AmendSubscriptionSuccess =>
+          server.stop()
+
+          val exception = intercept[Throwable] {
+            await(connector.amendSubscriptionInformation(amendRequest))
+          }
+
+          exception mustBe a[Throwable]
+          server.start()
         }
       }
     }

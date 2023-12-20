@@ -28,14 +28,13 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
@@ -65,6 +64,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
+                logger.info("Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -88,6 +88,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
+                logger.info("Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -111,6 +112,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
+                logger.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -134,6 +136,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
+                logger.info("Calling sendSubmissionRequest with fmRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -165,6 +168,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
+                logger.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -186,6 +190,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
+                logger.info("Calling sendSubmissionRequest without upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -223,6 +228,7 @@ class SubscriptionService @Inject() (
     val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
     upeOrgType match {
       case EntityType.UKLimitedCompany =>
+        logger.info("UK Limited Company selected as Entity")
         val incorporatedEntityRegistrationData =
           upeGrsResponse.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Incorporation Registration Data"))
         val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
@@ -232,6 +238,7 @@ class SubscriptionService @Inject() (
         UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
       case EntityType.LimitedLiabilityPartnership =>
+        logger.info("Limited Liability Partnership selected as Entity")
         val partnershipEntityRegistrationData =
           upeGrsResponse.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
         val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
@@ -264,10 +271,13 @@ class SubscriptionService @Inject() (
   ): Option[FilingMemberDetails] =
     filingMemberSafeId match {
       case Some(fmSafeId) =>
+        logger.info("filingMemberSafeId is matched")
         nominateFm match {
           case true =>
+            logger.info("nominateFm value is True")
             fmEntityTypeId match {
               case EntityType.UKLimitedCompany =>
+                logger.info("UK Limited Company selected as Entity")
                 val incorporatedEntityRegistrationData =
                   fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
                     throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
@@ -278,6 +288,7 @@ class SubscriptionService @Inject() (
 
                 Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
               case EntityType.LimitedLiabilityPartnership =>
+                logger.info("Limited Liability Corporation selected as Entity")
                 val partnershipEntityRegistrationData =
                   fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
                     throw new Exception("Malformed partnershipEntityRegistrationData data for Filing Member")
@@ -291,7 +302,9 @@ class SubscriptionService @Inject() (
               case _ => throw new Exception("Filing Member: Invalid Org Type")
             }
 
-          case false => None
+          case false =>
+            logger.info("nominateFm value is False")
+            None
         }
       case _ => None
     }
@@ -332,6 +345,7 @@ class SubscriptionService @Inject() (
       case Some(fmSafeId) =>
         nominateFm match {
           case true =>
+            logger.info("Calling FilingMemberDetails with fmSafeId and fmNameRegistration")
             Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
           case false => None
         }
@@ -353,6 +367,7 @@ class SubscriptionService @Inject() (
 
   def processSuccessfulResponse(
     id:           String,
+    plrReference: String,
     httpResponse: HttpResponse
   )(implicit
     ec:     ExecutionContext,
@@ -362,7 +377,7 @@ class SubscriptionService @Inject() (
     logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
-        extractSubscriptionData(id, subscriptionResponse.success)
+        extractSubscriptionData(id, plrReference, subscriptionResponse.success)
           .flatMap {
             case jsValue: JsObject =>
               jsValue.validate[UserAnswers] match {
@@ -404,7 +419,7 @@ class SubscriptionService @Inject() (
       .getSubscriptionInformation(plrReference)
       .flatMap { httpResponse =>
         httpResponse.status match {
-          case OK => processSuccessfulResponse(id, httpResponse)
+          case OK => processSuccessfulResponse(id, plrReference, httpResponse)
           case _  => processErrorResponse(httpResponse)
         }
       }
@@ -428,7 +443,7 @@ class SubscriptionService @Inject() (
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
-  private def extractSubscriptionData(id: String, sub: SubscriptionSuccess): Future[JsValue] = {
+  private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[JsValue] = {
 
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -494,7 +509,8 @@ class SubscriptionService @Inject() (
       .getOrElse(None, None, None)
 
     val subscriptionLocalData = SubscriptionLocalData(
-      subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.UkAndOther else MneOrDomestic.Uk,
+      plrReference = plrReference,
+      subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
       upeNameRegistration = sub.upeDetails.organisationName,
       subPrimaryContactName = sub.primaryContactDetails.name,
       subPrimaryEmail = sub.primaryContactDetails.emailAddress,
@@ -519,5 +535,102 @@ class SubscriptionService @Inject() (
     Future.successful(Json.toJson(userAnswers))
 
   }
+
+  private def createAmendSubscriptionParameters(userAnswers: UserAnswers): AmendSubscriptionSuccess = {
+    logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
+    (for {
+      subAddress        <- userAnswers.get(subRegisteredAddressId)
+      mneOrDom          <- userAnswers.get(subMneOrDomesticId)
+      companyName       <- userAnswers.get(upeNameRegistrationId)
+      pContactName      <- userAnswers.get(subPrimaryContactNameId)
+      pContactEmail     <- userAnswers.get(subPrimaryEmailId)
+      sContactNominated <- userAnswers.get(subAddSecondaryContactId)
+      accountingPeriod  <- userAnswers.get(subAccountingPeriodId)
+      nominatedFm       <- userAnswers.get(NominateFilingMemberId)
+      registrationDate  <- userAnswers.get(subRegistrationDateId)
+      plrReference      <- userAnswers.get(plrReferenceId)
+    } yield {
+      val upeDetail = UpeDetailsAmend(
+        plrReference = plrReference,
+        customerIdentification1 = userAnswers.get(upeRegInformationId).map(_.crn),
+        customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr),
+        organisationName = companyName,
+        registrationDate = registrationDate,
+        domesticOnly = if (mneOrDom == MneOrDomestic.Uk) true else false,
+        filingMember = nominatedFm
+      )
+      val primaryContact =
+        ContactDetailsType(name = pContactName, telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = pContactEmail)
+      val secondaryContact = if (sContactNominated) {
+        for {
+          name         <- userAnswers.get(subSecondaryContactNameId)
+          emailAddress <- userAnswers.get(subSecondaryEmailId)
+        } yield ContactDetailsType(name = name, telephone = userAnswers.get(subSecondaryCapturePhoneId), emailAddress = emailAddress)
+      } else {
+        None
+      }
+
+      val filingMember = if (nominatedFm) {
+        userAnswers
+          .get(subFilingMemberDetailsId)
+          .map(det =>
+            FilingMemberAmendDetails(
+              safeId = det.safeId,
+              customerIdentification1 = det.customerIdentification1,
+              customerIdentification2 = det.customerIdentification2,
+              organisationName = det.organisationName
+            )
+          )
+      } else {
+        None
+      }
+      AmendSubscriptionSuccess(
+        upeDetails = upeDetail,
+        accountingPeriod = AccountingPeriodAmend(accountingPeriod.startDate, accountingPeriod.endDate),
+        upeCorrespAddressDetails = UpeCorrespAddressDetails(
+          subAddress.addressLine1,
+          subAddress.addressLine2,
+          Some(subAddress.addressLine3),
+          subAddress.addressLine4,
+          subAddress.postalCode,
+          subAddress.countryCode
+        ),
+        primaryContactDetails = primaryContact,
+        secondaryContactDetails = secondaryContact,
+        filingMemberDetails = filingMember
+      )
+    }).getOrElse(throw new Exception("Expected data missing from user answers"))
+  }
+  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+    if (userAnswers == null) {
+      logger.error("UserAnswers is null")
+      Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))
+    } else {
+      val amendSub = createAmendSubscriptionParameters(userAnswers)
+      logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
+
+      subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
+        if (response.status == 200) {
+          response.json.validate[AmendResponse] match {
+            case JsSuccess(result, _) =>
+              logger
+                .info(
+                  s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
+                )
+              Future.successful(response)
+            case _ => throw new Exception("Could not parse response received from ETMP in success response")
+          }
+        } else {
+          response.json.validate[AmendSubscriptionFailureResponse] match {
+            case JsSuccess(failure, _) =>
+              logger.info(s"Call failed to ETMP with the code ${failure.failures(0).code} due to ${failure.failures(0).reason}")
+              Future.successful(response)
+            case _ => throw new Exception(s"Could not parse error response received from ETMP in failure response")
+
+          }
+        }
+
+      }
+    }
 
 }

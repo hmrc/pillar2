@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.identifiers
+package uk.gov.hmrc.pillar2.models.subscription
 
-import play.api.libs.json.JsPath
+import play.api.libs.json.{Json, OFormat}
 
-case object subSecondaryPhonePreferenceId extends TypedIdentifier[Boolean] {
-
-  override def path: JsPath = JsPath \ toString
-
-  override def toString: String = "subSecondaryPhonePreference"
-
+case class AmendSubscriptionRequestParameters(
+  id: String
+)
+object AmendSubscriptionRequestParameters {
+  implicit val format: OFormat[AmendSubscriptionRequestParameters] = Json.format[AmendSubscriptionRequestParameters]
 }

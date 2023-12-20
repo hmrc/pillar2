@@ -18,7 +18,6 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.DashboardInfo
-import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 
 case object fmDashboardId extends TypedIdentifier[DashboardInfo] {
 

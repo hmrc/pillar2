@@ -34,6 +34,20 @@ object UpeDetails {
   implicit val format: OFormat[UpeDetails] = Json.format[UpeDetails]
 }
 
+final case class UpeDetailsAmend(
+  plrReference:            String,
+  customerIdentification1: Option[String],
+  customerIdentification2: Option[String],
+  organisationName:        String,
+  registrationDate:        LocalDate,
+  domesticOnly:            Boolean,
+  filingMember:            Boolean
+)
+
+object UpeDetailsAmend {
+  implicit val format: OFormat[UpeDetailsAmend] = Json.format[UpeDetailsAmend]
+}
+
 final case class UpeCorrespAddressDetails(
   addressLine1: String,
   addressLine2: Option[String],
@@ -66,4 +80,16 @@ final case class FilingMemberDetails(
 
 object FilingMemberDetails {
   implicit val format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
+}
+
+final case class FilingMemberAmendDetails(
+  addNewFilingMember:      Boolean = true,
+  safeId:                  String,
+  customerIdentification1: Option[String],
+  customerIdentification2: Option[String],
+  organisationName:        String
+)
+
+object FilingMemberAmendDetails {
+  implicit val format: OFormat[FilingMemberAmendDetails] = Json.format[FilingMemberAmendDetails]
 }

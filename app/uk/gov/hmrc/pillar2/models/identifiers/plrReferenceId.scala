@@ -18,10 +18,9 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 
-case object subSecondaryPhonePreferenceId extends TypedIdentifier[Boolean] {
+case object plrReferenceId extends TypedIdentifier[String] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "subSecondaryPhonePreference"
-
+  override def toString: String = "plrReference"
 }

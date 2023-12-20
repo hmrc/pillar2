@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.services
 
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.when
+import org.mockito.Mockito.{times, verify, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
@@ -27,10 +27,12 @@ import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
+import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
@@ -163,6 +165,46 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
             (result \ "error").asOpt[String] should contain("DB upsert error")
           }
       }
+    }
+
+  }
+
+  "amendSubscription" - {
+    "process valid UserAnswers and handle successful amendment" in new Setup {
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
+
+      forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
+        service.extractAndProcess(validUserAnswers).map { response =>
+          response.status mustBe OK
+        }
+      }
+    }
+
+    "handle incomplete UserAnswers resulting in no amendment call" in new Setup {
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
+
+      forAll(arbitraryIncompleteAmendSubscriptionUserAnswers.arbitrary) { invalidUserAnswers =>
+        service.extractAndProcess(invalidUserAnswers).map { response =>
+          response.status mustBe BAD_REQUEST
+        }
+      }
+    }
+
+    "handle failure response from SubscriptionConnector" in new Setup {
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")))
+
+      forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
+        service.extractAndProcess(validUserAnswers).map { response =>
+          response.status mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+
     }
 
   }

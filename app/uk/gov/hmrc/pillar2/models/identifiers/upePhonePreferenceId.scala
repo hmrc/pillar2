@@ -18,8 +18,6 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 
-import scala.util.Try
-
 case object upePhonePreferenceId extends TypedIdentifier[Boolean] {
 
   override def path: JsPath = JsPath \ toString
