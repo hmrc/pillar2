@@ -48,7 +48,9 @@ class RegistrationCacheController @Inject() (
   }
 
   def remove(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    repository.remove(id).map(_ => Ok)
+    repository.remove(id).map { response =>
+      if (response) Ok else InternalServerError
+    }
   }
 
   private val jodaDateTimeNumberWrites = new Writes[DateTime] {
