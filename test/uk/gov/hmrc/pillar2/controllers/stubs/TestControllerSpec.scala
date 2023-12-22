@@ -68,7 +68,7 @@ class TestControllerSpec extends BaseSpec {
 
       status(result) shouldBe NOT_FOUND
     }
-    
+
     "clear all data successfully" in {
       when(mockRepository.clearAllData()(any[ExecutionContext])) thenReturn Future.successful(true)
 
