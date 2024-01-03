@@ -21,15 +21,21 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.service.audit.AuditService
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class RegistrationService @Inject() (repository: RegistrationCacheRepository, dataSubmissionConnectors: RegistrationConnector)(implicit
-  ec:                                            ExecutionContext
+class RegistrationService @Inject() (
+  repository:               RegistrationCacheRepository,
+  dataSubmissionConnectors: RegistrationConnector,
+  auditService:             AuditService
+)(implicit
+  ec: ExecutionContext
 ) extends Logging {
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
@@ -41,7 +47,8 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
     } yield registerWithoutId(
       upeName,
       Address.fromAddress(address),
-      ContactDetails(userAnswers.get(upeCapturePhoneId), None, None, Some(emailAddress))
+      ContactDetails(userAnswers.get(upeCapturePhoneId), None, None, Some(emailAddress)),
+      false
     )
   }.getOrElse {
     logger.warn("RegistrationService - Upe Registration Information Missing")
@@ -58,19 +65,31 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
     } yield registerWithoutId(
       fmName,
       Address.fromFmAddress(address),
-      ContactDetails(userAnswers.get(fmCapturePhoneId), None, None, Some(emailAddress))
+      ContactDetails(userAnswers.get(fmCapturePhoneId), None, None, Some(emailAddress)),
+      true
     )
   }.getOrElse {
     logger.warn("RegistrationService - Filing Member Registration Information Missing")
     registerWithoutIdError
   }
 
-  private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails)(implicit
+  private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails, isFm: Boolean)(implicit
     hc:                                       HeaderCarrier,
     ec:                                       ExecutionContext
-  ): Future[HttpResponse] =
-    dataSubmissionConnectors
-      .sendWithoutIDInformation(RegisterWithoutIDRequest(businessName, address, contactDetails))(hc, ec)
+  ): Future[HttpResponse] = {
+    val registerWithoutIDRequest = RegisterWithoutIDRequest(businessName, address, contactDetails)
+    val response = dataSubmissionConnectors
+      .sendWithoutIDInformation(registerWithoutIDRequest)(hc, ec)
+    response.map { res =>
+      val resReceived = AuditResponseReceived(res.status, res.json)
+      if (isFm) {
+        auditService.auditFmRegisterWithoutId(registerWithoutIDRequest, resReceived)
+      } else {
+        auditService.auditUpeRegisterWithoutId(registerWithoutIDRequest, resReceived)
+      }
+    }
+    response
+  }
 
   private val registerWithoutIdError =
     Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "RegistrationService - Response not received in registration"))

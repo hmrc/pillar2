@@ -27,6 +27,7 @@ import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 import org.scalacheck.{Arbitrary, Gen}
+import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 
 import java.time.{Instant, LocalDate}
@@ -878,6 +879,15 @@ trait ModelGenerators {
                "NominateFilingMember"        -> false
              )
     } yield UserAnswers(id, data, Instant.now)
+  }
+
+  implicit val arbitraryAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
+    for {
+      status <- responseStatusGen
+    } yield AuditResponseReceived(
+      status = status,
+      responseData = Json.parse("""{"value": "test"}""")
+    )
   }
 
 }
