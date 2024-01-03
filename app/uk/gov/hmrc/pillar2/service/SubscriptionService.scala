@@ -578,7 +578,7 @@ class SubscriptionService @Inject() (
         ContactDetailsType(name = pContactName, telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = pContactEmail)
       val secondaryContact = if (sContactNominated) {
         for {
-          name         <- userAnswers.get(subSecondaryCapturePhoneId)
+          name         <- userAnswers.get(subSecondaryContactNameId)
           emailAddress <- userAnswers.get(subSecondaryEmailId)
         } yield ContactDetailsType(name = name, telephone = userAnswers.get(subSecondaryCapturePhoneId), emailAddress = emailAddress)
       } else {
