@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{JsValue, Json, OFormat, OWrites}
+import play.api.libs.json.{Format, JsValue, Json, OFormat, OWrites}
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
 case class UpeRegisterWithoutIdAuditEvent(
@@ -28,8 +28,7 @@ case class UpeRegisterWithoutIdAuditEvent(
 }
 
 object UpeRegisterWithoutIdAuditEvent {
-  implicit val format: OFormat[UpeRegisterWithoutIdAuditEvent] = Json.format[UpeRegisterWithoutIdAuditEvent]
-  implicit val writes: OWrites[UpeRegisterWithoutIdAuditEvent] = Json.writes[UpeRegisterWithoutIdAuditEvent]
+  implicit val formats: Format[UpeRegisterWithoutIdAuditEvent] = Json.format[UpeRegisterWithoutIdAuditEvent]
 }
 
 case class FmRegisterWithoutIdAuditEvent(
@@ -41,6 +40,5 @@ case class FmRegisterWithoutIdAuditEvent(
 }
 
 object FmRegisterWithoutIdAuditEvent {
-  implicit val format: OFormat[FmRegisterWithoutIdAuditEvent] = Json.format[FmRegisterWithoutIdAuditEvent]
-  implicit val writes: OWrites[FmRegisterWithoutIdAuditEvent] = Json.writes[FmRegisterWithoutIdAuditEvent]
+  implicit val formats: Format[FmRegisterWithoutIdAuditEvent] = Json.format[FmRegisterWithoutIdAuditEvent]
 }

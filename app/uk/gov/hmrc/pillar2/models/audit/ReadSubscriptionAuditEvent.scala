@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{JsValue, Json, OFormat, OWrites}
+import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 
 case class ReadSubscriptionSuccessAuditEvent(
@@ -28,8 +28,7 @@ case class ReadSubscriptionSuccessAuditEvent(
 }
 
 object ReadSubscriptionSuccessAuditEvent {
-  implicit val format: OFormat[ReadSubscriptionSuccessAuditEvent] = Json.format[ReadSubscriptionSuccessAuditEvent]
-  implicit val writes: OWrites[ReadSubscriptionSuccessAuditEvent] = Json.writes[ReadSubscriptionSuccessAuditEvent]
+  implicit val formats: Format[ReadSubscriptionSuccessAuditEvent] = Json.format[ReadSubscriptionSuccessAuditEvent]
 }
 
 case class ReadSubscriptionFailedAuditEvent(
@@ -41,6 +40,5 @@ case class ReadSubscriptionFailedAuditEvent(
 }
 
 object ReadSubscriptionFailedAuditEvent {
-  implicit val format: OFormat[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
-  implicit val writes: OWrites[ReadSubscriptionFailedAuditEvent] = Json.writes[ReadSubscriptionFailedAuditEvent]
+  implicit val formatd: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
 }

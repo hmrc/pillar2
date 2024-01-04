@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{JsValue, Json, OFormat, OWrites}
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
+import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 case class CreateSubscriptionAuditEvent(
@@ -29,6 +28,5 @@ case class CreateSubscriptionAuditEvent(
 }
 
 object CreateSubscriptionAuditEvent {
-  implicit val format: OFormat[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
-  implicit val writes: OWrites[CreateSubscriptionAuditEvent] = Json.writes[CreateSubscriptionAuditEvent]
+  implicit val formats: Format[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
 }

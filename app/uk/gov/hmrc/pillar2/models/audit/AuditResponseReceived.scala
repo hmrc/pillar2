@@ -16,11 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{JsValue, Json, OFormat, OWrites}
+import play.api.libs.json.{Format, JsValue, Json}
 
 final case class AuditResponseReceived(status: Int, responseData: JsValue)
 
 object AuditResponseReceived {
-  implicit val format: OFormat[AuditResponseReceived] = Json.format[AuditResponseReceived]
-  implicit val writes: OWrites[AuditResponseReceived] = Json.writes[AuditResponseReceived]
+  implicit val formats: Format[AuditResponseReceived] = Json.format[AuditResponseReceived]
 }
