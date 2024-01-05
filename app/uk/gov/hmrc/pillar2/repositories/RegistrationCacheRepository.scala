@@ -18,59 +18,40 @@ package uk.gov.hmrc.pillar2.repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.joda.time.{DateTime, DateTimeZone}
-import org.mongodb.scala.bson.{BsonBinary, BsonDocument}
+import org.joda.time.DateTime
+import org.joda.time.DateTimeZone
+import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model._
 import play.api.Logging
 import play.api.libs.json._
+import uk.gov.hmrc.crypto.Crypted
+import uk.gov.hmrc.crypto.Decrypter
+import uk.gov.hmrc.crypto.Encrypter
+import uk.gov.hmrc.crypto.SymmetricCryptoFactory
+import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.formats.MongoBinaryFormats.{byteArrayReads, byteArrayWrites}
+import uk.gov.hmrc.mongo.play.json.Codecs
+import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.RegistrationDataEntryFormats.expireAtKey
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.{DataEntry, JsonDataEntry, RegistrationDataEntry, RegistrationDataEntryFormats}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
-import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.crypto.Sensitive
-import uk.gov.hmrc.crypto.json.JsonEncryption
+import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
 
-object RegistrationDataEntry {
+case class RegistrationDataEntry(id: String, data: String, lastUpdated: DateTime, expireAt: DateTime)
 
-  sealed trait RegistrationDataEntry
+object RegistrationDataEntryFormats {
+  implicit val dateFormat: Format[DateTime]              = MongoJodaFormats.dateTimeFormat
+  implicit val format:     Format[RegistrationDataEntry] = Json.format[RegistrationDataEntry]
+}
 
-  case class DataEntry(id: String, data: BsonBinary, lastUpdated: DateTime, expireAt: DateTime) extends RegistrationDataEntry
-
-  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: DateTime, expireAt: DateTime) extends RegistrationDataEntry
-
-  object DataEntry {
-    def apply(id: String, data: Array[Byte], lastUpdated: DateTime = DateTime.now(DateTimeZone.UTC), expireAt: DateTime): DataEntry =
-      DataEntry(id, BsonBinary(data), lastUpdated, expireAt)
-
-    final val bsonBinaryReads:     Reads[BsonBinary]  = byteArrayReads.map(t => BsonBinary(t))
-    final val bsonBinaryWrites:    Writes[BsonBinary] = byteArrayWrites.contramap(t => t.getData)
-    implicit val bsonBinaryFormat: Format[BsonBinary] = Format(bsonBinaryReads, bsonBinaryWrites)
-
-    implicit val dateFormat: Format[DateTime]  = MongoJodaFormats.dateTimeFormat
-    implicit val format:     Format[DataEntry] = Json.format[DataEntry]
-  }
-
-  object JsonDataEntry {
-    implicit val dateFormat: Format[DateTime]      = MongoJodaFormats.dateTimeFormat
-    implicit val format:     Format[JsonDataEntry] = Json.format[JsonDataEntry]
-  }
-
-  object RegistrationDataEntryFormats {
-    implicit val dateFormat: Format[DateTime]              = MongoJodaFormats.dateTimeFormat
-    implicit val format:     Format[RegistrationDataEntry] = Json.format[RegistrationDataEntry]
-
-    val dataKey:        String = "data"
-    val idField:        String = "id"
-    val lastUpdatedKey: String = "lastUpdated"
-    val expireAtKey:    String = "expireAt"
-  }
+object RegistrationDataKeys {
+  val dataKey:        String = "data"
+  val idField:        String = "id"
+  val lastUpdatedKey: String = "lastUpdated"
+  val expireAtKey:    String = "expireAt"
 }
 
 @Singleton
@@ -83,13 +64,9 @@ class RegistrationCacheRepository @Inject() (
       collectionName = "user-answers-records",
       mongoComponent = mongoComponent,
       domainFormat = RegistrationDataEntryFormats.format,
-      extraCodecs = Seq(
-        Codecs.playFormatCodec(JsonDataEntry.format),
-        Codecs.playFormatCodec(DataEntry.format)
-      ),
       indexes = Seq(
         IndexModel(
-          Indexes.ascending(expireAtKey),
+          Indexes.ascending(RegistrationDataKeys.expireAtKey),
           IndexOptions()
             .name("dataExpiry")
             .expireAfter(2419200, TimeUnit.SECONDS)
@@ -100,8 +77,6 @@ class RegistrationCacheRepository @Inject() (
     )
     with Logging {
 
-  import RegistrationDataEntryFormats._
-
   private def getExpireAt: DateTime =
     DateTime
       .now(DateTimeZone.UTC)
@@ -109,35 +84,37 @@ class RegistrationCacheRepository @Inject() (
       .plusDays(config.defaultDataExpireInDays + 1)
       .toDateTimeAtStartOfDay()
 
+  private lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
+
+  import RegistrationDataKeys._
+  import RegistrationDataEntryFormats._
+
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
 
-    val record = JsonDataEntry(id, data, DateTime.now(DateTimeZone.UTC), getExpireAt)
-    implicit val x: Writes[Sensitive.SensitiveString] =
-      JsonEncryption.sensitiveEncrypterDecrypter(Sensitive.SensitiveString.apply)
+    val record = RegistrationDataEntry(id, data.toString(), DateTime.now(DateTimeZone.UTC), getExpireAt)
+    val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
 
     val setOperation = Updates.combine(
       Updates.set(idField, record.id),
-      Updates.set(dataKey, Codecs.toBson(Sensitive.SensitiveString(record.data.toString()))),
+      Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
       Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated)),
       Updates.set(expireAtKey, Codecs.toBson(record.expireAt))
     )
     collection
-      .withDocumentClass[JsonDataEntry]()
       .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))
       .toFuture()
       .map(_ => ())
-
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
-    collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
+    collection.find(Filters.equal(idField, id)).headOption().map {
       _.map { dataEntry =>
-        dataEntry.data
+        Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
       }
     }
 
   def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] =
-    collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
+    collection.find(Filters.equal(idField, id)).headOption().map {
       _.map { dataEntry =>
         dataEntry.lastUpdated
       }
@@ -151,9 +128,9 @@ class RegistrationCacheRepository @Inject() (
 
   def getAll(max: Int)(implicit ec: ExecutionContext): Future[Seq[JsValue]] =
     collection
-      .find[JsonDataEntry]()
+      .find()
       .map { dataEntry =>
-        dataEntry.data
+        Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
       }
       .toFuture()
 
@@ -162,5 +139,4 @@ class RegistrationCacheRepository @Inject() (
       logger.info(s"Removing all the rows from collection $collectionName")
       result.wasAcknowledged
     }
-
 }

@@ -19,13 +19,18 @@ package uk.gov.hmrc.pillar2
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.OptionValues
 import play.api.libs.json.Json
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.JsonDataEntry
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry
 
 trait FakeObjects {
   self: OptionValues =>
 
   val userAnswersCache =
-    JsonDataEntry("id", Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1"), DateTime.now(DateTimeZone.UTC), getExpireAt)
+    RegistrationDataEntry(
+      "id",
+      Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
+      DateTime.now(DateTimeZone.UTC),
+      getExpireAt
+    )
 
   private def getExpireAt: DateTime =
     DateTime

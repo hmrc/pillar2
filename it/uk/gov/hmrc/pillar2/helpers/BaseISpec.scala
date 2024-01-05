@@ -69,10 +69,13 @@ abstract class BaseISpec
   implicit lazy val materializer: Materializer     = Materializer(system)
   implicit def ec:                ExecutionContext = global
 
+  protected val registrationCacheCryptoKey = "mMG5FM4hvLmAyX7V6Z/R4h0lSeA/FsSYPJ67a1V4bKo="
+
   additionalAppConfig ++= Map(
     "mongodb.uri"      -> "mongodb://localhost:27017/pillar2-test",
     "microservice.services.auth.host" -> "localhost",
     "microservice.services.auth.port"   -> 1234,
+    "registrationCache.key" -> registrationCacheCryptoKey,
     "metrics.enabled"  -> true,
     "auditing.enabled" -> false
   )

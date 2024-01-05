@@ -31,6 +31,8 @@ class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesCo
   def baseUrl(serviceName: String): String =
     s"${servicesConfig.baseUrl(serviceName)}${servicesConfig.getString(s"microservice.services.$serviceName.context")}"
 
+  val registrationCacheCryptoKey: String = config.get[String]("registrationCache.key")
+
   val bearerToken:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.bearer-token")
   val environment:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.environment")
   lazy val locationCanonicalList: String           = config.get[String]("location.canonical.list.all")
