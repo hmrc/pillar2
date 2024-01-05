@@ -40,5 +40,5 @@ case class ReadSubscriptionFailedAuditEvent(
 }
 
 object ReadSubscriptionFailedAuditEvent {
-  implicit val formatd: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
+  implicit val formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
 }
