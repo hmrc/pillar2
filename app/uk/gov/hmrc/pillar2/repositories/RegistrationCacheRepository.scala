@@ -34,6 +34,8 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.{DataEntry, JsonDa
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.crypto.Sensitive
+import uk.gov.hmrc.crypto.json.JsonEncryption
 
 object RegistrationDataEntry {
 
@@ -110,9 +112,12 @@ class RegistrationCacheRepository @Inject() (
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
 
     val record = JsonDataEntry(id, data, DateTime.now(DateTimeZone.UTC), getExpireAt)
+    implicit val x: Writes[Sensitive.SensitiveString] =
+      JsonEncryption.sensitiveEncrypterDecrypter(Sensitive.SensitiveString.apply)
+
     val setOperation = Updates.combine(
       Updates.set(idField, record.id),
-      Updates.set(dataKey, Codecs.toBson(record.data)),
+      Updates.set(dataKey, Codecs.toBson(Sensitive.SensitiveString(record.data.toString()))),
       Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated)),
       Updates.set(expireAtKey, Codecs.toBson(record.expireAt))
     )
