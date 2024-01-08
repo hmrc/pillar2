@@ -24,12 +24,10 @@ import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
-import uk.gov.hmrc.http.HeaderCarrier
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try}
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 @Singleton
 class RegistrationController @Inject() (
@@ -37,11 +35,11 @@ class RegistrationController @Inject() (
   dataSubmissionService:     RegistrationService,
   authenticate:              AuthAction,
   cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext, hc: HeaderCarrier)
+)(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
   def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    logger.info("[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling Registration Submission without UpeId")
+    logger.info(s"Calling Registration Submission without UpeId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdUpeRegistration(userAnswer)
