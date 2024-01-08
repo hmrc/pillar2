@@ -25,6 +25,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInp
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 class SubscriptionConnector @Inject() (
   val config: AppConfig,
@@ -35,7 +36,9 @@ class SubscriptionConnector @Inject() (
     subscription: RequestDetail
   )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
-    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}")
+    logger.info(
+      s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
+    )
     http.POST[RequestDetail, HttpResponse](
       config.baseUrl(serviceName),
       subscription,
@@ -52,7 +55,7 @@ class SubscriptionConnector @Inject() (
         response
       }
       .recover { case ex: Throwable =>
-        logger.warn(s"Error while fetching subscription information: ${ex.getMessage}")
+        logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Error while fetching subscription information: ${ex.getMessage}")
         throw ex
       }
   }
