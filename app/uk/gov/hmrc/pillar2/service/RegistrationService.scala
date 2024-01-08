@@ -27,13 +27,14 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 class RegistrationService @Inject() (repository: RegistrationCacheRepository, dataSubmissionConnectors: RegistrationConnector)(implicit
   ec:                                            ExecutionContext
 ) extends Logging {
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    logger.info("RegistrationService - Processing Upe Registration Details")
+    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Processing Upe Registration Details")
     for {
       upeName      <- userAnswers.get(upeNameRegistrationId)
       emailAddress <- userAnswers.get(upeContactEmailId)
@@ -44,12 +45,12 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
       ContactDetails(userAnswers.get(upeCapturePhoneId), None, None, Some(emailAddress))
     )
   }.getOrElse {
-    logger.warn("RegistrationService - Upe Registration Information Missing")
+    logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Upe Registration Information Missing")
     registerWithoutIdError
   }
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    logger.info("RegistrationService - Processing Filing Member Registration Details")
+    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Processing Filing Member Registration Details")
     for {
       fmName       <- userAnswers.get(fmNameRegistrationId)
       emailAddress <- userAnswers.get(fmContactEmailId)
@@ -61,7 +62,7 @@ class RegistrationService @Inject() (repository: RegistrationCacheRepository, da
       ContactDetails(userAnswers.get(fmCapturePhoneId), None, None, Some(emailAddress))
     )
   }.getOrElse {
-    logger.warn("RegistrationService - Filing Member Registration Information Missing")
+    logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Filing Member Registration Information Missing")
     registerWithoutIdError
   }
 
