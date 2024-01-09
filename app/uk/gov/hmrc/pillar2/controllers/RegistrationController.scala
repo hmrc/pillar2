@@ -24,6 +24,9 @@ import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,7 +42,8 @@ class RegistrationController @Inject() (
     extends BasePillar2Controller(cc) {
 
   def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    logger.info(s"Calling Registration Submission without UpeId")
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling Registration Submission without UpeId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdUpeRegistration(userAnswer)
@@ -48,7 +52,8 @@ class RegistrationController @Inject() (
   }
 
   def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    logger.info("Calling Registration Submission without FmId")
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+    logger.info("[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling Registration Submission without FmId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdFmRegistration(userAnswer)
@@ -89,7 +94,7 @@ class RegistrationController @Inject() (
     error match {
       case Success(JsSuccess(value, _)) =>
         logger.error(
-          s"Error with Regisration: ${value.errorDetail.sourceFaultDetail.map(_.detail.mkString)}"
+          s"Error with Registration: ${value.errorDetail.sourceFaultDetail.map(_.detail.mkString)}"
         )
       case err =>
         logger.error(s"Error with Registration but return is not a valid json - $err")
