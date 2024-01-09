@@ -31,7 +31,6 @@ class TestController @Inject() (
 )(implicit executionContext: ExecutionContext)
     extends BasePillar2Controller(cc) {
 
-
   def getAllRecords(max: Int): Action[AnyContent] = Action.async { implicit request =>
     repository
       .getAll(max)
@@ -48,7 +47,6 @@ class TestController @Inject() (
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
-
 
   def clearCurrentData(id: String): Action[AnyContent] = Action.async { implicit request =>
     repository

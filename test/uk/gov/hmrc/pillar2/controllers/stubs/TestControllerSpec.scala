@@ -32,7 +32,7 @@ class TestControllerSpec extends BaseSpec {
   val mockRepository: RegistrationCacheRepository = mock[RegistrationCacheRepository]
   val controller = new TestController(mockRepository, stubControllerComponents())
 
-  "TestController" should {
+  "TestController" - {
 
     "get all records successfully" in {
       when(mockRepository.getAll(any[Int])(any[ExecutionContext])) thenReturn Future.successful(Seq(Json.obj("foo" -> "bar")))
