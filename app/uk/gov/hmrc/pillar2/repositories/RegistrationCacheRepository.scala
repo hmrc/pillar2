@@ -18,28 +18,22 @@ package uk.gov.hmrc.pillar2.repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.joda.time.DateTime
-import org.joda.time.DateTimeZone
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model._
 import play.api.Logging
 import play.api.libs.json._
-import uk.gov.hmrc.crypto.Crypted
-import uk.gov.hmrc.crypto.Decrypter
-import uk.gov.hmrc.crypto.Encrypter
-import uk.gov.hmrc.crypto.SymmetricCryptoFactory
+import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.Codecs
-import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.{expireAtKey, lastUpdatedKey}
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
-import scala.concurrent.ExecutionContext
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class RegistrationDataEntry(id: String, data: String, lastUpdated: DateTime)
 
@@ -76,7 +70,8 @@ class RegistrationCacheRepository @Inject() (
           Indexes.ascending("id"),
           IndexOptions().name("id").unique(true).background(false)
         )
-      )
+      ),
+      replaceIndexes = true
     )
     with Logging {
 
@@ -84,8 +79,8 @@ class RegistrationCacheRepository @Inject() (
 
   private lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
 
-  import RegistrationDataKeys._
   import RegistrationDataEntryFormats._
+  import RegistrationDataKeys._
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
 

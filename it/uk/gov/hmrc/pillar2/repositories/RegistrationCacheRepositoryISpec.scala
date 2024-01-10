@@ -79,8 +79,29 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
   "remove" should {
     "successfully remove the record" in {
       repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-       repository.remove(userAnswersCache.id)
+       repository.remove(userAnswersCache.id).futureValue
       repository.get(userAnswersCache.id).futureValue mustBe None
+
+    }
+  }
+
+  "getAll" should {
+    "successfully fetch all records" in {
+      repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
+      val result = repository.getAll(1).futureValue
+      val expectedResult = Seq(
+        Json.toJson("foo"-> "bar", "name"-> "steve","address"-> "address1")
+      )
+      result mustBe expectedResult
+    }
+  }
+
+  "clearAllData" should {
+    "successfully remove all records" in {
+      repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
+      repository.clearAllData().futureValue
+      repository.get(userAnswersCache.id).futureValue mustBe None
+
     }
   }
 
