@@ -26,6 +26,7 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.connectors.{RegistrationConnector, SubscriptionConnector}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.service.{RegistrationService, SubscriptionService}
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
@@ -44,6 +45,7 @@ trait AllMocks extends MockitoSugar {
   val mockSubscriptionConnector:      SubscriptionConnector       = mock[SubscriptionConnector]
   val mockSubscriptionService:        SubscriptionService         = mock[SubscriptionService]
   val mockCountryOptions:             CountryOptions              = mock[CountryOptions]
+  val mockAuditService:               AuditService                = mock[AuditService]
   val mockAuthAction:                 AuthAction                  = mock[AuthAction]
   val mockAuthorisedFunctions:        AuthorisedFunctions         = mock[AuthorisedFunctions]
   override protected def beforeEach(): Unit =
@@ -59,6 +61,7 @@ trait AllMocks extends MockitoSugar {
       mockSubscriptionConnector,
       mockSubscriptionService,
       mockCountryOptions,
+      mockAuditService,
       mockAuthAction,
       mockAuthorisedFunctions
     ).foreach(Mockito.reset(_))

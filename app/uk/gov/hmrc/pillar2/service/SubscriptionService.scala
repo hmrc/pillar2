@@ -22,6 +22,7 @@ import play.api.libs.json.Writes._
 import play.api.libs.json._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
+import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
@@ -30,6 +31,7 @@ import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
 import java.time.LocalDate
@@ -38,7 +40,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
-  countryOptions:         CountryOptions
+  countryOptions:         CountryOptions,
+  auditService:           AuditService
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -212,9 +215,15 @@ class SubscriptionService @Inject() (
   private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(implicit
     hc:                                                  HeaderCarrier,
     ec:                                                  ExecutionContext
-  ): Future[HttpResponse] =
-    subscriptionConnectors
+  ): Future[HttpResponse] = {
+    val response = subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
+    response.map { res =>
+      val resReceived = AuditResponseReceived(res.status, res.json)
+      auditService.auditCreateSubscription(subscriptionRequest, resReceived)
+    }
+    response
+  }
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
@@ -371,12 +380,14 @@ class SubscriptionService @Inject() (
     httpResponse: HttpResponse
   )(implicit
     ec:     ExecutionContext,
+    hc:     HeaderCarrier,
     reads:  Reads[SubscriptionResponse],
     writes: Writes[UserAnswers]
   ): Future[JsValue] = {
     logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
+        auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
         extractSubscriptionData(id, plrReference, subscriptionResponse.success)
           .flatMap {
             case jsValue: JsObject =>
@@ -420,7 +431,7 @@ class SubscriptionService @Inject() (
       .flatMap { httpResponse =>
         httpResponse.status match {
           case OK => processSuccessfulResponse(id, plrReference, httpResponse)
-          case _  => processErrorResponse(httpResponse)
+          case _  => processErrorResponse(plrReference, httpResponse)
         }
       }
       .recover { case e: Exception =>
@@ -428,13 +439,17 @@ class SubscriptionService @Inject() (
         Json.obj("error" -> e.getMessage)
       }
 
-  private def processErrorResponse(httpResponse: HttpResponse): Future[JsValue] = {
+  private def processErrorResponse(plrReference: String, httpResponse: HttpResponse)(implicit
+    hc:                                          HeaderCarrier,
+    ec:                                          ExecutionContext
+  ): Future[JsValue] = {
     val status = httpResponse.status
+    auditService.auditReadSubscriptionFailure(plrReference, AuditResponseReceived(status, httpResponse.json))
     val errorMessage = status match {
       case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
-        s"Error response from service with status: $status and body: ${httpResponse.body}"
+        s"Error response from service with status: $status and body: ${httpResponse.json}"
       case _ =>
-        s"Unexpected response status from service: $status with body: ${httpResponse.body}"
+        s"Unexpected response status from service: $status with body: ${httpResponse.json}"
     }
     logger.error(errorMessage)
     Future.successful(Json.obj("error" -> errorMessage))
@@ -611,6 +626,7 @@ class SubscriptionService @Inject() (
 
       subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
         if (response.status == 200) {
+          auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
           response.json.validate[AmendResponse] match {
             case JsSuccess(result, _) =>
               logger
@@ -621,6 +637,7 @@ class SubscriptionService @Inject() (
             case _ => throw new Exception("Could not parse response received from ETMP in success response")
           }
         } else {
+          auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
           response.json.validate[AmendSubscriptionFailureResponse] match {
             case JsSuccess(failure, _) =>
               logger.info(s"Call failed to ETMP with the code ${failure.failures(0).code} due to ${failure.failures(0).reason}")

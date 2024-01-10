@@ -177,4 +177,8 @@ trait Generators extends ModelGenerators {
       tld        <- Gen.oneOf(".com", ".org", ".net", ".uk", ".gov")
     } yield s"$localPart@$subdomain.$mainDomain$tld"
 
+  def responseStatusGen: Gen[Int] =
+    for {
+      status <- Gen.oneOf(200, 400, 201, 404, 409, 422, 500, 503)
+    } yield status
 }

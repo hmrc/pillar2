@@ -40,7 +40,8 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       new SubscriptionService(
         mockRgistrationCacheRepository,
         mockSubscriptionConnector,
-        mockCountryOptions
+        mockCountryOptions,
+        mockAuditService
       )
   }
 
