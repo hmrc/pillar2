@@ -45,10 +45,10 @@ class RegistrationCacheController @Inject() (
   def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - - controllers.RegistrationCacheController.get: Authorised Request " + id)
+    logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.get: Authorised Request " + id)
     repository.get(id).map { response =>
       logger.debug(
-        s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - - controllers.RegistrationCacheController.get: Response for request Id $id is $response"
+        s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.get: Response for request Id $id is $response"
       )
       response.map(Ok(_)).getOrElse(NotFound)
     }
@@ -67,9 +67,9 @@ class RegistrationCacheController @Inject() (
   def lastUpdated(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
 
-    logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] -controllers.RegistrationCacheController.lastUpdated: Authorised Request " + id)
+    logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.lastUpdated: Authorised Request " + id)
     repository.getLastUpdated(id).map { response =>
-      logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] -controllers.RegistrationCacheController.lastUpdated: Response " + response)
+      logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.lastUpdated: Response " + response)
       response.map { date =>
         Ok(Json.toJson(date)(jodaDateTimeNumberWrites))
       } getOrElse NotFound
