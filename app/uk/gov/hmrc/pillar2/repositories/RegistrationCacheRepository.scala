@@ -64,7 +64,7 @@ class RegistrationCacheRepository @Inject() (
           Indexes.ascending(lastUpdatedKey),
           IndexOptions()
             .name("lastUpdatedIndex")
-            .expireAfter(config.defaultDataExpireInDays, TimeUnit.DAYS)
+            .expireAfter(config.defaultDataExpireInSeconds, TimeUnit.SECONDS)
         ),
         IndexModel(
           Indexes.ascending("id"),
@@ -75,7 +75,7 @@ class RegistrationCacheRepository @Inject() (
     )
     with Logging {
 
-  private def updatedAt = DateTime.now(DateTimeZone.UTC)
+  private def updatedAt: DateTime = DateTime.now(DateTimeZone.UTC)
 
   private lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
 
