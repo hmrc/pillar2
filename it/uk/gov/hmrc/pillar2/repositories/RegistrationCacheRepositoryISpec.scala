@@ -16,62 +16,77 @@
 
 package uk.gov.hmrc.pillar2.repositories
 
-import uk.gov.hmrc.pillar2.helpers.BaseISpec
-import uk.gov.hmrc.pillar2.service.test.TestService
+import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonDocument
-import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.crypto.Crypted
-import uk.gov.hmrc.crypto.Encrypter
-import uk.gov.hmrc.crypto.Decrypter
-import uk.gov.hmrc.crypto.SymmetricCryptoFactory
+import org.scalatest.OptionValues
+import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
+import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.wordspec.AnyWordSpec
+import play.api.inject.bind
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
+import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory}
+import uk.gov.hmrc.mongo.MongoComponent
+import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
-class RegistrationCacheRepositoryISpec extends BaseISpec {
-  val testService: TestService = app.injector.instanceOf[TestService]
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    await(testService.clearAllData)
-  }
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
+class RegistrationCacheRepositoryISpec extends AnyWordSpec with
+  DefaultPlayMongoRepositorySupport[RegistrationDataEntry] with ScalaFutures with IntegrationPatience with OptionValues {
+
+
+  private val app = GuiceApplicationBuilder().overrides(
+      bind[MongoComponent].toInstance(mongoComponent),
+    )
+    .build()
+
+  override protected val repository: RegistrationCacheRepository =
+    app.injector.instanceOf[RegistrationCacheRepository]
+
+  private val cryptoKey = app.configuration.get[String]("registrationCache.key")
+
+  private val userAnswersCache =
+    RegistrationDataEntry(
+      "id",
+      Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
+      DateTime.now(DateTimeZone.UTC),
+      DateTime
+        .now(DateTimeZone.UTC)
+        .toLocalDate
+        .plusDays(1)
+        .toDateTimeAtStartOfDay()
+    )
 
   "save" should {
     "successfully save data" in {
-      registrationCacheRepository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-      val result  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
-      result.toString shouldBe userAnswersCache.data
+      repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
+      val result = repository.get(userAnswersCache.id).futureValue.value
+      result.toString mustBe userAnswersCache.data
     }
 
     "encrypt the json payload in the database" in {
-      val crypto: Encrypter with Decrypter =  SymmetricCryptoFactory.aesGcmCrypto(registrationCacheCryptoKey)
-      
-      def assertEncrypted(encryptedValue: String, expectedValue: String): Unit = {
-        crypto.decrypt(Crypted(encryptedValue)).value shouldBe expectedValue
-      }
+      val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(cryptoKey)
 
-      val mongoComponent = MongoComponent(mongoUri = "mongodb://localhost:27017/pillar2-test")
-
-      (for {
-        _ <- registrationCacheRepository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data))
-        raw <- mongoComponent.database.getCollection[BsonDocument]("user-answers-records").find().headOption().map(_.value)
-        _ = assertEncrypted(raw.get("data").asString.getValue, userAnswersCache.data.toString())
-      } yield ()).futureValue
+      repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
+      val raw = mongoComponent.database.getCollection[BsonDocument]("user-answers-records").find().headOption().map(_.value).futureValue
+      crypto.decrypt(Crypted(raw.get("data").asString.getValue)).value mustBe userAnswersCache.data
     }
   }
 
   "get" should {
     "successfully get the record" in {
-      registrationCacheRepository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-      val result  = registrationCacheRepository.get(userAnswersCache.id).futureValue.headOption.value
-      result.toString shouldBe userAnswersCache.data
+      repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
+      val result = repository.get(userAnswersCache.id).futureValue.value
+      result.toString mustBe userAnswersCache.data
     }
   }
 
   "remove" should {
     "successfully remove the record" in {
-      registrationCacheRepository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-      val result  =registrationCacheRepository.remove(userAnswersCache.id).futureValue
-      result shouldBe true
+      repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
+       repository.remove(userAnswersCache.id)
+      repository.get(userAnswersCache.id).futureValue mustBe None
     }
   }
+
 }

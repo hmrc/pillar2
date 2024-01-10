@@ -34,6 +34,7 @@ import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.expireAtKey
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
@@ -66,14 +67,17 @@ class RegistrationCacheRepository @Inject() (
       domainFormat = RegistrationDataEntryFormats.format,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending(RegistrationDataKeys.expireAtKey),
+          Indexes.ascending(expireAtKey),
           IndexOptions()
             .name("dataExpiry")
-            .expireAfter(2419200, TimeUnit.SECONDS)
+            .expireAfter(config.defaultDataExpireInDays, TimeUnit.DAYS)
             .background(true)
+        ),
+        IndexModel(
+          Indexes.ascending("id"),
+          IndexOptions().name("id").unique(true).background(false)
         )
-      ),
-      replaceIndexes = true
+      )
     )
     with Logging {
 

@@ -16,19 +16,19 @@ object AppDependencies {
   )
 
   val test = Seq(
-    "org.scalatest"          %% "scalatest"              % "3.0.9"   % "test, it",
-    "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % bootstrapVersion            % "test, it",
-    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % hmrcMongoVersion            % Test,
-    "org.mockito"            % "mockito-core"            % "3.7.7"   % "test, it",
-    "com.typesafe.play"      %% "play-test"              % current   % "test, it",
-    "org.scalatestplus.play" %% "scalatestplus-play"     % "5.1.0"   % "test, it",
-    "com.vladsch.flexmark"   % "flexmark-all"            % "0.35.10" % "test, it",
-    "org.scalatestplus"      %% "mockito-3-4"            % "3.2.7.0" % "test",
-    "org.scalatestplus"       %% "scalatestplus-scalacheck"   % "3.1.0.0-RC2" % Test,
-    "wolfendale"              %% "scalacheck-gen-regexp"      % "0.1.2"       % Test,
-    "com.github.tomakehurst" % "wiremock-standalone"     % "2.27.2"  % "it",
-    "com.softwaremill.diffx" %% "diffx-core"             % "0.4.1"   % "test, it",
-    "com.softwaremill.diffx" %% "diffx-scalatest"        % "0.4.1"   % "test, it"
+    "org.scalatest"          %% "scalatest"              % "3.0.9" ,
+    "uk.gov.hmrc"             %% "bootstrap-test-play-28"     % bootstrapVersion,
+    "uk.gov.hmrc.mongo"       %% "hmrc-mongo-test-play-28"    % hmrcMongoVersion,
+    "org.mockito"            % "mockito-core"            % "3.7.7",
+    "com.typesafe.play"      %% "play-test"              % current,
+    "org.scalatestplus.play" %% "scalatestplus-play"     % "5.1.0",
+    "com.vladsch.flexmark"   % "flexmark-all"            % "0.35.10",
+    "org.scalatestplus"      %% "mockito-3-4"            % "3.2.7.0",
+    "org.scalatestplus"       %% "scalatestplus-scalacheck"   % "3.1.0.0-RC2",
+    "wolfendale"              %% "scalacheck-gen-regexp"      % "0.1.2",
+    "com.github.tomakehurst" % "wiremock-standalone"     % "2.27.2",
+    "com.softwaremill.diffx" %% "diffx-core"             % "0.4.1" ,
+    "com.softwaremill.diffx" %% "diffx-scalatest"        % "0.4.1"
 
-  )
+  ).map(_ % "test, it")
 }
