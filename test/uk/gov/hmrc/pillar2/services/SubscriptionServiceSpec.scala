@@ -18,21 +18,19 @@ package uk.gov.hmrc.pillar2.services
 
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{times, verify, when}
+import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.{JsObject, JsResultException, JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
-import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {

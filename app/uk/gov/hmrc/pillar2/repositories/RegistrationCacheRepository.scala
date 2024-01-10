@@ -34,14 +34,14 @@ import uk.gov.hmrc.mongo.play.json.Codecs
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.expireAtKey
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.{expireAtKey, lastUpdatedKey}
 
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-case class RegistrationDataEntry(id: String, data: String, lastUpdated: DateTime, expireAt: DateTime)
+case class RegistrationDataEntry(id: String, data: String, lastUpdated: DateTime)
 
 object RegistrationDataEntryFormats {
   implicit val dateFormat: Format[DateTime]              = MongoJodaFormats.dateTimeFormat
@@ -67,11 +67,10 @@ class RegistrationCacheRepository @Inject() (
       domainFormat = RegistrationDataEntryFormats.format,
       indexes = Seq(
         IndexModel(
-          Indexes.ascending(expireAtKey),
+          Indexes.ascending(lastUpdatedKey),
           IndexOptions()
-            .name("dataExpiry")
+            .name("lastUpdatedIndex")
             .expireAfter(config.defaultDataExpireInDays, TimeUnit.DAYS)
-            .background(true)
         ),
         IndexModel(
           Indexes.ascending("id"),
@@ -81,12 +80,7 @@ class RegistrationCacheRepository @Inject() (
     )
     with Logging {
 
-  private def getExpireAt: DateTime =
-    DateTime
-      .now(DateTimeZone.UTC)
-      .toLocalDate
-      .plusDays(config.defaultDataExpireInDays + 1)
-      .toDateTimeAtStartOfDay()
+  private def updatedAt = DateTime.now(DateTimeZone.UTC)
 
   private lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
 
@@ -95,14 +89,13 @@ class RegistrationCacheRepository @Inject() (
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
 
-    val record = RegistrationDataEntry(id, data.toString(), DateTime.now(DateTimeZone.UTC), getExpireAt)
+    val record = RegistrationDataEntry(id, data.toString(), updatedAt)
     val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
 
     val setOperation = Updates.combine(
       Updates.set(idField, record.id),
       Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
-      Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated)),
-      Updates.set(expireAtKey, Codecs.toBson(record.expireAt))
+      Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated))
     )
     collection
       .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))

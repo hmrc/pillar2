@@ -49,12 +49,7 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
     RegistrationDataEntry(
       "id",
       Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
-      DateTime.now(DateTimeZone.UTC),
-      DateTime
-        .now(DateTimeZone.UTC)
-        .toLocalDate
-        .plusDays(1)
-        .toDateTimeAtStartOfDay()
+      DateTime.now(DateTimeZone.UTC)
     )
 
   "save" should {
