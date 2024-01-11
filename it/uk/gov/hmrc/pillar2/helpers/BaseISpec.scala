@@ -29,7 +29,8 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc._
 import play.api.test._
 import play.api.{Application, Mode}
-import uk.gov.hmrc.pillar2.{FakeObjects, ResultAssertions}
+import uk.gov.hmrc.pillar2.ResultAssertions
+
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
@@ -62,17 +63,19 @@ abstract class BaseISpec
     with HttpVerbs
     with ResultExtractors
     with ResultAssertions
-    with AdditionalAppConfig
-    with FakeObjects {
+    with AdditionalAppConfig {
 
   implicit lazy val system:       ActorSystem      = ActorSystem()
   implicit lazy val materializer: Materializer     = Materializer(system)
   implicit def ec:                ExecutionContext = global
 
+  protected val registrationCacheCryptoKey = "mMG5FM4hvLmAyX7V6Z/R4h0lSeA/FsSYPJ67a1V4bKo="
+
   additionalAppConfig ++= Map(
     "mongodb.uri"      -> "mongodb://localhost:27017/pillar2-test",
     "microservice.services.auth.host" -> "localhost",
     "microservice.services.auth.port"   -> 1234,
+    "registrationCache.key" -> registrationCacheCryptoKey,
     "metrics.enabled"  -> true,
     "auditing.enabled" -> false
   )
