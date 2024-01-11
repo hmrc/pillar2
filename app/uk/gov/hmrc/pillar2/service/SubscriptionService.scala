@@ -33,6 +33,7 @@ import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPe
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -67,7 +68,9 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId")
+                logger.info(
+                  s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId"
+                )
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -91,7 +94,9 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId")
+                logger.info(
+                  s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId"
+                )
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -115,7 +120,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -139,7 +144,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with fmRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with fmRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -153,7 +158,7 @@ class SubscriptionService @Inject() (
               }
           }
         }.getOrElse {
-          logger.warn("Subscription Information Missing")
+          logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Subscription Information Missing")
           subscriptionError
         }
 
@@ -171,7 +176,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -193,7 +198,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest without upeRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest without upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -206,7 +211,7 @@ class SubscriptionService @Inject() (
               }
           }
         }.getOrElse {
-          logger.warn("Subscription Information Missing")
+          logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Subscription Information Missing")
           subscriptionError
         }
     }
@@ -289,7 +294,9 @@ class SubscriptionService @Inject() (
                 logger.info("UK Limited Company selected as Entity")
                 val incorporatedEntityRegistrationData =
                   fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
-                    throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
+                    throw new Exception(
+                      "Malformed IncorporatedEntityRegistrationData in Filing Member"
+                    )
                   )
                 val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
                 val name = incorporatedEntityRegistrationData.companyProfile.companyName
@@ -384,7 +391,9 @@ class SubscriptionService @Inject() (
     reads:  Reads[SubscriptionResponse],
     writes: Writes[UserAnswers]
   ): Future[JsValue] = {
-    logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
+    logger.info(
+      s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}"
+    )
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
         auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
@@ -435,7 +444,7 @@ class SubscriptionService @Inject() (
         }
       }
       .recover { case e: Exception =>
-        logger.error("An error occurred while retrieving subscription information", e)
+        logger.error(s"An error occurred while retrieving subscription information", e)
         Json.obj("error" -> e.getMessage)
       }
 
@@ -622,7 +631,9 @@ class SubscriptionService @Inject() (
       Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))
     } else {
       val amendSub = createAmendSubscriptionParameters(userAnswers)
-      logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
+      logger.info(
+        s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}"
+      )
 
       subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
         if (response.status == 200) {
