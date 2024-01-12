@@ -21,7 +21,7 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
+import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
@@ -84,13 +84,47 @@ class RegistrationService @Inject() (
     response.map { res =>
       val resReceived = AuditResponseReceived(res.status, res.json)
       if (isFm) {
-        auditService.auditFmRegisterWithoutId(registerWithoutIDRequest, resReceived)
+        val auditData = converNfmAuditDetails(registerWithoutIDRequest)
+        auditService.auditFmRegisterWithoutId(auditData)
       } else {
-        auditService.auditUpeRegisterWithoutId(registerWithoutIDRequest, resReceived)
+        val auditData = converUpeAuditDetails(registerWithoutIDRequest)
+        auditService.auditUpeRegisterWithoutId(auditData)
       }
     }
     response
   }
+
+  private def converUpeAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): UpeRegistration =
+    UpeRegistration(
+      registeredinUK = true,
+      entityType = "not Listed",
+      ultimateParentEntityName = registerWithoutIDRequest.organisation.organisationName,
+      addressLine1 = registerWithoutIDRequest.address.addressLine1,
+      addressLine2 = registerWithoutIDRequest.address.addressLine2.getOrElse(""),
+      townOrCity = registerWithoutIDRequest.address.addressLine3,
+      region = registerWithoutIDRequest.address.addressLine4.getOrElse(""),
+      postCode = registerWithoutIDRequest.address.postalCode.getOrElse(""),
+      country = registerWithoutIDRequest.address.countryCode,
+      name = "",
+      email = registerWithoutIDRequest.contactDetails.emailAddress.getOrElse(""),
+      telephoneNo = registerWithoutIDRequest.contactDetails.phoneNumber.getOrElse("")
+    )
+
+  private def converNfmAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): NominatedFilingMember =
+    NominatedFilingMember(
+      registerNomFilingMember = true,
+      registeredinUK = true,
+      nominatedFilingMemberName = registerWithoutIDRequest.organisation.organisationName,
+      addressLine1 = registerWithoutIDRequest.address.addressLine1,
+      addressLine2 = registerWithoutIDRequest.address.addressLine2.getOrElse(""),
+      townOrCity = registerWithoutIDRequest.address.addressLine3,
+      region = registerWithoutIDRequest.address.addressLine4.getOrElse(""),
+      postCode = registerWithoutIDRequest.address.postalCode.getOrElse(""),
+      country = registerWithoutIDRequest.address.countryCode,
+      name = "",
+      email = registerWithoutIDRequest.contactDetails.emailAddress.getOrElse(""),
+      telephoneNo = registerWithoutIDRequest.contactDetails.phoneNumber.getOrElse("")
+    )
 
   private val registerWithoutIdError =
     Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "RegistrationService - Response not received in registration"))

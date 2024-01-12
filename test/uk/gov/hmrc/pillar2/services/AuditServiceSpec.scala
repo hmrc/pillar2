@@ -41,8 +41,8 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       when(mockAuditConnector.sendExtendedEvent(any())(any(), any()))
         .thenReturn(Future.successful(AuditResult.Success))
 
-      forAll(arbitraryRegistration.arbitrary, arbitraryAuditResponseReceived.arbitrary) { (registerWithoutIDRequest, auditResponseReceived) =>
-        val result = await(service.auditUpeRegisterWithoutId(registerWithoutIDRequest, auditResponseReceived))
+      forAll(arbitraryUpeRegistration.arbitrary) { upeReg =>
+        val result = await(service.auditUpeRegisterWithoutId(upeReg))
         result mustBe AuditResult.Success
 
       }
@@ -55,8 +55,8 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       when(mockAuditConnector.sendExtendedEvent(any())(any(), any()))
         .thenReturn(Future.successful(AuditResult.Success))
 
-      forAll(arbitraryRegistration.arbitrary, arbitraryAuditResponseReceived.arbitrary) { (registerWithoutIDRequest, auditResponseReceived) =>
-        val result = await(service.auditFmRegisterWithoutId(registerWithoutIDRequest, auditResponseReceived))
+      forAll(arbitraryNominatedFilingMember.arbitrary) { nominatedFilingMember =>
+        val result = await(service.auditFmRegisterWithoutId(nominatedFilingMember))
         result mustBe AuditResult.Success
 
       }

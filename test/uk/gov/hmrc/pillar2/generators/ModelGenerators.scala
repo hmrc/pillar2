@@ -27,7 +27,7 @@ import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 import org.scalacheck.{Arbitrary, Gen}
-import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
+import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 
 import java.time.{Instant, LocalDate}
@@ -890,4 +890,68 @@ trait ModelGenerators {
     )
   }
 
+  implicit val arbitraryUpeRegistration: Arbitrary[UpeRegistration] = Arbitrary {
+
+    for {
+      registeredinUK           <- arbitrary[Boolean]
+      entityType               <- arbitrary[String]
+      ultimateParentEntityName <- arbitrary[String]
+      addressLine1             <- arbitrary[String]
+      addressLine2             <- arbitrary[String]
+      townOrCity               <- arbitrary[String]
+      region                   <- arbitrary[String]
+      postCode                 <- arbitrary[String]
+      country                  <- arbitrary[String]
+      name                     <- arbitrary[String]
+      email                    <- arbitrary[String]
+      telephoneNo              <- arbitrary[String]
+    } yield UpeRegistration(
+      registeredinUK,
+      entityType,
+      ultimateParentEntityName,
+      addressLine1,
+      addressLine2,
+      townOrCity,
+      region,
+      postCode,
+      country,
+      name,
+      email,
+      telephoneNo
+    )
+
+  }
+
+  implicit val arbitraryNominatedFilingMember: Arbitrary[NominatedFilingMember] = Arbitrary {
+
+    for {
+      registeredinUK            <- arbitrary[Boolean]
+      registerNomFilingMember   <- arbitrary[Boolean]
+      nominatedFilingMemberName <- arbitrary[String]
+      ultimateParentEntityName  <- arbitrary[String]
+      addressLine1              <- arbitrary[String]
+      addressLine2              <- arbitrary[String]
+      townOrCity                <- arbitrary[String]
+      region                    <- arbitrary[String]
+      postCode                  <- arbitrary[String]
+      country                   <- arbitrary[String]
+      name                      <- arbitrary[String]
+      email                     <- arbitrary[String]
+      telephoneNo               <- arbitrary[String]
+    } yield NominatedFilingMember(
+      registerNomFilingMember,
+      registeredinUK,
+      nominatedFilingMemberName,
+      addressLine1,
+      addressLine2,
+      townOrCity,
+      region,
+      postCode,
+      country,
+      name,
+      email,
+      telephoneNo
+    )
+
+  }
 }
