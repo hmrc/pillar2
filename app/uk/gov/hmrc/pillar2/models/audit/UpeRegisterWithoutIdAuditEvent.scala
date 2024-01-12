@@ -20,8 +20,7 @@ import play.api.libs.json.{Format, JsValue, Json, OFormat, OWrites}
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
 case class UpeRegisterWithoutIdAuditEvent(
-  requestData:  RegisterWithoutIDRequest,
-  responseData: AuditResponseReceived
+  upeRegistration: UpeRegistration
 ) extends AuditEvent {
   override val auditType:  String  = "CreateP2RegistrationUPENoID"
   override val detailJson: JsValue = Json.toJson(this)
@@ -32,8 +31,7 @@ object UpeRegisterWithoutIdAuditEvent {
 }
 
 case class FmRegisterWithoutIdAuditEvent(
-  requestData:  RegisterWithoutIDRequest,
-  responseData: AuditResponseReceived
+  nominatedFilingMember: NominatedFilingMember
 ) extends AuditEvent {
   override val auditType:  String  = "CreateP2RegistrationNFMNoID"
   override val detailJson: JsValue = Json.toJson(this)
@@ -41,4 +39,42 @@ case class FmRegisterWithoutIdAuditEvent(
 
 object FmRegisterWithoutIdAuditEvent {
   implicit val formats: Format[FmRegisterWithoutIdAuditEvent] = Json.format[FmRegisterWithoutIdAuditEvent]
+}
+
+case class UpeRegistration(
+  registeredinUK:           Boolean,
+  entityType:               String,
+  ultimateParentEntityName: String,
+  addressLine1:             String,
+  addressLine2:             String,
+  townOrCity:               String,
+  region:                   String,
+  postCode:                 String,
+  country:                  String,
+  name:                     String,
+  email:                    String,
+  telephoneNo:              String
+)
+
+object UpeRegistration {
+  implicit val formats: Format[UpeRegistration] = Json.format[UpeRegistration]
+}
+
+case class NominatedFilingMember(
+  registerNomFilingMember:   Boolean,
+  registeredinUK:            Boolean,
+  nominatedFilingMemberName: String,
+  addressLine1:              String,
+  addressLine2:              String,
+  townOrCity:                String,
+  region:                    String,
+  postCode:                  String,
+  country:                   String,
+  name:                      String,
+  email:                     String,
+  telephoneNo:               String
+)
+
+object NominatedFilingMember {
+  implicit val formats: Format[NominatedFilingMember] = Json.format[NominatedFilingMember]
 }

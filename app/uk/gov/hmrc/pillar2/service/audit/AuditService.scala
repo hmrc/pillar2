@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.service.audit
 
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionFailedAuditEvent, AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, UpeRegisterWithoutIdAuditEvent}
+import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionFailedAuditEvent, AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, NominatedFilingMember, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, UpeRegisterWithoutIdAuditEvent, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
@@ -33,24 +33,20 @@ class AuditService @Inject() (
     extends Logging {
 
   def auditUpeRegisterWithoutId(
-    registerWithoutIDRequest: RegisterWithoutIDRequest,
-    responseReceived:         AuditResponseReceived
-  )(implicit hc:              HeaderCarrier): Future[AuditResult] =
+    upeRegistration: UpeRegistration
+  )(implicit hc:     HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       UpeRegisterWithoutIdAuditEvent(
-        requestData = registerWithoutIDRequest,
-        responseData = responseReceived
+        upeRegistration = upeRegistration
       ).extendedDataEvent
     )
 
   def auditFmRegisterWithoutId(
-    registerWithoutIDRequest: RegisterWithoutIDRequest,
-    responseReceived:         AuditResponseReceived
-  )(implicit hc:              HeaderCarrier): Future[AuditResult] =
+    nominatedFilingMember: NominatedFilingMember
+  )(implicit hc:           HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       FmRegisterWithoutIdAuditEvent(
-        requestData = registerWithoutIDRequest,
-        responseData = responseReceived
+        nominatedFilingMember = nominatedFilingMember
       ).extendedDataEvent
     )
 
