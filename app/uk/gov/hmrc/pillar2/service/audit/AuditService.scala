@@ -16,16 +16,19 @@
 
 package uk.gov.hmrc.pillar2.service.audit
 
+import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionFailedAuditEvent, AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, NominatedFilingMember, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, UpeRegisterWithoutIdAuditEvent, UpeRegistration}
+import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, NominatedFilingMember, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, SuccessResponse, UpeRegisterWithoutIdAuditEvent, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, ContactDetailsType, FilingMemberDetails, SubscriptionResponse, UpeCorrespAddressDetails, UpeDetails}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
+import play.api.http.Status._
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
 
 class AuditService @Inject() (
   auditConnector: AuditConnector
@@ -53,13 +56,28 @@ class AuditService @Inject() (
   def auditCreateSubscription(
     subscriptionRequest: RequestDetail,
     responseReceived:    AuditResponseReceived
-  )(implicit hc:         HeaderCarrier): Future[AuditResult] =
+  )(implicit hc:         HeaderCarrier): Future[AuditResult] = {
+    //TODO - This needs to be fixed as we are loosing failure of response
+    val resData = responseReceived.status match {
+      case CREATED =>
+        val response = responseReceived.responseData.as[SuccessResponse]
+        (response.success.plrReference, response.success.processingDate.toString)
+      case _ => ("", "")
+    }
+
     auditConnector.sendExtendedEvent(
       CreateSubscriptionAuditEvent(
-        requestData = subscriptionRequest,
-        responseData = responseReceived
+        subscriptionRequest.upeDetails,
+        subscriptionRequest.accountingPeriod,
+        subscriptionRequest.upeCorrespAddressDetails,
+        subscriptionRequest.primaryContactDetails,
+        subscriptionRequest.secondaryContactDetails,
+        subscriptionRequest.filingMemberDetails,
+        plrReference = resData._1,
+        processingDate = resData._2
       ).extendedDataEvent
     )
+  }
 
   def auditReadSubscriptionSuccess(
     plrReference: String,
@@ -68,30 +86,38 @@ class AuditService @Inject() (
     auditConnector.sendExtendedEvent(
       ReadSubscriptionSuccessAuditEvent(
         plrReference = plrReference,
-        responseData = responseData
-      ).extendedDataEvent
-    )
-
-  def auditReadSubscriptionFailure(
-    plrReference: String,
-    responseData: AuditResponseReceived
-  )(implicit hc:  HeaderCarrier): Future[AuditResult] =
-    auditConnector.sendExtendedEvent(
-      ReadSubscriptionFailedAuditEvent(
-        plrReference = plrReference,
-        responseData = responseData
+        formBundleNumber = responseData.success.formBundleNumber,
+        upeDetails = responseData.success.upeDetails,
+        upeCorrespAddressDetails = responseData.success.upeCorrespAddressDetails,
+        primaryContactDetails = responseData.success.primaryContactDetails,
+        secondaryContactDetails = responseData.success.secondaryContactDetails,
+        filingMemberDetails = responseData.success.filingMemberDetails,
+        accountingPeriod = responseData.success.accountingPeriod,
+        accountStatus = responseData.success.accountStatus
       ).extendedDataEvent
     )
 
   def auditAmendSubscription(
     requestData:  AmendSubscriptionSuccess,
     responseData: AuditResponseReceived
-  )(implicit hc:  HeaderCarrier): Future[AuditResult] =
+  )(implicit hc:  HeaderCarrier): Future[AuditResult] = {
+    //TODO - This needs to be fixed as we are loosing failure of response
+    val resData = responseData.status match {
+      case OK =>
+        val response = responseData.responseData.as[AmendResponse]
+        response.success.processingDate
+      case _ => ""
+    }
     auditConnector.sendExtendedEvent(
       AmendSubscriptionSuccessAuditEvent(
-        requestData = requestData,
-        responseData = responseData
+        requestData.upeDetails,
+        requestData.accountingPeriod,
+        requestData.upeCorrespAddressDetails,
+        requestData.primaryContactDetails,
+        requestData.secondaryContactDetails,
+        requestData.filingMemberDetails,
+        processingDate = resData
       ).extendedDataEvent
     )
-
+  }
 }

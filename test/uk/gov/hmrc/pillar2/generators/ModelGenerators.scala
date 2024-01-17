@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.generators
 
+import org.joda.time.LocalDateTime
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, JsValue, Json}
@@ -27,7 +28,7 @@ import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 import org.scalacheck.{Arbitrary, Gen}
-import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, UpeRegistration}
+import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, SubscriptionSuccessResponse, SuccessResponse, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 
 import java.time.{Instant, LocalDate}
@@ -881,13 +882,53 @@ trait ModelGenerators {
     } yield UserAnswers(id, data, Instant.now)
   }
 
-  implicit val arbitraryAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
+  implicit val arbitraryAmendAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
     for {
-      status <- responseStatusGen
+      status          <- responseStatusGen
+      successResponse <- arbitrary[AmendResponse]
     } yield AuditResponseReceived(
       status = status,
-      responseData = Json.parse("""{"value": "test"}""")
+      responseData = Json.toJson(successResponse)
     )
+  }
+
+  implicit val arbitraryAmendResponse: Arbitrary[AmendResponse] = Arbitrary {
+    for {
+      success <- arbitrary[AmendSubscriptionSuccessResponse]
+    } yield AmendResponse(success)
+  }
+
+  implicit val arbitraryAmendSubscriptionSuccessResponse: Arbitrary[AmendSubscriptionSuccessResponse] = Arbitrary {
+    for {
+      formBundleNumber <- arbitrary[String]
+      processingDate   <- arbitrary[LocalDate]
+
+    } yield AmendSubscriptionSuccessResponse(processingDate.toString, formBundleNumber)
+  }
+
+  implicit val arbitraryCreateAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
+    for {
+      status          <- responseStatusGen
+      successResponse <- arbitrary[SuccessResponse]
+    } yield AuditResponseReceived(
+      status = status,
+      responseData = Json.toJson(successResponse)
+    )
+  }
+
+  implicit val arbitrarySuccessResponse: Arbitrary[SuccessResponse] = Arbitrary {
+    for {
+      success <- arbitrary[SubscriptionSuccessResponse]
+    } yield SuccessResponse(success)
+  }
+
+  implicit val arbitrarySubscriptionSuccessResponse: Arbitrary[SubscriptionSuccessResponse] = Arbitrary {
+    for {
+      plrRef           <- stringsWithMaxLength(20)
+      formBundleNumber <- arbitrary[String]
+      processingDate   <- arbitrary[LocalDate]
+
+    } yield SubscriptionSuccessResponse(plrRef, formBundleNumber, processingDate.atStartOfDay())
   }
 
   implicit val arbitraryUpeRegistration: Arbitrary[UpeRegistration] = Arbitrary {

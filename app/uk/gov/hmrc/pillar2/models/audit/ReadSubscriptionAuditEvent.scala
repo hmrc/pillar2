@@ -17,13 +17,21 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, SubscriptionResponse, UpeCorrespAddressDetails, UpeDetails}
 
 case class ReadSubscriptionSuccessAuditEvent(
-  plrReference: String,
-  responseData: SubscriptionResponse
+  plrReference:             String,
+  formBundleNumber:         String,
+  upeDetails:               UpeDetails,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberDetails],
+  accountingPeriod:         AccountingPeriod,
+  accountStatus:            Option[AccountStatus]
 ) extends AuditEvent {
-  override val auditType:  String  = "ReadP2Subscription"
+  override val auditType:  String  = "readPillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)
 }
 
@@ -35,10 +43,11 @@ case class ReadSubscriptionFailedAuditEvent(
   plrReference: String,
   responseData: AuditResponseReceived
 ) extends AuditEvent {
-  override val auditType:  String  = "ReadP2Subscription"
+  override val auditType:  String  = "readPillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)
 }
 
+/**/
 object ReadSubscriptionFailedAuditEvent {
   implicit val formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
 }

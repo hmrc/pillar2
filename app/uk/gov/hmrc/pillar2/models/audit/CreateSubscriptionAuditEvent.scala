@@ -16,17 +16,38 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import play.api.libs.json.{Format, JsValue, Json, OFormat}
+import uk.gov.hmrc.pillar2.models.AccountingPeriod
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
+
+import java.time.{LocalDate, LocalDateTime}
 
 case class CreateSubscriptionAuditEvent(
-  requestData:  RequestDetail,
-  responseData: AuditResponseReceived
+  upeDetails:               UpeDetails,
+  accountingPeriod:         AccountingPeriod,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberDetails],
+  plrReference:             String,
+  processingDate:           String
 ) extends AuditEvent {
-  override val auditType:  String  = "CreateP2Subscription"
+  override val auditType:  String  = "createPillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)
 }
 
 object CreateSubscriptionAuditEvent {
   implicit val formats: Format[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
+}
+
+case class SubscriptionSuccessResponse(plrReference: String, formBundleNumber: String, processingDate: LocalDateTime)
+
+object SubscriptionSuccessResponse {
+  implicit val format: OFormat[SubscriptionSuccessResponse] = Json.format[SubscriptionSuccessResponse]
+}
+
+case class SuccessResponse(success: SubscriptionSuccessResponse)
+
+object SuccessResponse {
+  implicit val format: OFormat[SuccessResponse] = Json.format[SuccessResponse]
 }
