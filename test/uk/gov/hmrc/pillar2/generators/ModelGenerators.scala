@@ -28,7 +28,9 @@ import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 import org.scalacheck.{Arbitrary, Gen}
+
 import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, SubscriptionSuccessResponse, SuccessResponse, UpeRegistration}
+
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 
 import java.time.{Instant, LocalDate}

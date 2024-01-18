@@ -21,6 +21,9 @@ import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -40,9 +43,13 @@ class RegistrationCacheController @Inject() (
   }
 
   def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    logger.debug("controllers.RegistrationCacheController.get: Authorised Request " + id)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+
+    logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.get: Authorised Request " + id)
     repository.get(id).map { response =>
-      logger.debug(s"controllers.RegistrationCacheController.get: Response for request Id $id is $response")
+      logger.debug(
+        s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.get: Response for request Id $id is $response"
+      )
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
@@ -58,9 +65,11 @@ class RegistrationCacheController @Inject() (
   }
 
   def lastUpdated(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    logger.debug("controllers.RegistrationCacheController.lastUpdated: Authorised Request " + id)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
+
+    logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.lastUpdated: Authorised Request " + id)
     repository.getLastUpdated(id).map { response =>
-      logger.debug("controllers.RegistrationCacheController.lastUpdated: Response " + response)
+      logger.debug(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - controllers.RegistrationCacheController.lastUpdated: Response " + response)
       response.map { date =>
         Ok(Json.toJson(date)(jodaDateTimeNumberWrites))
       } getOrElse NotFound

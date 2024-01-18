@@ -25,11 +25,12 @@ class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesCo
 
   val appName: String = config.get[String]("appName")
 
-  val defaultDataExpireInSeconds = config.get[Int]("defaultDataExpireInSeconds")
-  val defaultDataExpireInDays    = config.get[Int]("defaultDataExpireInDays")
+  val defaultDataExpireInSeconds: Int = config.get[Int]("defaultDataExpireInSeconds")
 
   def baseUrl(serviceName: String): String =
     s"${servicesConfig.baseUrl(serviceName)}${servicesConfig.getString(s"microservice.services.$serviceName.context")}"
+
+  val registrationCacheCryptoKey: String = config.get[String]("registrationCache.key")
 
   val bearerToken:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.bearer-token")
   val environment:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.environment")

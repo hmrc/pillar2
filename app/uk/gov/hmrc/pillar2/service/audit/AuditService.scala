@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.service.audit
 import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
+
 import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, NominatedFilingMember, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, SuccessResponse, UpeRegisterWithoutIdAuditEvent, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, ContactDetailsType, FilingMemberDetails, SubscriptionResponse, UpeCorrespAddressDetails, UpeDetails}
