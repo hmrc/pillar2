@@ -453,7 +453,7 @@ class SubscriptionService @Inject() (
     ec:                                          ExecutionContext
   ): Future[JsValue] = {
     val status = httpResponse.status
-    auditService.auditReadSubscriptionFailure(plrReference, AuditResponseReceived(status, httpResponse.json))
+    //TODO failure needs to be audited as well. we dont have approval yet.
     val errorMessage = status match {
       case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
         s"Error response from service with status: $status and body: ${httpResponse.json}"

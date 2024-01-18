@@ -70,7 +70,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       when(mockAuditConnector.sendExtendedEvent(any())(any(), any()))
         .thenReturn(Future.successful(AuditResult.Success))
 
-      forAll(arbitraryRequestDetail.arbitrary, arbitraryAuditResponseReceived.arbitrary) { (requestDetails, auditResponseReceived) =>
+      forAll(arbitraryRequestDetail.arbitrary, arbitraryCreateAuditResponseReceived.arbitrary) { (requestDetails, auditResponseReceived) =>
         val result = await(service.auditCreateSubscription(requestDetails, auditResponseReceived))
         result mustBe AuditResult.Success
       }
@@ -89,16 +89,6 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       }
     }
 
-    "Send failed readSubscription" in new Setup {
-
-      when(mockAuditConnector.sendExtendedEvent(any())(any(), any()))
-        .thenReturn(Future.successful(AuditResult.Success))
-
-      forAll(arbPlrReference.arbitrary, arbitraryAuditResponseReceived.arbitrary) { (plrRef, auditResponseReceived) =>
-        val result = await(service.auditReadSubscriptionFailure(plrRef, auditResponseReceived))
-        result mustBe AuditResult.Success
-      }
-    }
   }
 
   "AmendSubscription" - {
@@ -107,7 +97,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       when(mockAuditConnector.sendExtendedEvent(any())(any(), any()))
         .thenReturn(Future.successful(AuditResult.Success))
 
-      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbitraryAuditResponseReceived.arbitrary) { (requestDetail, responseDetail) =>
+      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbitraryAmendAuditResponseReceived.arbitrary) { (requestDetail, responseDetail) =>
         val result = await(service.auditAmendSubscription(requestDetail, responseDetail))
         result mustBe AuditResult.Success
       }

@@ -17,28 +17,22 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, ContactDetailsType, FilingMemberAmendDetails, SubscriptionResponse, UpeCorrespAddressDetails, UpeDetailsAmend}
 
 case class AmendSubscriptionSuccessAuditEvent(
-  requestData:  AmendSubscriptionSuccess,
-  responseData: AuditResponseReceived
+  upeDetails:               UpeDetailsAmend,
+  accountingPeriod:         AccountingPeriodAmend,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberAmendDetails],
+  processingDate:           String
 ) extends AuditEvent {
-  override val auditType:  String  = "UpdateP2Subscription"
+  override val auditType:  String  = "updatePillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)
 }
 
 object AmendSubscriptionSuccessAuditEvent {
   implicit val formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
-}
-
-case class AmendSubscriptionFailedAuditEvent(
-  requestData:  AmendSubscriptionSuccess,
-  responseData: AuditResponseReceived
-) extends AuditEvent {
-  override val auditType:  String  = "UpdateP2Subscription"
-  override val detailJson: JsValue = Json.toJson(this)
-}
-
-object AmendSubscriptionFailedAuditEvent {
-  implicit val formats: Format[AmendSubscriptionFailedAuditEvent] = Json.format[AmendSubscriptionFailedAuditEvent]
 }
