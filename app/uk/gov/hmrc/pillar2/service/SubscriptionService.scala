@@ -455,7 +455,7 @@ class SubscriptionService @Inject() (
     val status = httpResponse.status
     //TODO failure needs to be audited as well. we dont have approval yet.
     val errorMessage = status match {
-      case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
+      case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE | CONFLICT | SERVICE_UNAVAILABLE =>
         s"Error response from service with status: $status and body: ${httpResponse.json}"
       case _ =>
         s"Unexpected response status from service: $status with body: ${httpResponse.json}"
