@@ -51,6 +51,16 @@ package object controllers {
         logDownStreamError(httpResponse.body)
         ServiceUnavailable(httpResponse.body)
 
+      case UNPROCESSABLE_ENTITY =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
+        logDownStreamError(httpResponse.body)
+        UnprocessableEntity(httpResponse.body)
+
+      case INTERNAL_SERVER_ERROR =>
+        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
+        logDownStreamError(httpResponse.body)
+        InternalServerError(httpResponse.body)
+
       case CONFLICT =>
         logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
         logDownStreamError(httpResponse.body)
