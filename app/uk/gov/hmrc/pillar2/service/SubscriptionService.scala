@@ -649,12 +649,24 @@ class SubscriptionService @Inject() (
                 case _ => throw new Exception("Could not parse response received from ETMP in success response")
               }
 
-            case BAD_REQUEST           => throw UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)
-            case NOT_FOUND             => throw UpstreamErrorResponse("Not Found", NOT_FOUND, NOT_FOUND)
-            case UNPROCESSABLE_ENTITY  => throw UpstreamErrorResponse("Unprocessable Entity", UNPROCESSABLE_ENTITY, UNPROCESSABLE_ENTITY)
-            case INTERNAL_SERVER_ERROR => throw UpstreamErrorResponse("Internal Server Error", INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)
-            case SERVICE_UNAVAILABLE   => throw UpstreamErrorResponse("Service Unavailable", SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE)
-            case CONFLICT              => throw UpstreamErrorResponse("Conflict", CONFLICT, CONFLICT)
+            case BAD_REQUEST =>
+              logger.error("Bad Request error received from ETMP")
+              throw UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)
+            case NOT_FOUND =>
+              logger.error("Not Found error received from ETMP")
+              throw UpstreamErrorResponse("Not Found", NOT_FOUND, NOT_FOUND)
+            case UNPROCESSABLE_ENTITY =>
+              logger.error("Unprocessable Entity error received from ETMP")
+              throw UpstreamErrorResponse("Unprocessable Entity", UNPROCESSABLE_ENTITY, UNPROCESSABLE_ENTITY)
+            case INTERNAL_SERVER_ERROR =>
+              logger.error("Internal Server Error received from ETMP")
+              throw UpstreamErrorResponse("Internal Server Error", INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)
+            case SERVICE_UNAVAILABLE =>
+              logger.error("Service Unavailable error received from ETMP")
+              throw UpstreamErrorResponse("Service Unavailable", SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE)
+            case CONFLICT =>
+              logger.error("Conflict error received from ETMP")
+              throw UpstreamErrorResponse("Conflict", CONFLICT, CONFLICT)
 
             case _ =>
               auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
