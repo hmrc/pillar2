@@ -20,8 +20,9 @@ import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.Writes._
 import play.api.libs.json._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse, NotFoundException, UpstreamErrorResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
+import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
@@ -30,6 +31,8 @@ import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
 import java.time.LocalDate
@@ -38,7 +41,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
-  countryOptions:         CountryOptions
+  countryOptions:         CountryOptions,
+  auditService:           AuditService
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -64,7 +68,9 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId")
+                logger.info(
+                  s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId"
+                )
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -88,7 +94,9 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId")
+                logger.info(
+                  s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId"
+                )
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -112,7 +120,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -136,7 +144,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with fmRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with fmRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -150,7 +158,7 @@ class SubscriptionService @Inject() (
               }
           }
         }.getOrElse {
-          logger.warn("Subscription Information Missing")
+          logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Subscription Information Missing")
           subscriptionError
         }
 
@@ -168,7 +176,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest with upeRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -190,7 +198,7 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info("Calling sendSubmissionRequest without upeRegisteredInUKId")
+                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest without upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -203,7 +211,7 @@ class SubscriptionService @Inject() (
               }
           }
         }.getOrElse {
-          logger.warn("Subscription Information Missing")
+          logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Subscription Information Missing")
           subscriptionError
         }
     }
@@ -212,9 +220,15 @@ class SubscriptionService @Inject() (
   private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(implicit
     hc:                                                  HeaderCarrier,
     ec:                                                  ExecutionContext
-  ): Future[HttpResponse] =
-    subscriptionConnectors
+  ): Future[HttpResponse] = {
+    val response = subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
+    response.map { res =>
+      val resReceived = AuditResponseReceived(res.status, res.json)
+      auditService.auditCreateSubscription(subscriptionRequest, resReceived)
+    }
+    response
+  }
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
@@ -280,7 +294,9 @@ class SubscriptionService @Inject() (
                 logger.info("UK Limited Company selected as Entity")
                 val incorporatedEntityRegistrationData =
                   fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
-                    throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
+                    throw new Exception(
+                      "Malformed IncorporatedEntityRegistrationData in Filing Member"
+                    )
                   )
                 val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
                 val name = incorporatedEntityRegistrationData.companyProfile.companyName
@@ -371,12 +387,16 @@ class SubscriptionService @Inject() (
     httpResponse: HttpResponse
   )(implicit
     ec:     ExecutionContext,
+    hc:     HeaderCarrier,
     reads:  Reads[SubscriptionResponse],
     writes: Writes[UserAnswers]
   ): Future[JsValue] = {
-    logger.info(s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}")
+    logger.info(
+      s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}"
+    )
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
+        auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
         extractSubscriptionData(id, plrReference, subscriptionResponse.success)
           .flatMap {
             case jsValue: JsObject =>
@@ -420,21 +440,25 @@ class SubscriptionService @Inject() (
       .flatMap { httpResponse =>
         httpResponse.status match {
           case OK => processSuccessfulResponse(id, plrReference, httpResponse)
-          case _  => processErrorResponse(httpResponse)
+          case _  => processErrorResponse(plrReference, httpResponse)
         }
       }
       .recover { case e: Exception =>
-        logger.error("An error occurred while retrieving subscription information", e)
+        logger.error(s"An error occurred while retrieving subscription information", e)
         Json.obj("error" -> e.getMessage)
       }
 
-  private def processErrorResponse(httpResponse: HttpResponse): Future[JsValue] = {
+  private def processErrorResponse(plrReference: String, httpResponse: HttpResponse)(implicit
+    hc:                                          HeaderCarrier,
+    ec:                                          ExecutionContext
+  ): Future[JsValue] = {
     val status = httpResponse.status
+    //TODO failure needs to be audited as well. we dont have approval yet.
     val errorMessage = status match {
-      case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE =>
-        s"Error response from service with status: $status and body: ${httpResponse.body}"
+      case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE | CONFLICT | SERVICE_UNAVAILABLE =>
+        s"Error response from service with status: $status and body: ${httpResponse.json}"
       case _ =>
-        s"Unexpected response status from service: $status with body: ${httpResponse.body}"
+        s"Unexpected response status from service: $status with body: ${httpResponse.json}"
     }
     logger.error(errorMessage)
     Future.successful(Json.obj("error" -> errorMessage))
@@ -601,6 +625,7 @@ class SubscriptionService @Inject() (
       )
     }).getOrElse(throw new Exception("Expected data missing from user answers"))
   }
+
   def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
     if (userAnswers == null) {
       logger.error("UserAnswers is null")
@@ -609,28 +634,54 @@ class SubscriptionService @Inject() (
       val amendSub = createAmendSubscriptionParameters(userAnswers)
       logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
 
-      subscriptionConnectors.amendSubscriptionInformation(amendSub).flatMap { response =>
-        if (response.status == 200) {
-          response.json.validate[AmendResponse] match {
-            case JsSuccess(result, _) =>
-              logger
-                .info(
-                  s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
-                )
-              Future.successful(response)
-            case _ => throw new Exception("Could not parse response received from ETMP in success response")
-          }
-        } else {
-          response.json.validate[AmendSubscriptionFailureResponse] match {
-            case JsSuccess(failure, _) =>
-              logger.info(s"Call failed to ETMP with the code ${failure.failures(0).code} due to ${failure.failures(0).reason}")
-              Future.successful(response)
-            case _ => throw new Exception(s"Could not parse error response received from ETMP in failure response")
+      subscriptionConnectors
+        .amendSubscriptionInformation(amendSub)
+        .flatMap { response =>
+          response.status match {
+            case OK =>
+              auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
+              response.json.validate[AmendResponse] match {
+                case JsSuccess(result, _) =>
+                  logger.info(
+                    s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
+                  )
+                  Future.successful(response)
+                case _ => throw new Exception("Could not parse response received from ETMP in success response")
+              }
 
+            case BAD_REQUEST =>
+              logger.error("Bad Request error received from ETMP")
+              throw UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)
+            case NOT_FOUND =>
+              logger.error("Not Found error received from ETMP")
+              throw UpstreamErrorResponse("Not Found", NOT_FOUND, NOT_FOUND)
+            case UNPROCESSABLE_ENTITY =>
+              logger.error("Unprocessable Entity error received from ETMP")
+              throw UpstreamErrorResponse("Unprocessable Entity", UNPROCESSABLE_ENTITY, UNPROCESSABLE_ENTITY)
+            case INTERNAL_SERVER_ERROR =>
+              logger.error("Internal Server Error received from ETMP")
+              throw UpstreamErrorResponse("Internal Server Error", INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)
+            case SERVICE_UNAVAILABLE =>
+              logger.error("Service Unavailable error received from ETMP")
+              throw UpstreamErrorResponse("Service Unavailable", SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE)
+            case CONFLICT =>
+              logger.error("Conflict error received from ETMP")
+              throw UpstreamErrorResponse("Conflict", CONFLICT, CONFLICT)
+
+            case _ =>
+              auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
+              response.json.validate[AmendSubscriptionFailureResponse] match {
+                case JsSuccess(failure, _) =>
+                  logger.info(s"Call failed to ETMP with the code ${failure.failures(0).code} due to ${failure.failures(0).reason}")
+                  Future.successful(response)
+                case _ => throw new Exception(s"Could not parse error response received from ETMP in failure response")
+              }
           }
         }
-
-      }
+        .recoverWith { case e: Exception =>
+          logger.error("Error in extractAndProcess", e)
+          Future.failed(e)
+        }
     }
 
 }

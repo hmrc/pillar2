@@ -14,24 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2
+package uk.gov.hmrc.pillar2.models.audit
 
-import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatest.OptionValues
-import play.api.libs.json.Json
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataEntry.JsonDataEntry
+import play.api.libs.json.JsValue
+import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 
-trait FakeObjects {
-  self: OptionValues =>
+trait AuditEvent {
+  private val auditSource: String = "pillar2"
+  val auditType:  String
+  val detailJson: JsValue
 
-  val userAnswersCache =
-    JsonDataEntry("id", Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1"), DateTime.now(DateTimeZone.UTC), getExpireAt)
-
-  private def getExpireAt: DateTime =
-    DateTime
-      .now(DateTimeZone.UTC)
-      .toLocalDate
-      .plusDays(1)
-      .toDateTimeAtStartOfDay()
-
+  def extendedDataEvent: ExtendedDataEvent =
+    ExtendedDataEvent(auditSource = auditSource, auditType = auditType, detail = detailJson)
 }

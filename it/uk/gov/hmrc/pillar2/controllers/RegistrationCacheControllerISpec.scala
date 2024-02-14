@@ -16,10 +16,11 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.OptionValues
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockHelper, WireMockSupport}
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.repositories.{RegistrationCacheRepository, RegistrationDataEntry}
 import uk.gov.hmrc.pillar2.service.test.TestService
 
 
@@ -37,6 +38,12 @@ class RegistrationCacheControllerISpec extends BaseISpec
 
   val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
   val controller: RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
+  private val userAnswersCache =
+    RegistrationDataEntry(
+      "id",
+      Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
+      DateTime.now(DateTimeZone.UTC)
+    )
 
   "save" should {
     "successfully save data" in {

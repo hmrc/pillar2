@@ -77,7 +77,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     new SubscriptionService(
       mockRgistrationCacheRepository,
       mockSubscriptionConnector,
-      mockCountryOptions
+      mockCountryOptions,
+      mockAuditService
     )
 
   override def afterEach(): Unit = {
@@ -328,14 +329,14 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val logger = Logger(this.getClass)
 
           when(mockSubscriptionConnector.getSubscriptionInformation(plrReference))
-            .thenReturn(Future.successful(HttpResponse(NOT_FOUND, "")))
+            .thenReturn(Future.successful(HttpResponse(NOT_FOUND, """{}""")))
 
           logger.debug(s"Mock set for getSubscriptionInformation with plrReference: $plrReference")
 
           val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
 
           whenReady(resultFuture) { result =>
-            result mustBe Json.obj("error" -> "Error response from service with status: 404 and body: ")
+            result mustBe Json.obj("error" -> "Error response from service with status: 404 and body: {}")
           }
         }
       }
