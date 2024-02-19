@@ -1,8 +1,4 @@
 import scoverage.ScoverageKeys
-import play.sbt.PlayImport.PlayKeys.playDefaultPort
-import uk.gov.hmrc.DefaultBuildSettings._
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "pillar2"
 //revert
@@ -25,15 +21,13 @@ lazy val microservice = Project(appName, file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
-  .settings(publishingSettings: _*)
   .configs(IntegrationTest)
-  .settings(integrationTestSettings(): _*)
+
   .settings(
-    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
-    unmanagedSourceDirectories in IntegrationTest :=
+    unmanagedSourceDirectories in IntegrationTest ++=
       (baseDirectory in IntegrationTest)(base => Seq(base / "it", base / "test-common")).value,
     unmanagedSourceDirectories in Test := (baseDirectory in Test)(base => Seq(base / "test", base / "test-common")).value,
-    unmanagedResourceDirectories in IntegrationTest := Seq(baseDirectory.value / "test-resources"),
+    unmanagedResourceDirectories in IntegrationTest ++= Seq(baseDirectory.value / "test-resources"),
     unmanagedResourceDirectories in Test := Seq(baseDirectory.value / "test-resources"),
     testOptions in IntegrationTest += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports/html-it-report")
   )

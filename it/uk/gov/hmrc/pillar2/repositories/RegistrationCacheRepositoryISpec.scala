@@ -35,7 +35,10 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
   DefaultPlayMongoRepositorySupport[RegistrationDataEntry] with ScalaFutures with IntegrationPatience with OptionValues {
 
 
-  private val app = GuiceApplicationBuilder().overrides(
+  private val app = GuiceApplicationBuilder()
+    .configure(
+      Map("encryptionToggle"-> "true")
+    ).overrides(
       bind[MongoComponent].toInstance(mongoComponent),
     )
     .build()
