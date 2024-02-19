@@ -89,7 +89,7 @@ class RegistrationCacheRepository @Inject() (
 
     val setOperation = Updates.combine(
       Updates.set(idField, record.id),
-      Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
+      if (cryptoToggle) Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)) else Updates.set(dataKey, Codecs.toBson(data)),
       Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated))
     )
     collection
