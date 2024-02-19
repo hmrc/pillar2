@@ -77,8 +77,8 @@ class RegistrationCacheRepository @Inject() (
 
   private def updatedAt: DateTime = DateTime.now(DateTimeZone.UTC)
 
-  private lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
-
+  private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
+  private val cryptoToggle: Boolean                  = config.cryptoToggle
   import RegistrationDataEntryFormats._
   import RegistrationDataKeys._
 
@@ -101,7 +101,8 @@ class RegistrationCacheRepository @Inject() (
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
     collection.find(Filters.equal(idField, id)).headOption().map {
       _.map { dataEntry =>
-        Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
+        if (cryptoToggle) Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
+        else Json.parse(dataEntry.data)
       }
     }
 
@@ -122,7 +123,9 @@ class RegistrationCacheRepository @Inject() (
     collection
       .find()
       .map { dataEntry =>
-        Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
+        if (cryptoToggle)
+          Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
+        else Json.parse(dataEntry.data)
       }
       .toFuture()
 

@@ -30,7 +30,8 @@ class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesCo
   def baseUrl(serviceName: String): String =
     s"${servicesConfig.baseUrl(serviceName)}${servicesConfig.getString(s"microservice.services.$serviceName.context")}"
 
-  val registrationCacheCryptoKey: String = config.get[String]("registrationCache.key")
+  val registrationCacheCryptoKey: String  = config.get[String]("registrationCache.key")
+  val cryptoToggle:               Boolean = config.get[Boolean]("encryptionToggle")
 
   val bearerToken:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.bearer-token")
   val environment:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.environment")
