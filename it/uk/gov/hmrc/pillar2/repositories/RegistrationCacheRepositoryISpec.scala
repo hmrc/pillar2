@@ -37,7 +37,7 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
 
   private val app = GuiceApplicationBuilder()
     .configure(
-      Map("encryptionToggle"-> "true")
+     "encryptionToggle"-> "true"
     ).overrides(
       bind[MongoComponent].toInstance(mongoComponent),
     )

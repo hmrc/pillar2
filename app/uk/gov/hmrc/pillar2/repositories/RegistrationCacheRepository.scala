@@ -23,11 +23,11 @@ import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model._
 import play.api.Logging
 import play.api.libs.json._
-import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.crypto.json.JsonEncryption
+import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
+import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
 
@@ -40,6 +40,11 @@ case class RegistrationDataEntry(id: String, data: String, lastUpdated: DateTime
 object RegistrationDataEntryFormats {
   implicit val dateFormat: Format[DateTime]              = MongoJodaFormats.dateTimeFormat
   implicit val format:     Format[RegistrationDataEntry] = Json.format[RegistrationDataEntry]
+}
+case class JsonDataEntry(id: String, data: JsValue, lastUpdated: DateTime)
+object JsonDataEntry {
+  implicit val dateFormat: Format[DateTime]      = MongoJodaFormats.dateTimeFormat
+  implicit val format:     Format[JsonDataEntry] = Json.format[JsonDataEntry]
 }
 
 object RegistrationDataKeys {
@@ -59,6 +64,9 @@ class RegistrationCacheRepository @Inject() (
       collectionName = "user-answers-records",
       mongoComponent = mongoComponent,
       domainFormat = RegistrationDataEntryFormats.format,
+      extraCodecs = Seq(
+        Codecs.playFormatCodec(JsonDataEntry.format)
+      ),
       indexes = Seq(
         IndexModel(
           Indexes.ascending(lastUpdatedKey),
@@ -84,25 +92,47 @@ class RegistrationCacheRepository @Inject() (
 
   def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
 
-    val record = RegistrationDataEntry(id, data.toString(), updatedAt)
+    val encryptedRecord    = RegistrationDataEntry(id, data.toString(), updatedAt)
+    val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
     val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
+    if (cryptoToggle) {
+      val encryptedSetOperation = Updates.combine(
+        Updates.set(idField, encryptedRecord.id),
+        Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated))
+      )
+      collection
+        .withDocumentClass[RegistrationDataEntry]()
+        .findOneAndUpdate(filter = Filters.eq(idField, id), update = encryptedSetOperation, new FindOneAndUpdateOptions().upsert(true))
+        .toFuture()
+        .map(_ => ())
+    } else {
+      val setOperation = Updates.combine(
+        Updates.set(idField, nonEncryptedRecord.id),
+        Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated))
+      )
+      collection
+        .withDocumentClass[JsonDataEntry]()
+        .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .toFuture()
+        .map(_ => ())
+    }
 
-    val setOperation = Updates.combine(
-      Updates.set(idField, record.id),
-      if (cryptoToggle) Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)) else Updates.set(dataKey, Codecs.toBson(data)),
-      Updates.set(lastUpdatedKey, Codecs.toBson(record.lastUpdated))
-    )
-    collection
-      .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))
-      .toFuture()
-      .map(_ => ())
   }
 
   def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
-    collection.find(Filters.equal(idField, id)).headOption().map {
-      _.map { dataEntry =>
-        if (cryptoToggle) Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
-        else Json.parse(dataEntry.data)
+    if (cryptoToggle) {
+      collection.find[RegistrationDataEntry](Filters.equal(idField, id)).headOption().map {
+        _.map { dataEntry =>
+          Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
+        }
+      }
+    } else {
+      collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
+        _.map { dataEntry =>
+          dataEntry.data
+        }
       }
     }
 
@@ -120,14 +150,19 @@ class RegistrationCacheRepository @Inject() (
     }
 
   def getAll(max: Int)(implicit ec: ExecutionContext): Future[Seq[JsValue]] =
-    collection
-      .find()
-      .map { dataEntry =>
-        if (cryptoToggle)
-          Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
-        else Json.parse(dataEntry.data)
-      }
-      .toFuture()
+    (if (cryptoToggle) {
+       collection
+         .find()
+         .map { dataEntry =>
+           Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
+         }
+     } else {
+       collection
+         .find[JsonDataEntry]()
+         .map { dataEntry =>
+           dataEntry.data
+         }
+     }).toFuture()
 
   def clearAllData()(implicit ec: ExecutionContext): Future[Boolean] =
     collection.deleteMany(BsonDocument()).toFuture().map { result =>
