@@ -18,12 +18,8 @@ package uk.gov.hmrc.pillar2.controllers
 
 import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.OptionValues
-import play.api.Application
-import play.api.inject.bind
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockSupport}
+import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockHelper, WireMockSupport}
 import uk.gov.hmrc.pillar2.repositories.{RegistrationCacheRepository, RegistrationDataEntry}
 import uk.gov.hmrc.pillar2.service.test.TestService
 
@@ -38,17 +34,10 @@ class RegistrationCacheControllerISpec extends BaseISpec
     super.beforeEach()
     await(testService.clearAllData)
   }
-  override implicit lazy val app: Application = GuiceApplicationBuilder()
-    .configure(
-      "encryptionToggle"-> "true"
-    )
-    .build()
 
 
-  val registrationCacheRepository: RegistrationCacheRepository = GuiceApplicationBuilder()
-    .configure(Map("encryptionToggle"-> "true")).build().injector.instanceOf[RegistrationCacheRepository]
+  val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
   val controller: RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
-
   private val userAnswersCache =
     RegistrationDataEntry(
       "id",
