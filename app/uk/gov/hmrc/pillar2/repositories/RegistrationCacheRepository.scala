@@ -85,7 +85,7 @@ class RegistrationCacheRepository @Inject() (
 
   private def updatedAt: DateTime = DateTime.now(DateTimeZone.UTC)
 
-  private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
+  private lazy val crypto: Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle
   import RegistrationDataEntryFormats._
   import RegistrationDataKeys._
