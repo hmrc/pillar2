@@ -482,7 +482,7 @@ class SubscriptionService @Inject() (
         case _                         => "N/A"
       },
       addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
-      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("")),
       countryCode = sub.upeCorrespAddressDetails.countryCode
     )
 
