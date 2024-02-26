@@ -467,6 +467,28 @@ class SubscriptionService @Inject() (
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
+  def createNonUKAddress(
+    addressLine1: String,
+    addressLine2: Option[String],
+    addressLine3: String,
+    addressLine4: Option[String],
+    postalCode:   Option[String],
+    countryCode:  String
+  ): NonUKAddress = {
+    val filteredAddressLine2 = addressLine2.filter(_.nonEmpty)
+    val filteredAddressLine4 = addressLine4.filter(_.nonEmpty)
+    val filteredPostalCode   = postalCode.filter(_.nonEmpty)
+
+    NonUKAddress(
+      addressLine1 = addressLine1,
+      addressLine2 = filteredAddressLine2,
+      addressLine3 = addressLine3,
+      addressLine4 = filteredAddressLine4,
+      postalCode = filteredPostalCode,
+      countryCode = countryCode
+    )
+  }
+
   private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[JsValue] = {
 
     val dashboardInfo = DashboardInfo(
@@ -474,18 +496,14 @@ class SubscriptionService @Inject() (
       registrationDate = sub.upeDetails.registrationDate
     )
 
-    val nonUKAddress = NonUKAddress(
+    val nonUKAddress = createNonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
-      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3 match {
-        case Some(str) if str.nonEmpty => str
-        case _                         => "N/A"
-      },
-      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
-      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("")),
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2,
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse("N/A"),
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4,
+      postalCode = sub.upeCorrespAddressDetails.postCode,
       countryCode = sub.upeCorrespAddressDetails.countryCode
     )
-
     val crn    = sub.upeDetails.customerIdentification1
     val utr    = sub.upeDetails.customerIdentification2
     val safeId = sub.upeDetails.safeId
