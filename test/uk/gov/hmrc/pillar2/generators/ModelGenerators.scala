@@ -66,7 +66,7 @@ trait ModelGenerators {
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
-      addressLine3 <- arbitrary[String]
+      addressLine3 <- Gen.option(arbitrary[String])
       addressLine4 <- Gen.option(arbitrary[String])
       postalCode   <- Gen.option(arbitrary[String])
       countryCode  <- arbitrary[String]
@@ -449,9 +449,9 @@ trait ModelGenerators {
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
-      addressLine3 <- arbitrary[String]
+      addressLine3 <- Gen.option(arbitrary[String])
       addressLine4 <- Gen.option(arbitrary[String])
-      postCode     <- arbitrary[String]
+      postCode     <- Gen.option(arbitrary[String])
       countryCode  <- arbitrary[String]
     } yield UKAddress(
       addressLine1 = addressLine1,
@@ -468,7 +468,7 @@ trait ModelGenerators {
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
-      addressLine3 <- arbitrary[String]
+      addressLine3 <- Gen.option(arbitrary[String])
       addressLine4 <- Gen.option(arbitrary[String])
       postCode     <- Gen.option(arbitrary[String])
       countryCode  <- arbitrary[String]

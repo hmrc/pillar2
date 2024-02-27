@@ -32,7 +32,7 @@ object NoIdOrganisation {
 case class Address(
   addressLine1: String,
   addressLine2: Option[String],
-  addressLine3: String,
+  addressLine3: Option[String],
   addressLine4: Option[String],
   postalCode:   Option[String],
   countryCode:  String
@@ -40,12 +40,25 @@ case class Address(
 
 object Address {
   implicit val addressFormat: OFormat[Address] = Json.format[Address]
-
   def fromAddress(address: UKAddress): Address =
-    Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, Some(address.postalCode), address.countryCode)
+    Address(
+      addressLine1 = address.addressLine1,
+      addressLine2 = address.addressLine2.filter(_.nonEmpty),
+      addressLine3 = address.addressLine3.filter(_.nonEmpty),
+      addressLine4 = address.addressLine4.filter(_.nonEmpty),
+      postalCode = address.postalCode.filter(_.nonEmpty),
+      countryCode = address.countryCode
+    )
 
   def fromFmAddress(address: NonUKAddress): Address =
-    Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
+    Address(
+      addressLine1 = address.addressLine1,
+      addressLine2 = address.addressLine2.filter(_.nonEmpty),
+      addressLine3 = address.addressLine3.filter(_.nonEmpty),
+      addressLine4 = address.addressLine4.filter(_.nonEmpty),
+      postalCode = address.postalCode.filter(_.nonEmpty),
+      countryCode = address.countryCode
+    )
 
 }
 
