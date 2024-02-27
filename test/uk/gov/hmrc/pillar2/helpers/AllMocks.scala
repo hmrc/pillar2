@@ -34,27 +34,27 @@ import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 trait AllMocks extends MockitoSugar {
   me: BeforeAndAfterEach =>
 
-  val mockActorSystem:                ActorSystem                 = mock[ActorSystem]
-  val mockAuditConnector:             AuditConnector              = mock[AuditConnector]
-  val mockAuthConnector:              AuthConnector               = mock[AuthConnector]
-  val mockAppConfig:                  AppConfig                   = mock[AppConfig]
-  val mockRgistrationCacheRepository: RegistrationCacheRepository = mock[RegistrationCacheRepository]
-  val mockHttpClient:                 HttpClient                  = mock[HttpClient]
-  val mockDataSubmissionsConnector:   RegistrationConnector       = mock[RegistrationConnector]
-  val mockDataSubmissionsService:     RegistrationService         = mock[RegistrationService]
-  val mockSubscriptionConnector:      SubscriptionConnector       = mock[SubscriptionConnector]
-  val mockSubscriptionService:        SubscriptionService         = mock[SubscriptionService]
-  val mockCountryOptions:             CountryOptions              = mock[CountryOptions]
-  val mockAuditService:               AuditService                = mock[AuditService]
-  val mockAuthAction:                 AuthAction                  = mock[AuthAction]
-  val mockAuthorisedFunctions:        AuthorisedFunctions         = mock[AuthorisedFunctions]
+  val mockActorSystem:                 ActorSystem                 = mock[ActorSystem]
+  val mockAuditConnector:              AuditConnector              = mock[AuditConnector]
+  val mockAuthConnector:               AuthConnector               = mock[AuthConnector]
+  val mockAppConfig:                   AppConfig                   = mock[AppConfig]
+  val mockRegistrationCacheRepository: RegistrationCacheRepository = mock[RegistrationCacheRepository]
+  val mockHttpClient:                  HttpClient                  = mock[HttpClient]
+  val mockDataSubmissionsConnector:    RegistrationConnector       = mock[RegistrationConnector]
+  val mockDataSubmissionsService:      RegistrationService         = mock[RegistrationService]
+  val mockSubscriptionConnector:       SubscriptionConnector       = mock[SubscriptionConnector]
+  val mockSubscriptionService:         SubscriptionService         = mock[SubscriptionService]
+  val mockCountryOptions:              CountryOptions              = mock[CountryOptions]
+  val mockAuditService:                AuditService                = mock[AuditService]
+  val mockAuthAction:                  AuthAction                  = mock[AuthAction]
+  val mockAuthorisedFunctions:         AuthorisedFunctions         = mock[AuthorisedFunctions]
   override protected def beforeEach(): Unit =
     Seq(
       mockActorSystem,
       mockAuditConnector,
       mockAuthConnector,
       mockAppConfig,
-      mockRgistrationCacheRepository,
+      mockRegistrationCacheRepository,
       mockHttpClient,
       mockDataSubmissionsConnector,
       mockDataSubmissionsService,

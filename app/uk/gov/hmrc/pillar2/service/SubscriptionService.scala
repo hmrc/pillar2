@@ -405,11 +405,11 @@ class SubscriptionService @Inject() (
         Future.failed(JsResultError)
     }
 
-  def processReadSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[Done] =
+  def processReadSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     for {
       response <- subscriptionConnectors.getSubscriptionInformation(plrReference)
       _        <- process(id, plrReference, response)
-    } yield Done
+    } yield response
 
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"

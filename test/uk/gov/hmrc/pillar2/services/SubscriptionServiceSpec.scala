@@ -39,7 +39,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   trait Setup {
     val service =
       new SubscriptionService(
-        mockRgistrationCacheRepository,
+        mockRegistrationCacheRepository,
         mockSubscriptionConnector,
         mockAuditService
       )
@@ -93,19 +93,20 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
   }
 
-  "retrieveSubscriptionInformation" - {
+  "processReadSubscription " - {
 
     "return done if a valid response is received from ETMP" in new Setup {
       forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (mockId, plrReference, response) =>
+        val httpResponse = HttpResponse(status = OK, body = Json.toJson(response).toString())
         when(
           mockSubscriptionConnector
             .getSubscriptionInformation(any())(any(), any())
-        ).thenReturn(Future.successful(HttpResponse(status = OK, body = Json.toJson(response).toString())))
+        ).thenReturn(Future.successful(httpResponse))
         when(mockAuditService.auditReadSubscriptionSuccess(any(), any())(any())).thenReturn(Future.successful(AuditResult.Success))
-        when(mockRgistrationCacheRepository.upsert(any(), any())(any())).thenReturn(Future.unit)
+        when(mockRegistrationCacheRepository.upsert(any(), any())(any())).thenReturn(Future.unit)
         val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)
 
-        resultFuture.futureValue mustEqual Done
+        resultFuture.futureValue mustEqual httpResponse
       }
     }
 

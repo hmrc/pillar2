@@ -39,7 +39,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
   trait Setup {
     val controller =
       new RegistrationCacheController(
-        mockRgistrationCacheRepository,
+        mockRegistrationCacheRepository,
         mockAuthAction,
         stubControllerComponents()
       )
@@ -48,7 +48,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
   val application: Application = new GuiceApplicationBuilder()
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
     .overrides(
-      bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
+      bind[RegistrationCacheRepository].toInstance(mockRegistrationCacheRepository),
       bind[AuthConnector].toInstance(mockAuthConnector),
       bind[AuthAction].to[FakeAuthAction]
     )
@@ -56,21 +56,21 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
-      when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
+      when(mockRegistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
       val result  = route(application, request).value
       status(result) mustBe OK
     }
 
     "return 413 when request is not right" in new Setup {
-      when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
+      when(mockRegistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.successful((): Unit)
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
       val result  = route(application, request).value
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
     }
     "throw exception when mongo is down" in new Setup {
-      when(mockRgistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.failed(new Exception(""))
+      when(mockRegistrationCacheRepository.upsert(any(), any())(any())) thenReturn Future.failed(new Exception(""))
 
       val request = FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
       val result  = route(application, request).value
@@ -81,7 +81,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
   }
   "get" - {
     "return 200 when data exists" in new Setup {
-      when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
+      when(mockRegistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         Some(Json.obj())
       }
       val request = FakeRequest(GET, routes.RegistrationCacheController.get("id").url)
@@ -92,7 +92,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
     }
     "return NOT_FOUND when data exists" in new Setup {
-      when(mockRgistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
+      when(mockRegistrationCacheRepository.get(eqTo("id"))(any())) thenReturn Future.successful {
         None
       }
 
@@ -104,7 +104,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     }
     "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
-        when(mockRgistrationCacheRepository.remove(eqTo("id"))(any())) thenReturn Future.successful(true)
+        when(mockRegistrationCacheRepository.remove(eqTo("id"))(any())) thenReturn Future.successful(true)
 
         val request = FakeRequest(DELETE, routes.RegistrationCacheController.remove("id").url)
         val result  = route(application, request).value
@@ -116,7 +116,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     "lastUpdated" - {
       "return 200 and if record when it exists" in new Setup {
         val date = DateTime.now
-        when(mockRgistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
+        when(mockRegistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           Some(date)
         }
 
@@ -128,7 +128,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       }
 
       "return 404 when the data doesn't exist" in new Setup {
-        when(mockRgistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
+        when(mockRegistrationCacheRepository.getLastUpdated(eqTo("foo"))(any())) thenReturn Future.successful {
           None
         }
 
