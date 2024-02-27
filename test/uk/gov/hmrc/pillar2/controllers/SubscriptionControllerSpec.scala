@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import akka.Done
 import org.joda.time.DateTime
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{reset, when}
@@ -34,19 +35,17 @@ import play.api.test.Helpers._
 import play.api.{Application, Configuration, Logger}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
-import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{DashboardInfo, FilingMemberDetails, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.hods.{ErrorDetail, ErrorDetails, SourceFaultDetail}
 import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, ExtraSubscription, MneOrDomestic, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{UserAnswers, _}
+import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, MneOrDomestic, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
-import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -55,6 +54,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       new SubscriptionController(
         mockRgistrationCacheRepository,
         mockSubscriptionService,
+        mockSubscriptionConnector,
         mockAuthAction,
         stubControllerComponents()
       )
@@ -77,7 +77,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     new SubscriptionService(
       mockRgistrationCacheRepository,
       mockSubscriptionConnector,
-      mockCountryOptions,
       mockAuditService
     )
 
@@ -304,23 +303,24 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     "readSubscription" - {
 
       "return OK when valid data is provided" in new Setup {
-        forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) {
-          (id: String, plrReference: String, mockSubscriptionResponse: SubscriptionResponse) =>
-            stubResponse(
-              s"/pillar2/subscription/$plrReference",
-              OK
-            )
+        forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (id: String, plrReference: String, response) =>
+          stubGetResponse(
+            s"/pillar2/subscription/$plrReference",
+            OK
+          )
 
-            when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
-              .thenReturn(Future.successful(Json.toJson(mockSubscriptionResponse)))
+          when(mockSubscriptionService.processReadSubscriptionResponse(any[String], any[String])(any[HeaderCarrier]))
+            .thenReturn(Future.successful(Done))
 
-            when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
-              .thenReturn(Future.successful(()))
+          when(
+            mockSubscriptionConnector
+              .getSubscriptionInformation(any())(any(), any())
+          ).thenReturn(Future.successful(HttpResponse(status = OK, body = Json.toJson(response).toString())))
 
-            val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
-            val result  = route(application, request).value
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
+          val result  = route(application, request).value
 
-            status(result) mustBe OK
+          status(result) mustBe OK
         }
       }
 
@@ -333,7 +333,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
           logger.debug(s"Mock set for getSubscriptionInformation with plrReference: $plrReference")
 
-          val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
+          val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)(hc)
 
           whenReady(resultFuture) { result =>
             result mustBe Json.obj("error" -> "Error response from service with status: 404 and body: {}")
@@ -348,7 +348,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(expectedHttpResponse))
 
-          val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
+          val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)(hc)
 
           whenReady(resultFuture) { result =>
             result mustBe Json.obj(
@@ -365,7 +365,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(expectedHttpResponse))
 
-          val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
+          val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)(hc)
 
           whenReady(resultFuture) { result =>
             result mustBe Json.obj(
@@ -382,7 +382,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(expectedHttpResponse))
 
-          val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
+          val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)(hc)
 
           whenReady(resultFuture) { result =>
             result mustBe Json.obj("error" -> s"Error response from service with status: $SERVICE_UNAVAILABLE and body: ${expectedHttpResponse.body}")
@@ -399,7 +399,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
             .thenReturn(Future.successful(expectedHttpResponse))
 
-          val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
+          val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)(hc)
 
           whenReady(resultFuture) { result =>
             result mustBe Json.obj(
@@ -413,7 +413,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val id           = "testId"
         val plrReference = "testPlrReference"
 
-        when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockSubscriptionService.processReadSubscriptionResponse(any[String], any[String])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new Exception("Test exception")))
 
         val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
@@ -427,7 +427,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val id           = "testId"
         val plrReference = "testPlrReference"
 
-        when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockSubscriptionService.processReadSubscriptionResponse(any[String], any[String])(any[HeaderCarrier]))
           .thenAnswer(new Answer[Future[HttpResponse]] {
             override def answer(invocation: InvocationOnMock): Future[HttpResponse] =
               throw new Exception("Synchronous exception")
@@ -447,7 +447,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val fakeRequest = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
           .withBody(validParamsJson)
 
-        when(mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockSubscriptionService.processReadSubscriptionResponse(any[String], any[String])(any[HeaderCarrier]))
           .thenThrow(new RuntimeException("Synchronous exception"))
 
         val result = route(application, fakeRequest).value
@@ -460,7 +460,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val validParamsJson = Json.obj("id" -> "validId", "plrReference" -> "validPlrReference")
 
         when(
-          mockSubscriptionService.retrieveSubscriptionInformation(any[String], any[String])(any[HeaderCarrier], any[ExecutionContext])
+          mockSubscriptionService.processReadSubscriptionResponse(any[String], any[String])(any[HeaderCarrier])
         ).thenReturn(Future.failed(new RuntimeException("Service call failed")))
 
         val fakeRequest = FakeRequest(GET, routes.SubscriptionController.readSubscription("validId", "validPlrReference").url)
@@ -488,7 +488,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
             .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
 
-          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
             .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
 
           val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
@@ -526,7 +526,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
             logger.error("Error creating updated UserAnswers", exception)
         }
 
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
           .thenReturn(Future.successful(HttpResponse(400, "Invalid subscription response")))
 
         val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
@@ -545,7 +545,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
           .thenReturn(Future.successful(None))
 
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
           .thenReturn(Future.failed(new RuntimeException("Service error")))
 
         val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
@@ -569,7 +569,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockRgistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
             .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
 
-          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier], any[ExecutionContext]))
+          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
             .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
 
           val invalidJson = Json.obj("invalidField" -> "invalidValue")

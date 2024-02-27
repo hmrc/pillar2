@@ -21,11 +21,11 @@ import play.api.Logger
 import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, AmendSubscriptionSuccess}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 class SubscriptionConnector @Inject() (
   val config: AppConfig,

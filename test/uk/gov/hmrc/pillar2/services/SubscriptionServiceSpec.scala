@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.services
 
+import akka.Done
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -27,9 +28,11 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.JsResultError
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.service.SubscriptionService
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -38,7 +41,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       new SubscriptionService(
         mockRgistrationCacheRepository,
         mockSubscriptionConnector,
-        mockCountryOptions,
         mockAuditService
       )
   }
@@ -93,79 +95,32 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
   "retrieveSubscriptionInformation" - {
 
-    "Return NotFound HttpResponse when subscription information is not found" in new Setup {
-      forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
-        val expectedErrorMessage =
-          s"Error response from service with status: $NOT_FOUND and body: ${Json.obj("error" -> "Resource not found").toString()}"
-
-        val plrReferenceCaptor     = ArgumentCaptor.forClass(classOf[String])
-        val headerCarrierCaptor    = ArgumentCaptor.forClass(classOf[HeaderCarrier])
-        val executionContextCaptor = ArgumentCaptor.forClass(classOf[ExecutionContext])
-
+    "return done if a valid response is received from ETMP" in new Setup {
+      forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (mockId, plrReference, response) =>
         when(
           mockSubscriptionConnector
-            .getSubscriptionInformation(plrReferenceCaptor.capture())(headerCarrierCaptor.capture(), executionContextCaptor.capture())
-        ).thenReturn(Future.successful(HttpResponse(status = NOT_FOUND, body = Json.obj("error" -> "Resource not found").toString())))
+            .getSubscriptionInformation(any())(any(), any())
+        ).thenReturn(Future.successful(HttpResponse(status = OK, body = Json.toJson(response).toString())))
+        when(mockAuditService.auditReadSubscriptionSuccess(any(), any())(any())).thenReturn(Future.successful(AuditResult.Success))
+        when(mockRgistrationCacheRepository.upsert(any(), any())(any())).thenReturn(Future.unit)
+        val resultFuture = service.processReadSubscriptionResponse(mockId, plrReference)
 
-        val resultFuture = service.retrieveSubscriptionInformation(mockId, plrReference)(hc, ec)
-
-        whenReady(resultFuture) { resultJson =>
-          (resultJson \ "error").as[String] must include(expectedErrorMessage)
-          assert(plrReferenceCaptor.getValue == plrReference)
-        }
+        resultFuture.futureValue mustEqual Done
       }
     }
 
-    "handle external connector failure" in new Setup {
+    "throw exception if no valid json is received from ETMP" in new Setup {
       forAll(arbMockId.arbitrary, arbPlrReference.arbitrary) { (mockId: String, mockPlrReference: String) =>
-        when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.failed(new Exception("Mock failure")))
+        when(
+          mockSubscriptionConnector
+            .getSubscriptionInformation(any())(any(), any())
+        ).thenReturn(Future.successful(HttpResponse(status = OK, body = Json.obj("something" -> "anotherThing").toString())))
 
-        val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference)
+        val resultFuture = service.processReadSubscriptionResponse(mockId, mockPlrReference)
 
-        whenReady(resultFuture) { json =>
-          (json \ "error").as[String] mustBe "Mock failure"
-        }
+        resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.JsResultError
       }
     }
-
-    "handle data transformation error" in new Setup {
-
-      val malformedHttpResponse = HttpResponse(status = OK, body = "{\"malformed\": \"data\"}")
-
-      forAll(arbMockId.arbitrary, arbPlrReference.arbitrary) { (mockId: String, mockPlrReference: String) =>
-        when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
-          .thenReturn(Future.successful(malformedHttpResponse))
-
-        val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference)
-
-        whenReady(resultFuture) { result =>
-          result shouldBe Json.obj("error" -> "Invalid subscription response format")
-
-        }
-      }
-    }
-
-    "handle database upsert failure" in new Setup {
-      forAll(arbMockId.arbitrary, arbitrary[ReadSubscriptionRequestParameters], arbitrary[SubscriptionResponse]) {
-        (mockId, mockPlrReference, mockSubscriptionResponse) =>
-          val expectedHttpResponse = HttpResponse(status = OK, body = Json.toJson(mockSubscriptionResponse).toString())
-
-          when(mockSubscriptionConnector.getSubscriptionInformation(any[String])(any[HeaderCarrier], any[ExecutionContext]))
-            .thenReturn(Future.successful(expectedHttpResponse))
-
-          when(mockRgistrationCacheRepository.upsert(any[String], any[JsValue])(any[ExecutionContext]))
-            .thenReturn(Future.failed(new Exception("DB upsert error")))
-
-          val resultFuture = service.retrieveSubscriptionInformation(mockId, mockPlrReference.plrReference)
-
-          whenReady(resultFuture) { result =>
-            result                         shouldBe a[JsObject]
-            (result \ "error").asOpt[String] should contain("DB upsert error")
-          }
-      }
-    }
-
   }
 
   "amendSubscription" - {
