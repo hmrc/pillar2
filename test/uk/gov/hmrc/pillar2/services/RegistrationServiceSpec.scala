@@ -32,7 +32,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   trait Setup {
     val service =
       new RegistrationService(
-        mockRgistrationCacheRepository,
+        mockRegistrationCacheRepository,
         mockDataSubmissionsConnector,
         mockAuditService
       )

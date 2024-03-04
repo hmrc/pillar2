@@ -18,8 +18,8 @@ package uk.gov.hmrc.pillar2.controllers.stubs
 
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.pillar2.controllers.BasePillar2Controller
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
@@ -29,7 +29,7 @@ class TestController @Inject() (
   repository:                RegistrationCacheRepository,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
-    extends BasePillar2Controller(cc) {
+    extends BackendController(cc) {
 
   def getAllRecords(max: Int): Action[AnyContent] = Action.async {
     repository.getAll(max).map { response =>

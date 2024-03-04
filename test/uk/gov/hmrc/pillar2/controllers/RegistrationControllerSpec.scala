@@ -40,7 +40,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
   trait Setup {
     val controller =
       new RegistrationController(
-        mockRgistrationCacheRepository,
+        mockRegistrationCacheRepository,
         mockDataSubmissionsService,
         mockAuthAction,
         stubControllerComponents()
@@ -52,7 +52,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
     )
     .overrides(
-      bind[RegistrationCacheRepository].toInstance(mockRgistrationCacheRepository),
+      bind[RegistrationCacheRepository].toInstance(mockRegistrationCacheRepository),
       bind[RegistrationService].toInstance(mockDataSubmissionsService),
       bind[AuthConnector].toInstance(mockAuthConnector),
       bind[AuthAction].to[FakeAuthAction]
@@ -66,7 +66,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn OK with valid data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(OK, "Success")
@@ -81,7 +81,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn BAD_REQUEST with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(BAD_REQUEST, "Bad Request")
@@ -96,7 +96,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn NOT_FOUND with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(NOT_FOUND, "Not Found")
@@ -110,7 +110,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     }
     "rerutn FORBIDDEN with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(FORBIDDEN, "Forbidden")
@@ -125,7 +125,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR")
@@ -144,7 +144,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn OK with valid data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(OK, "Success")
@@ -159,7 +159,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn BAD_REQUEST with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(BAD_REQUEST, "Bad Request")
@@ -174,7 +174,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn NOT_FOUND with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(NOT_FOUND, "Not Found")
@@ -188,7 +188,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     }
     "rerutn FORBIDDEN with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(FORBIDDEN, "Forbidden")
@@ -203,7 +203,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRgistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any())(any())).thenReturn(
           Future.successful(
             HttpResponse.apply(INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR")

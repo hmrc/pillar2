@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import akka.Done
 import play.api.Logging
 import play.api.http.Status._
-import play.api.libs.json.Writes._
 import play.api.libs.json._
-import uk.gov.hmrc.http.{BadRequestException, HeaderCarrier, HttpResponse, NotFoundException, UpstreamErrorResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, UpstreamErrorResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.grs.EntityType
@@ -29,11 +29,10 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, JsResultError, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
-import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -41,7 +40,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
   repository:             RegistrationCacheRepository,
   subscriptionConnectors: SubscriptionConnector,
-  countryOptions:         CountryOptions,
   auditService:           AuditService
 )(implicit
   ec: ExecutionContext
@@ -218,8 +216,7 @@ class SubscriptionService @Inject() (
   }
 
   private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(implicit
-    hc:                                                  HeaderCarrier,
-    ec:                                                  ExecutionContext
+    hc:                                                  HeaderCarrier
   ): Future[HttpResponse] = {
     val response = subscriptionConnectors
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
@@ -381,48 +378,23 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  def processSuccessfulResponse(
+  private def process(
     id:           String,
     plrReference: String,
     httpResponse: HttpResponse
   )(implicit
-    ec:     ExecutionContext,
-    hc:     HeaderCarrier,
-    reads:  Reads[SubscriptionResponse],
-    writes: Writes[UserAnswers]
-  ): Future[JsValue] = {
-    logger.info(
-      s"SubscriptionService - ReadSubscription coming from Etmp - ${Json.prettyPrint(httpResponse.json)}"
-    )
+    hc:    HeaderCarrier,
+    reads: Reads[SubscriptionResponse]
+  ): Future[Done] =
     httpResponse.json.validate[SubscriptionResponse] match {
       case JsSuccess(subscriptionResponse, _) =>
         auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
-        extractSubscriptionData(id, plrReference, subscriptionResponse.success)
-          .flatMap {
-            case jsValue: JsObject =>
-              jsValue.validate[UserAnswers] match {
-                case JsSuccess(userAnswers, _) =>
-                  repository.upsert(id, userAnswers.data).map { _ =>
-                    logger.info(s"Upserted user answers for id: $id")
-                    userAnswers.data
-                  }
-                case JsError(errors) =>
-                  val errorDetails = errors
-                    .map { case (path, validationErrors) =>
-                      s"$path: ${validationErrors.mkString(", ")}"
-                    }
-                    .mkString("; ")
-                  logger.error(s"Failed to convert json to UserAnswers: $errorDetails")
-                  Future.failed(new Exception("Invalid user answers data"))
-              }
-            case _ =>
-              Future.failed(new Exception("Invalid data type received from extractSubscriptionData"))
+        extractSubscriptionData(id, plrReference, subscriptionResponse.success).flatMap { success =>
+          repository.upsert(success.id, success.data).map { _ =>
+            logger.info(s"Upserted user answers for id: $id")
+            Done
           }
-          .recoverWith { case ex =>
-            logger.error(s"Error processing successful response for id: $id", ex)
-            Future.successful(Json.obj("error" -> ex.getMessage))
-          }
-
+        }
       case JsError(errors) =>
         val errorDetails = errors
           .map { case (path, validationErrors) =>
@@ -430,44 +402,19 @@ class SubscriptionService @Inject() (
           }
           .mkString("; ")
         logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
-        Future.successful(Json.obj("error" -> "Invalid subscription response format"))
+        Future.failed(JsResultError)
     }
-  }
 
-  def retrieveSubscriptionInformation(id: String, plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[JsValue] =
-    subscriptionConnectors
-      .getSubscriptionInformation(plrReference)
-      .flatMap { httpResponse =>
-        httpResponse.status match {
-          case OK => processSuccessfulResponse(id, plrReference, httpResponse)
-          case _  => processErrorResponse(plrReference, httpResponse)
-        }
-      }
-      .recover { case e: Exception =>
-        logger.error(s"An error occurred while retrieving subscription information", e)
-        Json.obj("error" -> e.getMessage)
-      }
-
-  private def processErrorResponse(plrReference: String, httpResponse: HttpResponse)(implicit
-    hc:                                          HeaderCarrier,
-    ec:                                          ExecutionContext
-  ): Future[JsValue] = {
-    val status = httpResponse.status
-    //TODO failure needs to be audited as well. we dont have approval yet.
-    val errorMessage = status match {
-      case NOT_FOUND | BAD_REQUEST | UNPROCESSABLE_ENTITY | INTERNAL_SERVER_ERROR | SERVICE_UNAVAILABLE | CONFLICT | SERVICE_UNAVAILABLE =>
-        s"Error response from service with status: $status and body: ${httpResponse.json}"
-      case _ =>
-        s"Unexpected response status from service: $status with body: ${httpResponse.json}"
-    }
-    logger.error(errorMessage)
-    Future.successful(Json.obj("error" -> errorMessage))
-  }
+  def processReadSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+    for {
+      response <- subscriptionConnectors.getSubscriptionInformation(plrReference)
+      _        <- process(id, plrReference, response)
+    } yield response
 
   def getNonEmptyOrNA(value: String): String =
     if (value.nonEmpty) value else "N/A"
 
-  private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[JsValue] = {
+  private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[UserAnswers] = {
 
     val dashboardInfo = DashboardInfo(
       organisationName = sub.upeDetails.organisationName,
@@ -556,7 +503,7 @@ class SubscriptionService @Inject() (
     )
     // TODO - this need refactoring. Best to save at backend only
     val userAnswers = UserAnswers(id, Json.toJsObject(subscriptionLocalData))
-    Future.successful(Json.toJson(userAnswers))
+    Future.successful(userAnswers)
 
   }
 
@@ -626,7 +573,7 @@ class SubscriptionService @Inject() (
     }).getOrElse(throw new Exception("Expected data missing from user answers"))
   }
 
-  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] =
+  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     if (userAnswers == null) {
       logger.error("UserAnswers is null")
       Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))

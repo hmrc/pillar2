@@ -17,13 +17,15 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.joda.time.DateTime
+import play.api.Logging
 import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,7 +36,8 @@ class RegistrationCacheController @Inject() (
   authenticate:              AuthAction,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
-    extends BasePillar2Controller(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def save(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     request.body.asJson.map { jsValue =>
