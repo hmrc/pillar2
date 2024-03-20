@@ -16,17 +16,18 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import play.api.Logging
 import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -39,7 +40,8 @@ class RegistrationController @Inject() (
   authenticate:              AuthAction,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
-    extends BasePillar2Controller(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)

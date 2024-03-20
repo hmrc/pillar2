@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import play.api.Logger
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import play.api.{Logger, Logging}
+import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, ReadSubscriptionRequestParameters, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
-import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
+import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
@@ -34,18 +34,19 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionController @Inject() (
   repository:                RegistrationCacheRepository,
   subscriptionService:       SubscriptionService,
+  subscriptionConnectors:    SubscriptionConnector,
   authenticate:              AuthAction,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
-    extends BasePillar2Controller(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def createSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
     val subscriptionParameters: JsResult[SubscriptionRequestParameters] =
       request.body.validate[SubscriptionRequestParameters]
     subscriptionParameters.fold(
       invalid = error => {
-        logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - SubscriptionController - createSubscription called $error")
+        logger.info(s"SubscriptionController - createSubscription called $error")
 
         Future.successful(
           BadRequest("Subscription parameter is invalid")
@@ -65,32 +66,13 @@ class SubscriptionController @Inject() (
     }
 
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - readSubscription called with id: $id, plrReference: $plrReference")
-    val paramsJson = Json.obj("id" -> id, "plrReference" -> plrReference)
-
-    paramsJson.validate[ReadSubscriptionRequestParameters] match {
-      case JsSuccess(validParams, _) =>
-        logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling subscriptionService with valid parameters: $validParams")
-        try subscriptionService
-          .retrieveSubscriptionInformation(validParams.id, validParams.plrReference)
-          .map { subscriptionResponse =>
-            logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Received response: $subscriptionResponse")
-            Ok(Json.toJson(subscriptionResponse))
-          }
-          .recover { case e: Exception =>
-            logger.error(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Error retrieving subscription information", e)
-            InternalServerError(Json.obj("error" -> "Error retrieving subscription information"))
-          } catch {
-          case e: Exception =>
-            logger.error(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Exception thrown before Future was created", e)
-            Future.successful(InternalServerError(Json.obj("error" -> "Exception thrown before Future was created")))
-        }
-
-      case JsError(errors) =>
-        logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Validation failed for parameters: $paramsJson with errors: $errors")
-        Future.successful(BadRequest(Json.obj("error" -> "Invalid parameters")))
-    }
+    (for {
+      response <- subscriptionService.processReadSubscriptionResponse(id, plrReference)
+    } yield convertToResult(response)(implicitly[Logger](logger)))
+      .recover { case e: Exception =>
+        logger.error(s"an exception of type $e with message ${e.getMessage} occurred")
+        InternalServerError("Internal server error occurred")
+      }
   }
 
   def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
@@ -98,7 +80,7 @@ class SubscriptionController @Inject() (
 
     subscriptionParameters.fold(
       invalid = error => {
-        logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - SubscriptionController - amendSubscription called with error: $error")
+        logger.info(s"SubscriptionController - amendSubscription called with error: $error")
         Future.successful(BadRequest("Amend Subscription parameter is invalid"))
       },
       valid = subs =>
