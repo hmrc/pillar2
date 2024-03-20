@@ -18,10 +18,12 @@ package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
 import play.api.Logger
-import play.api.libs.json.{Json, Writes}
+import play.api.libs.json.{JsSuccess, Json, Writes}
+import uk.gov.hmrc.http.HttpReads.is2xx
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.InternalFailure
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
@@ -46,17 +48,16 @@ class SubscriptionConnector @Inject() (
     )(wts = RequestDetail.format, rds = httpReads, hc = hc, ec = ec)
   }
 
-  def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SubscriptionResponse] = {
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference"
     http
       .GET[HttpResponse](url, headers = extraHeaders(config, serviceName))(httpReads, hc, ec)
-      .map { response =>
-        response
-      }
-      .recover { case ex: Throwable =>
-        logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Error while fetching subscription information: ${ex.getMessage}")
-        throw ex
+      .flatMap { response=>
+        response.json.validate[SubscriptionResponse] match {
+                case JsSuccess(subscriptionResponse, _) if is2xx(response.status) => Future.successful(subscriptionResponse)
+                case _ => Future.failed(InternalFailure)
+        }
       }
   }
 

@@ -65,11 +65,11 @@ class SubscriptionController @Inject() (
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
     }
 
-  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     (for {
-      response <- subscriptionService.processReadSubscriptionResponse(id, plrReference)
+      response <- subscriptionService.processReadSubscriptionResponse(plrReference)
     } yield convertToResult(response)(implicitly[Logger](logger)))
-      .recover { case e: Exception =>
+      .recover { case e: Throwable =>
         logger.error(s"an exception of type $e with message ${e.getMessage} occurred")
         InternalServerError("Internal server error occurred")
       }
