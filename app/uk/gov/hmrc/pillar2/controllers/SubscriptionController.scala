@@ -19,7 +19,6 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Logger, Logging}
-import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, SubscriptionRequestParameters}
@@ -34,7 +33,6 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionController @Inject() (
   repository:                RegistrationCacheRepository,
   subscriptionService:       SubscriptionService,
-  subscriptionConnectors:    SubscriptionConnector,
   authenticate:              AuthAction,
   cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
@@ -66,13 +64,10 @@ class SubscriptionController @Inject() (
     }
 
   def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-    (for {
-      response <- subscriptionService.processReadSubscriptionResponse(plrReference)
-    } yield convertToResult(response)(implicitly[Logger](logger)))
-      .recover { case e: Throwable =>
-        logger.error(s"an exception of type $e with message ${e.getMessage} occurred")
-        InternalServerError("Internal server error occurred")
-      }
+    subscriptionService.processReadSubscriptionResponse(plrReference).map { subData =>
+      Ok(Json.toJson(subData))
+    }
+
   }
 
   def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>

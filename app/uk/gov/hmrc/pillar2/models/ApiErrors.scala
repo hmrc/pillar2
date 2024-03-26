@@ -19,4 +19,4 @@ package uk.gov.hmrc.pillar2.models
 trait ApiErrors extends Throwable
 
 case object JsResultError extends ApiErrors
-case object InternalFailure extends ApiErrors
+case object NonOkResponse extends ApiErrors

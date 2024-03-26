@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import akka.Done
 import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json._
@@ -29,7 +28,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodAmend, JsResultError, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
@@ -378,13 +377,11 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-
   def processReadSubscriptionResponse(plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
       subscriptionResponse <- subscriptionConnectors.getSubscriptionInformation(plrReference)
-      _ <-   auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
+      _                    <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
     } yield subscriptionResponse
-
 
   private def createAmendSubscriptionParameters(userAnswers: UserAnswers): AmendSubscriptionSuccess = {
     logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
