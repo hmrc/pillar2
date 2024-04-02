@@ -16,22 +16,17 @@
 
 package uk.gov.hmrc.pillar2.generators
 
-import org.joda.time.LocalDateTime
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, JsValue, Json}
+import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
-import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, SubscriptionAddress, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
-import org.scalacheck.{Arbitrary, Gen}
-
-import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, SubscriptionSuccessResponse, SuccessResponse, UpeRegistration}
-
-import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 
 import java.time.{Instant, LocalDate}
 
@@ -799,22 +794,6 @@ trait ModelGenerators {
     arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput(_))
   }
 
-  implicit val arbitraryExtraSubscription: Arbitrary[ExtraSubscription] = Arbitrary {
-    for {
-      formBundleNumber <- arbitrary[String]
-      crn              <- arbitrary[String]
-      utr              <- arbitrary[String]
-      safeId           <- arbitrary[String]
-      plrReference     <- arbitrary[String]
-    } yield ExtraSubscription(
-      Some(formBundleNumber),
-      Some(crn),
-      Some(utr),
-      Some(safeId),
-      Some(plrReference)
-    )
-  }
-
   val arbitraryAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
       plrRef               <- stringsWithMaxLength(20)
@@ -829,9 +808,8 @@ trait ModelGenerators {
       registrationDate     <- arbitrary[LocalDate]
       subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
 
-      filingMember      <- arbitraryFilingMemberAmendDetails.arbitrary
-      acountPeriod      <- arbitraryAccountingPeriod.arbitrary
-      extraSubscription <- arbitraryExtraSubscription.arbitrary
+      filingMember <- arbitraryFilingMemberAmendDetails.arbitrary
+      acountPeriod <- arbitraryAccountingPeriod.arbitrary
       data = Json.obj(
                "plrReference"                -> plrRef,
                "subMneOrDomestic"            -> "ukAndOther",
@@ -849,7 +827,6 @@ trait ModelGenerators {
                "subPrimaryPhonePreference"   -> true,
                "subSecondaryPhonePreference" -> true,
                "subAddSecondaryContact"      -> true,
-               "subExtraSubscription"        -> extraSubscription,
                "subRegisteredAddress"        -> subRegisteredAddress,
                "NominateFilingMember"        -> true
              )

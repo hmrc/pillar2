@@ -14,3 +14,9 @@ POST          /fm/registration/:id                                              
 POST          /subscription/create-subscription                                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
 GET           /subscription/read-subscription/:id/:plrReference                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(id: String, plrReference: String)
 PUT           /subscription/amend-subscription                                      uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription
+
+
+GET          /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.get(id: String)
+POST         /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)
+DELETE       /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.remove(id: String)
+

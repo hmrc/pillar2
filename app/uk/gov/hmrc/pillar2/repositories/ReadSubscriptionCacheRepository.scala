@@ -36,13 +36,13 @@ import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class RegistrationCacheRepository @Inject() (
+class ReadSubscriptionCacheRepository @Inject() (
   mongoComponent: MongoComponent,
   config:         AppConfig
 )(implicit
   ec: ExecutionContext
 ) extends PlayMongoRepository[RegistrationDataEntry](
-      collectionName = "user-answers-records",
+      collectionName = "read-subscription-records",
       mongoComponent = mongoComponent,
       domainFormat = RegistrationDataEntryFormats.format,
       extraCodecs = Seq(
@@ -53,7 +53,7 @@ class RegistrationCacheRepository @Inject() (
           Indexes.ascending(lastUpdatedKey),
           IndexOptions()
             .name("lastUpdatedIndex")
-            .expireAfter(config.defaultDataExpireInSeconds, TimeUnit.SECONDS)
+            .expireAfter(900, TimeUnit.SECONDS)
         ),
         IndexModel(
           Indexes.ascending("id"),
@@ -118,37 +118,10 @@ class RegistrationCacheRepository @Inject() (
       }
     }
 
-  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] =
-    collection.find(Filters.equal(idField, id)).headOption().map {
-      _.map { dataEntry =>
-        dataEntry.lastUpdated
-      }
-    }
-
   def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] =
     collection.deleteOne(Filters.equal(idField, id)).toFuture().map { result =>
       logger.info(s"Removing row from collection $collectionName externalId:$id")
       result.wasAcknowledged
     }
 
-  def getAll(max: Int)(implicit ec: ExecutionContext): Future[Seq[JsValue]] =
-    (if (cryptoToggle) {
-       collection
-         .find()
-         .map { dataEntry =>
-           Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
-         }
-     } else {
-       collection
-         .find[JsonDataEntry]()
-         .map { dataEntry =>
-           dataEntry.data
-         }
-     }).toFuture()
-
-  def clearAllData()(implicit ec: ExecutionContext): Future[Boolean] =
-    collection.deleteMany(BsonDocument()).toFuture().map { result =>
-      logger.info(s"Removing all the rows from collection $collectionName")
-      result.wasAcknowledged
-    }
 }

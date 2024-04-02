@@ -28,9 +28,9 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
-import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, JsResultError, NonUKAddress, UserAnswers}
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
@@ -38,9 +38,9 @@ import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
-  repository:             RegistrationCacheRepository,
-  subscriptionConnectors: SubscriptionConnector,
-  auditService:           AuditService
+  repository:            ReadSubscriptionCacheRepository,
+  subscriptionConnector: SubscriptionConnector,
+  auditService:          AuditService
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
@@ -66,9 +66,6 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info(
-                  s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with both upeRegisteredInUKId and fmRegisteredInUKId"
-                )
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -92,9 +89,6 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info(
-                  s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest without upeRegisteredInUKId and fmRegisteredInUKId"
-                )
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -118,7 +112,6 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -142,7 +135,6 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with fmRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -156,7 +148,6 @@ class SubscriptionService @Inject() (
               }
           }
         }.getOrElse {
-          logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Subscription Information Missing")
           subscriptionError
         }
 
@@ -174,7 +165,6 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest with upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
                   getAccountingPeriod(accountingPeriod),
@@ -196,7 +186,6 @@ class SubscriptionService @Inject() (
                 primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
               } yield {
-                logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling sendSubmissionRequest without upeRegisteredInUKId")
                 val subscriptionRequest = RequestDetail(
                   getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
                   getAccountingPeriod(accountingPeriod),
@@ -209,7 +198,6 @@ class SubscriptionService @Inject() (
               }
           }
         }.getOrElse {
-          logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Subscription Information Missing")
           subscriptionError
         }
     }
@@ -218,7 +206,7 @@ class SubscriptionService @Inject() (
   private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(implicit
     hc:                                                  HeaderCarrier
   ): Future[HttpResponse] = {
-    val response = subscriptionConnectors
+    val response = subscriptionConnector
       .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
     response.map { res =>
       val resReceived = AuditResponseReceived(res.status, res.json)
@@ -358,7 +346,6 @@ class SubscriptionService @Inject() (
       case Some(fmSafeId) =>
         nominateFm match {
           case true =>
-            logger.info("Calling FilingMemberDetails with fmSafeId and fmNameRegistration")
             Some(FilingMemberDetails(fmSafeId, None, None, fmNameRegistration))
           case false => None
         }
@@ -378,93 +365,29 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  private def process(
-    id:           String,
-    plrReference: String,
-    httpResponse: HttpResponse
-  )(implicit
-    hc:    HeaderCarrier,
-    reads: Reads[SubscriptionResponse]
-  ): Future[Done] =
-    httpResponse.json.validate[SubscriptionResponse] match {
-      case JsSuccess(subscriptionResponse, _) =>
-        auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
-        extractSubscriptionData(id, plrReference, subscriptionResponse.success).flatMap { success =>
-          repository.upsert(success.id, success.data).map { _ =>
-            logger.info(s"Upserted user answers for id: $id")
-            Done
-          }
-        }
-      case JsError(errors) =>
-        val errorDetails = errors
-          .map { case (path, validationErrors) =>
-            s"$path: ${validationErrors.mkString(", ")}"
-          }
-          .mkString("; ")
-        logger.error(s"Failed to validate SubscriptionResponse: $errorDetails")
-        Future.failed(JsResultError)
-    }
-
-  def processReadSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[Done] =
     for {
-      response <- subscriptionConnectors.getSubscriptionInformation(plrReference)
-      _        <- process(id, plrReference, response)
-    } yield response
+      subscriptionResponse <- subscriptionConnector.getSubscriptionInformation(plrReference)
+      _                    <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
+      dataToStore = createCachedObject(subscriptionResponse.success)
+      _ <- repository.upsert(id, Json.toJson(dataToStore))
+    } yield Done
 
-  def getNonEmptyOrNA(value: String): String =
-    if (value.nonEmpty) value else "N/A"
-
-  private def extractSubscriptionData(id: String, plrReference: String, sub: SubscriptionSuccess): Future[UserAnswers] = {
-
-    val dashboardInfo = DashboardInfo(
-      organisationName = sub.upeDetails.organisationName,
-      registrationDate = sub.upeDetails.registrationDate
-    )
+  private def createCachedObject(sub: SubscriptionSuccess): ReadSubscriptionCachedData = {
 
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
-      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty).orElse(Some("N/A")),
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3 match {
-        case Some(str) if str.nonEmpty => str
-        case _                         => "N/A"
-      },
-      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty).orElse(Some("N/A")),
-      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty).orElse(Some("N/A")),
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty),
       countryCode = sub.upeCorrespAddressDetails.countryCode
     )
-
-    val crn    = sub.upeDetails.customerIdentification1
-    val utr    = sub.upeDetails.customerIdentification2
-    val safeId = sub.upeDetails.safeId
-    //TODO - This needs refactoring
-    val extraSubscription = ExtraSubscription(
-      formBundleNumber = Some(getNonEmptyOrNA(sub.formBundleNumber)),
-      crn = crn.map(getNonEmptyOrNA),
-      utr = utr.map(getNonEmptyOrNA),
-      safeId = safeId.map(getNonEmptyOrNA)
-    )
-
-    val filingMemberDetails = sub.filingMemberDetails.map { fMember =>
-      FilingMemberDetails(
-        safeId = fMember.safeId,
-        customerIdentification1 = fMember.customerIdentification1,
-        customerIdentification2 = fMember.customerIdentification2,
-        organisationName = fMember.organisationName
-      )
-    }
-
     val accountingPeriod = AccountingPeriod(
       startDate = sub.accountingPeriod.startDate,
       endDate = sub.accountingPeriod.endDate,
       dueDate = sub.accountingPeriod.dueDate
     )
-
-    val accountStatus = sub.accountStatus.map { acStatus =>
-      AccountStatus(
-        inactive = acStatus.inactive
-      )
-    }
-
     val primaryHasTelephone: Boolean = sub.primaryContactDetails.telephone.isDefined
 
     val secContactTel: (Boolean, Boolean) = sub.secondaryContactDetails
@@ -479,10 +402,8 @@ class SubscriptionService @Inject() (
       }
       .getOrElse(None, None, None)
 
-    val subscriptionLocalData = SubscriptionLocalData(
-      plrReference = plrReference,
+    ReadSubscriptionCachedData(
       subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
-      upeNameRegistration = sub.upeDetails.organisationName,
       subPrimaryContactName = sub.primaryContactDetails.name,
       subPrimaryEmail = sub.primaryContactDetails.emailAddress,
       subPrimaryCapturePhone = sub.primaryContactDetails.telephone,
@@ -491,20 +412,10 @@ class SubscriptionService @Inject() (
       subAddSecondaryContact = secContactTel._2,
       subSecondaryEmail = secDetails._3,
       subSecondaryCapturePhone = secDetails._2,
-      subSecondaryPhonePreference = secContactTel._1,
+      subSecondaryPhonePreference = Some(secContactTel._1),
       subRegisteredAddress = nonUKAddress,
-      subFilingMemberDetails = filingMemberDetails,
-      subAccountingPeriod = accountingPeriod,
-      subAccountStatus = accountStatus,
-      NominateFilingMember = sub.upeDetails.filingMember,
-      subExtraSubscription = extraSubscription,
-      subRegistrationDate = sub.upeDetails.registrationDate,
-      fmDashboard = dashboardInfo
+      subAccountingPeriod = accountingPeriod
     )
-    // TODO - this need refactoring. Best to save at backend only
-    val userAnswers = UserAnswers(id, Json.toJsObject(subscriptionLocalData))
-    Future.successful(userAnswers)
-
   }
 
   private def createAmendSubscriptionParameters(userAnswers: UserAnswers): AmendSubscriptionSuccess = {
@@ -581,7 +492,7 @@ class SubscriptionService @Inject() (
       val amendSub = createAmendSubscriptionParameters(userAnswers)
       logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
 
-      subscriptionConnectors
+      subscriptionConnector
         .amendSubscriptionInformation(amendSub)
         .flatMap { response =>
           response.status match {

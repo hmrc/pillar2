@@ -66,13 +66,9 @@ class SubscriptionController @Inject() (
     }
 
   def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-    (for {
-      response <- subscriptionService.processReadSubscriptionResponse(id, plrReference)
-    } yield convertToResult(response)(implicitly[Logger](logger)))
-      .recover { case e: Exception =>
-        logger.error(s"an exception of type $e with message ${e.getMessage} occurred")
-        InternalServerError("Internal server error occurred")
-      }
+    for {
+      _ <- subscriptionService.storeSubscriptionResponse(id, plrReference)
+    } yield Ok
   }
 
   def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>

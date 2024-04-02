@@ -17,34 +17,24 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress}
 
-import java.time.LocalDate
-import uk.gov.hmrc.pillar2.models.subscription.{ExtraSubscription, MneOrDomestic}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress}
-
-case class SubscriptionLocalData(
-  plrReference:                String,
+case class ReadSubscriptionCachedData(
   subMneOrDomestic:            MneOrDomestic,
-  upeNameRegistration:         String,
+  subAccountingPeriod:         AccountingPeriod,
   subPrimaryContactName:       String,
   subPrimaryEmail:             String,
-  subPrimaryCapturePhone:      Option[String],
   subPrimaryPhonePreference:   Boolean,
-  subSecondaryContactName:     Option[String],
+  subPrimaryCapturePhone:      Option[String],
   subAddSecondaryContact:      Boolean,
+  subSecondaryContactName:     Option[String],
   subSecondaryEmail:           Option[String],
   subSecondaryCapturePhone:    Option[String],
-  subSecondaryPhonePreference: Boolean,
-  subRegisteredAddress:        NonUKAddress,
-  subFilingMemberDetails:      Option[FilingMemberDetails],
-  subAccountingPeriod:         AccountingPeriod,
-  subAccountStatus:            Option[AccountStatus],
-  NominateFilingMember:        Boolean,
-  subExtraSubscription:        ExtraSubscription,
-  subRegistrationDate:         LocalDate,
-  fmDashboard:                 DashboardInfo
+  subSecondaryPhonePreference: Option[Boolean],
+  subRegisteredAddress:        NonUKAddress
 )
 
-object SubscriptionLocalData {
-  implicit val format: OFormat[SubscriptionLocalData] = Json.format[SubscriptionLocalData]
+object ReadSubscriptionCachedData {
+  implicit val format: OFormat[ReadSubscriptionCachedData] = Json.format[ReadSubscriptionCachedData]
 }
