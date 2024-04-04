@@ -65,14 +65,14 @@ class SubscriptionController @Inject() (
 
   def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     for {
-      _ <- subscriptionService.storeSubscriptionResponse(id, plrReference)
-    } yield Ok
+      response <- subscriptionService.storeSubscriptionResponse(id, plrReference)
+    } yield Ok(Json.toJson(response))
   }
 
   def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     for {
-      data <- subscriptionService.readSubscriptionData(plrReference)
-    } yield Ok(Json.toJson(data))
+      response <- subscriptionService.readSubscriptionData(plrReference)
+    } yield Ok(Json.toJson(response))
   }
 
   def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { implicit request =>

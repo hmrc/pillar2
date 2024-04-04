@@ -364,13 +364,13 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[Done] =
+  def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
       subscriptionResponse <- subscriptionConnector.getSubscriptionInformation(plrReference)
       _                    <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
       dataToStore = createCachedObject(subscriptionResponse.success)
       _ <- repository.upsert(id, Json.toJson(dataToStore))
-    } yield Done
+    } yield subscriptionResponse
 
   def readSubscriptionData(plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
