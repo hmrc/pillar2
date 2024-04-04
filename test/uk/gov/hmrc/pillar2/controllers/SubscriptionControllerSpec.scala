@@ -18,16 +18,14 @@ package uk.gov.hmrc.pillar2.controllers
 
 import akka.Done
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.i18n.Lang.logger
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc.{AnyContentAsJson, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -39,28 +37,16 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.hods.{ErrorDetail, ErrorDetails, SourceFaultDetail}
-import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, MneOrDomestic, SubscriptionRequestParameters}
+import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.Future
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
 
-  trait Setup {
-    val controller =
-      new SubscriptionController(
-        mockRegistrationCacheRepository,
-        mockSubscriptionService,
-        mockAuthAction,
-        stubControllerComponents()
-      )
-  }
-
-  val jsData = Json.parse("""{"value": "field"}""")
+  val jsData: JsValue = Json.parse("""{"value": "field"}""")
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
@@ -88,7 +74,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
   "SubscriptionController" - {
 
     "createSubscription" - {
-      "should return BAD_REQUEST when subscriptionRequestParameter is invalid" in new Setup {
+      "should return BAD_REQUEST when subscriptionRequestParameter is invalid" in {
 
         val request: FakeRequest[AnyContentAsJson] =
           FakeRequest(
@@ -301,14 +287,17 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     }
 
     "readAndCacheSubscription" - {
-      "return ok if the connector returns successful" in {
-        when(mockSubscriptionService.storeSubscriptionResponse(any(), any())(any())).thenReturn(Future.successful(Done))
-        val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription("id", "pillar2Id").url)
-        val result  = route(application, request).value
-        status(result) mustEqual OK
+      "return ok with the response if the connector returns successful" in {
+        forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (id, plrReference, response) =>
+          when(mockSubscriptionService.storeSubscriptionResponse(any(), any())(any())).thenReturn(Future.successful(response))
+          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription(id, plrReference).url)
+          val result  = route(application, request).value
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response)
+        }
       }
 
-      "return UnexpectedResponse if connector fails" in {
+      "return UnexpectedResponse if connector returns non-OK response" in {
         when(mockSubscriptionService.storeSubscriptionResponse(any(), any())(any())).thenReturn(Future.failed(UnexpectedResponse))
         val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription("id", "pillar2Id").url)
         val result  = route(application, request).value
@@ -337,127 +326,30 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "amendSubscription" - {
 
-      "return OK when valid data is provided" in new Setup {
-        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers =>
-          stubPutResponse(
-            s"/pillar2/subscription",
-            OK
-          )
-          val id = "123"
+      "return OK when valid data is provided" in {
+        forAll(arbMockId.arbitrary, arbitraryAmendSubscriptionSuccess.arbitrary) { (id, amendData) =>
+          when(mockSubscriptionService.sendAmendedData(any(), any())(any())).thenReturn(Future.successful(Done))
 
-          val jsonUpdatedAnswers = Json.toJson(userAnswers)(UserAnswers.format)
-          when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-            .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
-
-          when(mockSubscriptionService.sendAmendedData(any[UserAnswers])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
-
-          val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
+          val requestJson = Json.toJson(amendData)
           val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
             .withJsonBody(requestJson)
-
           val resultFuture = route(application, fakeRequest).value
-
           status(resultFuture) shouldBe OK
-
         }
       }
+      "return bad request if the validation fails on the json payload" in {
+        forAll(arbMockId.arbitrary) { id =>
+          when(mockSubscriptionService.sendAmendedData(any(), any())(any())).thenReturn(Future.successful(Done))
 
-      "handle an invalid JSON format in the request" in new Setup {
-        val userAnswers = UserAnswers(id, Json.obj())
-        val updatedUserAnswers = for {
-          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
-
-          u2 <- u1.set(subAddSecondaryContactId, true)
-        } yield u2
-
-        stubPutResponse(
-          s"/pillar2/subscription",
-          OK
-        )
-        val id = "123"
-
-        updatedUserAnswers match {
-          case Success(updatedAnswers) =>
-            val jsonUpdatedAnswers = Json.toJson(updatedAnswers)(UserAnswers.format)
-            when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-              .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
-
-          case Failure(exception) =>
-            logger.error("Error creating updated UserAnswers", exception)
-        }
-
-        when(mockSubscriptionService.sendAmendedData(any[UserAnswers])(any[HeaderCarrier]))
-          .thenReturn(Future.successful(HttpResponse(400, "Invalid subscription response")))
-
-        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-          .withJsonBody(requestJson)
-
-        val resultFuture = route(application, fakeRequest).value
-
-        status(resultFuture) shouldBe BAD_REQUEST
-      }
-
-      "handle exceptions thrown by the SubscriptionService" in new Setup {
-
-        val id = "123"
-
-        when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-          .thenReturn(Future.successful(None))
-
-        when(mockSubscriptionService.sendAmendedData(any[UserAnswers])(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("Service error")))
-
-        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-          .withJsonBody(requestJson)
-
-        val resultFuture = route(application, fakeRequest).value
-
-        status(resultFuture) mustBe INTERNAL_SERVER_ERROR
-      }
-
-      "return BadRequest when given invalid subscription parameters" in new Setup {
-        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers =>
-          stubPutResponse(
-            s"/pillar2/subscription",
-            OK
-          )
-          val id = "123"
-
-          val jsonUpdatedAnswers = Json.toJson(userAnswers)(UserAnswers.format)
-          when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-            .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
-
-          when(mockSubscriptionService.sendAmendedData(any[UserAnswers])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
-
-          val invalidJson = Json.obj("invalidField" -> "invalidValue")
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-            .withJsonBody(invalidJson)
-
+          val requestJson = Json.obj("invalid" -> "payload")
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
+            .withJsonBody(requestJson)
           val resultFuture = route(application, fakeRequest).value
-
-          status(resultFuture) mustBe BAD_REQUEST
-          contentAsString(resultFuture) must include("Amend Subscription parameter is invalid")
-        }
-      }
-
-      "fail with IllegalArgumentException when UserAnswers is null" in {
-        val id = "123"
-
-        when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-          .thenReturn(Future.successful(None))
-
-        val result = service.sendAmendedData(null)
-
-        whenReady(result.failed, timeout(Span(5, Seconds)), interval(Span(500, Millis))) { e =>
-          e mustBe a[IllegalArgumentException]
-          e.getMessage must include("UserAnswers cannot be null")
+          status(resultFuture) shouldBe BAD_REQUEST
         }
       }
 
     }
+
   }
 }

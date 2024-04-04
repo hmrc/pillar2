@@ -99,7 +99,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         when(mockedCache.upsert(any(), any())(any())).thenReturn(Future.unit)
         val resultFuture = service.storeSubscriptionResponse(mockId, plrReference)
 
-        resultFuture.futureValue mustEqual Done
+        resultFuture.futureValue mustEqual response
       }
     }
 
@@ -132,42 +132,40 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
     }
   }
-  "amendSubscription" - {
-    "process valid UserAnswers and handle successful amendment" in {
+  "sendAmendedData" - {
+    "call amend API and delete cache in case of a successful response" in {
 
       when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
 
-      forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
-        service.sendAmendedData(validUserAnswers).map { response =>
-          response.status mustBe OK
+      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        service.sendAmendedData(id, validAmendObject).map { response =>
+          response mustBe Done
+        }
+      }
+    }
+    "return failure in case of an unusual json response" in {
+
+      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
+        .thenReturn(Future.successful(HttpResponse.apply(OK, None)))
+
+      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        service.sendAmendedData(id, validAmendObject).map { response =>
+          response mustBe uk.gov.hmrc.pillar2.models.JsResultError
         }
       }
     }
 
-    "handle incomplete UserAnswers resulting in no amendment call" in {
+    "return failure in case of a non-200 response" in {
 
       when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
         .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
 
-      forAll(arbitraryIncompleteAmendSubscriptionUserAnswers.arbitrary) { invalidUserAnswers =>
-        service.sendAmendedData(invalidUserAnswers).map { response =>
-          response.status mustBe BAD_REQUEST
+      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        service.sendAmendedData(id, validAmendObject).map { response =>
+          response mustBe uk.gov.hmrc.pillar2.models.UnexpectedResponse
         }
       }
-    }
-
-    "handle failure response from SubscriptionConnector" in {
-
-      when(mockSubscriptionConnector.amendSubscriptionInformation(any())(any(), any()))
-        .thenReturn(Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")))
-
-      forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
-        service.sendAmendedData(validUserAnswers).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-        }
-      }
-
     }
 
   }
