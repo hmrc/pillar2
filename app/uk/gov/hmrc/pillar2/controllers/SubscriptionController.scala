@@ -19,28 +19,22 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Logger, Logging}
-import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
-import uk.gov.hmrc.pillar2.models.{JsResultError, UserAnswers}
-import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess}
-import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
+import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
-import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionController @Inject() (
-                                         userAnswerCache:                RegistrationCacheRepository,
-                                         subscriptionCache:              ReadSubscriptionCacheRepository,
-                                         subscriptionService:       SubscriptionService,
-                                         subscriptionConnector:    SubscriptionConnector,
-                                         authenticate:              AuthAction,
-                                         auditService :            AuditService,
-                                         cc:                        ControllerComponents
+  userAnswerCache:           RegistrationCacheRepository,
+  subscriptionService:       SubscriptionService,
+  authenticate:              AuthAction,
+  cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
@@ -81,22 +75,8 @@ class SubscriptionController @Inject() (
     } yield Ok(Json.toJson(data))
   }
 
-  def amendSubscription(id:String) : Action[JsValue] = authenticate(parse.json).async { implicit request =>
-    val amendParameters: JsResult[AmendSubscriptionSuccess] = request.body.validate[AmendSubscriptionSuccess]
-    amendParameters.fold(
-      invalid = error => {
-        logger.info(s"invalid amend subscription payload passed to the BE $error")
-
-        Future.successful(
-          BadRequest("Amend Subscription parameter is invalid")
-        )
-      },
-      valid = subs =>
-        for {
-          _ <- subscriptionService.sendAmendedData(id, subs)
-        }yield Ok
-    )
+  def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { implicit request =>
+    subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
   }
-
 
 }

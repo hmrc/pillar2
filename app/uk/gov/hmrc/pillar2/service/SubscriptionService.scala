@@ -423,27 +423,26 @@ class SubscriptionService @Inject() (
     )
   }
 
-  def sendAmendedData(id :String, amendData: AmendSubscriptionSuccess)(implicit hc: HeaderCarrier): Future[Done] ={
-      subscriptionConnector.amendSubscriptionInformation(amendData).flatMap { response =>
-          if (response.status == 200){
-              auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
-              response.json.validate[AmendResponse] match {
-                case JsSuccess(result, _) =>
-                  logger.info(
-                    s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
-                  )
-                  repository.remove(id)
-                  Future.successful(Done)
-                case _ => Future.failed(JsResultError)
-              }}
-            else{
-              logger.info(
-                s"Unsuccessful response received for amend subscription with ${response.status} status and body: ${response.body} "
-              )
-              auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
-              Future.failed(UnexpectedResponse)
-            }}
+  def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(implicit hc: HeaderCarrier): Future[Done] =
+    subscriptionConnector.amendSubscriptionInformation(amendData).flatMap { response =>
+      if (response.status == 200) {
+        auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
+        response.json.validate[AmendResponse] match {
+          case JsSuccess(result, _) =>
+            logger.info(
+              s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
+            )
+            repository.remove(id)
+            Future.successful(Done)
+          case _ => Future.failed(JsResultError)
         }
-
+      } else {
+        logger.info(
+          s"Unsuccessful response received for amend subscription with ${response.status} status and body: ${response.body} "
+        )
+        auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
+        Future.failed(UnexpectedResponse)
+      }
+    }
 
 }

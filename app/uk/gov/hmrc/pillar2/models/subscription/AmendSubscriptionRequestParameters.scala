@@ -20,7 +20,7 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
 
 case class AmendSubscriptionRequestParameters(
-  id: String,
+  id:        String,
   amendData: AmendSubscriptionSuccess
 )
 object AmendSubscriptionRequestParameters {

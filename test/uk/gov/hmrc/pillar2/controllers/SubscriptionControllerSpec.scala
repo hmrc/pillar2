@@ -55,7 +55,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       new SubscriptionController(
         mockRegistrationCacheRepository,
         mockSubscriptionService,
-        mockSubscriptionConnector,
         mockAuthAction,
         stubControllerComponents()
       )
@@ -354,7 +353,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
             .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
 
           val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
             .withJsonBody(requestJson)
 
           val resultFuture = route(application, fakeRequest).value
