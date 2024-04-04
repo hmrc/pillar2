@@ -21,22 +21,26 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Logger, Logging}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
-import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.{JsResultError, UserAnswers}
+import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess}
 import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
 import uk.gov.hmrc.pillar2.service.SubscriptionService
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
+import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionController @Inject() (
-  repository:                RegistrationCacheRepository,
-  subscriptionService:       SubscriptionService,
-  subscriptionConnectors:    SubscriptionConnector,
-  authenticate:              AuthAction,
-  cc:                        ControllerComponents
+                                         userAnswerCache:                RegistrationCacheRepository,
+                                         subscriptionCache:              ReadSubscriptionCacheRepository,
+                                         subscriptionService:       SubscriptionService,
+                                         subscriptionConnector:    SubscriptionConnector,
+                                         authenticate:              AuthAction,
+                                         auditService :            AuditService,
+                                         cc:                        ControllerComponents
 )(implicit executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
@@ -61,37 +65,38 @@ class SubscriptionController @Inject() (
   }
 
   def getUserAnswers(id: String)(implicit executionContext: ExecutionContext): Future[UserAnswers] =
-    repository.get(id).map { userAnswer =>
+    userAnswerCache.get(id).map { userAnswer =>
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
     }
 
-  def readSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     for {
       _ <- subscriptionService.storeSubscriptionResponse(id, plrReference)
     } yield Ok
   }
 
-  def amendSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
-    val subscriptionParameters = request.body.validate[AmendSubscriptionRequestParameters]
+  def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+    for {
+      data <- subscriptionService.readSubscriptionData(plrReference)
+    } yield Ok(Json.toJson(data))
+  }
 
-    subscriptionParameters.fold(
+  def amendSubscription(id:String) : Action[JsValue] = authenticate(parse.json).async { implicit request =>
+    val amendParameters: JsResult[AmendSubscriptionSuccess] = request.body.validate[AmendSubscriptionSuccess]
+    amendParameters.fold(
       invalid = error => {
-        logger.info(s"SubscriptionController - amendSubscription called with error: $error")
-        Future.successful(BadRequest("Amend Subscription parameter is invalid"))
+        logger.info(s"invalid amend subscription payload passed to the BE $error")
+
+        Future.successful(
+          BadRequest("Amend Subscription parameter is invalid")
+        )
       },
       valid = subs =>
-        getUserAnswers(subs.id).flatMap { typedUserAnswers =>
-          subscriptionService
-            .extractAndProcess(typedUserAnswers)
-            .map { response =>
-              convertToResult(response)(implicitly[Logger](logger))
-            }
-            .recover { case ex: Throwable =>
-              logger.error(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - An error occurred during subscription processing", ex)
-              InternalServerError("Internal server error occurred")
-            }
-        }
+        for {
+          _ <- subscriptionService.sendAmendedData(id, subs)
+        }yield Ok
     )
   }
+
 
 }

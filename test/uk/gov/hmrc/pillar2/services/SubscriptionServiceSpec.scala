@@ -22,7 +22,6 @@ import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.inject
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -114,6 +113,25 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
     }
   }
+
+  "readSubscriptionData " - {
+
+    "return subscription response if a valid response is received from ETMP" in {
+
+      forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
+        when(mockSubscriptionConnector.getSubscriptionInformation(any())(any(), any())).thenReturn(Future.successful(response))
+        when(mockAuditService.auditReadSubscriptionSuccess(any(), any())(any())).thenReturn(Future.successful(AuditResult.Success))
+        val resultFuture = service.readSubscriptionData(plrReference)
+        resultFuture.futureValue mustEqual response
+      }
+    }
+
+    "throw exception if no valid json is received from ETMP" in {
+      when(mockSubscriptionConnector.getSubscriptionInformation(any())(any(), any())).thenReturn(Future.failed(UnexpectedResponse))
+      val resultFuture = service.readSubscriptionData("plrReference")
+      resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+    }
+  }
   "amendSubscription" - {
     "process valid UserAnswers and handle successful amendment" in {
 
@@ -121,7 +139,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
 
       forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
-        service.extractAndProcess(validUserAnswers).map { response =>
+        service.sendAmendedData(validUserAnswers).map { response =>
           response.status mustBe OK
         }
       }
@@ -133,7 +151,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
 
       forAll(arbitraryIncompleteAmendSubscriptionUserAnswers.arbitrary) { invalidUserAnswers =>
-        service.extractAndProcess(invalidUserAnswers).map { response =>
+        service.sendAmendedData(invalidUserAnswers).map { response =>
           response.status mustBe BAD_REQUEST
         }
       }
@@ -145,7 +163,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         .thenReturn(Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")))
 
       forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { validUserAnswers =>
-        service.extractAndProcess(validUserAnswers).map { response =>
+        service.sendAmendedData(validUserAnswers).map { response =>
           response.status mustBe INTERNAL_SERVER_ERROR
         }
       }

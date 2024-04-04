@@ -29,10 +29,9 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodAmend, NonUKAddress, UserAnswers}
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodAmend, JsResultError, NonUKAddress, UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -373,6 +372,12 @@ class SubscriptionService @Inject() (
       _ <- repository.upsert(id, Json.toJson(dataToStore))
     } yield Done
 
+  def readSubscriptionData(plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
+    for {
+      subscriptionResponse <- subscriptionConnector.getSubscriptionInformation(plrReference)
+      _                    <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
+    } yield subscriptionResponse
+
   private def createCachedObject(sub: SubscriptionSuccess): ReadSubscriptionCachedData = {
 
     val nonUKAddress = NonUKAddress(
@@ -418,128 +423,27 @@ class SubscriptionService @Inject() (
     )
   }
 
-  private def createAmendSubscriptionParameters(userAnswers: UserAnswers): AmendSubscriptionSuccess = {
-    logger.info(s"Starting extractAndProcess with UserAnswers: $userAnswers")
-    (for {
-      subAddress        <- userAnswers.get(subRegisteredAddressId)
-      mneOrDom          <- userAnswers.get(subMneOrDomesticId)
-      companyName       <- userAnswers.get(upeNameRegistrationId)
-      pContactName      <- userAnswers.get(subPrimaryContactNameId)
-      pContactEmail     <- userAnswers.get(subPrimaryEmailId)
-      sContactNominated <- userAnswers.get(subAddSecondaryContactId)
-      accountingPeriod  <- userAnswers.get(subAccountingPeriodId)
-      nominatedFm       <- userAnswers.get(NominateFilingMemberId)
-      registrationDate  <- userAnswers.get(subRegistrationDateId)
-      plrReference      <- userAnswers.get(plrReferenceId)
-    } yield {
-      val upeDetail = UpeDetailsAmend(
-        plrReference = plrReference,
-        customerIdentification1 = userAnswers.get(upeRegInformationId).map(_.crn),
-        customerIdentification2 = userAnswers.get(upeRegInformationId).map(_.utr),
-        organisationName = companyName,
-        registrationDate = registrationDate,
-        domesticOnly = if (mneOrDom == MneOrDomestic.Uk) true else false,
-        filingMember = nominatedFm
-      )
-      val primaryContact =
-        ContactDetailsType(name = pContactName, telephone = userAnswers.get(subPrimaryCapturePhoneId), emailAddress = pContactEmail)
-      val secondaryContact = if (sContactNominated) {
-        for {
-          name         <- userAnswers.get(subSecondaryContactNameId)
-          emailAddress <- userAnswers.get(subSecondaryEmailId)
-        } yield ContactDetailsType(name = name, telephone = userAnswers.get(subSecondaryCapturePhoneId), emailAddress = emailAddress)
-      } else {
-        None
-      }
-
-      val filingMember = if (nominatedFm) {
-        userAnswers
-          .get(subFilingMemberDetailsId)
-          .map(det =>
-            FilingMemberAmendDetails(
-              safeId = det.safeId,
-              customerIdentification1 = det.customerIdentification1,
-              customerIdentification2 = det.customerIdentification2,
-              organisationName = det.organisationName
-            )
-          )
-      } else {
-        None
-      }
-      AmendSubscriptionSuccess(
-        upeDetails = upeDetail,
-        accountingPeriod = AccountingPeriodAmend(accountingPeriod.startDate, accountingPeriod.endDate),
-        upeCorrespAddressDetails = UpeCorrespAddressDetails(
-          subAddress.addressLine1,
-          subAddress.addressLine2,
-          Some(subAddress.addressLine3),
-          subAddress.addressLine4,
-          subAddress.postalCode,
-          subAddress.countryCode
-        ),
-        primaryContactDetails = primaryContact,
-        secondaryContactDetails = secondaryContact,
-        filingMemberDetails = filingMember
-      )
-    }).getOrElse(throw new Exception("Expected data missing from user answers"))
-  }
-
-  def extractAndProcess(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    if (userAnswers == null) {
-      logger.error("UserAnswers is null")
-      Future.failed(new IllegalArgumentException("UserAnswers cannot be null"))
-    } else {
-      val amendSub = createAmendSubscriptionParameters(userAnswers)
-      logger.info(s"SubscriptionService - AmendSubscription going to Etmp - ${Json.prettyPrint(Json.toJson(amendSub))}")
-
-      subscriptionConnector
-        .amendSubscriptionInformation(amendSub)
-        .flatMap { response =>
-          response.status match {
-            case OK =>
-              auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
+  def sendAmendedData(id :String, amendData: AmendSubscriptionSuccess)(implicit hc: HeaderCarrier): Future[Done] ={
+      subscriptionConnector.amendSubscriptionInformation(amendData).flatMap { response =>
+          if (response.status == 200){
+              auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
               response.json.validate[AmendResponse] match {
                 case JsSuccess(result, _) =>
                   logger.info(
                     s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
                   )
-                  Future.successful(response)
-                case _ => throw new Exception("Could not parse response received from ETMP in success response")
-              }
-
-            case BAD_REQUEST =>
-              logger.error("Bad Request error received from ETMP")
-              throw UpstreamErrorResponse("Bad Request", BAD_REQUEST, BAD_REQUEST)
-            case NOT_FOUND =>
-              logger.error("Not Found error received from ETMP")
-              throw UpstreamErrorResponse("Not Found", NOT_FOUND, NOT_FOUND)
-            case UNPROCESSABLE_ENTITY =>
-              logger.error("Unprocessable Entity error received from ETMP")
-              throw UpstreamErrorResponse("Unprocessable Entity", UNPROCESSABLE_ENTITY, UNPROCESSABLE_ENTITY)
-            case INTERNAL_SERVER_ERROR =>
-              logger.error("Internal Server Error received from ETMP")
-              throw UpstreamErrorResponse("Internal Server Error", INTERNAL_SERVER_ERROR, INTERNAL_SERVER_ERROR)
-            case SERVICE_UNAVAILABLE =>
-              logger.error("Service Unavailable error received from ETMP")
-              throw UpstreamErrorResponse("Service Unavailable", SERVICE_UNAVAILABLE, SERVICE_UNAVAILABLE)
-            case CONFLICT =>
-              logger.error("Conflict error received from ETMP")
-              throw UpstreamErrorResponse("Conflict", CONFLICT, CONFLICT)
-
-            case _ =>
-              auditService.auditAmendSubscription(requestData = amendSub, responseData = AuditResponseReceived(response.status, response.json))
-              response.json.validate[AmendSubscriptionFailureResponse] match {
-                case JsSuccess(failure, _) =>
-                  logger.info(s"Call failed to ETMP with the code ${failure.failures(0).code} due to ${failure.failures(0).reason}")
-                  Future.successful(response)
-                case _ => throw new Exception(s"Could not parse error response received from ETMP in failure response")
-              }
-          }
+                  repository.remove(id)
+                  Future.successful(Done)
+                case _ => Future.failed(JsResultError)
+              }}
+            else{
+              logger.info(
+                s"Unsuccessful response received for amend subscription with ${response.status} status and body: ${response.body} "
+              )
+              auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
+              Future.failed(UnexpectedResponse)
+            }}
         }
-        .recoverWith { case e: Exception =>
-          logger.error("Error in extractAndProcess", e)
-          Future.failed(e)
-        }
-    }
+
 
 }
