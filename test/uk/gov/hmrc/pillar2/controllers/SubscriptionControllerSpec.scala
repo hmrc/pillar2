@@ -293,7 +293,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription(id, plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(response)
+          contentAsJson(result) mustEqual Json.toJson(response.success)
         }
       }
 
@@ -312,7 +312,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(response)
+          contentAsJson(result) mustEqual Json.toJson(response.success)
         }
       }
 
