@@ -16,17 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
-import play.api.libs.json.{Json, OFormat, Reads, Writes}
+import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend}
 
 import java.time.LocalDate
-
-object LocalDateImplicits {
-  implicit val localDateReads: Reads[LocalDate] = Reads.localDateReads("yyyy-MM-dd")
-  implicit val localDateWrites: Writes[LocalDate] = Writes.temporalWrites[LocalDate, java.time.format.DateTimeFormatter](
-    java.time.format.DateTimeFormatter.ISO_LOCAL_DATE
-  )
-}
 
 case class SubscriptionResponse(success: SubscriptionSuccess)
 
