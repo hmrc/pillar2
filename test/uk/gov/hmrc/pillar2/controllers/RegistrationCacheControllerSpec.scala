@@ -110,6 +110,14 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
         status(result) mustBe OK
       }
+      "return InternalServerError if the record is not removed successfully" in new Setup {
+        when(mockRegistrationCacheRepository.remove(eqTo("id"))(any())) thenReturn Future.successful(false)
+
+        val request = FakeRequest(DELETE, routes.RegistrationCacheController.remove("id").url)
+        val result  = route(application, request).value
+
+        status(result) mustBe INTERNAL_SERVER_ERROR
+      }
 
     }
     "lastUpdated" - {

@@ -42,9 +42,6 @@ class ReadSubscriptionCacheController @Inject() (
 
   def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.get(id).map { response =>
-      logger.debug(
-        s"controllers.ReadSubscriptionCacheController.get: Response for request Id $id is $response"
-      )
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }

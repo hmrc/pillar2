@@ -26,7 +26,6 @@ import play.api.libs.json._
 import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory}
 import uk.gov.hmrc.mongo.MongoComponent
-import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
