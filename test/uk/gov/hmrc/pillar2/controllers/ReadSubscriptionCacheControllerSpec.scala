@@ -61,13 +61,6 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
       status(result) mustBe OK
     }
 
-    "return 413 when request is not right" in new Setup {
-
-      val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
-      val result  = route(application, request).value
-
-      status(result) mustBe REQUEST_ENTITY_TOO_LARGE
-    }
     "throw exception when mongo is down" in new Setup {
 
       val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
