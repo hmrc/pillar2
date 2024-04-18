@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import akka.Done
 import org.joda.time.DateTime
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.i18n.Lang.logger
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.{AnyContentAsJson, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
@@ -35,29 +35,18 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.models.hods.{ErrorDetail, ErrorDetails, SourceFaultDetail}
-import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.models.subscription.{AmendSubscriptionRequestParameters, MneOrDomestic, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
+import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
+import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
+import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.Future
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
-  trait Setup {
-    val controller =
-      new SubscriptionController(
-        mockRegistrationCacheRepository,
-        mockSubscriptionService,
-        mockSubscriptionConnector,
-        mockAuthAction,
-        stubControllerComponents()
-      )
-  }
+  private val mockedCache = mock[ReadSubscriptionCacheRepository]
 
-  val jsData = Json.parse("""{"value": "field"}""")
+  val jsData: JsValue = Json.parse("""{"value": "field"}""")
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
@@ -72,7 +61,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
   val service =
     new SubscriptionService(
-      mockRegistrationCacheRepository,
+      mockedCache,
       mockSubscriptionConnector,
       mockAuditService
     )
@@ -85,16 +74,16 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
   "SubscriptionController" - {
 
     "createSubscription" - {
-      "should return BAD_REQUEST when subscriptionRequestParameter is invalid" in new Setup {
+      "should return BAD_REQUEST when subscriptionRequestParameter is invalid" in {
 
-        val request =
+        val request: FakeRequest[AnyContentAsJson] =
           FakeRequest(
             POST,
             routes.SubscriptionController.createSubscription.url
           )
             .withJsonBody(Json.parse("""{"value": "field"}"""))
 
-        val result = route(application, request).value
+        val result: Future[Result] = route(application, request).value
         status(result) mustEqual BAD_REQUEST
       }
 
@@ -297,208 +286,70 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
     }
 
-    "readSubscription" - {
-
-      "return OK when valid data is provided" in {
-        forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (id: String, plrReference: String, response) =>
-          when(mockSubscriptionService.processReadSubscriptionResponse(any(), any())(any()))
-            .thenReturn(Future.successful(HttpResponse(status = OK, body = Json.toJson(response).toString())))
-
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
+    "readAndCacheSubscription" - {
+      "return ok with the response if the connector returns successful" in {
+        forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (id, plrReference, response) =>
+          when(mockSubscriptionService.storeSubscriptionResponse(any(), any())(any())).thenReturn(Future.successful(response))
+          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription(id, plrReference).url)
           val result  = route(application, request).value
-
-          status(result) mustBe OK
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response.success)
         }
       }
 
-      "return NotFound response if no data is found" in {
-        forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
-          when(mockSubscriptionService.processReadSubscriptionResponse(any(), any())(any()))
-            .thenReturn(Future.successful(HttpResponse(NOT_FOUND, """{}""")))
-
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(mockId, plrReference).url)
-          val result  = route(application, request).value
-
-          status(result) mustBe NOT_FOUND
-        }
-
-      }
-
-      "Return Unprocessable Entity HttpResponse when subscription is unprocessable" in {
-        forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
-          when(mockSubscriptionService.processReadSubscriptionResponse(any(), any())(any()))
-            .thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, """{}""")))
-
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(mockId, plrReference).url)
-          val result  = route(application, request).value
-
-          status(result) mustBe UNPROCESSABLE_ENTITY
-        }
-      }
-
-      "Return InternalServerError HttpResponse for internal server error" in {
-        forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
-          when(mockSubscriptionService.processReadSubscriptionResponse(any(), any())(any()))
-            .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, """{}""")))
-
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(mockId, plrReference).url)
-          val result  = route(application, request).value
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
-        }
-      }
-
-      "Return ServiceUnavailable HttpResponse when service is unavailable" in {
-        forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
-          when(mockSubscriptionService.processReadSubscriptionResponse(any(), any())(any()))
-            .thenReturn(Future.successful(HttpResponse(SERVICE_UNAVAILABLE, """{}""")))
-
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(mockId, plrReference).url)
-          val result  = route(application, request).value
-
-          status(result) mustBe SERVICE_UNAVAILABLE
-        }
-      }
-
-      "should return InternalServerError when an exception occurs" in {
-        val id           = "testId"
-        val plrReference = "testPlrReference"
-
-        when(mockSubscriptionService.processReadSubscriptionResponse(any(), any())(any()))
-          .thenReturn(Future.failed(new Exception))
-
-        val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(id, plrReference).url)
+      "return UnexpectedResponse if connector returns non-OK response" in {
+        when(mockSubscriptionService.storeSubscriptionResponse(any(), any())(any())).thenReturn(Future.failed(UnexpectedResponse))
+        val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription("id", "pillar2Id").url)
         val result  = route(application, request).value
+        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      }
+    }
 
-        status(result) mustBe INTERNAL_SERVER_ERROR
-
+    "readSubscription" - {
+      "return Ok response with json object if the connector returns successful" in {
+        forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
+          when(mockSubscriptionService.readSubscriptionData(any())(any())).thenReturn(Future.successful(response))
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(plrReference).url)
+          val result  = route(application, request).value
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response.success)
+        }
       }
 
+      "return UnexpectedResponse if connector fails" in {
+        when(mockSubscriptionService.readSubscriptionData(any())(any())).thenReturn(Future.failed(UnexpectedResponse))
+        val request = FakeRequest(GET, routes.SubscriptionController.readSubscription("pillar2Id").url)
+        val result  = route(application, request).value
+        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      }
     }
 
     "amendSubscription" - {
 
-      "return OK when valid data is provided" in new Setup {
-        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers =>
-          stubPutResponse(
-            s"/pillar2/subscription",
-            OK
-          )
-          val id = "123"
+      "return OK when valid data is provided" in {
+        forAll(arbMockId.arbitrary, arbitraryAmendSubscriptionSuccess.arbitrary) { (id, amendData) =>
+          when(mockSubscriptionService.sendAmendedData(any(), any())(any())).thenReturn(Future.successful(Done))
 
-          val jsonUpdatedAnswers = Json.toJson(userAnswers)(UserAnswers.format)
-          when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-            .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
-
-          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
-
-          val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
+          val requestJson = Json.toJson(amendData)
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
             .withJsonBody(requestJson)
-
           val resultFuture = route(application, fakeRequest).value
-
           status(resultFuture) shouldBe OK
-
         }
       }
+      "return bad request if the validation fails on the json payload" in {
+        forAll(arbMockId.arbitrary) { id =>
+          when(mockSubscriptionService.sendAmendedData(any(), any())(any())).thenReturn(Future.successful(Done))
 
-      "handle an invalid JSON format in the request" in new Setup {
-        val userAnswers = UserAnswers(id, Json.obj())
-        val updatedUserAnswers = for {
-          u1 <- userAnswers.set(subMneOrDomesticId, MneOrDomestic.Uk)
-
-          u2 <- u1.set(subAddSecondaryContactId, true)
-        } yield u2
-
-        stubPutResponse(
-          s"/pillar2/subscription",
-          OK
-        )
-        val id = "123"
-
-        updatedUserAnswers match {
-          case Success(updatedAnswers) =>
-            val jsonUpdatedAnswers = Json.toJson(updatedAnswers)(UserAnswers.format)
-            when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-              .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
-
-          case Failure(exception) =>
-            logger.error("Error creating updated UserAnswers", exception)
-        }
-
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
-          .thenReturn(Future.successful(HttpResponse(400, "Invalid subscription response")))
-
-        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-          .withJsonBody(requestJson)
-
-        val resultFuture = route(application, fakeRequest).value
-
-        status(resultFuture) shouldBe BAD_REQUEST
-      }
-
-      "handle exceptions thrown by the SubscriptionService" in new Setup {
-
-        val id = "123"
-
-        when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-          .thenReturn(Future.successful(None))
-
-        when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
-          .thenReturn(Future.failed(new RuntimeException("Service error")))
-
-        val requestJson = Json.toJson(AmendSubscriptionRequestParameters(id))
-        val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-          .withJsonBody(requestJson)
-
-        val resultFuture = route(application, fakeRequest).value
-
-        status(resultFuture) mustBe INTERNAL_SERVER_ERROR
-      }
-
-      "return BadRequest when given invalid subscription parameters" in new Setup {
-        forAll(arbitraryAmendSubscriptionUserAnswers.arbitrary) { userAnswers =>
-          stubPutResponse(
-            s"/pillar2/subscription",
-            OK
-          )
-          val id = "123"
-
-          val jsonUpdatedAnswers = Json.toJson(userAnswers)(UserAnswers.format)
-          when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-            .thenReturn(Future.successful(Some(jsonUpdatedAnswers)))
-
-          when(mockSubscriptionService.extractAndProcess(any[UserAnswers])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(200, "Amendment successful")))
-
-          val invalidJson = Json.obj("invalidField" -> "invalidValue")
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription.url)
-            .withJsonBody(invalidJson)
-
+          val requestJson = Json.obj("invalid" -> "payload")
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
+            .withJsonBody(requestJson)
           val resultFuture = route(application, fakeRequest).value
-
-          status(resultFuture) mustBe BAD_REQUEST
-          contentAsString(resultFuture) must include("Amend Subscription parameter is invalid")
-        }
-      }
-
-      "fail with IllegalArgumentException when UserAnswers is null" in {
-        val id = "123"
-
-        when(mockRegistrationCacheRepository.get(eqTo(id))(any[ExecutionContext]))
-          .thenReturn(Future.successful(None))
-
-        val result = service.extractAndProcess(null)
-
-        whenReady(result.failed, timeout(Span(5, Seconds)), interval(Span(500, Millis))) { e =>
-          e mustBe a[IllegalArgumentException]
-          e.getMessage must include("UserAnswers cannot be null")
+          status(resultFuture) shouldBe BAD_REQUEST
         }
       }
 
     }
+
   }
 }

@@ -16,13 +16,17 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
+import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
+import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionInput, AmendSubscriptionSuccess}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -31,7 +35,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       "microservice.services.create-subscription.port" -> server.port()
     )
     .build()
-
+  private val errorCodes: Gen[Int] = Gen.oneOf(Seq(203, 204, 400, 403, 500, 501, 502, 503, 504))
   lazy val connector: SubscriptionConnector =
     app.injector.instanceOf[SubscriptionConnector]
 
@@ -79,55 +83,50 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
     "for retrieving Subscription Information" - {
 
-      "must return status as OK" in {
-        forAll(plrReferenceGen) { (plrReference: String) =>
-          stubGetResponse(
-            s"/pillar2/subscription/$plrReference",
-            OK
+      "must return object when the response was OK" in {
+        forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponse.arbitrary) { (plrReference, response) =>
+          server.stubFor(
+            get(urlEqualTo(s"/pillar2/subscription/$plrReference"))
+              .willReturn(
+                aResponse()
+                  .withStatus(200)
+                  .withBody(Json.stringify(Json.toJson(SubscriptionResponse(response.success))))
+              )
           )
           val result = await(connector.getSubscriptionInformation(plrReference))
-          result.status mustBe OK
+          result mustEqual SubscriptionResponse(response.success)
+        }
+      }
+      "must throw exception when unexpected body is received" in {
+        forAll(arbPlrReference.arbitrary) { plrReference =>
+          server.stubFor(
+            get(urlEqualTo(s"/pillar2/subscription/$plrReference"))
+              .willReturn(
+                aResponse()
+                  .withStatus(200)
+                  .withBody(Json.stringify(Json.obj()))
+              )
+          )
+          val result = connector.getSubscriptionInformation(plrReference)
+          result.failed.map { ex =>
+            ex shouldBe a[JsResultException]
+          }
         }
       }
 
-      "must return status as NOT_FOUND" in {
+      "must return future failed for non-200 responses" in {
 
         forAll(plrReferenceGen) { (plrReference: String) =>
           stubGetResponse(
             s"/pillar2/subscription/$plrReference",
-            NOT_FOUND
+            errorCodes.sample.value
           )
 
-          val result = connector.getSubscriptionInformation(plrReference).futureValue
-          result.status mustBe NOT_FOUND
+          val result = connector.getSubscriptionInformation(plrReference)
+          result.failed.futureValue mustBe uk.gov.hmrc.pillar2.models.UnexpectedResponse
         }
       }
 
-      "must return status as BAD_REQUEST" in {
-
-        forAll(plrReferenceGen) { (plrReference: String) =>
-          stubGetResponse(
-            s"/pillar2/subscription/$plrReference",
-            BAD_REQUEST
-          )
-
-          val result = connector.getSubscriptionInformation(plrReference).futureValue
-          result.status mustBe BAD_REQUEST
-        }
-      }
-
-      "must return status as INTERNAL_SERVER_ERROR" in {
-
-        forAll(plrReferenceGen) { (plrReference: String) =>
-          stubGetResponse(
-            s"/pillar2/subscription/$plrReference",
-            INTERNAL_SERVER_ERROR
-          )
-
-          val result = connector.getSubscriptionInformation(plrReference).futureValue
-          result.status mustBe INTERNAL_SERVER_ERROR
-        }
-      }
     }
 
     "amendSubscriptionInformation" - {
