@@ -40,7 +40,6 @@ class RegistrationService @Inject() (
 ) extends Logging {
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Processing Upe Registration Details")
     for {
       upeName      <- userAnswers.get(upeNameRegistrationId)
       emailAddress <- userAnswers.get(upeContactEmailId)
@@ -52,12 +51,11 @@ class RegistrationService @Inject() (
       false
     )
   }.getOrElse {
-    logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Upe Registration Information Missing")
+    logger.warn("Ultimate Parent registration failed as one or more required fields were missing")
     registerWithoutIdError
   }
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Processing Filing Member Registration Details")
     for {
       fmName       <- userAnswers.get(fmNameRegistrationId)
       emailAddress <- userAnswers.get(fmContactEmailId)
@@ -70,19 +68,32 @@ class RegistrationService @Inject() (
       true
     )
   }.getOrElse {
-    logger.warn(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationService - Filing Member Registration Information Missing")
+    logger.warn("Filing member registration failed as one or more required fields were missing")
     registerWithoutIdError
   }
 
+  def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier) =
+    (for {
+      name    <- userAnswers.get(RfmNameRegistrationId)
+      email   <- userAnswers.get(RfmPrimaryContactEmailId)
+      address <- userAnswers.get(RfmRegisteredAddressId)
+    } yield registerWithoutId(
+      name,
+      Address.fromFmAddress(address),
+      ContactDetails(userAnswers.get(RfmPrimaryPhoneId), None, None, Some(email)),
+      isFm = true
+    )).getOrElse {
+      logger.warn("Replace Filing member registration failed as one or more required fields were missing")
+      registerWithoutIdError
+    }
+
   private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails, isFm: Boolean)(implicit
-    hc:                                       HeaderCarrier,
-    ec:                                       ExecutionContext
+    hc:                                       HeaderCarrier
   ): Future[HttpResponse] = {
     val registerWithoutIDRequest = RegisterWithoutIDRequest(businessName, address, contactDetails)
     val response = dataSubmissionConnectors
       .sendWithoutIDInformation(registerWithoutIDRequest)(hc, ec)
-    response.map { res =>
-      val resReceived = AuditResponseReceived(res.status, res.json)
+    response.map { _ =>
       if (isFm) {
         val auditData = converNfmAuditDetails(registerWithoutIDRequest)
         auditService.auditFmRegisterWithoutId(auditData)

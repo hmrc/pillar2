@@ -18,9 +18,9 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 
-case object FmSafeId extends TypedIdentifier[String] {
+case object RfmPrimaryContactEmailId extends TypedIdentifier[String] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "FmSafeID"
+  override def toString: String = "rfmPrimaryContactEmail"
 }

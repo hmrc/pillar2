@@ -19,15 +19,13 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -44,8 +42,6 @@ class RegistrationController @Inject() (
     with Logging {
 
   def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-    logger.info(s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling Registration Submission without UpeId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdUpeRegistration(userAnswer)
@@ -54,11 +50,17 @@ class RegistrationController @Inject() (
   }
 
   def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequestAndSession(request, request.session)
-    logger.info("[Session ID: ${SessionIdHelper.sessionId(hc)}] - Calling Registration Submission without FmId")
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdFmRegistration(userAnswer)
+        .map(handleResult)
+    }
+  }
+
+  def registerNewFilingMember(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+    getUserAnswers(id).flatMap { userAnswer =>
+      dataSubmissionService
+        .registerNewFilingMember(userAnswer)
         .map(handleResult)
     }
   }
@@ -71,22 +73,15 @@ class RegistrationController @Inject() (
   private def handleResult(httpResponse: HttpResponse): Result =
     httpResponse.status match {
       case OK =>
-        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         Ok(httpResponse.body)
       case NOT_FOUND => NotFound(httpResponse.body)
-
       case BAD_REQUEST =>
-        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         BadRequest(httpResponse.body)
-
       case FORBIDDEN =>
-        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         Forbidden(httpResponse.body)
-
       case _ =>
-        logger.info(s"handleResult - Received Response body - ${httpResponse.body}")
         logServerError(httpResponse.body)
         InternalServerError(httpResponse.body)
     }

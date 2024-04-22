@@ -9,6 +9,7 @@ GET          /user-cache/registration-subscription/:id/lastUpdated              
 
 POST          /upe/registration/:id                                                 uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdUpeRegistrationSubmission(id: String)
 POST          /fm/registration/:id                                                  uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
+POST          /rfm/registration/:id                                                  uk.gov.hmrc.pillar2.controllers.RegistrationController.registerNewFilingMember(id: String)
 
 
 POST          /subscription/create-subscription                                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
