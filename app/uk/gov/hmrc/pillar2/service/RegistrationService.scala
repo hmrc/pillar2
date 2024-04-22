@@ -72,7 +72,7 @@ class RegistrationService @Inject() (
     registerWithoutIdError
   }
 
-  def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier) =
+  def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     (for {
       name    <- userAnswers.get(RfmNameRegistrationId)
       email   <- userAnswers.get(RfmPrimaryContactEmailId)

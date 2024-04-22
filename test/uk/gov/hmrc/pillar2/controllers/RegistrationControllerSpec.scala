@@ -220,7 +220,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
   "RegisterNewFilingMember" - {
 
-    "rerutn OK with valid data has been submitted" in new Setup {
+    "return OK with valid data has been submitted" in new Setup {
       forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
@@ -235,7 +235,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn BAD_REQUEST with data has been submitted" in new Setup {
+    "return BAD_REQUEST with data has been submitted" in new Setup {
       forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
@@ -250,7 +250,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn NOT_FOUND with data has been submitted" in new Setup {
+    "return NOT_FOUND with data has been submitted" in new Setup {
       forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
@@ -264,7 +264,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
       }
     }
-    "rerutn FORBIDDEN with data has been submitted" in new Setup {
+    "return FORBIDDEN with data has been submitted" in new Setup {
       forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
@@ -279,7 +279,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
+    "return INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
       forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
