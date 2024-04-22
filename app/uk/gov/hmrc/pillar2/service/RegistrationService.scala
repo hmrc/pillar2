@@ -21,18 +21,15 @@ import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.audit.{AuditResponseReceived, NominatedFilingMember, UpeRegistration}
+import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 class RegistrationService @Inject() (
-  repository:               RegistrationCacheRepository,
   dataSubmissionConnectors: RegistrationConnector,
   auditService:             AuditService
 )(implicit
@@ -95,17 +92,17 @@ class RegistrationService @Inject() (
       .sendWithoutIDInformation(registerWithoutIDRequest)(hc, ec)
     response.map { _ =>
       if (isFm) {
-        val auditData = converNfmAuditDetails(registerWithoutIDRequest)
+        val auditData = convertNfmAuditDetails(registerWithoutIDRequest)
         auditService.auditFmRegisterWithoutId(auditData)
       } else {
-        val auditData = converUpeAuditDetails(registerWithoutIDRequest)
+        val auditData = convertUpeAuditDetails(registerWithoutIDRequest)
         auditService.auditUpeRegisterWithoutId(auditData)
       }
     }
     response
   }
 
-  private def converUpeAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): UpeRegistration =
+  private def convertUpeAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): UpeRegistration =
     UpeRegistration(
       registeredinUK = true,
       entityType = "not Listed",
@@ -121,7 +118,7 @@ class RegistrationService @Inject() (
       telephoneNo = registerWithoutIDRequest.contactDetails.phoneNumber.getOrElse("")
     )
 
-  private def converNfmAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): NominatedFilingMember =
+  private def convertNfmAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): NominatedFilingMember =
     NominatedFilingMember(
       registerNomFilingMember = true,
       registeredinUK = true,
