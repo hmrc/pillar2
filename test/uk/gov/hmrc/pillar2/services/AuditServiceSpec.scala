@@ -17,13 +17,11 @@
 package uk.gov.hmrc.pillar2.services
 
 import org.mockito.ArgumentMatchers.any
-import org.mockito.Mockito.{verify, when}
+import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.test.Helpers.await
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionResponse
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 

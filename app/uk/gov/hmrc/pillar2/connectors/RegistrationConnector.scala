@@ -18,13 +18,11 @@ package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
 import play.api.Logger
-import play.api.libs.json.Json
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 class RegistrationConnector @Inject() (
   val config: AppConfig,
@@ -33,9 +31,6 @@ class RegistrationConnector @Inject() (
   implicit val logger: Logger = Logger(this.getClass.getName)
   def sendWithoutIDInformation(registration: RegisterWithoutIDRequest)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "register-without-id"
-    logger.info(
-      s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - RegistrationConnector - RegisterWithoutIdRequest going to ETMP $serviceName - ${Json.toJson(registration)}"
-    )
     http.POST[RegisterWithoutIDRequest, HttpResponse](
       config.baseUrl(serviceName),
       registration,

@@ -18,12 +18,10 @@ package uk.gov.hmrc.pillar2.services
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
-import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.service.RegistrationService
 
 import scala.concurrent.Future
@@ -32,7 +30,6 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   trait Setup {
     val service =
       new RegistrationService(
-        mockRegistrationCacheRepository,
         mockDataSubmissionsConnector,
         mockAuditService
       )
@@ -111,6 +108,44 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         }
       }
 
+    }
+
+    "registerNewFilingMember" - {
+      "Return successful Http Response" in new Setup {
+        when(
+          mockDataSubmissionsConnector
+            .sendWithoutIDInformation(any())(any(), any())
+        ).thenReturn(
+          Future.successful(
+            HttpResponse.apply(OK, "Success")
+          )
+        )
+
+        forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+          service.registerNewFilingMember(userAnswers).map { response =>
+            response.status mustBe OK
+          }
+        }
+
+      }
+
+      "Return internal server error with response" in new Setup {
+        when(
+          mockDataSubmissionsConnector
+            .sendWithoutIDInformation(any())(any(), any())
+        ).thenReturn(
+          Future.successful(
+            HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")
+          )
+        )
+
+        forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+          service.registerNewFilingMember(userAnswers).map { response =>
+            response.status mustBe INTERNAL_SERVER_ERROR
+          }
+        }
+
+      }
     }
   }
 

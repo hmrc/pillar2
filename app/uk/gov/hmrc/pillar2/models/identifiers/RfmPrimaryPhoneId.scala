@@ -17,11 +17,10 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.RowStatus
 
-case object GrsFilingMemberStatusId extends TypedIdentifier[RowStatus] {
+case object RfmPrimaryPhoneId extends TypedIdentifier[String] {
 
   override def path: JsPath = JsPath \ toString
 
-  override def toString: String = "GrsFilingMemberStatus"
+  override def toString: String = "rfmPrimaryCapturePhone"
 }

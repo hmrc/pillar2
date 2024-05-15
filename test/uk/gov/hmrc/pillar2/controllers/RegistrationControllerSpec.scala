@@ -27,8 +27,7 @@ import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
-import uk.gov.hmrc.pillar2.controllers.auth.FakeAuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
@@ -61,6 +60,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
   def routeUpeWithoutID(id: String): String = routes.RegistrationController.withoutIdUpeRegistrationSubmission(id).url
   def routeFmWithoutID(id: String):  String = routes.RegistrationController.withoutIdFmRegistrationSubmission(id).url
+  def rfmRoute(id: String):          String = routes.RegistrationController.registerNewFilingMember(id).url
 
   "withoutIdUpeRegistrationSubmission" - {
 
@@ -210,6 +210,84 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
           )
         )
         val request = FakeRequest(POST, routeFmWithoutID(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual INTERNAL_SERVER_ERROR
+
+      }
+    }
+
+  }
+
+  "RegisterNewFilingMember" - {
+
+    "return OK with valid data has been submitted" in new Setup {
+      forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(OK, "Success")
+          )
+        )
+        val request = FakeRequest(POST, rfmRoute(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual OK
+
+      }
+    }
+
+    "return BAD_REQUEST with data has been submitted" in new Setup {
+      forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(BAD_REQUEST, "Bad Request")
+          )
+        )
+        val request = FakeRequest(POST, rfmRoute(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual BAD_REQUEST
+
+      }
+    }
+
+    "return NOT_FOUND with data has been submitted" in new Setup {
+      forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(NOT_FOUND, "Not Found")
+          )
+        )
+        val request = FakeRequest(POST, rfmRoute(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual NOT_FOUND
+
+      }
+    }
+    "return FORBIDDEN with data has been submitted" in new Setup {
+      forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(FORBIDDEN, "Forbidden")
+          )
+        )
+        val request = FakeRequest(POST, rfmRoute(userAnswers.id)).withJsonBody(jsData)
+        val result  = route(application, request).value
+        status(result) mustEqual FORBIDDEN
+
+      }
+    }
+
+    "return INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
+      forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
+        when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.registerNewFilingMember(any())(any())).thenReturn(
+          Future.successful(
+            HttpResponse.apply(INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR")
+          )
+        )
+        val request = FakeRequest(POST, rfmRoute(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
         status(result) mustEqual INTERNAL_SERVER_ERROR
 

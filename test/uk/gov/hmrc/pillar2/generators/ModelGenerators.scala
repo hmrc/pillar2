@@ -153,6 +153,32 @@ trait ModelGenerators {
     )
   }
 
+  val arbitraryNewFilingMember: Arbitrary[JsValue] = Arbitrary {
+    for {
+
+      nameRegistration   <- stringsWithMaxLength(200)
+      address            <- arbitraryNonUKAddressDetails.arbitrary
+      primaryEmail       <- stringsWithMaxLength(200)
+      primaryPhoneNumber <- arbitrary[Int]
+    } yield Json.obj(
+      "RfmNameRegistration"    -> nameRegistration,
+      "rfmPrimaryContactEmail" -> primaryEmail,
+      "rfmPrimaryCapturePhone" -> primaryPhoneNumber,
+      "RfmRegisteredAddress"   -> address
+    )
+  }
+  val NewFilingMemberRegistrationDetails: Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      id       <- nonEmptyString
+      userData <- arbitraryNewFilingMember.arbitrary
+
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
+    )
+  }
+
   val arbitraryUncompleteUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
       id       <- nonEmptyString
