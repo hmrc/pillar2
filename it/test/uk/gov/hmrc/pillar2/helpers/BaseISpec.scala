@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.pillar2.helpers
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -34,8 +34,6 @@ import uk.gov.hmrc.pillar2.ResultAssertions
 import scala.concurrent.ExecutionContext.global
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.control.NonFatal
-
-
 
 abstract class BaseISpec
     extends AnyWordSpec
@@ -72,12 +70,12 @@ abstract class BaseISpec
   protected val registrationCacheCryptoKey = "mMG5FM4hvLmAyX7V6Z/R4h0lSeA/FsSYPJ67a1V4bKo="
 
   additionalAppConfig ++= Map(
-    "mongodb.uri"      -> "mongodb://localhost:27017/pillar2-test",
+    "mongodb.uri"                     -> "mongodb://localhost:27017/pillar2-test",
     "microservice.services.auth.host" -> "localhost",
-    "microservice.services.auth.port"   -> 1234,
-    "registrationCache.key" -> registrationCacheCryptoKey,
-    "metrics.enabled"  -> true,
-    "auditing.enabled" -> false
+    "microservice.services.auth.port" -> 1234,
+    "registrationCache.key"           -> registrationCacheCryptoKey,
+    "metrics.enabled"                 -> false,
+    "auditing.enabled"                -> false
   )
 
   override implicit val patienceConfig: PatienceConfig =
@@ -85,7 +83,6 @@ abstract class BaseISpec
 
   override def fakeApplication(): Application =
     GuiceApplicationBuilder()
-      .disable[com.kenshoo.play.metrics.PlayModule]
       .configure(additionalAppConfig.toMap)
       .in(Mode.Test)
       .build()
@@ -95,15 +92,14 @@ abstract class BaseISpec
   def fakeRequest(call: Call): FakeRequest[AnyContentAsEmpty.type] =
     FakeRequest(call).withHeaders(uk.gov.hmrc.http.HeaderNames.authorisation -> "some bearer token")
 
-
-  def callRoute[A](request: FakeRequest[A],  requiresAuth: Boolean = true)(implicit app: Application, w: Writeable[A]): Future[Result] = {
+  def callRoute[A](request: FakeRequest[A], requiresAuth: Boolean = true)(implicit app: Application, w: Writeable[A]): Future[Result] = {
     val errorHandler = app.errorHandler
-    val req = if (requiresAuth) request.withHeaders("Authorization" -> "test") else request
+    val req          = if (requiresAuth) request.withHeaders("Authorization" -> "test") else request
     route(app, req) match {
       case None => fail("Route does not exist")
       case Some(fResult) =>
-        fResult.recoverWith {
-          case NonFatal(t) => errorHandler.onServerError(req, t)
+        fResult.recoverWith { case NonFatal(t) =>
+          errorHandler.onServerError(req, t)
         }
     }
   }

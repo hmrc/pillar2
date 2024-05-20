@@ -26,7 +26,7 @@ An ultimate parent is not a subsidiary of any other company and has a controllin
 The nominated filing member is responsible for managing the group's tax returns and keeping business records.
 ### To check test coverage:
 
-`sbt scalafmt test:scalafmt it:test::scalafmt coverage test it:test coverageReport`
+`sbt scalafmt test:scalafmt it:test::scalafmt coverage test it/test coverageReport`
 
 ### Integration and unit tests
 
@@ -35,7 +35,7 @@ To run unit tests:
     Run 'sbt test' from directory the project is stored in
 To run Integration tests:
 
-    sbt it:test
+    sbt it/test
 
 ### Using Service Manager
 

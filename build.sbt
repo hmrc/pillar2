@@ -1,16 +1,19 @@
 import scoverage.ScoverageKeys
 import play.sbt.PlayImport.PlayKeys.playDefaultPort
-import uk.gov.hmrc.DefaultBuildSettings._
+import uk.gov.hmrc.DefaultBuildSettings
+import uk.gov.hmrc.DefaultBuildSettings.*
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 
 val appName = "pillar2"
+
+ThisBuild / scalaVersion := "2.13.12"
+ThisBuild / majorVersion := 0
+
 //revert
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
   .settings(
-    majorVersion        := 0,
-    scalaVersion        := "2.13.8",
       ScoverageKeys.coverageExcludedFiles :=
         "<empty>;com.kenshoo.play.metrics.*;.*definition.*;prod.*;testOnlyDoNotUseInAppConf.*;.*stubs.*;.*models.*;" +
           "app.*;.*BuildInfo.*;.*Routes.*;.*repositories.*;.*package.*;.*controllers.test.*;.*services.test.*;.*metrics.*",
@@ -25,17 +28,16 @@ lazy val microservice = Project(appName, file("."))
     // suppress warnings in generated routes files
     scalacOptions += "-Wconf:src=routes/.*:s",
   )
-  .settings(publishingSettings: _*)
-  .configs(IntegrationTest)
-  .settings(integrationTestSettings(): _*)
   .settings(
-    unmanagedResourceDirectories in Compile += baseDirectory.value / "resources",
-    unmanagedSourceDirectories in IntegrationTest :=
-      (baseDirectory in IntegrationTest)(base => Seq(base / "it", base / "test-common")).value,
-    unmanagedSourceDirectories in Test := (baseDirectory in Test)(base => Seq(base / "test", base / "test-common")).value,
-    unmanagedResourceDirectories in IntegrationTest := Seq(baseDirectory.value / "test-resources"),
-    unmanagedResourceDirectories in Test := Seq(baseDirectory.value / "test-resources"),
-    testOptions in IntegrationTest += Tests.Argument(TestFrameworks.ScalaTest, "-h", "target/test-reports/html-it-report")
+    Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
+    Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
+    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
   )
   .settings(resolvers += Resolver.jcenterRepo)
-  .settings(CodeCoverageSettings.settings: _*)
+  .settings(CodeCoverageSettings.settings *)
+
+lazy val it = project
+  .enablePlugins(play.sbt.PlayScala)
+  .dependsOn(microservice % "test->test")
+  .settings(DefaultBuildSettings.itSettings())
+  .settings(libraryDependencies ++= AppDependencies.it)

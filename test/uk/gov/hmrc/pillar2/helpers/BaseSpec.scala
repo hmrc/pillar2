@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.pillar2.helpers
 
-import akka.actor.ActorSystem
-import akka.stream.Materializer
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.stream.Materializer
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, post, put, urlEqualTo}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.ScalaFutures

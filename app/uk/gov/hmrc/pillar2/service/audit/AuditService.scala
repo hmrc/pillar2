@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service.audit
 
-import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
+import org.apache.pekko.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.services
 
-import akka.Done
+import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary

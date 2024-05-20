@@ -16,20 +16,20 @@
 
 package uk.gov.hmrc.pillar2
 
-import org.joda.time.DateTime
+import java.time.Instant
 import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.mongo.play.json.formats.MongoJodaFormats
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
 package object repositories {
-  case class RegistrationDataEntry(id: String, data: String, lastUpdated: DateTime)
+  case class RegistrationDataEntry(id: String, data: String, lastUpdated: Instant)
 
   object RegistrationDataEntryFormats {
-    implicit val dateFormat: Format[DateTime]              = MongoJodaFormats.dateTimeFormat
+    implicit val dateFormat: Format[Instant]               = MongoJavatimeFormats.instantFormat
     implicit val format:     Format[RegistrationDataEntry] = Json.format[RegistrationDataEntry]
   }
-  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: DateTime)
+  case class JsonDataEntry(id: String, data: JsValue, lastUpdated: Instant)
   object JsonDataEntry {
-    implicit val dateFormat: Format[DateTime]      = MongoJodaFormats.dateTimeFormat
+    implicit val dateFormat: Format[Instant]       = MongoJavatimeFormats.instantFormat
     implicit val format:     Format[JsonDataEntry] = Json.format[JsonDataEntry]
   }
 

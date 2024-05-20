@@ -16,18 +16,15 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.joda.time.{DateTime, DateTimeZone}
 import org.scalatest.OptionValues
 import play.api.libs.json.Json
-import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockHelper, WireMockSupport}
+import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockSupport}
 import uk.gov.hmrc.pillar2.repositories.{RegistrationCacheRepository, RegistrationDataEntry}
 import uk.gov.hmrc.pillar2.service.test.TestService
 
+import java.time.Instant
 
-class RegistrationCacheControllerISpec extends BaseISpec
-  with WireMockSupport
-  with WireMockConfig
-  with OptionValues {
+class RegistrationCacheControllerISpec extends BaseISpec with WireMockSupport with WireMockConfig with OptionValues {
 
   val testService: TestService = app.injector.instanceOf[TestService]
   override def beforeEach(): Unit = {
@@ -35,25 +32,26 @@ class RegistrationCacheControllerISpec extends BaseISpec
     await(testService.clearAllData)
   }
 
-
   val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
-  val controller: RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
+  val controller:                  RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
   private val userAnswersCache =
     RegistrationDataEntry(
       "id",
       Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
-      DateTime.now(DateTimeZone.UTC)
+      Instant.now()
     )
 
   "save" should {
     "successfully save data" in {
       stubAuthenticate()
-      val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
+      val example = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
-          .withBody(example))
+        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
+          .withHeaders(contentType)
+          .withBody(example)
+      )
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
+      val expectedResult = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
       example shouldBe expectedResult
     }
 
@@ -62,12 +60,14 @@ class RegistrationCacheControllerISpec extends BaseISpec
   "get" should {
     "successfully get the record" in {
       stubAuthenticate()
-      val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
+      val example = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
-          .withBody(example))
+        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
+          .withHeaders(contentType)
+          .withBody(example)
+      )
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
+      val expectedResult = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
       example shouldBe expectedResult
     }
 
@@ -75,12 +75,14 @@ class RegistrationCacheControllerISpec extends BaseISpec
   "remove" should {
     "successfully remove the record" in {
       stubAuthenticate()
-      val example =  Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
+      val example = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
       val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id)).withHeaders(contentType)
-          .withBody(example))
+        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
+          .withHeaders(contentType)
+          .withBody(example)
+      )
       status(result) shouldBe 200
-      val expectedResult  = registrationCacheRepository.remove(userAnswersCache.id).futureValue
+      val expectedResult = registrationCacheRepository.remove(userAnswersCache.id).futureValue
       expectedResult shouldBe true
 
     }

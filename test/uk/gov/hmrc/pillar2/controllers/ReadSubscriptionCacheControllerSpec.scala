@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import akka.util.ByteString
+import org.apache.pekko.util.ByteString
 import org.apache.commons.lang3.RandomUtils
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
