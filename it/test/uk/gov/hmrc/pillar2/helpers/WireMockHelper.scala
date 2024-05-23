@@ -38,12 +38,13 @@ object WireMockHelper {
       post(urlMatching(url))
         .willReturn(
           aResponse().withStatus(responseStatus).withBody(responseBody)
-        ))
+        )
+    )
   }
 
   def stubPut(url: String, status: Integer, response: String, responseHeader: Map[String, String] = Map.empty): StubMapping = {
-    val httpHeader = responseHeader.map {
-      case (key, value) => new HttpHeader(key, value)
+    val httpHeader = responseHeader.map { case (key, value) =>
+      new HttpHeader(key, value)
     }
     val responseHeaders = new HttpHeaders(httpHeader.asJava)
     removeStub(put(urlMatching(url)))
@@ -54,6 +55,7 @@ object WireMockHelper {
             .withBody(response)
             .withStatus(status)
             .withHeaders(responseHeaders)
-        ))
+        )
+    )
   }
 }

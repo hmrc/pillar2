@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.joda.time.{DateTime, DateTimeZone}
+import java.time.Instant
 import org.mongodb.scala.bson.BsonDocument
 import org.mongodb.scala.model._
 import play.api.Logging
@@ -63,7 +63,7 @@ class RegistrationCacheRepository @Inject() (
     )
     with Logging {
 
-  private def updatedAt: DateTime = DateTime.now(DateTimeZone.UTC)
+  private def updatedAt: Instant = Instant.now
 
   private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle
@@ -117,7 +117,7 @@ class RegistrationCacheRepository @Inject() (
       }
     }
 
-  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[DateTime]] =
+  def getLastUpdated(id: String)(implicit ec: ExecutionContext): Future[Option[Instant]] =
     collection.find(Filters.equal(idField, id)).headOption().map {
       _.map { dataEntry =>
         dataEntry.lastUpdated

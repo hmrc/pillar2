@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import akka.Done
-import org.joda.time.DateTime
+import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
@@ -42,6 +41,7 @@ import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
+import java.time.Instant
 import scala.concurrent.Future
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
@@ -215,7 +215,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       "should return CONFLICT when occurs from EIS" in {
         val errorDetails = ErrorDetails(
           ErrorDetail(
-            DateTime.now().toString,
+            Instant.now().toString,
             Some("xx"),
             "409",
             "CONFLICT",

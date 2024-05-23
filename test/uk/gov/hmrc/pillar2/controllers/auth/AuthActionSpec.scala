@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers.auth
 
-import akka.util.Timeout
+import org.apache.pekko.util.Timeout
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar

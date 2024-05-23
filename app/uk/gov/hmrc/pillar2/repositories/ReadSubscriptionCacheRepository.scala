@@ -18,7 +18,6 @@ package uk.gov.hmrc.pillar2.repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.model._
 import play.api.Logging
 import play.api.libs.json._
@@ -29,6 +28,7 @@ import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
 
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,7 +62,7 @@ class ReadSubscriptionCacheRepository @Inject() (
     )
     with Logging {
 
-  private def updatedAt: DateTime = DateTime.now(DateTimeZone.UTC)
+  private def updatedAt: Instant = Instant.now
 
   private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle

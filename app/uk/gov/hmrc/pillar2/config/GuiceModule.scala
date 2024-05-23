@@ -17,10 +17,10 @@
 package uk.gov.hmrc.pillar2.config
 
 import com.google.inject.AbstractModule
-import play.api.libs.concurrent.AkkaGuiceSupport
+import play.api.libs.concurrent.PekkoGuiceSupport
 import play.api.{Configuration, Environment}
 
-class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule with AkkaGuiceSupport {
+class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule with PekkoGuiceSupport {
 
   override def configure(): Unit =
     bind(classOf[AppConfig]).asEagerSingleton()

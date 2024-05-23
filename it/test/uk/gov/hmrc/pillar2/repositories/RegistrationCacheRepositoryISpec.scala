@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.repositories
 
-import org.joda.time.{DateTime, DateTimeZone}
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
@@ -29,17 +28,23 @@ import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
+import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class RegistrationCacheRepositoryISpec extends AnyWordSpec with
-  DefaultPlayMongoRepositorySupport[RegistrationDataEntry] with ScalaFutures with IntegrationPatience with OptionValues {
-
+class RegistrationCacheRepositoryISpec
+    extends AnyWordSpec
+    with DefaultPlayMongoRepositorySupport[RegistrationDataEntry]
+    with ScalaFutures
+    with IntegrationPatience
+    with OptionValues {
 
   private val app = GuiceApplicationBuilder()
     .configure(
-     "encryptionToggle"-> "true"
-    ).overrides(
-      bind[MongoComponent].toInstance(mongoComponent),
+      "metrics.enabled"  -> false,
+      "encryptionToggle" -> "true"
+    )
+    .overrides(
+      bind[MongoComponent].toInstance(mongoComponent)
     )
     .build()
 
@@ -52,7 +57,7 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
     RegistrationDataEntry(
       "id",
       Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
-      DateTime.now(DateTimeZone.UTC)
+      Instant.now()
     )
 
   "save" should {
@@ -82,7 +87,7 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
   "remove" should {
     "successfully remove the record" in {
       repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-       repository.remove(userAnswersCache.id).futureValue
+      repository.remove(userAnswersCache.id).futureValue
       repository.get(userAnswersCache.id).futureValue mustBe None
 
     }
@@ -93,7 +98,7 @@ class RegistrationCacheRepositoryISpec extends AnyWordSpec with
       repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
       val result = repository.getAll(1).futureValue
       val expectedResult = Seq(
-        Json.toJson("foo"-> "bar", "name"-> "steve","address"-> "address1")
+        Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1")
       )
       result mustBe expectedResult
     }

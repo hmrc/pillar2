@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.joda.time.DateTime
+import java.time.Instant
 import play.api.Logging
 import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -54,14 +54,14 @@ class RegistrationCacheController @Inject() (
     }
   }
 
-  private val jodaDateTimeNumberWrites = new Writes[DateTime] {
-    def writes(d: DateTime): JsValue = JsNumber(d.getMillis)
+  private val javaDateTimeNumberWrites = new Writes[Instant] {
+    def writes(d: Instant): JsValue = JsNumber(d.getEpochSecond)
   }
 
   def lastUpdated(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.getLastUpdated(id).map { response =>
       response.map { date =>
-        Ok(Json.toJson(date)(jodaDateTimeNumberWrites))
+        Ok(Json.toJson(date)(javaDateTimeNumberWrites))
       } getOrElse NotFound
     }
   }
