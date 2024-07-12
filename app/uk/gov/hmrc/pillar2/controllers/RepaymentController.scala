@@ -34,8 +34,8 @@ class RepaymentController @Inject() (
     extends BackendController(cc)
     with Logging {
 
-  def repaymentsSendRequest(id: String): Action[RepaymentRequestDetail] = authenticate(parse.json[RepaymentRequestDetail]).async { implicit request =>
-    repaymentService.sendRepaymentsData(id, request.body).map(_ => Ok)
+  def repaymentsSendRequest: Action[RepaymentRequestDetail] = authenticate(parse.json[RepaymentRequestDetail]).async { implicit request =>
+    repaymentService.sendRepaymentsData(request.body).map(_ => Ok)
   }
 
 }
