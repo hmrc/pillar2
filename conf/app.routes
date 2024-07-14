@@ -22,4 +22,4 @@ GET          /user-cache/read-subscription/:id                              uk.g
 POST         /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)
 DELETE       /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.remove(id: String)
 
-POST           /repayments                                    uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
+POST           /repayment                                    uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest

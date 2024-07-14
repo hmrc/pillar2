@@ -42,16 +42,16 @@ class RepaymentService @Inject() (
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
 
-  def sendRepaymentsData(amendData: RepaymentRequestDetail)(implicit hc: HeaderCarrier): Future[Done] =
-    repaymentConnector.sendRepaymentInformation(amendData).flatMap { response =>
+  def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(implicit hc: HeaderCarrier): Future[Done] =
+    repaymentConnector.sendRepaymentInformation(rePaymentData).flatMap { response =>
       if (response.status == 200) {
-        auditService.auditCreateRepayment(requestData = amendData, responseReceived = AuditResponseReceived(response.status, response.json))
+        auditService.auditCreateRepayment(requestData = rePaymentData, responseReceived = AuditResponseReceived(response.status, response.json))
         response.json.validate[RepaymentResponse] match {
           case JsSuccess(result, _) =>
             logger.info(
               s"Successful response received for repayment  for form  at ${result.success.processingDate}"
             )
-            repository.remove(amendData.userId)
+            repository.remove(rePaymentData.userId)
             Future.successful(Done)
           case _ => Future.failed(JsResultError)
         }
@@ -59,7 +59,7 @@ class RepaymentService @Inject() (
         logger.info(
           s"Unsuccessful response received for repayments  with ${response.status} status and body: ${response.body} "
         )
-        auditService.auditCreateRepayment(requestData = amendData, responseReceived = AuditResponseReceived(response.status, response.json))
+        auditService.auditCreateRepayment(requestData = rePaymentData, responseReceived = AuditResponseReceived(response.status, response.json))
         // auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
         Future.failed(UnexpectedResponse)
       }

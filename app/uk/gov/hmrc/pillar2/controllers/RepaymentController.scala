@@ -35,6 +35,9 @@ class RepaymentController @Inject() (
     with Logging {
 
   def repaymentsSendRequest: Action[RepaymentRequestDetail] = authenticate(parse.json[RepaymentRequestDetail]).async { implicit request =>
+    println(
+      "call recieved at back end .....................................................................................8........................"
+    )
     repaymentService.sendRepaymentsData(request.body).map(_ => Ok)
   }
 

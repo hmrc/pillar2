@@ -69,6 +69,7 @@ class RepaymentConnector @Inject() (
   )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
+    println("url@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" + url)
     implicit val writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
     http.PUT[RepaymentRequestDetail, HttpResponse](
       url,
