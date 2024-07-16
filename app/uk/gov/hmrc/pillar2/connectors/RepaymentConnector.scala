@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.UnexpectedResponse
+import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentSuccess
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
@@ -65,13 +65,12 @@ class RepaymentConnector @Inject() (
   }
 
   def sendRepaymentInformation(
-    amendRequest: RepaymentRequestDetail
+    amendRequest: UserAnswers
   )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
-    println("url@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" + url)
-    implicit val writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
-    http.PUT[RepaymentRequestDetail, HttpResponse](
+    implicit val writes: Writes[UserAnswers] = UserAnswers.format
+    http.PUT[UserAnswers, HttpResponse](
       url,
       amendRequest,
       extraHeaders(config, serviceName)

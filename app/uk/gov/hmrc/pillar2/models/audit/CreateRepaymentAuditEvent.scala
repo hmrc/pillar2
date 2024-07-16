@@ -22,11 +22,8 @@ import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, ContactDet
 import java.time.LocalDateTime
 
 case class CreateRepaymentAuditEvent(
-  repaymentDetails: RepaymentDetails,
-  bankDetails:      BankDetails,
-  contactDetails:   ContactDetails,
-  plrReference:     String,
-  processingDate:   String
+  plrReference:   String,
+  processingDate: String
 ) extends AuditEvent {
   override val auditType:  String  = "createRepaymentPillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)

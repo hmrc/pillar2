@@ -29,7 +29,7 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.http.Status._
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, UserAnswers}
 
 class AuditService @Inject() (
   auditConnector: AuditConnector
@@ -99,7 +99,7 @@ class AuditService @Inject() (
     )
 
   def auditCreateRepayment(
-    requestData:      RepaymentRequestDetail,
+    requestData:      UserAnswers,
     responseReceived: AuditResponseReceived
   )(implicit hc:      HeaderCarrier): Future[AuditResult] = {
     //TODO - This needs to be fixed as we are loosing failure of response
@@ -112,9 +112,9 @@ class AuditService @Inject() (
 
     auditConnector.sendExtendedEvent(
       CreateRepaymentAuditEvent(
-        requestData.repaymentDetails,
-        bankDetails = requestData.bankDetails,
-        contactDetails = requestData.contactDetails,
+//        requestData.repaymentDetails,
+//        bankDetails = requestData.bankDetails,
+//        contactDetails = requestData.contactDetails,
         plrReference = resData._1,
         processingDate = resData._2
       ).extendedDataEvent
