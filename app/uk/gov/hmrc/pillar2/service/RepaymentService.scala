@@ -18,51 +18,27 @@ package uk.gov.hmrc.pillar2.service
 
 import org.apache.pekko.Done
 import play.api.Logging
-import play.api.http.Status._
-import play.api.libs.json._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.RepaymentConnector
-import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
-import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentResponse
-import uk.gov.hmrc.pillar2.models.{JsResultError, UnexpectedResponse, UserAnswers}
-import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.pillar2.models.UnexpectedResponse
+import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class RepaymentService @Inject() (
-  // repository:         ReadSubscriptionCacheRepository,
-  repaymentConnector: RepaymentConnector,
-  auditService:       AuditService
+  repaymentConnector: RepaymentConnector
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
 
-  private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
-
-  def sendRepaymentsData(rePaymentData: UserAnswers)(implicit hc: HeaderCarrier): Future[Done] = {
-    println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!..................................rePaymentData......." + rePaymentData)
-    repaymentConnector.sendRepaymentInformation(rePaymentData).flatMap { response =>
-      if (response.status == 200) {
-        auditService.auditCreateRepayment(requestData = rePaymentData, responseReceived = AuditResponseReceived(response.status, response.json))
-        response.json.validate[RepaymentResponse] match {
-          case JsSuccess(result, _) =>
-            logger.info(
-              s"Successful response received for repayment  for form  at ${result.success.processingDate}"
-            )
-            //    repository.remove(rePaymentData.userId)
-            Future.successful(Done)
-          case _ => Future.failed(JsResultError)
-        }
+  def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(implicit hc: HeaderCarrier): Future[Done] =
+    repaymentConnector.sendRepaymentDetails(rePaymentData).flatMap { response =>
+      if (response.status == 201) {
+        Future.successful(Done)
       } else {
-        logger.info(
-          s"Unsuccessful response received for repayments  with ${response.status} status and body: ${response.body} "
-        )
-        auditService.auditCreateRepayment(requestData = rePaymentData, responseReceived = AuditResponseReceived(response.status, response.json))
-        // auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
         Future.failed(UnexpectedResponse)
       }
     }
-  }
 
 }

@@ -17,60 +17,27 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
-import play.api.Logger
-import play.api.libs.json.{Json, Writes}
+import play.api.Logging
+import play.api.libs.json.Writes
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
-import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentSuccess
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class RepaymentConnector @Inject() (
+class RepaymentConnector @Inject() (implicit
+  ec:         ExecutionContext,
   val config: AppConfig,
   val http:   HttpClient
-) {
-  implicit val logger: Logger = Logger(this.getClass.getName)
-  def sendCreateSubscriptionInformation(
-    subscription: RequestDetail
-  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
-    logger.info(
-      s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
-    )
-    http.POST[RequestDetail, HttpResponse](
-      config.baseUrl(serviceName),
-      subscription,
-      headers = extraHeaders(config, serviceName)
-    )(wts = RequestDetail.format, rds = httpReads, hc = hc, ec = ec)
-  }
+) extends Logging {
 
-  def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SubscriptionResponse] = {
-    val serviceName = "create-subscription"
-    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
-    http
-      .GET[HttpResponse](url, headers = extraHeaders(config, serviceName))(httpReads, hc, ec)
-      .flatMap { response =>
-        if (response.status == 200) {
-          Future.successful(response.json.as[SubscriptionResponse])
-        } else {
-          logger.error(s"unexpected error for read subscription with status: ${response.status}")
-          Future.failed(UnexpectedResponse)
-        }
-      }
-  }
-
-  def sendRepaymentInformation(
-    amendRequest: UserAnswers
-  )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def sendRepaymentDetails(
+    amendRequest: RepaymentRequestDetail
+  )(implicit hc:  HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
-    implicit val writes: Writes[UserAnswers] = UserAnswers.format
-    http.PUT[UserAnswers, HttpResponse](
+    implicit val writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
+    http.POST[RepaymentRequestDetail, HttpResponse](
       url,
       amendRequest,
       extraHeaders(config, serviceName)

@@ -21,6 +21,7 @@ import play.api.libs.json.{Json, OFormat}
 final case class RepaymentDetails(
   plrReference:       String,
   name:               String,
+  utr:                Option[String],
   reasonForRepayment: String,
   refundAmount:       String
 )
@@ -43,10 +44,10 @@ object BankDetails {
   implicit val format: OFormat[BankDetails] = Json.format[BankDetails]
 }
 
-final case class ContactDetails(
+final case class RepaymentContactDetails(
   contactDetails: String
 )
 
-object ContactDetails {
-  implicit val format: OFormat[ContactDetails] = Json.format[ContactDetails]
+object RepaymentContactDetails {
+  implicit val format: OFormat[RepaymentContactDetails] = Json.format[RepaymentContactDetails]
 }

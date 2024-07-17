@@ -17,13 +17,12 @@
 package uk.gov.hmrc.pillar2.models.hods.repayment.request
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, ContactDetails, RepaymentDetails}
+import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 
 case class RepaymentRequestDetail(
-  userId:           String,
   repaymentDetails: RepaymentDetails,
   bankDetails:      BankDetails,
-  contactDetails:   ContactDetails
+  contactDetails:   RepaymentContactDetails
 )
 
 object RepaymentRequestDetail {

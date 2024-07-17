@@ -20,7 +20,7 @@ import uk.gov.hmrc.pillar2.models.WithName
 
 sealed trait UkOrAbroadBankAccount
 
-object UkOrAbroadBankAccount  {
+object UkOrAbroadBankAccount {
   case object UkBankAccount extends WithName("ukBankAccount") with UkOrAbroadBankAccount
   case object ForeignBankAccount extends WithName("nonUkBankAccount") with UkOrAbroadBankAccount
 

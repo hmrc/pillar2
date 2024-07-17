@@ -16,20 +16,16 @@
 
 package uk.gov.hmrc.pillar2.service.audit
 
-import org.apache.pekko.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import play.api.Logging
+import play.api.http.Status._
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateRepaymentAuditEvent, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, NominatedFilingMember, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, SuccessResponse, UpeRegisterWithoutIdAuditEvent, UpeRegistration}
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, ContactDetailsType, FilingMemberDetails, SubscriptionResponse, UpeCorrespAddressDetails, UpeDetails}
+import uk.gov.hmrc.pillar2.models.audit._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.http.Status._
-import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, UserAnswers}
 
 class AuditService @Inject() (
   auditConnector: AuditConnector
@@ -97,30 +93,6 @@ class AuditService @Inject() (
         accountStatus = responseData.success.accountStatus
       ).extendedDataEvent
     )
-
-  def auditCreateRepayment(
-    requestData:      UserAnswers,
-    responseReceived: AuditResponseReceived
-  )(implicit hc:      HeaderCarrier): Future[AuditResult] = {
-    //TODO - This needs to be fixed as we are loosing failure of response
-    val resData = responseReceived.status match {
-      case CREATED =>
-        val response = responseReceived.responseData.as[SuccessResponse]
-        (response.success.plrReference, response.success.processingDate.toString)
-      case _ => ("", "")
-    }
-
-    auditConnector.sendExtendedEvent(
-      CreateRepaymentAuditEvent(
-//        requestData.repaymentDetails,
-//        bankDetails = requestData.bankDetails,
-//        contactDetails = requestData.contactDetails,
-        plrReference = resData._1,
-        processingDate = resData._2
-      ).extendedDataEvent
-    )
-  }
-
   def auditAmendSubscription(
     requestData:  AmendSubscriptionSuccess,
     responseData: AuditResponseReceived
