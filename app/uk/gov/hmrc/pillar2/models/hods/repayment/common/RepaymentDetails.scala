@@ -33,7 +33,9 @@ final case class BankDetails(
   nameOnBankAccount: String,
   bankName:          String,
   sortCode:          Option[String],
-  accountNumber:     String,
+  accountNumber:     Option[String],
+  iban:              Option[String],
+  bic:               Option[String],
   countryCode:       Option[String]
 )
 
