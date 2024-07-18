@@ -40,7 +40,6 @@ import scala.concurrent.Future
 class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
 
-
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
@@ -77,7 +76,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
       val result: Future[Result] = route(application, request).value
       status(result) mustEqual BAD_REQUEST
     }
-    
+
     "should return CREATED when a valid json is passed and the call to ETMP is successfull" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayload =>
         val request: FakeRequest[AnyContentAsJson] =

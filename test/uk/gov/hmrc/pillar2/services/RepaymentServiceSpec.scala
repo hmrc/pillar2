@@ -31,22 +31,24 @@ import scala.concurrent.Future
 
 class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-    val service =
-      new RepaymentService(
-        mockRepaymentConnector
-      )
+  val service =
+    new RepaymentService(
+      mockRepaymentConnector
+    )
 
   "RepaymentService" - {
     "Return Done in case of a CREATED Http Response" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
-        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any())).thenReturn(Future.successful(HttpResponse(responseStatus= 201)))
+        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
+          .thenReturn(Future.successful(HttpResponse(responseStatus = 201)))
         val result = service.sendRepaymentsData(repaymentPayLoad)
         result.futureValue mustBe Done
-        }
       }
+    }
     "return a failed result in case of a response other than 201" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
-        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any())).thenReturn(Future.successful(HttpResponse(responseStatus= 200)))
+        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
+          .thenReturn(Future.successful(HttpResponse(responseStatus = 200)))
         val result = service.sendRepaymentsData(repaymentPayLoad)
         result.failed.futureValue mustBe UnexpectedResponse
       }

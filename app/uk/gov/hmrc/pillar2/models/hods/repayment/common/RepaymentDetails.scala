@@ -23,7 +23,7 @@ final case class RepaymentDetails(
   name:               String,
   utr:                Option[String],
   reasonForRepayment: String,
-  refundAmount:       String
+  refundAmount:       BigDecimal
 )
 
 object RepaymentDetails {

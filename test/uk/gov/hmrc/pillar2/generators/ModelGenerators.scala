@@ -1010,7 +1010,7 @@ trait ModelGenerators {
       name               <- arbitrary[String]
       utr                <- arbitrary[String]
       reasonForRepayment <- arbitrary[String]
-      refundAmount       <- arbitrary[String]
+      refundAmount       <- arbitrary[BigDecimal]
       nameOnBankAccount  <- arbitrary[String]
       bankName           <- arbitrary[String]
       sortCode           <- arbitrary[String]
