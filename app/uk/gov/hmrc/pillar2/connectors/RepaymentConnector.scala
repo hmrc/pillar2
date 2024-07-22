@@ -33,7 +33,7 @@ class RepaymentConnector @Inject() (implicit
 
   def sendRepaymentDetails(
     repaymentRequest: RepaymentRequestDetail
-  )(implicit hc:  HeaderCarrier): Future[HttpResponse] = {
+  )(implicit hc:      HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
     implicit val writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
