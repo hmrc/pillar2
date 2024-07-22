@@ -32,14 +32,14 @@ class RepaymentConnector @Inject() (implicit
 ) extends Logging {
 
   def sendRepaymentDetails(
-    amendRequest: RepaymentRequestDetail
+    repaymentRequest: RepaymentRequestDetail
   )(implicit hc:  HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
     implicit val writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
     http.POST[RepaymentRequestDetail, HttpResponse](
       url,
-      amendRequest,
+      repaymentRequest,
       extraHeaders(config, serviceName)
     )(writes, httpReads, hc, ec)
   }
