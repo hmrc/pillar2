@@ -24,7 +24,6 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
-import uk.gov.hmrc.pillar2.utils.SessionIdHelper
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -38,7 +37,7 @@ class SubscriptionConnector @Inject() (
   )(implicit hc:  HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     logger.info(
-      s"[Session ID: ${SessionIdHelper.sessionId(hc)}] - SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
+      s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
     )
     http.POST[RequestDetail, HttpResponse](
       config.baseUrl(serviceName),

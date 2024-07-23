@@ -23,11 +23,11 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors.{RegistrationConnector, SubscriptionConnector}
+import uk.gov.hmrc.pillar2.connectors.{RegistrationConnector, RepaymentConnector, SubscriptionConnector}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
-import uk.gov.hmrc.pillar2.service.{RegistrationService, SubscriptionService}
+import uk.gov.hmrc.pillar2.service.{RegistrationService, RepaymentService, SubscriptionService}
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
@@ -41,9 +41,11 @@ trait AllMocks extends MockitoSugar {
   val mockRegistrationCacheRepository: RegistrationCacheRepository = mock[RegistrationCacheRepository]
   val mockHttpClient:                  HttpClient                  = mock[HttpClient]
   val mockDataSubmissionsConnector:    RegistrationConnector       = mock[RegistrationConnector]
+  val mockRepaymentConnector:          RepaymentConnector          = mock[RepaymentConnector]
   val mockDataSubmissionsService:      RegistrationService         = mock[RegistrationService]
   val mockSubscriptionConnector:       SubscriptionConnector       = mock[SubscriptionConnector]
   val mockSubscriptionService:         SubscriptionService         = mock[SubscriptionService]
+  val mockRepaymentService:            RepaymentService            = mock[RepaymentService]
   val mockCountryOptions:              CountryOptions              = mock[CountryOptions]
   val mockAuditService:                AuditService                = mock[AuditService]
   val mockAuthAction:                  AuthAction                  = mock[AuthAction]
@@ -53,9 +55,11 @@ trait AllMocks extends MockitoSugar {
       mockActorSystem,
       mockAuditConnector,
       mockAuthConnector,
+      mockRepaymentConnector,
       mockAppConfig,
       mockRegistrationCacheRepository,
       mockHttpClient,
+      mockRepaymentService,
       mockDataSubmissionsConnector,
       mockDataSubmissionsService,
       mockSubscriptionConnector,
