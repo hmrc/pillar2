@@ -47,19 +47,19 @@ class SubscriptionConnector @Inject() (
     )(wts = RequestDetail.format, rds = httpReads, hc = hc, ec = ec)
   }
 
-  def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[SubscriptionResponse] = {
+  def getSubscriptionInformation(plrReference: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference"
     http
       .GET[HttpResponse](url, headers = extraHeaders(config, serviceName))(httpReads, hc, ec)
-      .flatMap { response =>
-        if (response.status == 200) {
-          Future.successful(response.json.as[SubscriptionResponse])
-        } else {
-          logger.error(s"unexpected error for read subscription with status: ${response.status}")
-          Future.failed(UnexpectedResponse)
-        }
-      }
+//      .flatMap { response =>
+//        if (response.status == 200) {
+//          Future.successful(response.json.as[SubscriptionResponse])
+//        } else {
+//          logger.error(s"unexpected error for read subscription with status: ${response.status}")
+//          Future.failed(UnexpectedResponse)
+//        }
+//      }
   }
 
   def amendSubscriptionInformation(
