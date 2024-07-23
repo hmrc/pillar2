@@ -93,8 +93,9 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
                   .withBody(Json.stringify(Json.toJson(SubscriptionResponse(response.success))))
               )
           )
-          val result = await(connector.getSubscriptionInformation(plrReference))
-          result mustEqual SubscriptionResponse(response.success)
+          val result = connector.getSubscriptionInformation(plrReference).futureValue
+          result.status mustEqual OK
+          result.json mustEqual Json.toJson(SubscriptionResponse(response.success))
         }
       }
       "must throw exception when unexpected body is received" in {
@@ -115,15 +116,15 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
 
       "must return future failed for non-200 responses" in {
-
+        val errorResponse = errorCodes.sample.value
         forAll(plrReferenceGen) { (plrReference: String) =>
           stubGetResponse(
             s"/pillar2/subscription/$plrReference",
-            errorCodes.sample.value
+            errorResponse
           )
 
           val result = connector.getSubscriptionInformation(plrReference)
-          result.failed.futureValue mustBe uk.gov.hmrc.pillar2.models.UnexpectedResponse
+          result.futureValue.status mustBe errorResponse
         }
       }
 

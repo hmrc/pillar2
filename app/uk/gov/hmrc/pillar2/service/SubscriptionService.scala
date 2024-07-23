@@ -32,6 +32,7 @@ import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, JsResultError, NonUKAddress, UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -376,9 +377,14 @@ class SubscriptionService @Inject() (
   def readSubscriptionData(plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     for {
       response <- subscriptionConnector.getSubscriptionInformation(plrReference)
-      subscriptionResponse = response.json.as[SubscriptionResponse]
-      _ <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
+      _        <- createAuditForReadSubscription(plrReference, response)
     } yield response
+
+  private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(implicit hc: HeaderCarrier): Future[AuditResult] =
+    response.status match {
+      case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionResponse])
+      case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
+    }
 
   private def createCachedObject(sub: SubscriptionSuccess): ReadSubscriptionCachedData = {
 
