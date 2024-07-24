@@ -16,20 +16,17 @@
 
 package uk.gov.hmrc.pillar2.service.audit
 
-import org.apache.pekko.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import play.api.Logging
+import play.api.http.Status._
+import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.models.audit.{AmendSubscriptionSuccessAuditEvent, AuditResponseReceived, CreateSubscriptionAuditEvent, FmRegisterWithoutIdAuditEvent, NominatedFilingMember, ReadSubscriptionFailedAuditEvent, ReadSubscriptionSuccessAuditEvent, SuccessResponse, UpeRegisterWithoutIdAuditEvent, UpeRegistration}
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, ContactDetailsType, FilingMemberDetails, SubscriptionResponse, UpeCorrespAddressDetails, UpeDetails}
+import uk.gov.hmrc.pillar2.models.audit._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.http.Status._
-import play.api.libs.json.JsValue
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
 
 class AuditService @Inject() (
   auditConnector: AuditConnector

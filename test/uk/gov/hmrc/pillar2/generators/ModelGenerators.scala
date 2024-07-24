@@ -22,6 +22,8 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods._
+import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
+import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
@@ -997,6 +999,42 @@ trait ModelGenerators {
       name,
       email,
       telephoneNo
+    )
+
+  }
+
+  implicit val arbitraryRepaymentPayload: Arbitrary[RepaymentRequestDetail] = Arbitrary {
+
+    for {
+      plrReference       <- arbitrary[String]
+      name               <- arbitrary[String]
+      utr                <- arbitrary[String]
+      reasonForRepayment <- arbitrary[String]
+      refundAmount       <- arbitrary[BigDecimal]
+      nameOnBankAccount  <- arbitrary[String]
+      bankName           <- arbitrary[String]
+      sortCode           <- arbitrary[String]
+      accountNumber      <- arbitrary[String]
+      email              <- arbitrary[String]
+      telephoneNo        <- arbitrary[String]
+    } yield RepaymentRequestDetail(
+      RepaymentDetails(
+        plrReference = plrReference,
+        name = name,
+        utr = Some(utr),
+        reasonForRepayment = reasonForRepayment,
+        refundAmount = refundAmount
+      ),
+      BankDetails(
+        nameOnBankAccount = nameOnBankAccount,
+        bankName = bankName,
+        sortCode = Some(sortCode),
+        accountNumber = Some(accountNumber),
+        iban = None,
+        bic = None,
+        countryCode = None
+      ),
+      contactDetails = RepaymentContactDetails(s"$name , $email, $telephoneNo")
     )
 
   }
