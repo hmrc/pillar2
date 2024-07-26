@@ -72,7 +72,7 @@ class SubscriptionController @Inject() (
   def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     for {
       response <- subscriptionService.readSubscriptionData(plrReference)
-    } yield Ok(Json.toJson(response.success))
+    } yield convertToResult(response)(implicitly[Logger](logger))
   }
 
   def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { implicit request =>

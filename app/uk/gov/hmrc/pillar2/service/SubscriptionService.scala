@@ -32,6 +32,7 @@ import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, JsResultError, NonUKAddress, UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -366,17 +367,24 @@ class SubscriptionService @Inject() (
 
   def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
-      subscriptionResponse <- subscriptionConnector.getSubscriptionInformation(plrReference)
-      _                    <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
+      response <- subscriptionConnector.getSubscriptionInformation(plrReference)
+      subscriptionResponse = response.json.as[SubscriptionResponse]
+      _ <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
       dataToStore = createCachedObject(subscriptionResponse.success)
       _ <- repository.upsert(id, Json.toJson(dataToStore))
     } yield subscriptionResponse
 
-  def readSubscriptionData(plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
+  def readSubscriptionData(plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     for {
-      subscriptionResponse <- subscriptionConnector.getSubscriptionInformation(plrReference)
-      _                    <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
-    } yield subscriptionResponse
+      response <- subscriptionConnector.getSubscriptionInformation(plrReference)
+      _        <- createAuditForReadSubscription(plrReference, response)
+    } yield response
+
+  private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(implicit hc: HeaderCarrier): Future[AuditResult] =
+    response.status match {
+      case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionResponse])
+      case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
+    }
 
   private def createCachedObject(sub: SubscriptionSuccess): ReadSubscriptionCachedData = {
 

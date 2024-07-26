@@ -308,7 +308,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     "readSubscription" - {
       "return Ok response with json object if the connector returns successful" in {
         forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
-          when(mockSubscriptionService.readSubscriptionData(any())(any())).thenReturn(Future.successful(response))
+          when(mockSubscriptionService.readSubscriptionData(any())(any()))
+            .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
           val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK

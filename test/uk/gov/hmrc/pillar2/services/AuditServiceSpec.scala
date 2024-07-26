@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.services
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -83,6 +84,16 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponse.arbitrary) { (plrRef, response) =>
         val result = await(service.auditReadSubscriptionSuccess(plrRef, response))
+        result mustBe AuditResult.Success
+      }
+    }
+
+    "Send failed readSubscription" in new Setup {
+
+      when(mockAuditConnector.sendExtendedEvent(any())(any(), any()))
+        .thenReturn(Future.successful(AuditResult.Success))
+      forAll(arbPlrReference.arbitrary) { plrRef =>
+        val result = await(service.auditReadSubscriptionFailure(plrRef, 404, Json.obj()))
         result mustBe AuditResult.Success
       }
     }
