@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models
+package uk.gov.hmrc.pillar2.models.financial
 
 import play.api.libs.json.Json
 
-trait ApiErrors extends Throwable
+import java.time.LocalDate
 
-case object JsResultError extends ApiErrors
-case object UnexpectedResponse extends ApiErrors
+final case class FinancialHistory(date: LocalDate, paymentType: String, amountPaid: BigDecimal, amountRepaid: BigDecimal)
 
-final case class FinancialDataError(code: String, reason: String) extends ApiErrors
-
-final case class FinancialDataErrorResponses(failures: Seq[FinancialDataError]) extends ApiErrors
-
-object FinancialDataError {
-  implicit val formatException = Json.format[FinancialDataError]
+object FinancialHistory {
+  implicit val format = Json.format[FinancialHistory]
 }
+final case class TransactionHistory(plrReference: String, financialHistory: Seq[FinancialHistory])
 
-object FinancialDataErrorResponses {
-  implicit val format = Json.format[FinancialDataErrorResponses]
+object TransactionHistory {
+  implicit val format = Json.format[TransactionHistory]
 }

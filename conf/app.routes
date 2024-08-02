@@ -1,25 +1,27 @@
 # microservice specific routes
 
 # user answers caching in mongo
-GET          /user-cache/registration-subscription/:id                              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.get(id: String)
-POST         /user-cache/registration-subscription/:id                              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
-DELETE       /user-cache/registration-subscription/:id                              uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
-GET          /user-cache/registration-subscription/:id/lastUpdated                  uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
+GET           /user-cache/registration-subscription/:id                    uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.get(id: String)
+POST          /user-cache/registration-subscription/:id                    uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
+DELETE        /user-cache/registration-subscription/:id                    uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
+GET           /user-cache/registration-subscription/:id/lastUpdated        uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
 
 
-POST          /upe/registration/:id                                                 uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdUpeRegistrationSubmission(id: String)
-POST          /fm/registration/:id                                                  uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
-POST          /rfm/registration/:id                                                  uk.gov.hmrc.pillar2.controllers.RegistrationController.registerNewFilingMember(id: String)
+POST          /upe/registration/:id                                        uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdUpeRegistrationSubmission(id: String)
+POST          /fm/registration/:id                                         uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
+POST          /rfm/registration/:id                                        uk.gov.hmrc.pillar2.controllers.RegistrationController.registerNewFilingMember(id: String)
 
 
-POST          /subscription/create-subscription                                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
-GET           /subscription/read-subscription/:id/:plrReference                     uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
-GET           /subscription/read-subscription/:plrReference                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
-PUT           /subscription/amend-subscription/:id                                      uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
+POST          /subscription/create-subscription                            uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
+GET           /subscription/read-subscription/:id/:plrReference            uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
+GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
+PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
 
 
-GET          /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.get(id: String)
-POST         /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)
-DELETE       /user-cache/read-subscription/:id                              uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.remove(id: String)
+GET           /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.get(id: String)
+POST          /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)
+DELETE        /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.remove(id: String)
 
-POST           /repayment                                    uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
+POST          /repayment                                                   uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
+
+GET           /transaction-history/:plrReference                           uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String)
