@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.services
+package uk.gov.hmrc.pillar2.service
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -25,7 +25,7 @@ import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial._
 import uk.gov.hmrc.pillar2.service.FinancialService
-import uk.gov.hmrc.pillar2.services.FinancialServiceSpec._
+import uk.gov.hmrc.pillar2.service.FinancialServiceSpec._
 
 import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.Future
