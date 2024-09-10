@@ -21,8 +21,9 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.FinancialDataConnector
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialHistory, TransactionHistory}
-import uk.gov.hmrc.pillar2.service.FinancialService.{PAYMENT_IDENTIFIER, Payment, REPAYMENT_IDENTIFIER, Refund}
+import uk.gov.hmrc.pillar2.service.FinancialService._
 
+import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -32,9 +33,12 @@ class FinancialService @Inject() (
   ec: ExecutionContext
 ) extends Logging {
 
-  def getTransactionHistory(plrReference: String)(implicit hc: HeaderCarrier): Future[Either[FinancialDataError, TransactionHistory]] = {
+  def getTransactionHistory(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+    hc:                                   HeaderCarrier
+  ): Future[Either[FinancialDataError, TransactionHistory]] = {
+
     val result = for {
-      financialData <- financialDataConnector.retrieveFinancialData(plrReference)
+      financialData <- retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
       repaymentData <- Future successful getRepaymentData(financialData)
       paymentData   <- Future successful getPaymentData(financialData)
       sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)
@@ -43,6 +47,45 @@ class FinancialService @Inject() (
     result.recover { case e: FinancialDataError =>
       logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
       Left(e)
+    }
+  }
+
+  private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+    headerCarrier:                                                HeaderCarrier
+  ): Future[FinancialDataResponse] =
+    Future
+      .sequence(
+        splitIntoYearIntervals(dateFrom, dateTo).map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
+      )
+      .map { financialDataResponses =>
+        val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
+
+        FinancialDataResponse(
+          idType = financialDataResponses.head.idType,
+          idNumber = financialDataResponses.head.idNumber,
+          regimeType = financialDataResponses.head.regimeType,
+          processingDate = financialDataResponses.head.processingDate,
+          financialTransactions = allTransactions
+        )
+      }
+
+  private[service] def splitIntoYearIntervals(startDate: LocalDate, endDate: LocalDate): List[Years] = {
+
+    val adjustedStartDate = if (startDate.isBefore(endDate.minusYears(7))) endDate.minusYears(7) else startDate
+
+    val years = Iterator
+      .iterate(adjustedStartDate)(_.plusYears(1))
+      .takeWhile(_.isBefore(endDate))
+      .toList
+
+    years.foldLeft(List.empty[Years]) { (acc, currentStartDate) =>
+      val currentEndDate =
+        if (currentStartDate.plusYears(1).isBefore(endDate))
+          currentStartDate.plusYears(1).minusDays(1)
+        else
+          endDate
+
+      acc :+ Years(currentStartDate, currentEndDate)
     }
   }
 
@@ -71,4 +114,5 @@ object FinancialService {
   val PAYMENT_IDENTIFIER   = "0060"
   val REPAYMENT_IDENTIFIER = "Outgoing payment - Paid"
 
+  private[service] case class Years(startDate: LocalDate, endDate: LocalDate)
 }
