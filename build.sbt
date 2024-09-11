@@ -10,6 +10,9 @@ val appName = "pillar2"
 ThisBuild / scalaVersion := "2.13.12"
 ThisBuild / majorVersion := 0
 
+ThisBuild / semanticdbEnabled := true
+ThisBuild / semanticdbVersion := scalafixSemanticdb.revision
+
 //revert
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
