@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.pillar2.controllers.stubs
 
+import javax.inject.{Inject, Singleton}
+
+import scala.concurrent.ExecutionContext
+
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
 
 @Singleton
 class TestController @Inject() (
@@ -51,7 +52,7 @@ class TestController @Inject() (
     repository.clearAllData().map(_ => Ok)
   }
 
-  def deEnrol(): Action[AnyContent] = Action.async { implicit request =>
+  def deEnrol(): Action[AnyContent] = Action.async { _ =>
     ???
   }
 

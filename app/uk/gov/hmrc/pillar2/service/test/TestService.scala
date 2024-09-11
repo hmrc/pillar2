@@ -16,11 +16,12 @@
 
 package uk.gov.hmrc.pillar2.service.test
 
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.play.http.logging.Mdc
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class TestService @Inject() (
   registrationCacheRepository: RegistrationCacheRepository

@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import javax.inject.{Inject, Singleton}
+
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Try}
+
 import play.api.Logging
 import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.mvc.{Action, AnyContent, ControllerComponents, Result}
@@ -26,10 +31,6 @@ import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Success, Try}
 
 @Singleton
 class RegistrationController @Inject() (

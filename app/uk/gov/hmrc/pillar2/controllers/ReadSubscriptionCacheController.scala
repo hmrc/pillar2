@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import javax.inject.{Inject, Singleton}
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import play.api.Logging
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReadSubscriptionCacheController @Inject() (
@@ -40,13 +41,13 @@ class ReadSubscriptionCacheController @Inject() (
     } getOrElse Future.successful(EntityTooLarge)
   }
 
-  def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def get(id: String): Action[AnyContent] = authenticate.async { _ =>
     repository.get(id).map { response =>
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
 
-  def remove(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def remove(id: String): Action[AnyContent] = authenticate.async { _ =>
     repository.remove(id).map { response =>
       if (response) Ok else InternalServerError
     }

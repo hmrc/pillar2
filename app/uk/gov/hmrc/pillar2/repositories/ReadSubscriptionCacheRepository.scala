@@ -16,6 +16,12 @@
 
 package uk.gov.hmrc.pillar2.repositories
 
+import java.time.Instant
+import java.util.concurrent.TimeUnit
+import javax.inject.Singleton
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
 import org.mongodb.scala.model._
@@ -27,11 +33,6 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
-
-import java.time.Instant
-import java.util.concurrent.TimeUnit
-import javax.inject.Singleton
-import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReadSubscriptionCacheRepository @Inject() (

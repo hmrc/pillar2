@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.registration
 
+import java.time.LocalDate
+
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.grs.{BusinessVerificationResult, GrsRegistrationResult}
-
-import java.time.LocalDate
 
 final case class IncorporatedEntityRegistrationData(
   companyProfile:       CompanyProfile,

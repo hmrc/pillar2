@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
+import scala.concurrent.{ExecutionContext, Future}
+
 import com.google.inject.Inject
 import play.api.Logger
 import play.api.http.Status.OK
@@ -23,8 +25,6 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.financial.FinancialDataResponse
 import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
-
-import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataConnector @Inject() (val config: AppConfig, val http: HttpClient) {
   implicit val logger: Logger = Logger(this.getClass.getName)

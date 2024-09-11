@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.queries
 
+import scala.util.{Success, Try}
+
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.UserAnswers
-
-import scala.util.{Success, Try}
 
 sealed trait Query {
 

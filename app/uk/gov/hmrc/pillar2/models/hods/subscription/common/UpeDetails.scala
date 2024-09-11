@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
-import play.api.libs.json.{Json, OFormat}
-
 import java.time.LocalDate
+
+import play.api.libs.json.{Json, OFormat}
 
 final case class UpeDetails(
   safeId:                  Option[String],

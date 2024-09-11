@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.pillar2.models.financial
 
-import play.api.libs.json.{Json, OFormat}
-
 import java.time.{LocalDate, LocalDateTime}
+
+import play.api.libs.json.{Json, OFormat}
 
 final case class FinancialDataResponse(
   idType:                String,

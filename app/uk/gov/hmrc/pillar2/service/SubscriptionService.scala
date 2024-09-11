@@ -16,6 +16,11 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import java.time.LocalDate
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import org.apache.pekko.Done
 import play.api.Logging
 import play.api.http.Status._
@@ -33,10 +38,6 @@ import uk.gov.hmrc.pillar2.models.{AccountingPeriod, JsResultError, NonUKAddress
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
-
-import java.time.LocalDate
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionService @Inject() (
   repository:            ReadSubscriptionCacheRepository,
   subscriptionConnector: SubscriptionConnector,

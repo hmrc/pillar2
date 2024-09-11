@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import javax.inject.Inject
+
+import scala.concurrent.ExecutionContext
+
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.service.FinancialService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
-import javax.inject.Inject
-import scala.concurrent.ExecutionContext
 
 class FinancialDataController @Inject() (
   financialService:          FinancialService,

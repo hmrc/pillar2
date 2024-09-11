@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.FinancialDataConnector
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialHistory, TransactionHistory}
 import uk.gov.hmrc.pillar2.service.FinancialService.{PAYMENT_IDENTIFIER, Payment, REPAYMENT_IDENTIFIER, Refund}
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialService @Inject() (
   financialDataConnector: FinancialDataConnector

@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -25,9 +29,6 @@ import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
 import uk.gov.hmrc.pillar2.models.identifiers._
 import uk.gov.hmrc.pillar2.service.audit.AuditService
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class RegistrationService @Inject() (
   dataSubmissionConnectors: RegistrationConnector,

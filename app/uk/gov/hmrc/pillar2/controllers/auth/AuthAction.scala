@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.pillar2.controllers.auth
 
+import scala.concurrent.{ExecutionContext, Future}
+
 import com.google.inject.{ImplementedBy, Inject}
 import play.api.http.Status.UNAUTHORIZED
 import play.api.mvc.Results.Status
@@ -23,8 +25,6 @@ import play.api.mvc._
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
-
-import scala.concurrent.{ExecutionContext, Future}
 
 class AuthActionImpl @Inject() (
   override val authConnector:    AuthConnector,

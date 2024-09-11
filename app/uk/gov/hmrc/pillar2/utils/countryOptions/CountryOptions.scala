@@ -16,12 +16,12 @@
 
 package uk.gov.hmrc.pillar2.utils.countryOptions
 
+import javax.inject.{Inject, Singleton}
+
 import com.typesafe.config.ConfigException
 import play.api.Environment
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.config.AppConfig
-
-import javax.inject.{Inject, Singleton}
 
 @Singleton
 class CountryOptions @Inject() (environment: Environment, config: AppConfig) {

@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.registration
 
+import java.time.LocalDate
+
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.grs.EntityType
-
-import java.time.LocalDate
 
 case class Registration(
   isUPERegisteredInUK: Boolean,

@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.pillar2.service.audit
 
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import play.api.Logging
 import play.api.http.Status._
 import play.api.libs.json.JsValue
@@ -24,9 +28,6 @@ import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class AuditService @Inject() (
   auditConnector: AuditConnector

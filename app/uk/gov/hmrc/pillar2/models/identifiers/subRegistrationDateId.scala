@@ -16,8 +16,9 @@
 
 package uk.gov.hmrc.pillar2.models.identifiers
 
-import play.api.libs.json.JsPath
 import java.time.LocalDate
+
+import play.api.libs.json.JsPath
 
 case object subRegistrationDateId extends TypedIdentifier[LocalDate] {
 

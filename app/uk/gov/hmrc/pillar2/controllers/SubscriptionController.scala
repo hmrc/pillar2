@@ -16,6 +16,10 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Logger, Logging}
@@ -26,9 +30,6 @@ import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionController @Inject() (
   userAnswerCache:           RegistrationCacheRepository,

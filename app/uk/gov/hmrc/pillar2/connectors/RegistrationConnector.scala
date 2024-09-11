@@ -16,13 +16,13 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
+import scala.concurrent.{ExecutionContext, Future}
+
 import com.google.inject.Inject
 import play.api.Logger
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
-
-import scala.concurrent.{ExecutionContext, Future}
 
 class RegistrationConnector @Inject() (
   val config: AppConfig,

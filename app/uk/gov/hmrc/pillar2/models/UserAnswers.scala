@@ -16,12 +16,13 @@
 
 package uk.gov.hmrc.pillar2.models
 
+import java.time.Instant
+
+import scala.util.{Failure, Success, Try}
+
 import play.api.libs.json._
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 import uk.gov.hmrc.pillar2.models.queries.{Gettable, Settable}
-
-import java.time.Instant
-import scala.util.{Failure, Success, Try}
 
 final case class UserAnswers(
   id:          String,

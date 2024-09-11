@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.hods
 
+import java.util.UUID
+
 import play.api.libs.json._
 import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
-
-import java.util.UUID
 
 case class NoIdOrganisation(organisationName: String)
 

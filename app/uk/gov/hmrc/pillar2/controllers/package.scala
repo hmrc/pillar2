@@ -16,17 +16,18 @@
 
 package uk.gov.hmrc.pillar2
 
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import scala.util.{Success, Try}
+
 import play.api.Logger
 import play.api.http.Status._
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
-import scala.util.{Success, Try}
 
 package object controllers {
-  implicit class JsErrorLogger(val error: JsError) extends AnyVal {
+  implicit class JsErrorLogger(private val error: JsError) extends AnyVal {
     def toLogFormat: String = Json.prettyPrint(JsError.toJson(error))
   }
 

@@ -16,9 +16,9 @@
 
 package uk.gov.hmrc.pillar2.models
 
-import play.api.libs.json.{Json, OFormat}
-
 import java.time.LocalDate
+
+import play.api.libs.json.{Json, OFormat}
 
 final case class AccountingPeriod(
   startDate: LocalDate,

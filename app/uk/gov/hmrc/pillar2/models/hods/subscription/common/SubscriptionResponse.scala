@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
+import java.time.LocalDate
+
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend}
-
-import java.time.LocalDate
 
 case class SubscriptionResponse(success: SubscriptionSuccess)
 

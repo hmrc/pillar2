@@ -16,15 +16,16 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import javax.inject.Inject
+
+import scala.concurrent.{ExecutionContext, Future}
+
 import org.apache.pekko.Done
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.RepaymentConnector
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-
-import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
 
 class RepaymentService @Inject() (
   repaymentConnector: RepaymentConnector

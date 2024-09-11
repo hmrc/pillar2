@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
+import scala.concurrent.{ExecutionContext, Future}
+
 import com.google.inject.Inject
 import play.api.Logging
 import play.api.libs.json.Writes
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-
-import scala.concurrent.{ExecutionContext, Future}
 
 class RepaymentConnector @Inject() (implicit
   ec:         ExecutionContext,
