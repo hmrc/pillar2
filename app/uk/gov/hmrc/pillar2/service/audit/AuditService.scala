@@ -120,6 +120,7 @@ class AuditService @Inject() (
     }
     auditConnector.sendExtendedEvent(
       AmendSubscriptionSuccessAuditEvent(
+        requestData.replaceFilingMember,
         requestData.upeDetails,
         requestData.accountingPeriod,
         requestData.upeCorrespAddressDetails,
