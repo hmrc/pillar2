@@ -261,8 +261,8 @@ object FinancialServiceSpec {
     TransactionHistory(
       plrReference,
       List(
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0)
+        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
+        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
       )
     )
 
@@ -270,12 +270,12 @@ object FinancialServiceSpec {
     TransactionHistory(
       plrReference,
       List(
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
         FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
         FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0)
+        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
+        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
+        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
+        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
       )
     )
 
@@ -283,12 +283,12 @@ object FinancialServiceSpec {
     TransactionHistory(
       plrReference,
       List(
+        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 200.0, 0.00),
+        FinancialHistory(LocalDate.now.plusDays(1), "Refund", 0.0, 200.0),
         FinancialHistory(LocalDate.now, "Payment", 100.0, 0.00),
         FinancialHistory(LocalDate.now, "Payment", 300.0, 0.00),
         FinancialHistory(LocalDate.now, "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now, "Refund", 0.0, 111.0),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 200.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(1), "Refund", 0.0, 200.0)
+        FinancialHistory(LocalDate.now, "Refund", 0.0, 111.0)
       )
     )
 

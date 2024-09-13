@@ -41,7 +41,7 @@ class FinancialService @Inject() (
       financialData <- retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
       repaymentData <- Future successful getRepaymentData(financialData)
       paymentData   <- Future successful getPaymentData(financialData)
-      sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)
+      sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)(Ordering[LocalDate].reverse)
     } yield Right(TransactionHistory(plrReference, sortedFinancialHistory))
 
     result.recover { case e: FinancialDataError =>
