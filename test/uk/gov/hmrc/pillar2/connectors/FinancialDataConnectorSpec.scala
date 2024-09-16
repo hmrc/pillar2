@@ -24,8 +24,8 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.connectors.FinancialDataConnectorSpec._
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialItem, FinancialTransaction}
+import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
 
 import java.time.{LocalDate, LocalDateTime}
 
@@ -40,10 +40,15 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
   lazy val connector: FinancialDataConnector =
     app.injector.instanceOf[FinancialDataConnector]
 
+  val startDate = LocalDate.now()
+  val endDate   = LocalDate.now().plusYears(1)
+  val url =
+    s"/enterprise/financial-data/ZPLR/$PlrReference/PLR?dateFrom=$startDate&dateTo=$endDate&onlyOpenItems=false&includeLocks=false&calculateAccruedInterest=true&customerPaymentInformation=true"
+
   "FinancialDataConnector" - {
     "must return status as OK when financial data is returned" in {
       server.stubFor(
-        get(urlEqualTo(s"/enterprise/financial-data/ZPLR/$PlrReference/PLR"))
+        get(urlEqualTo(url))
           .willReturn(
             aResponse()
               .withStatus(200)
@@ -51,13 +56,13 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
           )
       )
 
-      val result = await(connector.retrieveFinancialData(PlrReference))
+      val result = await(connector.retrieveFinancialData(PlrReference, startDate, endDate))
       result mustBe response
     }
 
     "must return status as BAD_REQUEST" in {
       server.stubFor(
-        get(urlEqualTo(s"/enterprise/financial-data/ZPLR/$PlrReference/PLR"))
+        get(urlEqualTo(url))
           .willReturn(
             aResponse()
               .withStatus(404)
@@ -65,14 +70,14 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
           )
       )
 
-      val result = connector.retrieveFinancialData(PlrReference).failed
+      val result = connector.retrieveFinancialData(PlrReference, startDate, endDate).failed
 
       await(result) mustBe Json.parse(FinancialDataNotFound).as[FinancialDataError]
     }
 
     "must return status as INTERNAL_SERVER_ERROR" in {
       server.stubFor(
-        get(urlEqualTo(s"/enterprise/financial-data/ZPLR/$PlrReference/PLR"))
+        get(urlEqualTo(url))
           .willReturn(
             aResponse()
               .withStatus(404)
@@ -80,14 +85,14 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
           )
       )
 
-      val result = connector.retrieveFinancialData(PlrReference).failed
+      val result = connector.retrieveFinancialData(PlrReference, startDate, endDate).failed
 
       await(result) mustBe Json.parse(FinancialServerError).as[FinancialDataError]
     }
 
     "handle multiple errors returned from financial data" in {
       server.stubFor(
-        get(urlEqualTo(s"/enterprise/financial-data/ZPLR/$PlrReference/PLR"))
+        get(urlEqualTo(url))
           .willReturn(
             aResponse()
               .withStatus(404)
@@ -95,7 +100,7 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
           )
       )
 
-      val result = connector.retrieveFinancialData(PlrReference).failed
+      val result = connector.retrieveFinancialData(PlrReference, startDate, endDate).failed
 
       await(result) mustBe Json.parse(MultipleErrors).as[FinancialDataErrorResponses]
     }
