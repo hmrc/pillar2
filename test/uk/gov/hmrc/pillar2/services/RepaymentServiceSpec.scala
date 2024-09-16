@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import scala.concurrent.Future
 
 class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-  val service =
+  // Adding explicit type ascription
+  val service: RepaymentService =
     new RepaymentService(
       mockRepaymentConnector
     )
@@ -45,7 +46,8 @@ class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         result.futureValue mustBe Done
       }
     }
-    "return a failed result in case of a response other than 201" in {
+
+    "Return a failed result in case of a response other than 201" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
         when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
           .thenReturn(Future.successful(HttpResponse(responseStatus = 200)))

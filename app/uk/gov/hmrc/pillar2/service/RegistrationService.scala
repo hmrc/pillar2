@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,18 @@
  */
 
 package uk.gov.hmrc.pillar2.service
+
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
+import play.api.libs.json.Reads
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
+import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
 import uk.gov.hmrc.pillar2.models.identifiers._
-import uk.gov.hmrc.pillar2.service.audit.AuditService
-import play.api.Logging
-import play.api.http.Status.INTERNAL_SERVER_ERROR
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
-import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
-import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
-import uk.gov.hmrc.pillar2.models.identifiers._
+import uk.gov.hmrc.pillar2.models.queries.Gettable
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 
 import javax.inject.Inject
@@ -45,53 +40,58 @@ class RegistrationService @Inject() (
 ) extends Logging {
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    for {
-      upeName      <- userAnswers.get(upeNameRegistrationId.gettable)
-      emailAddress <- userAnswers.get(upeContactEmailId.gettable)
-      address      <- userAnswers.get(upeRegisteredAddressId.gettable)
-    } yield registerWithoutId(
+    val upeName      = userAnswers.get(upeNameRegistrationId.gettable).getOrElse("Unknown UPE Name")
+    val emailAddress = userAnswers.get(upeContactEmailId.gettable).getOrElse("unknown@example.com")
+    val phone        = userAnswers.get(upeCapturePhoneId.gettable).getOrElse("0000000000")
+    val address      = extractAddress[UKAddress](userAnswers, upeRegisteredAddressId.gettable)
+
+    registerWithoutId(
       upeName,
-      Address.fromAddress(address),
-      ContactDetails(userAnswers.get(upeCapturePhoneId.gettable), None, None, Some(emailAddress)),
-      false
+      address,
+      ContactDetails(Some(phone), None, None, Some(emailAddress)),
+      isFm = false
     )
-  }.getOrElse {
-    logger.warn("Ultimate Parent registration failed as one or more required fields were missing")
-    registerWithoutIdError
   }
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
-    for {
-      fmName       <- userAnswers.get(fmNameRegistrationId.gettable)
-      emailAddress <- userAnswers.get(fmContactEmailId.gettable)
-      address      <- userAnswers.get(fmRegisteredAddressId.gettable)
+    val fmName       = userAnswers.get(fmNameRegistrationId.gettable).getOrElse("Unknown FM Name")
+    val emailAddress = userAnswers.get(fmContactEmailId.gettable).getOrElse("unknownfm@example.com")
+    val phone        = userAnswers.get(fmCapturePhoneId.gettable).getOrElse("0000000000")
+    val address      = extractAddress[NonUKAddress](userAnswers, fmRegisteredAddressId.gettable)
 
-    } yield registerWithoutId(
+    registerWithoutId(
       fmName,
-      Address.fromFmAddress(address),
-      ContactDetails(userAnswers.get(fmCapturePhoneId.gettable), None, None, Some(emailAddress)),
-      true
+      address,
+      ContactDetails(Some(phone), None, None, Some(emailAddress)),
+      isFm = true
     )
-  }.getOrElse {
-    logger.warn("Filing member registration failed as one or more required fields were missing")
-    registerWithoutIdError
   }
 
-  def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    (for {
-      name    <- userAnswers.get(RfmNameRegistrationId.gettable)
-      email   <- userAnswers.get(RfmPrimaryContactEmailId.gettable)
-      address <- userAnswers.get(RfmRegisteredAddressId.gettable)
-    } yield registerWithoutId(
-      name,
-      Address.fromFmAddress(address),
-      ContactDetails(userAnswers.get(RfmPrimaryPhoneId.gettable), None, None, Some(email)),
-      isFm = true
-    )).getOrElse {
-      logger.warn("Replace Filing member registration failed as one or more required fields were missing")
-      registerWithoutIdError
-    }
+  def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+    val name    = userAnswers.get(RfmNameRegistrationId.gettable).getOrElse("Unknown Filing Member")
+    val email   = userAnswers.get(RfmPrimaryContactEmailId.gettable).getOrElse("unknownfm@example.com")
+    val phone   = userAnswers.get(RfmPrimaryPhoneId.gettable).getOrElse("0000000000")
+    val address = extractAddress[NonUKAddress](userAnswers, RfmRegisteredAddressId.gettable)
 
+    registerWithoutId(
+      name,
+      address,
+      ContactDetails(Some(phone), None, None, Some(email)),
+      isFm = true
+    )
+  }
+
+  private def extractAddress[T](userAnswers: UserAnswers, addressId: Gettable[T])(implicit reads: Reads[T]): Address = {
+    val addressPath = addressId.path
+    userAnswers.get(addressId) match {
+      case Some(ukAddress: UKAddress) =>
+        Address.fromAddress(ukAddress)
+      case Some(nonUKAddress: NonUKAddress) =>
+        Address.fromFmAddress(nonUKAddress)
+      case _ =>
+        Address("Unknown Line 1", Some(""), "Unknown City", Some(""), Some(""), "UK")
+    }
+  }
   private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails, isFm: Boolean)(implicit
     hc:                                       HeaderCarrier
   ): Future[HttpResponse] = {

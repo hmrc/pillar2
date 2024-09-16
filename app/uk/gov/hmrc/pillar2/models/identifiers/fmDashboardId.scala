@@ -18,10 +18,11 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.DashboardInfo
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object fmDashboardId extends TypedIdentifier[DashboardInfo] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[DashboardInfo] = GettableFactory.create(path)
+  override def path: JsPath                  = JsPath \ toString
 
   override def toString: String = "fmDashboard"
 }

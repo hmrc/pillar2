@@ -23,9 +23,9 @@ import uk.gov.hmrc.pillar2.models.queries.ExternalGettableSettable
 import scala.util.{Success, Try}
 
 trait TypedIdentifier[A] extends Identifier with ExternalGettableSettable[A] {
-  override def toString: String = getClass.getSimpleName // Provide a custom toString implementation
+  override def toString: String = getClass.getSimpleName
 
-  def path: JsPath = JsPath \ toString // Use the overridden toString method
+  def path: JsPath = JsPath \ toString
 
   override def cleanup(value: Option[A], userAnswers: UserAnswers): Try[UserAnswers] =
     Success(userAnswers)

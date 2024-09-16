@@ -17,11 +17,14 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.identifiers.subPrimaryPhonePreferenceId.path
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
+
 import java.time.LocalDate
 
 case object subRegistrationDateId extends TypedIdentifier[LocalDate] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[LocalDate] = GettableFactory.create(path)
+  override def path: JsPath              = JsPath \ toString
 
   override def toString: String = "subRegistrationDate"
 }

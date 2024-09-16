@@ -18,7 +18,6 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.NonUKAddress
-import uk.gov.hmrc.pillar2.models.identifiers.fmNameRegistrationId.path
 import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object fmRegisteredAddressId extends TypedIdentifier[NonUKAddress] {

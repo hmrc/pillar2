@@ -51,7 +51,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
     )
     .build()
 
-  val service =
+  val service: SubscriptionService = // Explicit type added here
     new SubscriptionService(
       mockedCache,
       mockSubscriptionConnector,
@@ -64,7 +64,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
   }
 
   "RepaymentController" - {
-    "should return BAD_REQUEST when  repayment parameter is invalid" in {
+    "should return BAD_REQUEST when repayment parameter is invalid" in {
 
       val request: FakeRequest[AnyContentAsJson] =
         FakeRequest(
@@ -77,7 +77,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
       status(result) mustEqual BAD_REQUEST
     }
 
-    "should return CREATED when a valid json is passed and the call to ETMP is successfull" in {
+    "should return CREATED when a valid json is passed and the call to ETMP is successful" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayload =>
         val request: FakeRequest[AnyContentAsJson] =
           FakeRequest(

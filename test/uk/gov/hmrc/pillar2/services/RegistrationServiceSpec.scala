@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.services
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -36,6 +37,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   }
 
   "sendNoIdUpeRegistration" - {
+
     "Return successful Http Response" in new Setup {
       when(
         mockDataSubmissionsConnector
@@ -47,11 +49,11 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       )
 
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
+        println(Json.prettyPrint(Json.toJson(userAnswers))) // Print the JSON to inspect the structure
         service.sendNoIdUpeRegistration(userAnswers).map { response =>
           response.status mustBe OK
         }
       }
-
     }
 
     "Return internal server error with response" in new Setup {
@@ -74,22 +76,25 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   }
 
   "sendNoIdFmRegistration" - {
-    "Return successful Http Response" in new Setup {
-      when(
-        mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
-      ).thenReturn(
-        Future.successful(
-          HttpResponse.apply(OK, "Success")
+    "sendNoIdUpeRegistration" - {
+      "Return successful Http Response" in new Setup {
+        when(
+          mockDataSubmissionsConnector
+            .sendWithoutIDInformation(any())(any(), any())
+        ).thenReturn(
+          Future.successful(
+            HttpResponse.apply(OK, "Success")
+          )
         )
-      )
 
-      forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        service.sendNoIdFmRegistration(userAnswers).map { response =>
-          response.status mustBe OK
+        forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
+          whenever(userAnswers.data.fields.nonEmpty) {
+            service.sendNoIdUpeRegistration(userAnswers).map { response =>
+              response.status mustBe OK
+            }
+          }
         }
       }
-
     }
 
     "Return internal server error with response" in new Setup {

@@ -18,10 +18,12 @@ package uk.gov.hmrc.pillar2.models.identifiers.repayment
 
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.identifiers.TypedIdentifier
+import uk.gov.hmrc.pillar2.models.identifiers.repayment.RepaymentsContactNameId.path
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object RepaymentsRefundAmountId extends TypedIdentifier[BigDecimal] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[BigDecimal] = GettableFactory.create(path)
+  override def path: JsPath               = JsPath \ toString
 
   override def toString: String = "refundAmount"
 }

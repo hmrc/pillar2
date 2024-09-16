@@ -40,7 +40,7 @@ class ReadSubscriptionCacheController @Inject() (
     } getOrElse Future.successful(EntityTooLarge)
   }
 
-  def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def get(id: String): Action[AnyContent] = authenticate.async { _ =>
     repository.get(id).map { response =>
       response.map(Ok(_)).getOrElse(NotFound)
     }
