@@ -20,7 +20,7 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress}
 
-case class ReadSubscriptionCachedData(
+final case class ReadSubscriptionCachedData(
   subMneOrDomestic:            MneOrDomestic,
   subAccountingPeriod:         AccountingPeriod,
   subPrimaryContactName:       String,

@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.models.registration
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.UKAddress
 
-case class WithoutIdRegData(
+final case class WithoutIdRegData(
   upeNameRegistration:   String,
   upeRegisteredAddress:  UKAddress,
   upeContactName:        String,

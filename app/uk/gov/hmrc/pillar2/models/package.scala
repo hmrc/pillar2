@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.pillar2
 
+import cats.instances.int._
+import cats.syntax.eq._
 import play.api.libs.json._
 
 package object models {
@@ -31,6 +33,7 @@ package object models {
 
   implicit class RichJsValue(jsValue: JsValue) {
 
+    @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
     def set(path: JsPath, value: JsValue): JsResult[JsValue] =
       (path.path, jsValue) match {
 
@@ -53,7 +56,7 @@ package object models {
             .flatMap { opt =>
               opt
                 .map(JsSuccess(_))
-                .getOrElse {
+                .getOrElse[JsResult[JsValue]] {
                   second match {
                     case _: KeyPathNode =>
                       JsSuccess(Json.obj())
@@ -77,10 +80,10 @@ package object models {
 
       oldValue match {
         case oldValue: JsArray if index >= 0 && index <= oldValue.value.length =>
-          if (index == oldValue.value.length) {
+          if (index === oldValue.value.length) { // Fixed == with ===
             JsSuccess(oldValue.append(newValue))
           } else {
-            JsSuccess(JsArray(oldValue.value.updated(index, newValue)))
+            JsSuccess(JsArray(oldValue.value.patch(index, Seq(newValue), 1))) // Replaced Seq.updated with patch to avoid `Seq.updated`
           }
         case oldValue: JsArray =>
           JsError(s"array index out of bounds: $index, $oldValue")
@@ -94,7 +97,7 @@ package object models {
 
       valueToRemoveFrom match {
         case valueToRemoveFrom: JsArray if index >= 0 && index < valueToRemoveFrom.value.length =>
-          val updatedJsArray = valueToRemoveFrom.value.slice(0, index) ++ valueToRemoveFrom.value.slice(index + 1, valueToRemoveFrom.value.size)
+          val updatedJsArray = valueToRemoveFrom.value.patch(index, Nil, 1)
           JsSuccess(JsArray(updatedJsArray))
         case valueToRemoveFrom: JsArray => JsError(s"array index out of bounds: $index, $valueToRemoveFrom")
         case _ => JsError(s"cannot set an index on $valueToRemoveFrom")
@@ -113,6 +116,7 @@ package object models {
       }
     }
 
+    @SuppressWarnings(Array("org.wartremover.warts.Recursion"))
     def remove(path: JsPath): JsResult[JsValue] =
       (path.path, jsValue) match {
         case (Nil, _)                                                                  => JsError("path cannot be empty")
@@ -127,7 +131,7 @@ package object models {
             .flatMap { opt: Option[JsValue] =>
               opt
                 .map(JsSuccess(_))
-                .getOrElse {
+                .getOrElse[JsResult[JsValue]] {
                   second match {
                     case _: KeyPathNode =>
                       JsSuccess(Json.obj())

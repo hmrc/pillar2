@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import cats.syntax.eq._ // Import for ===
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
@@ -36,10 +37,10 @@ class FinancialDataController @Inject() (
 
   def getTransactionHistory(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
     financialService.getTransactionHistory(plrReference).map {
-      case Right(value)                                                                       => Ok(Json.toJson(value))
-      case Left(error) if error.code == "NOT_FOUND"                                           => NotFound(Json.toJson(error))
-      case Left(error) if error.code == "SERVER_ERROR" || error.code == "SERVICE_UNAVAILABLE" => FailedDependency(Json.toJson(error))
-      case Left(error)                                                                        => BadRequest(Json.toJson(error))
+      case Right(value)                                                                         => Ok(Json.toJson(value))
+      case Left(error) if error.code === "NOT_FOUND"                                            => NotFound(Json.toJson(error)) // Use ===
+      case Left(error) if error.code === "SERVER_ERROR" || error.code === "SERVICE_UNAVAILABLE" => FailedDependency(Json.toJson(error)) // Use ===
+      case Left(error)                                                                          => BadRequest(Json.toJson(error))
     }
   }
 

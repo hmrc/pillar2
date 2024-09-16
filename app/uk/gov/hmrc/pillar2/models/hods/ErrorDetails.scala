@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,15 @@
 
 package uk.gov.hmrc.pillar2.models.hods
 
-import play.api.libs.json.Json
+import play.api.libs.json.{Json, OFormat}
 
-case class SourceFaultDetail(detail: Seq[String])
+final case class SourceFaultDetail(detail: Seq[String]) // Make case class final
 
 object SourceFaultDetail {
-  implicit val format = Json.format[SourceFaultDetail]
+  implicit val format: OFormat[SourceFaultDetail] = Json.format[SourceFaultDetail] // Explicit type added
 }
 
-case class ErrorDetail(
+final case class ErrorDetail( // Make case class final
   timestamp:         String,
   correlationId:     Option[String],
   errorCode:         String,
@@ -34,11 +34,11 @@ case class ErrorDetail(
 )
 
 object ErrorDetail {
-  implicit val format = Json.format[ErrorDetail]
+  implicit val format: OFormat[ErrorDetail] = Json.format[ErrorDetail] // Explicit type added
 }
 
-case class ErrorDetails(errorDetail: ErrorDetail)
+final case class ErrorDetails(errorDetail: ErrorDetail) // Make case class final
 
 object ErrorDetails {
-  implicit val format = Json.format[ErrorDetails]
+  implicit val format: OFormat[ErrorDetails] = Json.format[ErrorDetails] // Explicit type added
 }

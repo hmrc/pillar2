@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json._
+import cats.Eq // Import Eq from Cats
 
 sealed trait MneOrDomestic extends Product with Serializable
 
@@ -30,6 +31,10 @@ object MneOrDomestic {
   val ukAndOther: MneOrDomestic = UkAndOther
   val uk:         MneOrDomestic = Uk
 
+  // Define the Eq instance for MneOrDomestic
+  implicit val eqMneOrDomestic: Eq[MneOrDomestic] = Eq.fromUniversalEquals
+
+  // JSON formatting
   implicit val format: Format[MneOrDomestic] = new Format[MneOrDomestic] {
     override def reads(json: JsValue): JsResult[MneOrDomestic] =
       json.as[String] match {
@@ -38,11 +43,10 @@ object MneOrDomestic {
         case _            => JsError("Invalid movement type")
       }
 
-    override def writes(yesNoType: MneOrDomestic): JsValue =
-      yesNoType match {
+    override def writes(mneOrDomestic: MneOrDomestic): JsValue =
+      mneOrDomestic match {
         case UkAndOther => JsString("ukAndOther")
         case Uk         => JsString("uk")
       }
   }
-
 }

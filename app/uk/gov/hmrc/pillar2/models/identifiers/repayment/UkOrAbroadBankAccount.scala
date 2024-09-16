@@ -24,9 +24,8 @@ object UkOrAbroadBankAccount {
   case object UkBankAccount extends WithName("ukBankAccount") with UkOrAbroadBankAccount
   case object ForeignBankAccount extends WithName("nonUkBankAccount") with UkOrAbroadBankAccount
 
-  val values: Seq[UkOrAbroadBankAccount] = Seq(
+  val values: Seq[UkOrAbroadBankAccount] = Seq[UkOrAbroadBankAccount](
     UkBankAccount,
     ForeignBankAccount
   )
-
 }

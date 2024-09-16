@@ -16,17 +16,25 @@
 
 package uk.gov.hmrc.pillar2.models.financial
 
-import play.api.libs.json.Json
-
+import play.api.libs.json.{Json, OFormat}
 import java.time.LocalDate
 
-final case class FinancialHistory(date: LocalDate, paymentType: String, amountPaid: BigDecimal, amountRepaid: BigDecimal)
+final case class FinancialHistory( // Add final to the case class
+  date:         LocalDate,
+  paymentType:  String,
+  amountPaid:   BigDecimal,
+  amountRepaid: BigDecimal
+)
 
 object FinancialHistory {
-  implicit val format = Json.format[FinancialHistory]
+  implicit val format: OFormat[FinancialHistory] = Json.format[FinancialHistory] // Explicit type added
 }
-final case class TransactionHistory(plrReference: String, financialHistory: Seq[FinancialHistory])
+
+final case class TransactionHistory( // Add final to the case class
+  plrReference:     String,
+  financialHistory: Seq[FinancialHistory]
+)
 
 object TransactionHistory {
-  implicit val format = Json.format[TransactionHistory]
+  implicit val format: OFormat[TransactionHistory] = Json.format[TransactionHistory] // Explicit type added
 }

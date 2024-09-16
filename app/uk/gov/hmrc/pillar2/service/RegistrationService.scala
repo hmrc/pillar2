@@ -15,7 +15,15 @@
  */
 
 package uk.gov.hmrc.pillar2.service
-
+import play.api.Logging
+import play.api.http.Status.INTERNAL_SERVER_ERROR
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
+import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
+import uk.gov.hmrc.pillar2.models.identifiers._
+import uk.gov.hmrc.pillar2.service.audit.AuditService
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -38,13 +46,13 @@ class RegistrationService @Inject() (
 
   def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
-      upeName      <- userAnswers.get(upeNameRegistrationId)
-      emailAddress <- userAnswers.get(upeContactEmailId)
-      address      <- userAnswers.get(upeRegisteredAddressId)
+      upeName      <- userAnswers.get(upeNameRegistrationId.gettable)
+      emailAddress <- userAnswers.get(upeContactEmailId.gettable)
+      address      <- userAnswers.get(upeRegisteredAddressId.gettable)
     } yield registerWithoutId(
       upeName,
       Address.fromAddress(address),
-      ContactDetails(userAnswers.get(upeCapturePhoneId), None, None, Some(emailAddress)),
+      ContactDetails(userAnswers.get(upeCapturePhoneId.gettable), None, None, Some(emailAddress)),
       false
     )
   }.getOrElse {
@@ -54,14 +62,14 @@ class RegistrationService @Inject() (
 
   def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     for {
-      fmName       <- userAnswers.get(fmNameRegistrationId)
-      emailAddress <- userAnswers.get(fmContactEmailId)
-      address      <- userAnswers.get(fmRegisteredAddressId)
+      fmName       <- userAnswers.get(fmNameRegistrationId.gettable)
+      emailAddress <- userAnswers.get(fmContactEmailId.gettable)
+      address      <- userAnswers.get(fmRegisteredAddressId.gettable)
 
     } yield registerWithoutId(
       fmName,
       Address.fromFmAddress(address),
-      ContactDetails(userAnswers.get(fmCapturePhoneId), None, None, Some(emailAddress)),
+      ContactDetails(userAnswers.get(fmCapturePhoneId.gettable), None, None, Some(emailAddress)),
       true
     )
   }.getOrElse {
@@ -71,13 +79,13 @@ class RegistrationService @Inject() (
 
   def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] =
     (for {
-      name    <- userAnswers.get(RfmNameRegistrationId)
-      email   <- userAnswers.get(RfmPrimaryContactEmailId)
-      address <- userAnswers.get(RfmRegisteredAddressId)
+      name    <- userAnswers.get(RfmNameRegistrationId.gettable)
+      email   <- userAnswers.get(RfmPrimaryContactEmailId.gettable)
+      address <- userAnswers.get(RfmRegisteredAddressId.gettable)
     } yield registerWithoutId(
       name,
       Address.fromFmAddress(address),
-      ContactDetails(userAnswers.get(RfmPrimaryPhoneId), None, None, Some(email)),
+      ContactDetails(userAnswers.get(RfmPrimaryPhoneId.gettable), None, None, Some(email)),
       isFm = true
     )).getOrElse {
       logger.warn("Replace Filing member registration failed as one or more required fields were missing")

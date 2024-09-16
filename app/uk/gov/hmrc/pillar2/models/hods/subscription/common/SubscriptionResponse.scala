@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPe
 
 import java.time.LocalDate
 
-case class SubscriptionResponse(success: SubscriptionSuccess)
+final case class SubscriptionResponse(success: SubscriptionSuccess)
 
 object SubscriptionResponse {
   implicit val format: OFormat[SubscriptionResponse] = Json.format[SubscriptionResponse]
 }
 
-case class SubscriptionSuccess(
+final case class SubscriptionSuccess(
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
@@ -73,7 +73,8 @@ object AmendSubscriptionSuccessResponse {
   implicit val format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }
 
-final case class AmendSubscriptionFailureResponse(failures: Array[Failure])
+// Changed failures from Array[Failure] to Seq[Failure]
+final case class AmendSubscriptionFailureResponse(failures: Seq[Failure])
 
 object AmendSubscriptionFailureResponse {
   implicit val format: OFormat[AmendSubscriptionFailureResponse] = Json.format[AmendSubscriptionFailureResponse]
@@ -85,7 +86,7 @@ object Failure {
   implicit val format: OFormat[Failure] = Json.format[Failure]
 }
 
-case class DashboardInfo(
+final case class DashboardInfo(
   organisationName: String,
   registrationDate: LocalDate
 )

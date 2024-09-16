@@ -16,6 +16,17 @@
 
 package uk.gov.hmrc.pillar2.models.identifiers
 
-import uk.gov.hmrc.pillar2.models.queries.{Gettable, Settable}
+import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.queries.ExternalGettableSettable
 
-trait TypedIdentifier[A] extends Identifier with Gettable[A] with Settable[A]
+import scala.util.{Success, Try}
+
+trait TypedIdentifier[A] extends Identifier with ExternalGettableSettable[A] {
+  override def toString: String = getClass.getSimpleName // Provide a custom toString implementation
+
+  def path: JsPath = JsPath \ toString // Use the overridden toString method
+
+  override def cleanup(value: Option[A], userAnswers: UserAnswers): Try[UserAnswers] =
+    Success(userAnswers)
+}

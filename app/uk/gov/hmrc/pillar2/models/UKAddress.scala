@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.models
 
 import play.api.libs.json.{Json, OFormat}
 
-case class UKAddress(
+final case class UKAddress(
   addressLine1: String,
   addressLine2: Option[String],
   addressLine3: String,

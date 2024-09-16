@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,15 +21,13 @@ import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
 
 import java.util.UUID
 
-case class NoIdOrganisation(organisationName: String)
+final case class NoIdOrganisation(organisationName: String)
 
 object NoIdOrganisation {
-
   implicit val format: OFormat[NoIdOrganisation] = Json.format[NoIdOrganisation]
-
 }
 
-case class Address(
+final case class Address(
   addressLine1: String,
   addressLine2: Option[String],
   addressLine3: String,
@@ -46,10 +44,9 @@ object Address {
 
   def fromFmAddress(address: NonUKAddress): Address =
     Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, address.postalCode, address.countryCode)
-
 }
 
-case class ContactDetails(
+final case class ContactDetails(
   phoneNumber:  Option[String],
   mobileNumber: Option[String],
   faxNumber:    Option[String],
@@ -57,20 +54,20 @@ case class ContactDetails(
 )
 
 object ContactDetails {
-  implicit val contactFormats = Json.format[ContactDetails]
+  implicit val contactFormats: OFormat[ContactDetails] = Json.format[ContactDetails] // Explicit type added
 }
 
-case class Identification(
+final case class Identification(
   idNumber:           String,
   issuingInstitution: String,
   issuingCountryCode: String
 )
 
 object Identification {
-  implicit val indentifierFormats = Json.format[Identification]
+  implicit val indentifierFormats: OFormat[Identification] = Json.format[Identification] // Explicit type added
 }
 
-case class RegisterWithoutIDRequest(
+final case class RegisterWithoutIDRequest(
   regime:                   String,
   acknowledgementReference: String,
   isAnAgent:                Boolean,
@@ -82,11 +79,12 @@ case class RegisterWithoutIDRequest(
 )
 
 object RegisterWithoutIDRequest {
-  implicit val format = Json.format[RegisterWithoutIDRequest]
+  implicit val format: OFormat[RegisterWithoutIDRequest] = Json.format[RegisterWithoutIDRequest] // Explicit type added
+
   def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutIDRequest =
     RegisterWithoutIDRequest(
       regime = "PLR",
-      acknowledgementReference = UUID.randomUUID().toString.replaceAll("-", ""), //uuids are 36 and spec demands 32
+      acknowledgementReference = UUID.randomUUID().toString.replaceAll("-", ""), // UUIDs are 36 characters, spec demands 32
       isAnAgent = false,
       isAGroup = true,
       identification = None,

@@ -15,7 +15,7 @@
  */
 
 package uk.gov.hmrc.pillar2.service
-
+import cats.syntax.eq._
 import org.apache.pekko.Done
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
@@ -34,7 +34,7 @@ class RepaymentService @Inject() (
 
   def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(implicit hc: HeaderCarrier): Future[Done] =
     repaymentConnector.sendRepaymentDetails(rePaymentData).flatMap { response =>
-      if (response.status == 201) {
+      if (response.status === 201) {
         Future.successful(Done)
       } else {
         Future.failed(UnexpectedResponse)

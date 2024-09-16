@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.models.registration
 
 import play.api.libs.json.{Json, OFormat}
 
-case class GrsResponse(
+final case class GrsResponse(
   incorporatedEntityRegistrationData: Option[IncorporatedEntityRegistrationData] = None,
   partnershipEntityRegistrationData:  Option[PartnershipEntityRegistrationData] = None
 )

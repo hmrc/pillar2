@@ -17,11 +17,12 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 
 case object upeGRSResponseId extends TypedIdentifier[GrsResponse] {
+  val gettable: Gettable[GrsResponse] = GettableFactory.create(path) // Correct type
 
-  override def path: JsPath = JsPath \ toString
-
+  override def path:     JsPath = JsPath \ toString
   override def toString: String = "upeGRSResponse"
 }

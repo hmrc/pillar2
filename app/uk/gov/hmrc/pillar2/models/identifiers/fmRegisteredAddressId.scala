@@ -18,10 +18,12 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.NonUKAddress
+import uk.gov.hmrc.pillar2.models.identifiers.fmNameRegistrationId.path
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object fmRegisteredAddressId extends TypedIdentifier[NonUKAddress] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[NonUKAddress] = GettableFactory.create(path)
+  override def path: JsPath                 = JsPath \ toString
 
   override def toString: String = "fmRegisteredAddress"
 }

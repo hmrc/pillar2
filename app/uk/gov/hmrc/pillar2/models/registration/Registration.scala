@@ -21,7 +21,7 @@ import uk.gov.hmrc.pillar2.models.grs.EntityType
 
 import java.time.LocalDate
 
-case class Registration(
+final case class Registration(
   isUPERegisteredInUK: Boolean,
   orgType:             Option[EntityType] = None,
   withIdRegData:       Option[GrsResponse] = None,
@@ -33,7 +33,7 @@ object Registration {
   implicit val format: OFormat[Registration] = Json.format[Registration]
 }
 
-case class RegistrationInfo(
+final case class RegistrationInfo(
   crn:              String,
   utr:              String,
   safeId:           String,

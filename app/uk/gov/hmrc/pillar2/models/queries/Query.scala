@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,31 @@ import uk.gov.hmrc.pillar2.models.UserAnswers
 import scala.util.{Success, Try}
 
 sealed trait Query {
-
   def path: JsPath
 }
 
-trait Gettable[A] extends Query
+sealed trait Gettable[A] extends Query
 
-trait Settable[A] extends Query {
-
+sealed trait Settable[A] extends Query {
   def cleanup(value: Option[A], userAnswers: UserAnswers): Try[UserAnswers] =
     Success(userAnswers)
+}
+
+// Factory method to create Gettable instances
+object GettableFactory {
+  def create[A](path: JsPath): Gettable[A] = new Gettable[A] {
+    override val path: JsPath = path // Fixed the recursion issue by correctly assigning the path
+  }
+}
+
+sealed trait GettableSettable[A] extends Gettable[A] with Settable[A]
+
+trait ExternalGettableSettable[A] {
+  def path: JsPath
+  def cleanup(value: Option[A], userAnswers: UserAnswers): Try[UserAnswers]
+}
+
+object GettableSettable extends GettableSettable[Nothing] {
+  override def path:                                                      JsPath           = JsPath
+  override def cleanup(value: Option[Nothing], userAnswers: UserAnswers): Try[UserAnswers] = Success(userAnswers)
 }

@@ -38,10 +38,18 @@ class FinancialDataConnector @Inject() (val config: AppConfig, val http: HttpCli
       )(httpReads, hc, ec)
       .flatMap { response =>
         response.status match {
-          case OK => Future successful response.json.as[FinancialDataResponse]
-          case _  => Future failed response.json.asOpt[FinancialDataError].getOrElse(response.json.as[FinancialDataErrorResponses])
+          case OK => Future.successful(response.json.as[FinancialDataResponse])
+          case _ =>
+            response.json.asOpt[FinancialDataError] match {
+              case Some(error) => Future.failed(new RuntimeException(s"Financial data error: ${error.code}, ${error.reason}"))
+              case None =>
+                response.json.asOpt[FinancialDataErrorResponses] match {
+                  case Some(errorResponse) =>
+                    Future.failed(new RuntimeException(s"Multiple financial data errors: ${errorResponse.failures.map(_.reason).mkString(", ")}"))
+                  case None => Future.failed(new RuntimeException("Unexpected error response format"))
+                }
+            }
         }
       }
-
   }
 }
