@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.service
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
@@ -28,20 +29,22 @@ import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.service.RepaymentService
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
-class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ScalaFutures {
+
+  // Override the patience configuration to increase timeout duration
+  implicit override val patienceConfig: PatienceConfig = PatienceConfig(timeout = 5.seconds, interval = 100.millis)
 
   // Adding explicit type ascription
-  val service: RepaymentService =
-    new RepaymentService(
-      mockRepaymentConnector
-    )
+  val service: RepaymentService = new RepaymentService(mockRepaymentConnector)
 
   "RepaymentService" - {
     "Return Done in case of a CREATED Http Response" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
         when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
           .thenReturn(Future.successful(HttpResponse(responseStatus = 201)))
+
         val result = service.sendRepaymentsData(repaymentPayLoad)
         result.futureValue mustBe Done
       }
@@ -51,10 +54,10 @@ class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
         when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
           .thenReturn(Future.successful(HttpResponse(responseStatus = 200)))
+
         val result = service.sendRepaymentsData(repaymentPayLoad)
         result.failed.futureValue mustBe UnexpectedResponse
       }
     }
   }
-
 }
