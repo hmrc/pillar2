@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.services
+package uk.gov.hmrc.pillar2.service
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when

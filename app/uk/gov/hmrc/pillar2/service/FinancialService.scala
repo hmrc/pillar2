@@ -55,13 +55,13 @@ final class FinancialService @Inject() (
   ): Future[FinancialDataResponse] =
     Future
       .sequence(
-        splitIntoYearIntervals(dateFrom, dateTo)
-          .map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
+        splitIntoYearIntervals(dateFrom, dateTo).map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
       )
       .flatMap { financialDataResponses =>
         financialDataResponses.headOption match {
           case Some(firstResponse) =>
             val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
+
             Future.successful(
               FinancialDataResponse(
                 idType = firstResponse.idType,
@@ -71,8 +71,8 @@ final class FinancialService @Inject() (
                 financialTransactions = allTransactions
               )
             )
-
           case None =>
+            logger.error("No financial data responses found")
             Future.failed(new RuntimeException("No financial data responses found"))
         }
       }
@@ -86,17 +86,15 @@ final class FinancialService @Inject() (
       .takeWhile(_.isBefore(endDate))
       .toList
 
-    years
-      .foldLeft(List.empty[Years]) { (acc, currentStartDate) =>
-        val currentEndDate =
-          if (currentStartDate.plusYears(1).isBefore(endDate))
-            currentStartDate.plusYears(1).minusDays(1)
-          else
-            endDate
+    years.foldLeft(List.empty[Years]) { (acc, currentStartDate) =>
+      val currentEndDate =
+        if (currentStartDate.plusYears(1).isBefore(endDate))
+          currentStartDate.plusYears(1).minusDays(1)
+        else
+          endDate
 
-        Years(currentStartDate, currentEndDate) :: acc // Prepend to the list
-      }
-      .reverse // Reverse at the end
+      acc ++ List(Years(currentStartDate, currentEndDate)) // Replace :+ with ++ List
+    }
   }
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =

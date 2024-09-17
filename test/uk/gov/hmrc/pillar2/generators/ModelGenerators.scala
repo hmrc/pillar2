@@ -804,6 +804,7 @@ trait ModelGenerators {
   }
   implicit val arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
     for {
+      replaceFilingMember      <- arbitrary[Boolean]
       upeDetails               <- arbitrary[UpeDetailsAmend]
       accountingPeriod         <- arbitrary[AccountingPeriodAmend]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
@@ -811,6 +812,7 @@ trait ModelGenerators {
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
       filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
     } yield AmendSubscriptionSuccess(
+      replaceFilingMember,
       upeDetails,
       accountingPeriod,
       upeCorrespAddressDetails,

@@ -44,4 +44,5 @@ class FinancialDataController @Inject() (
       case Left(error)                                                                          => BadRequest(Json.toJson(error))
     }
   }
+
 }

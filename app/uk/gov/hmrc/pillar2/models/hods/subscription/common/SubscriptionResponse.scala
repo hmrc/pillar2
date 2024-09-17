@@ -43,6 +43,7 @@ object SubscriptionSuccess {
 }
 
 final case class AmendSubscriptionSuccess(
+  replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
   accountingPeriod:         AccountingPeriodAmend,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,

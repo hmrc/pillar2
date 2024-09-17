@@ -21,6 +21,7 @@ import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberAmendDetails, UpeCorrespAddressDetails, UpeDetailsAmend}
 
 final case class AmendSubscriptionSuccessAuditEvent(
+  replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
   accountingPeriod:         AccountingPeriodAmend,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
