@@ -33,7 +33,7 @@ object AppDependencies {
   ).map(_ % Test)
 
   val it: Seq[ModuleID] = Seq(
-    "uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrapVersion % Test
+    "uk.gov.hmrc" %% "bootstrap-test-play-30" % bootstrapVersion % "it",
+    "com.github.tomakehurst" % "wiremock-standalone" % "3.0.1" % "it"
   )
-
 }

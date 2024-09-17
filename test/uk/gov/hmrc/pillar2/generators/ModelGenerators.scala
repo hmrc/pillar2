@@ -159,17 +159,6 @@ trait ModelGenerators {
     )
   }
 
-//  val arbitraryWithoutIdUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
-//    for {
-//      id       <- nonEmptyString
-//      userData <- arbitraryWithoutIdUpeFmUserData.arbitrary
-//    } yield UserAnswers(
-//      id = id,
-//      data = Json.toJson(userData).asOpt[JsObject].getOrElse(Json.obj()), // Handle missing fields safely
-//      lastUpdated = Instant.now
-//    )
-//  }
-
   val arbitraryNewFilingMember: Arbitrary[JsValue] = Arbitrary {
     for {
 
@@ -255,57 +244,6 @@ trait ModelGenerators {
       "subRegisteredAddress"        -> subRegisteredAddress
     )
   }
-
-//  val arbitraryWithoutIdUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
-//    for {
-//
-//      upeNameRegistration      <- stringsWithMaxLength(105)
-//      upeRegisteredAddress     <- arbitraryUKAddressDetails.arbitrary
-//      upeContactName           <- stringsWithMaxLength(200)
-//      upeContactEmail          <- arbitrary[String]
-//      upeCapturePhone          <- arbitrary[Int]
-//      fmNameRegistration       <- stringsWithMaxLength(200)
-//      fmRegisteredAddress      <- arbitraryNonUKAddressDetails.arbitrary
-//      fmContactName            <- stringsWithMaxLength(200)
-//      fmContactEmail           <- stringsWithMaxLength(200)
-//      fmCapturePhone           <- arbitrary[Int]
-//      subAccountingPeriod      <- arbitrary[AccountingPeriod]
-//      subPrimaryEmail          <- arbitrary[String]
-//      subPrimaryContactName    <- stringsWithMaxLength(200)
-//      subSecondaryContactName  <- stringsWithMaxLength(200)
-//      subSecondaryEmail        <- arbitrary[String]
-//      subSecondaryCapturePhone <- arbitrary[Int]
-//      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
-//
-//    } yield Json.obj(
-//      "upeRegisteredInUK"           -> false,
-//      "upeNameRegistration"         -> upeNameRegistration,
-//      "upeRegisteredAddress"        -> upeRegisteredAddress,
-//      "upeContactName"              -> upeContactName,
-//      "upeContactEmail"             -> upeContactEmail,
-//      "upeCapturePhone"             -> upeCapturePhone,
-//      "NominateFilingMember"        -> true,
-//      "fmRegisteredInUK"            -> false,
-//      "fmNameRegistration"          -> fmNameRegistration,
-//      "fmRegisteredAddress"         -> fmRegisteredAddress,
-//      "fmContactName"               -> fmContactName,
-//      "fmContactEmail"              -> fmContactEmail,
-//      "fmPhonePreference"           -> true,
-//      "fmCapturePhone"              -> fmCapturePhone,
-//      "subMneOrDomestic"            -> "ukAndOther",
-//      "subAccountingPeriod"         -> subAccountingPeriod,
-//      "subUsePrimaryContact"        -> true,
-//      "subPrimaryEmail"             -> subPrimaryEmail,
-//      "subPrimaryPhonePreference"   -> true,
-//      "subPrimaryContactName"       -> subPrimaryContactName,
-//      "subAddSecondaryContact"      -> true,
-//      "subSecondaryContactName"     -> subSecondaryContactName,
-//      "subSecondaryEmail"           -> subSecondaryEmail,
-//      "subSecondaryPhonePreference" -> true,
-//      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
-//      "subRegisteredAddress"        -> subRegisteredAddress
-//    )
-//  }
 
   val arbitraryWithIdUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
     for {

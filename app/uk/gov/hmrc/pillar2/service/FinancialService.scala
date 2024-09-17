@@ -21,29 +21,82 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.FinancialDataConnector
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialHistory, TransactionHistory}
-import uk.gov.hmrc.pillar2.service.FinancialService.{PAYMENT_IDENTIFIER, Payment, REPAYMENT_IDENTIFIER, Refund}
+import uk.gov.hmrc.pillar2.service.FinancialService._
 
+import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FinancialService @Inject() (
+final class FinancialService @Inject() (
   financialDataConnector: FinancialDataConnector
 )(implicit
   ec: ExecutionContext
 ) extends Logging {
 
-  def getTransactionHistory(plrReference: String)(implicit hc: HeaderCarrier): Future[Either[FinancialDataError, TransactionHistory]] = {
+  def getTransactionHistory(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+    hc:                                   HeaderCarrier
+  ): Future[Either[FinancialDataError, TransactionHistory]] = {
+
     val result = for {
-      financialData <- financialDataConnector.retrieveFinancialData(plrReference)
+      financialData <- retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
       repaymentData <- Future successful getRepaymentData(financialData)
       paymentData   <- Future successful getPaymentData(financialData)
-      sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)
+      sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)(Ordering[LocalDate].reverse)
     } yield Right(TransactionHistory(plrReference, sortedFinancialHistory))
 
     result.recover { case e: FinancialDataError =>
       logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
       Left(e)
     }
+  }
+
+  private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+    headerCarrier:                                                HeaderCarrier
+  ): Future[FinancialDataResponse] =
+    Future
+      .sequence(
+        splitIntoYearIntervals(dateFrom, dateTo)
+          .map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
+      )
+      .flatMap { financialDataResponses =>
+        financialDataResponses.headOption match {
+          case Some(firstResponse) =>
+            val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
+            Future.successful(
+              FinancialDataResponse(
+                idType = firstResponse.idType,
+                idNumber = firstResponse.idNumber,
+                regimeType = firstResponse.regimeType,
+                processingDate = firstResponse.processingDate,
+                financialTransactions = allTransactions
+              )
+            )
+
+          case None =>
+            Future.failed(new RuntimeException("No financial data responses found"))
+        }
+      }
+
+  private[service] def splitIntoYearIntervals(startDate: LocalDate, endDate: LocalDate): List[Years] = {
+
+    val adjustedStartDate = if (startDate.isBefore(endDate.minusYears(7))) endDate.minusYears(7) else startDate
+
+    val years = Iterator
+      .iterate(adjustedStartDate)(_.plusYears(1))
+      .takeWhile(_.isBefore(endDate))
+      .toList
+
+    years
+      .foldLeft(List.empty[Years]) { (acc, currentStartDate) =>
+        val currentEndDate =
+          if (currentStartDate.plusYears(1).isBefore(endDate))
+            currentStartDate.plusYears(1).minusDays(1)
+          else
+            endDate
+
+        Years(currentStartDate, currentEndDate) :: acc // Prepend to the list
+      }
+      .reverse // Reverse at the end
   }
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
@@ -71,4 +124,5 @@ object FinancialService {
   val PAYMENT_IDENTIFIER   = "0060"
   val REPAYMENT_IDENTIFIER = "Outgoing payment - Paid"
 
+  private[service] final case class Years(startDate: LocalDate, endDate: LocalDate)
 }

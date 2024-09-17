@@ -24,4 +24,4 @@ DELETE        /user-cache/read-subscription/:id                            uk.go
 
 POST          /repayment                                                   uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
 
-GET           /transaction-history/:plrReference                           uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String)
+GET           /transaction-history/:plrReference                           uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String)

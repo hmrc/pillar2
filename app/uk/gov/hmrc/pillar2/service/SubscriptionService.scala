@@ -198,6 +198,10 @@ class SubscriptionService @Inject() (
         }.getOrElse {
           subscriptionError
         }
+      case None =>
+        // Handle the case where NominateFilingMember is not present
+        logger.warn("NominateFilingMember not found in UserAnswers")
+        subscriptionError
     }
   }
 
