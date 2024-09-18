@@ -27,7 +27,7 @@ import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class FinancialService @Inject() (
+final class FinancialService @Inject() (
   financialDataConnector: FinancialDataConnector
 )(implicit
   ec: ExecutionContext
@@ -57,16 +57,24 @@ class FinancialService @Inject() (
       .sequence(
         splitIntoYearIntervals(dateFrom, dateTo).map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
       )
-      .map { financialDataResponses =>
-        val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
+      .flatMap { financialDataResponses =>
+        financialDataResponses.headOption match {
+          case Some(firstResponse) =>
+            val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
 
-        FinancialDataResponse(
-          idType = financialDataResponses.head.idType,
-          idNumber = financialDataResponses.head.idNumber,
-          regimeType = financialDataResponses.head.regimeType,
-          processingDate = financialDataResponses.head.processingDate,
-          financialTransactions = allTransactions
-        )
+            Future.successful(
+              FinancialDataResponse(
+                idType = firstResponse.idType,
+                idNumber = firstResponse.idNumber,
+                regimeType = firstResponse.regimeType,
+                processingDate = firstResponse.processingDate,
+                financialTransactions = allTransactions
+              )
+            )
+          case None =>
+            logger.error("No financial data responses found")
+            Future.failed(new RuntimeException("No financial data responses found"))
+        }
       }
 
   private[service] def splitIntoYearIntervals(startDate: LocalDate, endDate: LocalDate): List[Years] = {
@@ -85,7 +93,7 @@ class FinancialService @Inject() (
         else
           endDate
 
-      acc :+ Years(currentStartDate, currentEndDate)
+      acc ++ List(Years(currentStartDate, currentEndDate)) // Replace :+ with ++ List
     }
   }
 
@@ -114,5 +122,5 @@ object FinancialService {
   val PAYMENT_IDENTIFIER   = "0060"
   val REPAYMENT_IDENTIFIER = "Outgoing payment - Paid"
 
-  private[service] case class Years(startDate: LocalDate, endDate: LocalDate)
+  private[service] final case class Years(startDate: LocalDate, endDate: LocalDate)
 }

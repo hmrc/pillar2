@@ -40,9 +40,9 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
   lazy val connector: FinancialDataConnector =
     app.injector.instanceOf[FinancialDataConnector]
 
-  val startDate = LocalDate.now()
-  val endDate   = LocalDate.now().plusYears(1)
-  val url =
+  val startDate: LocalDate = LocalDate.now() // Explicit type ascription added
+  val endDate:   LocalDate = LocalDate.now().plusYears(1) // Explicit type ascription added
+  val url: String =
     s"/enterprise/financial-data/ZPLR/$PlrReference/PLR?dateFrom=$startDate&dateTo=$endDate&onlyOpenItems=false&includeLocks=false&calculateAccruedInterest=true&customerPaymentInformation=true"
 
   "FinancialDataConnector" - {
@@ -109,7 +109,7 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
 
 object FinancialDataConnectorSpec {
 
-  val PlrReference = "XMPLR0123456789"
+  val PlrReference: String = "XMPLR0123456789" // Explicit type ascription added
 
   val response: FinancialDataResponse = FinancialDataResponse(
     "ZPLR",

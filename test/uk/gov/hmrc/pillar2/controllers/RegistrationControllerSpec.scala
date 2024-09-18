@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json} // Added JsValue import for type ascription
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
@@ -45,7 +45,10 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         stubControllerComponents()
       )
   }
-  val jsData = Json.parse("""{"value": "field"}""")
+
+  // Explicit type ascription added to jsData
+  val jsData: JsValue = Json.parse("""{"value": "field"}""")
+
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
@@ -64,7 +67,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
   "withoutIdUpeRegistrationSubmission" - {
 
-    "rerutn OK with valid data has been submitted" in new Setup {
+    "return OK with valid data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any())(any())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any())(any())).thenReturn(

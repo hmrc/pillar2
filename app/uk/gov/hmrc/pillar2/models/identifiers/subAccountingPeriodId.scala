@@ -18,10 +18,11 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.AccountingPeriod
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object subAccountingPeriodId extends TypedIdentifier[AccountingPeriod] {
+  val gettable: Gettable[AccountingPeriod] = GettableFactory.create(path) // Correct type
 
-  override def path: JsPath = JsPath \ toString
-
+  override def path:     JsPath = JsPath \ toString
   override def toString: String = "subAccountingPeriod"
 }

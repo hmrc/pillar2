@@ -43,6 +43,7 @@ import uk.gov.hmrc.pillar2.service.SubscriptionService
 
 import java.time.Instant
 import scala.concurrent.Future
+
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
 
@@ -59,7 +60,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     )
     .build()
 
-  val service =
+  val service: SubscriptionService =
     new SubscriptionService(
       mockedCache,
       mockSubscriptionConnector,

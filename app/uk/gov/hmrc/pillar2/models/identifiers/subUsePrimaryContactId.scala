@@ -17,11 +17,12 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 //REDUNDANT
 case object subUsePrimaryContactId extends TypedIdentifier[Boolean] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[Boolean] = GettableFactory.create(path)
+  override def path: JsPath            = JsPath \ toString
 
   override def toString: String = "subUsePrimaryContact"
 

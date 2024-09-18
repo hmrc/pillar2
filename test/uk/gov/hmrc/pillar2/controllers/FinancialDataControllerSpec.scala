@@ -23,7 +23,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.Result
+import play.api.mvc.{AnyContentAsEmpty, Result}
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{GET, contentAsJson, route, status, writeableOf_AnyContentAsEmpty}
 import play.api.{Application, Configuration}
@@ -64,8 +64,8 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       )
     )
 
-  val startDate = LocalDate.now().toString
-  val endDate   = LocalDate.now().plusYears(1).toString
+  val startDate: String = LocalDate.now().toString // Explicit type ascription added
+  val endDate:   String = LocalDate.now().plusYears(1).toString // Explicit type ascription added
 
   "FinancialDataController" - {
 
@@ -74,7 +74,8 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
         when(mockFinancialService.getTransactionHistory(any(), any(), any())(any()))
           .thenReturn(Future successful Right(paymentHistoryResult(plrReference)))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+        val request: FakeRequest[AnyContentAsEmpty.type] =
+          FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 200
@@ -86,7 +87,8 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       val dataError = FinancialDataError("NOT_FOUND", "Some reason")
       when(mockFinancialService.getTransactionHistory(any(), any(), any())(any())).thenReturn(Future successful Left(dataError))
 
-      val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789", startDate, endDate).url)
+      val request: FakeRequest[AnyContentAsEmpty.type] =
+        FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789", startDate, endDate).url)
       val result: Future[Result] = route(application, request).value
 
       status(result) mustBe 404
@@ -99,7 +101,8 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
         when(mockFinancialService.getTransactionHistory(any(), any(), any())(any())).thenReturn(Future successful Left(dataError))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+        val request: FakeRequest[AnyContentAsEmpty.type] =
+          FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 424
@@ -114,7 +117,8 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
         when(mockFinancialService.getTransactionHistory(any(), any(), any())(any())).thenReturn(Future successful Left(dataError))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+        val request: FakeRequest[AnyContentAsEmpty.type] =
+          FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 400

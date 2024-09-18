@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.models.hods.repayment.request
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 
-case class RepaymentRequestDetail(
+final case class RepaymentRequestDetail(
   repaymentDetails: RepaymentDetails,
   bankDetails:      BankDetails,
   contactDetails:   RepaymentContactDetails

@@ -17,11 +17,12 @@
 package uk.gov.hmrc.pillar2.models.identifiers.repayment
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.identifiers.{QuestionPage, TypedIdentifier}
+import uk.gov.hmrc.pillar2.models.identifiers.TypedIdentifier
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object RepaymentsTelephoneDetailsId extends TypedIdentifier[String] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[String] = GettableFactory.create(path)
+  override def path: JsPath           = JsPath \ toString
 
   override def toString: String = "repaymentsTelephoneDetails"
 

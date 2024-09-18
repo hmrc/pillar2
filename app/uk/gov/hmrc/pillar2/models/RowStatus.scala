@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,14 +22,17 @@ import play.api.mvc.JavascriptLiteral
 sealed trait RowStatus extends Product with Serializable
 
 object RowStatus {
+
   case object Completed extends RowStatus {
-    val value: String = this.toString
+    val value: String = "Completed" // Explicit string representation
   }
+
   case object InProgress extends RowStatus {
-    val value: String = this.toString
+    val value: String = "InProgress" // Explicit string representation
   }
+
   case object NotStarted extends RowStatus {
-    val value: String = this.toString
+    val value: String = "NotStarted" // Explicit string representation
   }
 
   implicit val format: Format[RowStatus] = new Format[RowStatus] {
@@ -41,12 +44,12 @@ object RowStatus {
         case other        => JsError(s"Invalid Source System: $other")
       }
 
-    override def writes(sourceSystem: RowStatus): JsValue =
-      sourceSystem match {
-        case Completed  => JsString("Completed")
-        case InProgress => JsString("InProgress")
-        case NotStarted => JsString("NotStarted")
-      }
+    override def writes(rowStatus: RowStatus): JsValue =
+      JsString(rowStatus match {
+        case Completed  => "Completed"
+        case InProgress => "InProgress"
+        case NotStarted => "NotStarted"
+      })
   }
 
   implicit val jsLiteral: JavascriptLiteral[RowStatus] = new JavascriptLiteral[RowStatus] {

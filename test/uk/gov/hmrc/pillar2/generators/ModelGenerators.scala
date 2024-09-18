@@ -147,10 +147,14 @@ trait ModelGenerators {
     for {
       id       <- nonEmptyString
       userData <- arbitraryWithoutIdUpeFmUserData.arbitrary
-
+      validData = Json.toJson(userData).asOpt[JsObject].getOrElse {
+                    // Log a warning if the userData is not valid
+                    println(s"Invalid userData: ${Json.prettyPrint(Json.toJson(userData))}")
+                    Json.obj() // Fallback to empty object
+                  }
     } yield UserAnswers(
       id = id,
-      data = Json.toJson(userData).as[JsObject],
+      data = validData,
       lastUpdated = Instant.now
     )
   }
@@ -194,7 +198,6 @@ trait ModelGenerators {
 
   val arbitraryWithoutIdUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
     for {
-
       upeNameRegistration      <- stringsWithMaxLength(105)
       upeRegisteredAddress     <- arbitraryUKAddressDetails.arbitrary
       upeContactName           <- stringsWithMaxLength(200)
@@ -212,7 +215,6 @@ trait ModelGenerators {
       subSecondaryEmail        <- arbitrary[String]
       subSecondaryCapturePhone <- arbitrary[Int]
       subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
-
     } yield Json.obj(
       "upeRegisteredInUK"           -> false,
       "upeNameRegistration"         -> upeNameRegistration,

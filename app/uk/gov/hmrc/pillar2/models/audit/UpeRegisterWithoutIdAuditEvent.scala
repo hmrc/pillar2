@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.models.audit
 import play.api.libs.json.{Format, JsValue, Json, OFormat, OWrites}
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
-case class UpeRegisterWithoutIdAuditEvent(
+final case class UpeRegisterWithoutIdAuditEvent(
   upeRegistration: UpeRegistration
 ) extends AuditEvent {
   override val auditType:  String  = "CreateP2RegistrationUPENoID"
@@ -30,7 +30,7 @@ object UpeRegisterWithoutIdAuditEvent {
   implicit val formats: Format[UpeRegisterWithoutIdAuditEvent] = Json.format[UpeRegisterWithoutIdAuditEvent]
 }
 
-case class FmRegisterWithoutIdAuditEvent(
+final case class FmRegisterWithoutIdAuditEvent(
   nominatedFilingMember: NominatedFilingMember
 ) extends AuditEvent {
   override val auditType:  String  = "CreateP2RegistrationNFMNoID"
@@ -41,7 +41,7 @@ object FmRegisterWithoutIdAuditEvent {
   implicit val formats: Format[FmRegisterWithoutIdAuditEvent] = Json.format[FmRegisterWithoutIdAuditEvent]
 }
 
-case class UpeRegistration(
+final case class UpeRegistration(
   registeredinUK:           Boolean,
   entityType:               String,
   ultimateParentEntityName: String,
@@ -60,7 +60,7 @@ object UpeRegistration {
   implicit val formats: Format[UpeRegistration] = Json.format[UpeRegistration]
 }
 
-case class NominatedFilingMember(
+final case class NominatedFilingMember(
   registerNomFilingMember:   Boolean,
   registeredinUK:            Boolean,
   nominatedFilingMemberName: String,

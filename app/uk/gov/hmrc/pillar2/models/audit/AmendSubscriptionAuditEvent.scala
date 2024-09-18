@@ -20,7 +20,7 @@ import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberAmendDetails, UpeCorrespAddressDetails, UpeDetailsAmend}
 
-case class AmendSubscriptionSuccessAuditEvent(
+final case class AmendSubscriptionSuccessAuditEvent(
   replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
   accountingPeriod:         AccountingPeriodAmend,

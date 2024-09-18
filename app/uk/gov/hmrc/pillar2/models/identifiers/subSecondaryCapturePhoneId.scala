@@ -17,10 +17,11 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object subSecondaryCapturePhoneId extends TypedIdentifier[String] {
+  val gettable: Gettable[String] = GettableFactory.create(path) // Correct type
 
-  override def path: JsPath = JsPath \ toString
-
+  override def path:     JsPath = JsPath \ toString
   override def toString: String = "subSecondaryCapturePhone"
 }

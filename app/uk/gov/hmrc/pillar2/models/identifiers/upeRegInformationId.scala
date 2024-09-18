@@ -17,10 +17,12 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.identifiers.upePhonePreferenceId.path
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 import uk.gov.hmrc.pillar2.models.registration.RegistrationInfo
 case object upeRegInformationId extends QuestionPage[RegistrationInfo] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[RegistrationInfo] = GettableFactory.create(path)
+  override def path: JsPath                     = JsPath \ toString
 
   override def toString: String = "upeRegInformationId"
 }

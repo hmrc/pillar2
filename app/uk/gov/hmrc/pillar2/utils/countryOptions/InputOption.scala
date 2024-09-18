@@ -16,4 +16,4 @@
 
 package uk.gov.hmrc.pillar2.utils.countryOptions
 
-case class InputOption(value: String, label: String, dataTarget: Option[String] = None)
+final case class InputOption(value: String, label: String, dataTarget: Option[String] = None)

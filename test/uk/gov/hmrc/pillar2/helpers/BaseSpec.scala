@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ trait BaseSpec
     with Status
     with WireMockServerHandler {
 
-  implicit lazy val ec:           ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
+  // Using app's execution context to avoid using global
+  implicit lazy val ec:           ExecutionContext = injector.instanceOf[ExecutionContext]
   implicit lazy val hc:           HeaderCarrier    = HeaderCarrier()
   implicit lazy val system:       ActorSystem      = ActorSystem()
   implicit lazy val materializer: Materializer     = Materializer(system)

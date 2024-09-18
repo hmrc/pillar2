@@ -17,11 +17,14 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
+import uk.gov.hmrc.pillar2.models.AccountStatus
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.FilingMemberDetails
+import uk.gov.hmrc.pillar2.models.identifiers.subAccountStatusId.path
+import uk.gov.hmrc.pillar2.models.queries.{Gettable, GettableFactory}
 
 case object subFilingMemberDetailsId extends TypedIdentifier[FilingMemberDetails] {
-
-  override def path: JsPath = JsPath \ toString
+  val gettable:      Gettable[FilingMemberDetails] = GettableFactory.create(path)
+  override def path: JsPath                        = JsPath \ toString
 
   override def toString: String = "subFilingMemberDetails"
 }

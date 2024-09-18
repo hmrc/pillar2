@@ -16,13 +16,6 @@
 
 package uk.gov.hmrc.pillar2.models.identifiers
 
-class Identifiers {}
-import scala.language.implicitConversions
-
-trait Identifier
-
-object Identifier {
-
-  implicit def toString(identifier: Identifier): String =
-    identifier.toString
+trait Identifier {
+  override def toString: String = getClass.getSimpleName // Provide a custom toString implementation
 }

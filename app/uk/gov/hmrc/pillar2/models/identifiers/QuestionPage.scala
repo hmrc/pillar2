@@ -17,8 +17,13 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.queries.{Gettable, Settable}
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.queries.ExternalGettableSettable
 
-trait QuestionPage[A] extends Gettable[A] with Settable[A] {
+import scala.util.{Success, Try}
+
+trait QuestionPage[A] extends ExternalGettableSettable[A] {
   def path: JsPath
+  override def cleanup(value: Option[A], userAnswers: UserAnswers): Try[UserAnswers] =
+    Success(userAnswers)
 }

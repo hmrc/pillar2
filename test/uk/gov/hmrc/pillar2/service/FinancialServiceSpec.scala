@@ -34,8 +34,9 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 
   private val service = new FinancialService(mockFinancialDataConnector)
 
-  val startDate = LocalDate.now()
-  val endDate   = LocalDate.now().plusDays(364)
+  // Explicit type ascriptions
+  val startDate: LocalDate = LocalDate.now()
+  val endDate:   LocalDate = LocalDate.now().plusDays(364)
 
   "getPaymentHistory" - {
     "return payment history if relevant fields are defined with both payment and Refund sorted by date" in {
@@ -79,7 +80,6 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
   }
 
   "splitIntoYearIntervals" - {
-
     "return a list of 1 year intervals between two dates" in {
       val startDate = LocalDate.of(2020, 5, 15)
       val endDate   = LocalDate.of(2023, 9, 10)
@@ -110,11 +110,19 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 
       val result = service.splitIntoYearIntervals(startDate, endDate)
 
-      result.head.startDate mustNot be(startDate)
-      result.head.startDate mustBe newAdjustedStartDate
-      result.last.endDate mustBe endDate
-    }
+      result.headOption match {
+        case Some(year) =>
+          year.startDate mustNot be(startDate)
+          year.startDate mustBe newAdjustedStartDate
+        case None => fail("Expected at least one year interval")
+      }
 
+      result.lastOption match {
+        case Some(year) =>
+          year.endDate mustBe endDate
+        case None => fail("Expected at least one year interval")
+      }
+    }
   }
 }
 
@@ -291,5 +299,4 @@ object FinancialServiceSpec {
         FinancialHistory(LocalDate.now, "Refund", 0.0, 111.0)
       )
     )
-
 }

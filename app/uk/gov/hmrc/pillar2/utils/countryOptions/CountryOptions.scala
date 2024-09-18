@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.utils.countryOptions
 
-import com.typesafe.config.ConfigException
 import play.api.Environment
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.config.AppConfig
@@ -29,25 +28,27 @@ class CountryOptions @Inject() (environment: Environment, config: AppConfig) {
 
   def getCountryCodeFromName(name: String): String =
     options
-      .find(_.label == name)
-      .map(_.value)
+      .collectFirst { case InputOption(value, `name`, _) => value }
       .getOrElse(name)
 }
-object CountryOptions {
 
+object CountryOptions {
   def getCountries(environment: Environment, fileName: String): Seq[InputOption] =
     environment
       .resourceAsStream(fileName)
       .flatMap { in =>
         val locationJsValue = Json.parse(in)
         Json.fromJson[Seq[Seq[String]]](locationJsValue).asOpt.map {
-          _.map { countryList =>
-            InputOption(countryList(1).replaceAll("country:", ""), countryList.head)
+          _.flatMap { countryList =>
+            for {
+              code <- countryList.lift(1)
+              name <- countryList.headOption
+            } yield InputOption(code.replaceAll("country:", ""), name)
           }
         }
       }
       .getOrElse {
-        throw new ConfigException.BadValue(fileName, "country json does not exist")
+        play.api.Logger(getClass).error(s"Country JSON file not found or invalid: $fileName")
+        Seq.empty[InputOption]
       }
-
 }

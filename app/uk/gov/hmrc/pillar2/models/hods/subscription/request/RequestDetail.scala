@@ -20,7 +20,7 @@ import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.AccountingPeriod
 import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 
-case class RequestDetail(
+final case class RequestDetail(
   upeDetails:               UpeDetails,
   accountingPeriod:         AccountingPeriod,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
