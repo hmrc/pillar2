@@ -56,6 +56,16 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       }
     }
 
+    "return payment history when the response contains both payment and refund" in {
+      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+        .thenReturn(Future.successful(financialResponseWithPaymentAndRefund))
+
+      forAll(plrReferenceGen) { plrReference =>
+        val result = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        result mustBe Right(paymentHistoryResult(plrReference))
+      }
+    }
+
     "return payment description first if Refund and payments are made on the same day" in {
       when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(financialDataResponseSameDay))
@@ -250,6 +260,27 @@ object FinancialServiceSpec {
             amount = Some(111.00),
             paymentAmount = None,
             clearingDate = Some(LocalDate.now()),
+            clearingReason = Some("Outgoing payment - Paid")
+          )
+        )
+      )
+    )
+  )
+
+  val financialResponseWithPaymentAndRefund: FinancialDataResponse = FinancialDataResponse(
+    idType = "ZPLR",
+    idNumber = "XPLR00000000001",
+    regimeType = "PLR",
+    processingDate = LocalDateTime.now(),
+    financialTransactions = Seq(
+      FinancialTransaction(
+        mainTransaction = Some("0060"),
+        items = Seq(
+          FinancialItem(
+            dueDate = Some(LocalDate.now().plusDays(1)),
+            amount = Some(-100.00),
+            paymentAmount = Some(100.00),
+            clearingDate = Some(LocalDate.now().plusDays(2)),
             clearingReason = Some("Outgoing payment - Paid")
           )
         )
