@@ -92,10 +92,10 @@ class FinancialService @Inject() (
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {
       financialData  <- response.financialTransactions.filter(_.mainTransaction.contains(PAYMENT_IDENTIFIER))
-      financialItems <- financialData.items.filterNot(_.clearingReason.contains(REPAYMENT_IDENTIFIER))
+      financialItems <- financialData.items
       dueDate        <- financialItems.dueDate
       paymentAmount  <- financialItems.paymentAmount
-    } yield FinancialHistory(date = dueDate, paymentType = Payment, amountPaid = paymentAmount, amountRepaid = 0.00)
+    } yield FinancialHistory(date = dueDate, paymentType = Payment, amountPaid = paymentAmount.abs, amountRepaid = 0.00)
 
   private def getRepaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {
@@ -103,7 +103,7 @@ class FinancialService @Inject() (
       financialItems <- financialData.items.filter(_.clearingReason.contains(REPAYMENT_IDENTIFIER))
       clearingDate   <- financialItems.clearingDate
       amount         <- financialItems.amount
-    } yield FinancialHistory(date = clearingDate, paymentType = Refund, amountPaid = 0.00, amountRepaid = amount)
+    } yield FinancialHistory(date = clearingDate, paymentType = Refund, amountPaid = 0.00, amountRepaid = amount.abs)
 
 }
 
