@@ -370,7 +370,7 @@ class SubscriptionService @Inject() (
       response <- subscriptionConnector.getSubscriptionInformation(plrReference)
       subscriptionResponse = response.json.as[SubscriptionResponse]
       _ <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
-      dataToStore = createCachedObject(subscriptionResponse.success)
+      dataToStore = createCachedObject(subscriptionResponse.success, plrReference)
       _ <- repository.upsert(id, Json.toJson(dataToStore))
     } yield subscriptionResponse
 
@@ -386,7 +386,7 @@ class SubscriptionService @Inject() (
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
     }
 
-  private def createCachedObject(sub: SubscriptionSuccess): ReadSubscriptionCachedData = {
+  private def createCachedObject(sub: SubscriptionSuccess, plrReference: String): ReadSubscriptionCachedData = {
 
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
@@ -416,6 +416,7 @@ class SubscriptionService @Inject() (
       .getOrElse(None, None, None)
 
     ReadSubscriptionCachedData(
+      plrReference = Some(plrReference),
       subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
       subPrimaryContactName = sub.primaryContactDetails.name,
       subPrimaryEmail = sub.primaryContactDetails.emailAddress,
