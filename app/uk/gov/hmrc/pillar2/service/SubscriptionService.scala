@@ -432,8 +432,9 @@ class SubscriptionService @Inject() (
     )
   }
 
-  def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(implicit hc: HeaderCarrier): Future[Done] =
-    subscriptionConnector.amendSubscriptionInformation(amendData).flatMap { response =>
+  def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(implicit hc: HeaderCarrier): Future[Done] = {
+    val etmpAmendSubscriptionSuccess = ETMPAmendSubscriptionSuccess(amendData)
+    subscriptionConnector.amendSubscriptionInformation(etmpAmendSubscriptionSuccess).flatMap { response =>
       if (response.status == 200) {
         auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json))
         response.json.validate[AmendResponse] match {
@@ -453,5 +454,6 @@ class SubscriptionService @Inject() (
         Future.failed(UnexpectedResponse)
       }
     }
+  }
 
 }
