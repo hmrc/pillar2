@@ -24,16 +24,28 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.financial.FinancialDataResponse
 import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataConnector @Inject() (val config: AppConfig, val http: HttpClient) {
   implicit val logger: Logger = Logger(this.getClass.getName)
 
-  def retrieveFinancialData(idNumber: String)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[FinancialDataResponse] = {
+  def retrieveFinancialData(idNumber: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+    hc:                               HeaderCarrier,
+    ec:                               ExecutionContext
+  ): Future[FinancialDataResponse] = {
     val serviceName = "financial-data"
     http
       .GET[HttpResponse](
         url = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR",
+        queryParams = Seq(
+          "dateFrom"                   -> dateFrom.toString,
+          "dateTo"                     -> dateTo.toString,
+          "onlyOpenItems"              -> "false",
+          "includeLocks"               -> "false",
+          "calculateAccruedInterest"   -> "true",
+          "customerPaymentInformation" -> "true"
+        ),
         headers = extraHeaders(config, serviceName)
       )(httpReads, hc, ec)
       .flatMap { response =>

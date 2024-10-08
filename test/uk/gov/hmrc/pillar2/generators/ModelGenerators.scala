@@ -800,6 +800,25 @@ trait ModelGenerators {
       filingMember = filingMember
     )
   }
+
+  implicit val arbitraryETMPAmendSubscriptionSuccess: Arbitrary[ETMPAmendSubscriptionSuccess] = Arbitrary {
+    for {
+      upeDetails               <- arbitrary[UpeDetailsAmend]
+      accountingPeriod         <- arbitrary[AccountingPeriodAmend]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
+    } yield ETMPAmendSubscriptionSuccess(
+      upeDetails,
+      accountingPeriod,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails
+    )
+  }
+
   implicit val arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
     for {
       replaceFilingMember      <- arbitrary[Boolean]

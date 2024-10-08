@@ -21,6 +21,7 @@ import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress}
 
 case class ReadSubscriptionCachedData(
+  plrReference:                Option[String],
   subMneOrDomestic:            MneOrDomestic,
   subAccountingPeriod:         AccountingPeriod,
   subPrimaryContactName:       String,

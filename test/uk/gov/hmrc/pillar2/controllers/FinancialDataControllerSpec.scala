@@ -37,6 +37,7 @@ import uk.gov.hmrc.pillar2.service.FinancialService
 
 import java.time.LocalDate
 import scala.concurrent.Future
+
 class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   val application: Application = new GuiceApplicationBuilder()
     .configure(
@@ -63,13 +64,17 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       )
     )
 
+  val startDate = LocalDate.now().toString
+  val endDate   = LocalDate.now().plusYears(1).toString
+
   "FinancialDataController" - {
 
     "should return OK with payment history when payment history is found for plrReference" in {
       forAll(plrReferenceGen) { plrReference =>
-        when(mockFinancialService.getTransactionHistory(any())(any())).thenReturn(Future successful Right(paymentHistoryResult(plrReference)))
+        when(mockFinancialService.getTransactionHistory(any(), any(), any())(any()))
+          .thenReturn(Future successful Right(paymentHistoryResult(plrReference)))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference).url)
+        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 200
@@ -79,9 +84,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
     "should return Not found when api returns not found" in {
       val dataError = FinancialDataError("NOT_FOUND", "Some reason")
-      when(mockFinancialService.getTransactionHistory(any())(any())).thenReturn(Future successful Left(dataError))
+      when(mockFinancialService.getTransactionHistory(any(), any(), any())(any())).thenReturn(Future successful Left(dataError))
 
-      val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789").url)
+      val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789", startDate, endDate).url)
       val result: Future[Result] = route(application, request).value
 
       status(result) mustBe 404
@@ -92,9 +97,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       forAll(plrReferenceGen, Gen.oneOf(Seq("SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
         val dataError = FinancialDataError(errorCode, "Some reason")
 
-        when(mockFinancialService.getTransactionHistory(any())(any())).thenReturn(Future successful Left(dataError))
+        when(mockFinancialService.getTransactionHistory(any(), any(), any())(any())).thenReturn(Future successful Left(dataError))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference).url)
+        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 424
@@ -107,9 +112,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       forAll(plrReferenceGen, stringsExceptSpecificValues(Seq("NOT_FOUND", "SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
         val dataError = FinancialDataError(errorCode, "Some reason")
 
-        when(mockFinancialService.getTransactionHistory(any())(any())).thenReturn(Future successful Left(dataError))
+        when(mockFinancialService.getTransactionHistory(any(), any(), any())(any())).thenReturn(Future successful Left(dataError))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference).url)
+        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 400
