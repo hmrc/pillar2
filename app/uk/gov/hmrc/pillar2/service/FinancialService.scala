@@ -53,41 +53,17 @@ class FinancialService @Inject() (
   private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     headerCarrier:                                                HeaderCarrier
   ): Future[FinancialDataResponse] =
-    Future
-      .sequence(
-        splitIntoYearIntervals(dateFrom, dateTo).map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
-      )
-      .map { financialDataResponses =>
-        val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
-
+    financialDataConnector
+      .retrieveFinancialData(plrReference, dateFrom, dateTo)
+      .map { financialDataResponse =>
         FinancialDataResponse(
-          idType = financialDataResponses.head.idType,
-          idNumber = financialDataResponses.head.idNumber,
-          regimeType = financialDataResponses.head.regimeType,
-          processingDate = financialDataResponses.head.processingDate,
-          financialTransactions = allTransactions
+          idType = financialDataResponse.idType,
+          idNumber = financialDataResponse.idNumber,
+          regimeType = financialDataResponse.regimeType,
+          processingDate = financialDataResponse.processingDate,
+          financialTransactions = financialDataResponse.financialTransactions
         )
       }
-
-  private[service] def splitIntoYearIntervals(startDate: LocalDate, endDate: LocalDate): List[Years] = {
-
-    val adjustedStartDate = if (startDate.isBefore(endDate.minusYears(7))) endDate.minusYears(7) else startDate
-
-    val years = Iterator
-      .iterate(adjustedStartDate)(_.plusYears(1))
-      .takeWhile(_.isBefore(endDate))
-      .toList
-
-    years.foldLeft(List.empty[Years]) { (acc, currentStartDate) =>
-      val currentEndDate =
-        if (currentStartDate.plusYears(1).isBefore(endDate))
-          currentStartDate.plusYears(1).minusDays(1)
-        else
-          endDate
-
-      acc :+ Years(currentStartDate, currentEndDate)
-    }
-  }
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {

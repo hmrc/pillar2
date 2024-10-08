@@ -47,15 +47,6 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       }
     }
 
-    "return payment history when the requesting years more than one" in {
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any())).thenReturn(Future.successful(financialDataResponse))
-
-      forAll(plrReferenceGen) { plrReference =>
-        val result = await(service.getTransactionHistory(plrReference, startDate, startDate.plusYears(3)))
-        result mustBe Right(paymentHistoryResultMultipleYears(plrReference))
-      }
-    }
-
     "return payment history when the response contains both payment and refund" in {
       when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(financialResponseWithPaymentAndRefund))
@@ -86,45 +77,6 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         }
       }
     }
-  }
-
-  "splitIntoYearIntervals" - {
-
-    "return a list of 1 year intervals between two dates" in {
-      val startDate = LocalDate.of(2020, 5, 15)
-      val endDate   = LocalDate.of(2023, 9, 10)
-      val result    = service.splitIntoYearIntervals(startDate, endDate)
-
-      val expectedResult = List(
-        Years(LocalDate.of(2020, 5, 15), LocalDate.of(2021, 5, 14)),
-        Years(LocalDate.of(2021, 5, 15), LocalDate.of(2022, 5, 14)),
-        Years(LocalDate.of(2022, 5, 15), LocalDate.of(2023, 5, 14)),
-        Years(LocalDate.of(2023, 5, 15), LocalDate.of(2023, 9, 10))
-      )
-
-      result mustBe expectedResult
-    }
-
-    "return only 1 interval if date is less than a year" in {
-      val startDate = LocalDate.of(2020, 5, 15)
-      val endDate   = LocalDate.of(2020, 9, 10)
-
-      service.splitIntoYearIntervals(startDate, endDate) mustBe List(Years(startDate, endDate))
-    }
-
-    "only return the last 7 years if dates are beyond 7 years" in {
-      val startDate = LocalDate.of(2020, 1, 1)
-      val endDate   = LocalDate.of(2028, 1, 1)
-
-      val newAdjustedStartDate = LocalDate.of(2021, 1, 1)
-
-      val result = service.splitIntoYearIntervals(startDate, endDate)
-
-      result.head.startDate mustNot be(startDate)
-      result.head.startDate mustBe newAdjustedStartDate
-      result.last.endDate mustBe endDate
-    }
-
   }
 }
 
@@ -293,19 +245,6 @@ object FinancialServiceSpec {
       plrReference,
       List(
         FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
-      )
-    )
-
-  val paymentHistoryResultMultipleYears: String => TransactionHistory = (plrReference: String) =>
-    TransactionHistory(
-      plrReference,
-      List(
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
         FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
       )
     )
