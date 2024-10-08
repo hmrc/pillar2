@@ -428,7 +428,8 @@ class SubscriptionService @Inject() (
       subSecondaryCapturePhone = secDetails._2,
       subSecondaryPhonePreference = Some(secContactTel._1),
       subRegisteredAddress = nonUKAddress,
-      subAccountingPeriod = accountingPeriod
+      subAccountingPeriod = accountingPeriod,
+      accountStatus = sub.accountStatus
     )
   }
 
