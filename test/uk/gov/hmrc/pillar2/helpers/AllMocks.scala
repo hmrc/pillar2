@@ -23,7 +23,7 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors.{FinancialDataConnector, RegistrationConnector, RepaymentConnector, SubscriptionConnector}
+import uk.gov.hmrc.pillar2.connectors.{FinancialDataConnector, ObligationConnector, RegistrationConnector, RepaymentConnector, SubscriptionConnector}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.audit.AuditService
@@ -52,6 +52,7 @@ trait AllMocks extends MockitoSugar {
   val mockAuthorisedFunctions:         AuthorisedFunctions         = mock[AuthorisedFunctions]
   val mockFinancialDataConnector:      FinancialDataConnector      = mock[FinancialDataConnector]
   val mockFinancialService:            FinancialService            = mock[FinancialService]
+  val mockObligationConnector:         ObligationConnector         = mock[ObligationConnector]
 
   override protected def beforeEach(): Unit =
     Seq(
