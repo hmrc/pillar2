@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberAmendDetails, UpeCorrespAddressDetails, UpeDetailsAmend}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 
 case class AmendSubscriptionSuccessAuditEvent(
   replaceFilingMember:      Boolean,
