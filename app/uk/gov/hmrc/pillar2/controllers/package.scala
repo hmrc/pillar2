@@ -16,13 +16,14 @@
 
 package uk.gov.hmrc.pillar2
 
-import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.Logger
 import play.api.http.Status._
+import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
+
 import scala.util.{Success, Try}
 
 package object controllers {
