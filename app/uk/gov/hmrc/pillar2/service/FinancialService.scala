@@ -60,7 +60,7 @@ class FinancialService @Inject() (
     }
 
     financialDataConnector
-      .retrieveFinancialData(plrReference, adjustedStartDate, dateTo)
+      .retrieveFinancialData(plrReference, dateFrom = adjustedStartDate, dateTo = dateTo)
       .map { financialDataResponse =>
         FinancialDataResponse(
           idType = financialDataResponse.idType,
