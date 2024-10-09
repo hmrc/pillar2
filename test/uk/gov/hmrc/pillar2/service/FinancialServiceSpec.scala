@@ -16,9 +16,11 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
-import org.mockito.Mockito.{times, verify, when}
-import org.scalatest.concurrent.ScalaFutures
+import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
@@ -27,7 +29,8 @@ import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial._
 import uk.gov.hmrc.pillar2.service.FinancialServiceSpec._
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDate
+import java.time.LocalDateTime
 import scala.concurrent.Future
 class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
