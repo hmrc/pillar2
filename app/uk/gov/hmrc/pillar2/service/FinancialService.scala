@@ -52,9 +52,15 @@ class FinancialService @Inject() (
 
   private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     headerCarrier:                                                HeaderCarrier
-  ): Future[FinancialDataResponse] =
+  ): Future[FinancialDataResponse] = {
+
+    val adjustedStartDate = {
+      val sevenYearsAgo = dateTo.minusYears(7)
+      if (dateFrom.isBefore(sevenYearsAgo)) sevenYearsAgo else dateFrom
+    }
+
     financialDataConnector
-      .retrieveFinancialData(plrReference, dateFrom, dateTo)
+      .retrieveFinancialData(plrReference, adjustedStartDate, dateTo)
       .map { financialDataResponse =>
         FinancialDataResponse(
           idType = financialDataResponse.idType,
@@ -64,6 +70,7 @@ class FinancialService @Inject() (
           financialTransactions = financialDataResponse.financialTransactions
         )
       }
+  }
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {
