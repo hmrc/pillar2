@@ -50,12 +50,13 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     }
 
     "return payment a not found error if no relevant history is found" in {
+      val result = FinancialDataError("NOT_FOUND", "No relevant financial data found")
       when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
         .thenReturn(Future.successful(financialResponseWithNeitherPaymentAndRefund))
 
       forAll(plrReferenceGen) { plrReference =>
-        val result = await(service.getTransactionHistory(plrReference, startDate, endDate))
-        result mustBe Right(paymentHistoryResult(plrReference))
+        val response = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        response mustBe Left(result)
       }
     }
 

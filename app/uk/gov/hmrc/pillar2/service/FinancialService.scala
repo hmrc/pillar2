@@ -35,20 +35,29 @@ class FinancialService @Inject() (
 
   def getTransactionHistory(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     hc:                                   HeaderCarrier
-  ): Future[Either[FinancialDataError, TransactionHistory]] = {
+  ): Future[Either[FinancialDataError, TransactionHistory]] =
+    retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
+      .map { financialData =>
+        val repaymentData = getRepaymentData(financialData)
+        val paymentData   = getPaymentData(financialData)
 
-    val result = for {
-      financialData <- retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
-      repaymentData <- Future successful getRepaymentData(financialData)
-      paymentData   <- Future successful getPaymentData(financialData)
-      sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)(Ordering[LocalDate].reverse)
-    } yield Right(TransactionHistory(plrReference, sortedFinancialHistory))
-
-    result.recover { case e: FinancialDataError =>
-      logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
-      Left(e)
-    }
-  }
+        if (repaymentData.isEmpty && paymentData.isEmpty) {
+          Left(FinancialDataError("NOT_FOUND", "No relevant financial data found"))
+        } else {
+          val sortedFinancialHistory = (paymentData ++ repaymentData)
+            .sortBy(_.paymentType)
+            .sortBy(_.date)(Ordering[LocalDate].reverse)
+          Right(TransactionHistory(plrReference, sortedFinancialHistory))
+        }
+      }
+      .recover {
+        case e: FinancialDataError =>
+          logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
+          Left(e)
+        case e: Exception =>
+          logger.error(s"Unexpected error occurred for plrReference=$plrReference - ${e.getMessage}")
+          Left(FinancialDataError("UNKNOWN_ERROR", e.getMessage))
+      }
 
   private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     headerCarrier:                                                HeaderCarrier
@@ -59,17 +68,7 @@ class FinancialService @Inject() (
       if (dateFrom.isBefore(sevenYearsAgo)) sevenYearsAgo else dateFrom
     }
 
-    financialDataConnector
-      .retrieveFinancialData(plrReference, dateFrom = adjustedStartDate, dateTo = dateTo)
-      .map { financialDataResponse =>
-        FinancialDataResponse(
-          idType = financialDataResponse.idType,
-          idNumber = financialDataResponse.idNumber,
-          regimeType = financialDataResponse.regimeType,
-          processingDate = financialDataResponse.processingDate,
-          financialTransactions = financialDataResponse.financialTransactions
-        )
-      }
+    financialDataConnector.retrieveFinancialData(plrReference, dateFrom = adjustedStartDate, dateTo = dateTo)
   }
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
