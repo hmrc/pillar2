@@ -50,13 +50,9 @@ class FinancialService @Inject() (
           Right(TransactionHistory(plrReference, sortedFinancialHistory))
         }
       }
-      .recover {
-        case e: FinancialDataError =>
-          logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
-          Left(e)
-        case e: Exception =>
-          logger.error(s"Unexpected error occurred for plrReference=$plrReference - ${e.getMessage}")
-          Left(FinancialDataError("UNKNOWN_ERROR", e.getMessage))
+      .recover { case e: FinancialDataError =>
+        logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
+        Left(e)
       }
 
   private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
