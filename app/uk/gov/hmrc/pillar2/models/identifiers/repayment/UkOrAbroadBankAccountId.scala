@@ -19,6 +19,8 @@ package uk.gov.hmrc.pillar2.models.identifiers.repayment
 import play.api.libs.json.JsPath
 import uk.gov.hmrc.pillar2.models.identifiers.TypedIdentifier
 
+import scala.util.Try
+
 case object UkOrAbroadBankAccountId extends TypedIdentifier[UkOrAbroadBankAccount] {
 
   override def path: JsPath = JsPath \ toString

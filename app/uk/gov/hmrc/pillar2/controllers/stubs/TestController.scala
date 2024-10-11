@@ -51,7 +51,7 @@ class TestController @Inject() (
     repository.clearAllData().map(_ => Ok)
   }
 
-  def deEnrol(): Action[AnyContent] = Action.async { _ =>
+  def deEnrol(): Action[AnyContent] = Action.async { implicit request =>
     ???
   }
 
