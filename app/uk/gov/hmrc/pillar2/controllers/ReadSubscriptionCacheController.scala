@@ -40,13 +40,13 @@ class ReadSubscriptionCacheController @Inject() (
     } getOrElse Future.successful(EntityTooLarge)
   }
 
-  def get(id: String): Action[AnyContent] = authenticate.async { _ =>
+  def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.get(id).map { response =>
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
 
-  def remove(id: String): Action[AnyContent] = authenticate.async { _ =>
+  def remove(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.remove(id).map { response =>
       if (response) Ok else InternalServerError
     }

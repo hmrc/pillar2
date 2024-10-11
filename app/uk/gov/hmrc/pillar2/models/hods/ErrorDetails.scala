@@ -17,12 +17,11 @@
 package uk.gov.hmrc.pillar2.models.hods
 
 import play.api.libs.json.Json
-import play.api.libs.json.OFormat
 
 case class SourceFaultDetail(detail: Seq[String])
 
 object SourceFaultDetail {
-  implicit val format: OFormat[SourceFaultDetail] = Json.format[SourceFaultDetail]
+  implicit val format = Json.format[SourceFaultDetail]
 }
 
 case class ErrorDetail(
@@ -35,11 +34,11 @@ case class ErrorDetail(
 )
 
 object ErrorDetail {
-  implicit val format: OFormat[ErrorDetail] = Json.format[ErrorDetail]
+  implicit val format = Json.format[ErrorDetail]
 }
 
 case class ErrorDetails(errorDetail: ErrorDetail)
 
 object ErrorDetails {
-  implicit val format: OFormat[ErrorDetails] = Json.format[ErrorDetails]
+  implicit val format = Json.format[ErrorDetails]
 }

@@ -16,10 +16,9 @@
 
 package uk.gov.hmrc.pillar2
 
+import java.time.Instant
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
-
-import java.time.Instant
 
 package object repositories {
   case class RegistrationDataEntry(id: String, data: String, lastUpdated: Instant)

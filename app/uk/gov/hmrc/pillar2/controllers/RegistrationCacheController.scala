@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import java.time.Instant
 import play.api.Logging
-import play.api.libs.json._
+import play.api.libs.json.{JsNumber, JsValue, Json, Writes}
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
-import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -42,13 +42,13 @@ class RegistrationCacheController @Inject() (
     } getOrElse Future.successful(EntityTooLarge)
   }
 
-  def get(id: String): Action[AnyContent] = authenticate.async { _ =>
+  def get(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.get(id).map { response =>
       response.map(Ok(_)).getOrElse(NotFound)
     }
   }
 
-  def remove(id: String): Action[AnyContent] = authenticate.async { _ =>
+  def remove(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.remove(id).map { response =>
       if (response) Ok else InternalServerError
     }
@@ -58,7 +58,7 @@ class RegistrationCacheController @Inject() (
     def writes(d: Instant): JsValue = JsNumber(d.getEpochSecond)
   }
 
-  def lastUpdated(id: String): Action[AnyContent] = authenticate.async { _ =>
+  def lastUpdated(id: String): Action[AnyContent] = authenticate.async { implicit request =>
     repository.getLastUpdated(id).map { response =>
       response.map { date =>
         Ok(Json.toJson(date)(javaDateTimeNumberWrites))

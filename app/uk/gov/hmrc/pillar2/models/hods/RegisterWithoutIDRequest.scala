@@ -57,7 +57,7 @@ case class ContactDetails(
 )
 
 object ContactDetails {
-  implicit val contactFormats: OFormat[ContactDetails] = Json.format[ContactDetails]
+  implicit val contactFormats = Json.format[ContactDetails]
 }
 
 case class Identification(
@@ -67,7 +67,7 @@ case class Identification(
 )
 
 object Identification {
-  implicit val indentifierFormats: OFormat[Identification] = Json.format[Identification]
+  implicit val indentifierFormats = Json.format[Identification]
 }
 
 case class RegisterWithoutIDRequest(
@@ -82,7 +82,7 @@ case class RegisterWithoutIDRequest(
 )
 
 object RegisterWithoutIDRequest {
-  implicit val format: OFormat[RegisterWithoutIDRequest] = Json.format[RegisterWithoutIDRequest]
+  implicit val format = Json.format[RegisterWithoutIDRequest]
   def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutIDRequest =
     RegisterWithoutIDRequest(
       regime = "PLR",

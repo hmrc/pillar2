@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json._
+import play.api.libs.json.{Format, JsValue, Json, OFormat}
 import uk.gov.hmrc.pillar2.models.AccountingPeriod
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
 
-import java.time.LocalDateTime
+import java.time.{LocalDate, LocalDateTime}
 
 case class CreateSubscriptionAuditEvent(
   upeDetails:               UpeDetails,
