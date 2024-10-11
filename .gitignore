@@ -2,7 +2,6 @@
 
 !.gitignore
 !.scalafmt.conf
-!.scalafix.conf
 .cache
 /.classpath
 db
