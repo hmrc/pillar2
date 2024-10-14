@@ -35,58 +35,36 @@ class FinancialService @Inject() (
 
   def getTransactionHistory(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     hc:                                   HeaderCarrier
-  ): Future[Either[FinancialDataError, TransactionHistory]] = {
+  ): Future[Either[FinancialDataError, TransactionHistory]] =
+    retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
+      .map { financialData =>
+        val repaymentData = getRepaymentData(financialData)
+        val paymentData   = getPaymentData(financialData)
 
-    val result = for {
-      financialData <- retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
-      repaymentData <- Future successful getRepaymentData(financialData)
-      paymentData   <- Future successful getPaymentData(financialData)
-      sortedFinancialHistory = (paymentData ++ repaymentData).sortBy(_.paymentType).sortBy(_.date)(Ordering[LocalDate].reverse)
-    } yield Right(TransactionHistory(plrReference, sortedFinancialHistory))
-
-    result.recover { case e: FinancialDataError =>
-      logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
-      Left(e)
-    }
-  }
+        if (repaymentData.isEmpty && paymentData.isEmpty) {
+          Left(FinancialDataError("NOT_FOUND", "No relevant financial data found"))
+        } else {
+          val sortedFinancialHistory = (paymentData ++ repaymentData)
+            .sortBy(_.paymentType)
+            .sortBy(_.date)(Ordering[LocalDate].reverse)
+          Right(TransactionHistory(plrReference, sortedFinancialHistory))
+        }
+      }
+      .recover { case e: FinancialDataError =>
+        logger.error(s"Error returned from getFinancials for plrReference=$plrReference - Error code=${e.code} Error reason=${e.reason}")
+        Left(e)
+      }
 
   private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     headerCarrier:                                                HeaderCarrier
-  ): Future[FinancialDataResponse] =
-    Future
-      .sequence(
-        splitIntoYearIntervals(dateFrom, dateTo).map(year => financialDataConnector.retrieveFinancialData(plrReference, year.startDate, year.endDate))
-      )
-      .map { financialDataResponses =>
-        val allTransactions = financialDataResponses.flatMap(_.financialTransactions)
+  ): Future[FinancialDataResponse] = {
 
-        FinancialDataResponse(
-          idType = financialDataResponses.head.idType,
-          idNumber = financialDataResponses.head.idNumber,
-          regimeType = financialDataResponses.head.regimeType,
-          processingDate = financialDataResponses.head.processingDate,
-          financialTransactions = allTransactions
-        )
-      }
-
-  private[service] def splitIntoYearIntervals(startDate: LocalDate, endDate: LocalDate): List[Years] = {
-
-    val adjustedStartDate = if (startDate.isBefore(endDate.minusYears(7))) endDate.minusYears(7) else startDate
-
-    val years = Iterator
-      .iterate(adjustedStartDate)(_.plusYears(1))
-      .takeWhile(_.isBefore(endDate))
-      .toList
-
-    years.foldLeft(List.empty[Years]) { (acc, currentStartDate) =>
-      val currentEndDate =
-        if (currentStartDate.plusYears(1).isBefore(endDate))
-          currentStartDate.plusYears(1).minusDays(1)
-        else
-          endDate
-
-      acc :+ Years(currentStartDate, currentEndDate)
+    val adjustedStartDate = {
+      val sevenYearsAgo = dateTo.minusYears(7)
+      if (dateFrom.isBefore(sevenYearsAgo)) sevenYearsAgo else dateFrom
     }
+
+    financialDataConnector.retrieveFinancialData(plrReference, dateFrom = adjustedStartDate, dateTo = dateTo)
   }
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =

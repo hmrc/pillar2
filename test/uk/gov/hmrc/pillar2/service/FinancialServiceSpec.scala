@@ -17,6 +17,9 @@
 package uk.gov.hmrc.pillar2.service
 
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{eq => eqTo}
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.test.Helpers.await
@@ -24,12 +27,11 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial._
-import uk.gov.hmrc.pillar2.service.FinancialService.Years
 import uk.gov.hmrc.pillar2.service.FinancialServiceSpec._
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.LocalDate
+import java.time.LocalDateTime
 import scala.concurrent.Future
-
 class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
   private val service = new FinancialService(mockFinancialDataConnector)
@@ -47,12 +49,14 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       }
     }
 
-    "return payment history when the requesting years more than one" in {
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any())).thenReturn(Future.successful(financialDataResponse))
+    "return payment a not found error if no relevant history is found" in {
+      val result = FinancialDataError("NOT_FOUND", "No relevant financial data found")
+      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+        .thenReturn(Future.successful(financialResponseWithNeitherPaymentAndRefund))
 
       forAll(plrReferenceGen) { plrReference =>
-        val result = await(service.getTransactionHistory(plrReference, startDate, startDate.plusYears(3)))
-        result mustBe Right(paymentHistoryResultMultipleYears(plrReference))
+        val response = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        response mustBe Left(result)
       }
     }
 
@@ -86,46 +90,38 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         }
       }
     }
+
+    "truncate dateFrom to last 7 years if more than 7 years are requested" in {
+      val startDate = LocalDate.now().minusYears(8)
+      val endDate   = LocalDate.now()
+
+      val sevenYearsBeforeEndDate = LocalDate.now().minusYears(7)
+
+      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+        .thenReturn(Future.successful(financialDataResponse))
+
+      forAll(plrReferenceGen) { plrReference =>
+        await(service.getTransactionHistory(plrReference, startDate, endDate))
+        verify(mockFinancialDataConnector, times(1))
+          .retrieveFinancialData(eqTo(plrReference), eqTo(sevenYearsBeforeEndDate), eqTo(endDate))(any(), any())
+      }
+    }
+
+    "should use original dateFrom if it is within the last seven years" in {
+      val startDate = LocalDate.now().minusYears(6)
+      val endDate   = LocalDate.now()
+
+      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+        .thenReturn(Future.successful(financialDataResponse))
+
+      forAll(plrReferenceGen) { plrReference =>
+        await(service.getTransactionHistory(plrReference, startDate, endDate))
+        verify(mockFinancialDataConnector, times(1))
+          .retrieveFinancialData(eqTo(plrReference), eqTo(startDate), eqTo(endDate))(any(), any())
+      }
+    }
   }
 
-  "splitIntoYearIntervals" - {
-
-    "return a list of 1 year intervals between two dates" in {
-      val startDate = LocalDate.of(2020, 5, 15)
-      val endDate   = LocalDate.of(2023, 9, 10)
-      val result    = service.splitIntoYearIntervals(startDate, endDate)
-
-      val expectedResult = List(
-        Years(LocalDate.of(2020, 5, 15), LocalDate.of(2021, 5, 14)),
-        Years(LocalDate.of(2021, 5, 15), LocalDate.of(2022, 5, 14)),
-        Years(LocalDate.of(2022, 5, 15), LocalDate.of(2023, 5, 14)),
-        Years(LocalDate.of(2023, 5, 15), LocalDate.of(2023, 9, 10))
-      )
-
-      result mustBe expectedResult
-    }
-
-    "return only 1 interval if date is less than a year" in {
-      val startDate = LocalDate.of(2020, 5, 15)
-      val endDate   = LocalDate.of(2020, 9, 10)
-
-      service.splitIntoYearIntervals(startDate, endDate) mustBe List(Years(startDate, endDate))
-    }
-
-    "only return the last 7 years if dates are beyond 7 years" in {
-      val startDate = LocalDate.of(2020, 1, 1)
-      val endDate   = LocalDate.of(2028, 1, 1)
-
-      val newAdjustedStartDate = LocalDate.of(2021, 1, 1)
-
-      val result = service.splitIntoYearIntervals(startDate, endDate)
-
-      result.head.startDate mustNot be(startDate)
-      result.head.startDate mustBe newAdjustedStartDate
-      result.last.endDate mustBe endDate
-    }
-
-  }
 }
 
 object FinancialServiceSpec {
@@ -288,24 +284,32 @@ object FinancialServiceSpec {
     )
   )
 
+  val financialResponseWithNeitherPaymentAndRefund: FinancialDataResponse = FinancialDataResponse(
+    idType = "ZPLR",
+    idNumber = "XPLR00000000001",
+    regimeType = "PLR",
+    processingDate = LocalDateTime.now(),
+    financialTransactions = Seq(
+      FinancialTransaction(
+        mainTransaction = Some("0000"),
+        items = Seq(
+          FinancialItem(
+            dueDate = Some(LocalDate.now().plusDays(3)),
+            amount = None,
+            paymentAmount = Some(100.00),
+            clearingDate = None,
+            clearingReason = None
+          )
+        )
+      )
+    )
+  )
+
   val paymentHistoryResult: String => TransactionHistory = (plrReference: String) =>
     TransactionHistory(
       plrReference,
       List(
         FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
-      )
-    )
-
-  val paymentHistoryResultMultipleYears: String => TransactionHistory = (plrReference: String) =>
-    TransactionHistory(
-      plrReference,
-      List(
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00),
         FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
       )
     )
