@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.models
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 trait ApiErrors extends Throwable
 
@@ -28,9 +29,9 @@ final case class FinancialDataError(code: String, reason: String) extends ApiErr
 final case class FinancialDataErrorResponses(failures: Seq[FinancialDataError]) extends ApiErrors
 
 object FinancialDataError {
-  implicit val formatException = Json.format[FinancialDataError]
+  implicit val formatException: OFormat[FinancialDataError] = Json.format[FinancialDataError]
 }
 
 object FinancialDataErrorResponses {
-  implicit val format = Json.format[FinancialDataErrorResponses]
+  implicit val format: OFormat[FinancialDataErrorResponses] = Json.format[FinancialDataErrorResponses]
 }

@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{Format, JsValue, Json, OFormat, OWrites}
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
+import play.api.libs.json.{Format, JsValue, Json}
 
 case class UpeRegisterWithoutIdAuditEvent(
   upeRegistration: UpeRegistration

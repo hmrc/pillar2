@@ -21,7 +21,7 @@ import play.api.Logger
 import play.api.libs.json.{Json, Writes}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, ETMPAmendSubscriptionSuccess}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.ETMPAmendSubscriptionSuccess
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
