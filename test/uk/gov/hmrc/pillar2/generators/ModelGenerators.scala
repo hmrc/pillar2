@@ -558,7 +558,7 @@ trait ModelGenerators {
     for {
       companyName            <- arbitrary[String]
       companyNumber          <- arbitrary[String]
-      dateOfIncorporation    <- arbitrary[LocalDate]
+      dateOfIncorporation    <- Gen.option(arbitrary[LocalDate])
       unsanitisedCHROAddress <- arbitrary[IncorporatedEntityAddress]
 
     } yield CompanyProfile(
