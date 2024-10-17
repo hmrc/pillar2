@@ -25,3 +25,5 @@ DELETE        /user-cache/read-subscription/:id                            uk.go
 POST          /repayment                                                   uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
 
 GET           /transaction-history/:plrReference/:dateFrom/:dateTo         uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String)
+
+GET           /get-obligation/:plrReference/:dateFrom/:dateTo              uk.gov.hmrc.pillar2.controllers.ObligationController.getObligation(plrReference: String, dateFrom: String, dateTo: String)

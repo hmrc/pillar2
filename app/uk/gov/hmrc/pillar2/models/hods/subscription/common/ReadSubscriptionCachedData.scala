@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, NonUKAddress}
+import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, NonUKAddress}
 
 case class ReadSubscriptionCachedData(
   plrReference:                Option[String],
@@ -33,7 +33,8 @@ case class ReadSubscriptionCachedData(
   subSecondaryEmail:           Option[String],
   subSecondaryCapturePhone:    Option[String],
   subSecondaryPhonePreference: Option[Boolean],
-  subRegisteredAddress:        NonUKAddress
+  subRegisteredAddress:        NonUKAddress,
+  accountStatus:               Option[AccountStatus]
 )
 
 object ReadSubscriptionCachedData {
