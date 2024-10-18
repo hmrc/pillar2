@@ -37,7 +37,7 @@ object IncorporatedEntityRegistrationData {
 final case class CompanyProfile(
   companyName:            String,
   companyNumber:          String,
-  dateOfIncorporation:    LocalDate,
+  dateOfIncorporation:    Option[LocalDate],
   unsanitisedCHROAddress: IncorporatedEntityAddress
 )
 
