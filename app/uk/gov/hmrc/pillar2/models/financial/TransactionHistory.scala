@@ -17,9 +17,9 @@
 package uk.gov.hmrc.pillar2.models.financial
 
 import play.api.libs.json.Json
+import play.api.libs.json.OFormat
 
 import java.time.LocalDate
-import play.api.libs.json.OFormat
 
 final case class FinancialHistory(date: LocalDate, paymentType: String, amountPaid: BigDecimal, amountRepaid: BigDecimal)
 

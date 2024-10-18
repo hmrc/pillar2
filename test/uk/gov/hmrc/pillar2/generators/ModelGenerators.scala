@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.generators
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, JsValue, Json}
+import uk.gov.hmrc.pillar2.models._
 import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hods._
@@ -28,7 +29,6 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodAmend, NonUKAddress, RowStatus, UKAddress, UserAnswers}
 
 import java.time.{Instant, LocalDate}
 
