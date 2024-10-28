@@ -130,7 +130,7 @@ class RegistrationCacheRepository @Inject() (
       result.wasAcknowledged
     }
 
-  def getAll(max: Int)(implicit ec: ExecutionContext): Future[Seq[JsValue]] =
+  def getAll: Future[Seq[JsValue]] =
     (if (cryptoToggle) {
        collection
          .find()

@@ -16,9 +16,6 @@
 
 package uk.gov.hmrc.pillar2.models.identifiers
 
-class Identifiers {}
-import scala.language.implicitConversions
-
 trait Identifier
 
 object Identifier {

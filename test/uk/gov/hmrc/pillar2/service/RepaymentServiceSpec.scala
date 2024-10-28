@@ -20,12 +20,12 @@ import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.gov.hmrc.http.HttpResponse
+import play.api.libs.json.JsObject
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-import uk.gov.hmrc.pillar2.service.RepaymentService
 
 import scala.concurrent.Future
 
@@ -39,16 +39,16 @@ class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
   "RepaymentService" - {
     "Return Done in case of a CREATED Http Response" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
-        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
-          .thenReturn(Future.successful(HttpResponse(responseStatus = 201)))
+        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(status = 201, json = JsObject.empty, Map.empty)))
         val result = service.sendRepaymentsData(repaymentPayLoad)
         result.futureValue mustBe Done
       }
     }
     "return a failed result in case of a response other than 201" in {
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
-        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any()))
-          .thenReturn(Future.successful(HttpResponse(responseStatus = 200)))
+        when(mockRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(status = 200, json = JsObject.empty, Map.empty)))
         val result = service.sendRepaymentsData(repaymentPayLoad)
         result.failed.futureValue mustBe UnexpectedResponse
       }

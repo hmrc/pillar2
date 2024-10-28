@@ -4,6 +4,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 import uk.gov.hmrc.DefaultBuildSettings.*
 import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
 import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
+import org.typelevel.scalacoptions.ScalacOptions
 
 val appName = "pillar2"
 
@@ -31,7 +32,12 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
-    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources")
+    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
+    tpolecatExcludeOptions ++= Set(
+      ScalacOptions.warnNonUnitStatement,
+//      ScalacOptions.warnValueDiscard,
+//      ScalacOptions.warnUnusedNoWarn
+    ) //++ ScalacOptions.warnUnusedOptions
   )
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
@@ -43,6 +49,11 @@ lazy val it = project
   .enablePlugins(play.sbt.PlayScala)
   .dependsOn(microservice % "test->test")
   .settings(DefaultBuildSettings.itSettings())
+  .settings(
+    tpolecatExcludeOptions ++= Set(
+      ScalacOptions.warnNonUnitStatement
+    )
+  )
   .settings(libraryDependencies ++= AppDependencies.it)
 
 inThisBuild(

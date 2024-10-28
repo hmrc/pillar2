@@ -26,6 +26,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.ObligationConnector
 import uk.gov.hmrc.pillar2.controllers.ObligationControllerSpec._
 import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
@@ -35,7 +36,7 @@ import uk.gov.hmrc.pillar2.models.obligation.ObligationStatus.Fulfilled
 import uk.gov.hmrc.pillar2.models.obligation.{ObligationInformation, ObligationType}
 
 import java.time.LocalDate
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
@@ -53,7 +54,8 @@ class ObligationControllerSpec extends BaseSpec with Generators with ScalaCheckP
   "Obligation Controller" - {
 
     "return 200 with obligation data when connector returns us obligation information" in {
-      when(mockObligationConnector.getObligations(any(), any(), any())(any(), any())).thenReturn(Future.successful(obligationResponse))
+      when(mockObligationConnector.getObligations(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]()))
+        .thenReturn(Future.successful(obligationResponse))
 
       val request =
         FakeRequest(GET, routes.ObligationController.getObligation(PlrReference, dateFrom.toString, dateTo.toString).url)
@@ -64,7 +66,8 @@ class ObligationControllerSpec extends BaseSpec with Generators with ScalaCheckP
     }
 
     "return 404 when cannot find successful response" in {
-      when(mockObligationConnector.getObligations(any(), any(), any())(any(), any())).thenReturn(Future.failed(new Exception("wrong")))
+      when(mockObligationConnector.getObligations(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]()))
+        .thenReturn(Future.failed(new Exception("wrong")))
 
       val request =
         FakeRequest(GET, routes.ObligationController.getObligation(PlrReference, dateFrom.toString, dateTo.toString).url)

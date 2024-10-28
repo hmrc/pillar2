@@ -39,6 +39,7 @@ import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import wolfendale.scalacheck.regexp.RegexpGen
 
 import java.time.{Instant, LocalDate, ZoneOffset}
+import scala.annotation.nowarn
 trait Generators extends ModelGenerators {
 
   implicit val dontShrink: Shrink[String] = Shrink.shrinkAny
@@ -78,6 +79,7 @@ trait Generators extends ModelGenerators {
   def nonNumerics: Gen[String] =
     alphaStr suchThat (_.size > 0)
 
+  @nowarn
   def decimals: Gen[String] =
     arbitrary[BigDecimal]
       .suchThat(_.abs < Int.MaxValue)

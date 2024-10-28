@@ -55,7 +55,7 @@ class ReadSubscriptionCacheRepositoryISpec
   private val userAnswersCache =
     RegistrationDataEntry(
       "id",
-      Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
+      Json.toJson(("foo" -> "bar", "name" -> "steve", "address" -> "address1")).toString(),
       Instant.now()
     )
 

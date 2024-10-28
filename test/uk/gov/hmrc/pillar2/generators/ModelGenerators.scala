@@ -889,7 +889,6 @@ trait ModelGenerators {
       upeNameRegistration  <- stringsWithMaxLength(105)
       primaryContactName   <- stringsWithMaxLength(200)
       primaryEmail         <- stringsWithMaxLength(20)
-      secondaryContactName <- stringsWithMaxLength(200)
       registrationDate     <- arbitrary[LocalDate]
       subRegisteredAddress <- arbitraryNonUKAddressDetails.arbitrary
       acountPeriod         <- arbitraryAccountingPeriod.arbitrary
@@ -997,7 +996,6 @@ trait ModelGenerators {
       registeredinUK            <- arbitrary[Boolean]
       registerNomFilingMember   <- arbitrary[Boolean]
       nominatedFilingMemberName <- arbitrary[String]
-      ultimateParentEntityName  <- arbitrary[String]
       addressLine1              <- arbitrary[String]
       addressLine2              <- arbitrary[String]
       townOrCity                <- arbitrary[String]

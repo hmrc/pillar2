@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.config
+package uk.gov.hmrc.pillar2.repositories
 
-import com.google.inject.AbstractModule
-import play.api.libs.concurrent.PekkoGuiceSupport
+import play.api.libs.json.{Format, JsValue, Json}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-class GuiceModule extends AbstractModule with PekkoGuiceSupport {
+import java.time.Instant
 
-  override def configure(): Unit =
-    bind(classOf[AppConfig]).asEagerSingleton()
+case class JsonDataEntry(id: String, data: JsValue, lastUpdated: Instant)
 
+object JsonDataEntry {
+  implicit val dateFormat: Format[Instant]       = MongoJavatimeFormats.instantFormat
+  implicit val format:     Format[JsonDataEntry] = Json.format[JsonDataEntry]
 }

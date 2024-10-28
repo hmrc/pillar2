@@ -19,12 +19,13 @@ package uk.gov.hmrc.pillar2.service
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 import uk.gov.hmrc.pillar2.service.RegistrationService
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
@@ -39,7 +40,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "Return successful Http Response" in new Setup {
       when(
         mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
+          .sendWithoutIDInformation(any[RegisterWithoutIDRequest]())(any[HeaderCarrier](), any[ExecutionContext]())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(OK, "Success")
@@ -57,7 +58,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "Return internal server error with response" in new Setup {
       when(
         mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
+          .sendWithoutIDInformation(any[RegisterWithoutIDRequest]())(any[HeaderCarrier](), any[ExecutionContext]())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")
@@ -77,7 +78,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "Return successful Http Response" in new Setup {
       when(
         mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
+          .sendWithoutIDInformation(any[RegisterWithoutIDRequest]())(any[HeaderCarrier](), any[ExecutionContext]())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(OK, "Success")
@@ -95,7 +96,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "Return internal server error with response" in new Setup {
       when(
         mockDataSubmissionsConnector
-          .sendWithoutIDInformation(any())(any(), any())
+          .sendWithoutIDInformation(any[RegisterWithoutIDRequest]())(any[HeaderCarrier](), any[ExecutionContext]())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")
@@ -114,7 +115,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       "Return successful Http Response" in new Setup {
         when(
           mockDataSubmissionsConnector
-            .sendWithoutIDInformation(any())(any(), any())
+            .sendWithoutIDInformation(any[RegisterWithoutIDRequest]())(any[HeaderCarrier](), any[ExecutionContext]())
         ).thenReturn(
           Future.successful(
             HttpResponse.apply(OK, "Success")
@@ -132,7 +133,7 @@ class RegistrationServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       "Return internal server error with response" in new Setup {
         when(
           mockDataSubmissionsConnector
-            .sendWithoutIDInformation(any())(any(), any())
+            .sendWithoutIDInformation(any[RegisterWithoutIDRequest]())(any[HeaderCarrier](), any[ExecutionContext]())
         ).thenReturn(
           Future.successful(
             HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")

@@ -56,7 +56,7 @@ class RegistrationCacheRepositoryISpec
   private val userAnswersCache =
     RegistrationDataEntry(
       "id",
-      Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1").toString(),
+      Json.toJson(("foo" -> "bar", "name" -> "steve", "address" -> "address1")).toString(),
       Instant.now()
     )
 
@@ -96,9 +96,9 @@ class RegistrationCacheRepositoryISpec
   "getAll" should {
     "successfully fetch all records" in {
       repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-      val result = repository.getAll(1).futureValue
+      val result = repository.getAll.futureValue
       val expectedResult = Seq(
-        Json.toJson("foo" -> "bar", "name" -> "steve", "address" -> "address1")
+        Json.toJson(("foo" -> "bar", "name" -> "steve", "address" -> "address1"))
       )
       result mustBe expectedResult
     }
