@@ -34,7 +34,7 @@ lazy val microservice = Project(appName, file("."))
     Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
     Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
     tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement,
+      ScalacOptions.warnNonUnitStatement
 //      ScalacOptions.warnValueDiscard,
 //      ScalacOptions.warnUnusedNoWarn
     ) //++ ScalacOptions.warnUnusedOptions
