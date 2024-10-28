@@ -67,7 +67,7 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
     )
 
   val startDate: String = LocalDate.now().toString
-  val endDate: String   = LocalDate.now().plusYears(1).toString
+  val endDate:   String = LocalDate.now().plusYears(1).toString
 
   "FinancialDataController" - {
 

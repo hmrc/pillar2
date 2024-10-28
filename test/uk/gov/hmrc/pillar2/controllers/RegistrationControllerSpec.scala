@@ -36,7 +36,6 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
 
 import scala.concurrent.{ExecutionContext, Future}
-import play.api.libs.json.JsValue
 
 class RegistrationControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {

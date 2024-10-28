@@ -18,4 +18,4 @@ package uk.gov.hmrc.pillar2.models.identifiers
 
 import uk.gov.hmrc.pillar2.models.queries.{Gettable, Settable}
 
-trait TypedIdentifier[A] extends Identifier with Gettable[A] with Settable[A]
+trait TypedIdentifier[A] extends Gettable[A] with Settable[A]
