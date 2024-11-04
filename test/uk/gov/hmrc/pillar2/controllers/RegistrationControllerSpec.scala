@@ -34,6 +34,7 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
 
 import scala.concurrent.Future
+import play.api.libs.json.JsValue
 
 class RegistrationControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
@@ -45,7 +46,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         stubControllerComponents()
       )
   }
-  val jsData = Json.parse("""{"value": "field"}""")
+  val jsData: JsValue = Json.parse("""{"value": "field"}""")
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)

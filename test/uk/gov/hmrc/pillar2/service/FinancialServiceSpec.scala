@@ -36,8 +36,8 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 
   private val service = new FinancialService(mockFinancialDataConnector)
 
-  val startDate = LocalDate.now()
-  val endDate   = LocalDate.now().plusDays(364)
+  val startDate: LocalDate = LocalDate.now()
+  val endDate: LocalDate   = LocalDate.now().plusDays(364)
 
   "getPaymentHistory" - {
     "return payment history if relevant fields are defined with both payment and Refund sorted by date" in {

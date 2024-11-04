@@ -25,7 +25,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers.{GET, contentAsJson, route, status, writeableOf_AnyContentAsEmpty}
+import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
@@ -64,8 +64,8 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       )
     )
 
-  val startDate = LocalDate.now().toString
-  val endDate   = LocalDate.now().plusYears(1).toString
+  val startDate: String = LocalDate.now().toString
+  val endDate: String   = LocalDate.now().plusYears(1).toString
 
   "FinancialDataController" - {
 
