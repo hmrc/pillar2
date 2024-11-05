@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.apache.pekko.util.ByteString
 import org.apache.commons.lang3.RandomUtils
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import play.api.mvc.{AnyContentAsEmpty, AnyContentAsJson, AnyContentAsRaw, Result}
+import play.api.mvc._
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}

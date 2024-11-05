@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.helpers
 
+import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, post, put, urlEqualTo}
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers

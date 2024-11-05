@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.pillar2.helpers
 
-import org.apache.pekko.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
+import org.apache.pekko.actor.ActorSystem
 import org.scalatest.BeforeAndAfterAll
 import play.api.{Configuration, Environment}
 import uk.gov.hmrc.pillar2.config.AppConfig

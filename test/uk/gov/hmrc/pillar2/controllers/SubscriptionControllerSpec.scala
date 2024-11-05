@@ -213,7 +213,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       }
 
       "should return CONFLICT when occurs from EIS" in {
-        val errorDetails = ErrorDetails(
+        ErrorDetails(
           ErrorDetail(
             Instant.now().toString,
             Some("xx"),

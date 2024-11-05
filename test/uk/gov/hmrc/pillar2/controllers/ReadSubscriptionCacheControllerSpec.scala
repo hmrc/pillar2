@@ -16,8 +16,8 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.apache.pekko.util.ByteString
 import org.apache.commons.lang3.RandomUtils
+import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import play.api.inject.bind

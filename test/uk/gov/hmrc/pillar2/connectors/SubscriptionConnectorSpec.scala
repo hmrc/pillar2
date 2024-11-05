@@ -26,7 +26,7 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, ETMPAmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {

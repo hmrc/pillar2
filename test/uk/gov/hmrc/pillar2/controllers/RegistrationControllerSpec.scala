@@ -21,6 +21,7 @@ import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -45,7 +46,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         stubControllerComponents()
       )
   }
-  val jsData = Json.parse("""{"value": "field"}""")
+  val jsData: JsValue = Json.parse("""{"value": "field"}""")
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
