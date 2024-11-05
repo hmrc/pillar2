@@ -41,7 +41,7 @@ class FinancialDataConnectorSpec extends BaseSpec with Generators with ScalaChec
     app.injector.instanceOf[FinancialDataConnector]
 
   val startDate: LocalDate = LocalDate.now()
-  val endDate: LocalDate   = LocalDate.now().plusYears(1)
+  val endDate:   LocalDate = LocalDate.now().plusYears(1)
   val url: String =
     s"/enterprise/financial-data/ZPLR/$PlrReference/PLR?dateFrom=$startDate&dateTo=$endDate&onlyOpenItems=false&includeLocks=false&calculateAccruedInterest=true&customerPaymentInformation=true"
 

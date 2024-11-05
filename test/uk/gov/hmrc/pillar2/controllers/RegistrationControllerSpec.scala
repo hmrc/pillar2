@@ -21,6 +21,7 @@ import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsValue
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
@@ -34,7 +35,6 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
 
 import scala.concurrent.Future
-import play.api.libs.json.JsValue
 
 class RegistrationControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   trait Setup {
