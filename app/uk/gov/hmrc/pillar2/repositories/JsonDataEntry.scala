@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.identifiers
+package uk.gov.hmrc.pillar2.repositories
 
-import play.api.libs.json.JsPath
+import play.api.libs.json.{Format, JsValue, Json}
+import uk.gov.hmrc.mongo.play.json.formats.MongoJavatimeFormats
 
-case object subPrimaryPhonePreferenceId extends TypedIdentifier[Boolean] {
+import java.time.Instant
 
-  override def path: JsPath = JsPath \ toString
+case class JsonDataEntry(id: String, data: JsValue, lastUpdated: Instant)
 
-  override def toString: String = "subPrimaryPhonePreference"
-
+object JsonDataEntry {
+  implicit val dateFormat: Format[Instant]       = MongoJavatimeFormats.instantFormat
+  implicit val format:     Format[JsonDataEntry] = Json.format[JsonDataEntry]
 }

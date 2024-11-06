@@ -22,7 +22,7 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
@@ -31,7 +31,7 @@ import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ReadSubscriptionCacheControllerSpec extends BaseSpec {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
@@ -55,7 +55,7 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
 
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
-      when(mockedCache.upsert(any(), any())(any)).thenReturn(Future.successful((): Unit))
+      when(mockedCache.upsert(any[String](), any[JsValue]())(any[ExecutionContext]())).thenReturn(Future.successful((): Unit))
       val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
       val result  = route(application, request).value
       status(result) mustBe OK
@@ -73,7 +73,7 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
   "get" - {
     "return 200 when data exists" in new Setup {
       val jsonObject = Json.obj("hello" -> "goodbye")
-      when(mockedCache.get(any())(any())).thenReturn(Future.successful(Some(jsonObject)))
+      when(mockedCache.get(any[String]())(any[ExecutionContext]())).thenReturn(Future.successful(Some(jsonObject)))
       val request = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
       val result  = route(application, request).value
 
@@ -82,7 +82,7 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
 
     }
     "return NOT_FOUND when data exists" in new Setup {
-      when(mockedCache.get(any())(any())).thenReturn(Future.successful(None))
+      when(mockedCache.get(any[String]())(any[ExecutionContext]())).thenReturn(Future.successful(None))
       val request = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
       val result  = route(application, request).value
 
@@ -91,14 +91,14 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
     }
     "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
-        when(mockedCache.remove(eqTo("id"))(any())) thenReturn Future.successful(true)
+        when(mockedCache.remove(eqTo("id"))(any[ExecutionContext]())) thenReturn Future.successful(true)
         val request = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
         val result  = route(application, request).value
         status(result) mustBe OK
       }
 
       "return InternalServerError if the record is not removed" in new Setup {
-        when(mockedCache.remove(eqTo("id"))(any())) thenReturn Future.successful(false)
+        when(mockedCache.remove(eqTo("id"))(any[ExecutionContext]())) thenReturn Future.successful(false)
         val request = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
         val result  = route(application, request).value
         status(result) mustBe INTERNAL_SERVER_ERROR

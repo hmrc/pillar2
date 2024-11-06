@@ -21,8 +21,7 @@ import com.github.tomakehurst.wiremock.client.{MappingBuilder, ResponseDefinitio
 import com.github.tomakehurst.wiremock.http.{HttpHeader, HttpHeaders}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 
-import scala.collection.JavaConverters._
-
+import scala.jdk.CollectionConverters._
 object WireMockHelper {
   this: BaseISpec =>
 

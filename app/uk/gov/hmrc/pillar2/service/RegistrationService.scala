@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import cats.syntax.flatMap._
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -88,18 +89,17 @@ class RegistrationService @Inject() (
     hc:                                       HeaderCarrier
   ): Future[HttpResponse] = {
     val registerWithoutIDRequest = RegisterWithoutIDRequest(businessName, address, contactDetails)
-    val response = dataSubmissionConnectors
+    dataSubmissionConnectors
       .sendWithoutIDInformation(registerWithoutIDRequest)(hc, ec)
-    response.map { _ =>
-      if (isFm) {
-        val auditData = convertNfmAuditDetails(registerWithoutIDRequest)
-        auditService.auditFmRegisterWithoutId(auditData)
-      } else {
-        val auditData = convertUpeAuditDetails(registerWithoutIDRequest)
-        auditService.auditUpeRegisterWithoutId(auditData)
+      .flatTap { _ =>
+        if (isFm) {
+          val auditData = convertNfmAuditDetails(registerWithoutIDRequest)
+          auditService.auditFmRegisterWithoutId(auditData)
+        } else {
+          val auditData = convertUpeAuditDetails(registerWithoutIDRequest)
+          auditService.auditUpeRegisterWithoutId(auditData)
+        }
       }
-    }
-    response
   }
 
   private def convertUpeAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): UpeRegistration =

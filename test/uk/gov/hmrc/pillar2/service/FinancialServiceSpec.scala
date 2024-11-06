@@ -23,6 +23,7 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.test.Helpers.await
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.FinancialDataError
@@ -31,7 +32,7 @@ import uk.gov.hmrc.pillar2.service.FinancialServiceSpec._
 
 import java.time.LocalDate
 import java.time.LocalDateTime
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
   private val service = new FinancialService(mockFinancialDataConnector)
@@ -41,7 +42,11 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 
   "getPaymentHistory" - {
     "return payment history if relevant fields are defined with both payment and Refund sorted by date" in {
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any())).thenReturn(Future.successful(financialDataResponse))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
+        .thenReturn(Future.successful(financialDataResponse))
 
       forAll(plrReferenceGen) { plrReference =>
         val result = await(service.getTransactionHistory(plrReference, startDate, endDate))
@@ -51,7 +56,10 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 
     "return payment a not found error if no relevant history is found" in {
       val result = FinancialDataError("NOT_FOUND", "No relevant financial data found")
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
         .thenReturn(Future.successful(financialResponseWithNeitherPaymentAndRefund))
 
       forAll(plrReferenceGen) { plrReference =>
@@ -61,7 +69,10 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     }
 
     "return payment history when the response contains both payment and refund" in {
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
         .thenReturn(Future.successful(financialResponseWithPaymentAndRefund))
 
       forAll(plrReferenceGen) { plrReference =>
@@ -71,7 +82,10 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     }
 
     "return payment description first if Refund and payments are made on the same day" in {
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
         .thenReturn(Future.successful(financialDataResponseSameDay))
 
       val result = await(service.getTransactionHistory(plrReference = "123", startDate, endDate))
@@ -81,7 +95,10 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     "return the error financial data responds" in {
       val result = FinancialDataError("NOT_FOUND", "not found")
 
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
         .thenReturn(Future.failed(result))
 
       forAll(plrReferenceGen) { plrReference =>
@@ -97,13 +114,16 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 
       val sevenYearsBeforeEndDate = LocalDate.now().minusYears(7)
 
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
         .thenReturn(Future.successful(financialDataResponse))
 
       forAll(plrReferenceGen) { plrReference =>
         await(service.getTransactionHistory(plrReference, startDate, endDate))
         verify(mockFinancialDataConnector, times(1))
-          .retrieveFinancialData(eqTo(plrReference), eqTo(sevenYearsBeforeEndDate), eqTo(endDate))(any(), any())
+          .retrieveFinancialData(eqTo(plrReference), eqTo(sevenYearsBeforeEndDate), eqTo(endDate))(any[HeaderCarrier](), any[ExecutionContext]())
       }
     }
 
@@ -111,13 +131,16 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       val startDate = LocalDate.now().minusYears(6)
       val endDate   = LocalDate.now()
 
-      when(mockFinancialDataConnector.retrieveFinancialData(any(), any(), any())(any(), any()))
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
         .thenReturn(Future.successful(financialDataResponse))
 
       forAll(plrReferenceGen) { plrReference =>
         await(service.getTransactionHistory(plrReference, startDate, endDate))
         verify(mockFinancialDataConnector, times(1))
-          .retrieveFinancialData(eqTo(plrReference), eqTo(startDate), eqTo(endDate))(any(), any())
+          .retrieveFinancialData(eqTo(plrReference), eqTo(startDate), eqTo(endDate))(any[HeaderCarrier](), any[ExecutionContext]())
       }
     }
   }

@@ -31,8 +31,8 @@ class TestController @Inject() (
 )(implicit executionContext: ExecutionContext)
     extends BackendController(cc) {
 
-  def getAllRecords(max: Int): Action[AnyContent] = Action.async {
-    repository.getAll(max).map { response =>
+  def getAllRecords: Action[AnyContent] = Action.async {
+    repository.getAll.map { response =>
       Ok(Json.toJson(response))
     }
   }
@@ -49,10 +49,6 @@ class TestController @Inject() (
 
   def clearAllData(): Action[AnyContent] = Action.async {
     repository.clearAllData().map(_ => Ok)
-  }
-
-  def deEnrol(): Action[AnyContent] = Action.async { _ =>
-    ???
   }
 
 }

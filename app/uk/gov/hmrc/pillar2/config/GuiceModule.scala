@@ -18,47 +18,10 @@ package uk.gov.hmrc.pillar2.config
 
 import com.google.inject.AbstractModule
 import play.api.libs.concurrent.PekkoGuiceSupport
-import play.api.{Configuration, Environment}
 
-class GuiceModule(environment: Environment, configuration: Configuration) extends AbstractModule with PekkoGuiceSupport {
+class GuiceModule extends AbstractModule with PekkoGuiceSupport {
 
   override def configure(): Unit =
     bind(classOf[AppConfig]).asEagerSingleton()
-
-  /*  @Provides
-  @Named("eisBearerToken")
-  @Singleton
-  def eisBearerTokenProvider(servicesConfig: ServicesConfig): String =
-    servicesConfig.getString("microservice.services.eis.bearer-token")
-
-  @Provides
-  @Named("eisUrl")
-  @Singleton
-  def eisUrlProvider(servicesConfig: ServicesConfig): String =
-    servicesConfig.baseUrl("eis")
-
-  @Provides
-  @Named("eisEnvironment")
-  @Singleton
-  def eisEnvironmentProvider(servicesConfig: ServicesConfig): String =
-    servicesConfig.getString("microservice.services.eis.environment")
-
-  @Provides
-  @Named("platformLogLimit")
-  @Singleton
-  def platformLogLimit =
-    configuration.get[Int]("mdtp.log.size.max")
-
-  @Provides
-  @Named("platformAnalyticsUrl")
-  @Singleton
-  def platformAnalyticsUrlProvider(servicesConfig: ServicesConfig): String =
-    servicesConfig.baseUrl("platform-analytics")
-
-  @Provides
-  @Named("platformAnalyticsTrackingId")
-  @Singleton
-  protected def platformAnalyticsTrackingIdProvider(configuration: Configuration): String =
-    configuration.get[String](s"google-analytics.trackingId")*/
 
 }

@@ -24,12 +24,6 @@ object EntityType {
 
   case object UKLimitedCompany extends EntityType
   case object LimitedLiabilityPartnership extends EntityType
-  case object Other extends EntityType
-
-  //to handle contravariant to invariant in 2.8 play-json
-  val ukLimitedCompany:            EntityType = UKLimitedCompany
-  val limitedLiabilityPartnership: EntityType = LimitedLiabilityPartnership
-  val other:                       EntityType = Other
 
   implicit val format: Format[EntityType] = new Format[EntityType] {
     override def reads(json: JsValue): JsResult[EntityType] =

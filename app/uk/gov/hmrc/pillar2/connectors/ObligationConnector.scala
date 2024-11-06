@@ -18,6 +18,7 @@ package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
 import play.api.Logger
+import uk.gov.hmrc.http.HttpReads.Implicits._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.obligation.ObligationInformation

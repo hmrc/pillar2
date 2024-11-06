@@ -70,7 +70,7 @@ trait BaseSpec
 
   val PLATFORM_LOG_LIMIT = 12288
 
-  val logUtils = new LogUtility(PLATFORM_LOG_LIMIT)
+  val logUtils = new LogUtility
 
   protected def applicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()

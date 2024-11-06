@@ -28,7 +28,7 @@ class TestService @Inject() (
 
   def clearAllData: Future[Unit] = {
     val cacheRepositoryDropF = Mdc.preservingMdc(registrationCacheRepository.collection.drop().toFuture()).flatMap { _ =>
-      Mdc.preservingMdc(registrationCacheRepository.ensureIndexes)
+      Mdc.preservingMdc(registrationCacheRepository.ensureIndexes())
     }
 
     for {
