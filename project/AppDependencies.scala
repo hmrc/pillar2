@@ -17,7 +17,7 @@ object AppDependencies {
   )
 
   val test: Seq[ModuleID] = Seq(
-    "org.scalatest"          %% "scalatest"                % "3.2.18",
+    "org.scalatest"          %% "scalatest"                % "3.2.19",
     "uk.gov.hmrc"            %% "bootstrap-test-play-30"   % bootstrapVersion,
     "uk.gov.hmrc.mongo"      %% "hmrc-mongo-test-play-30"  % hmrcMongoVersion,
     "org.mockito"             % "mockito-core"             % "5.11.0",
