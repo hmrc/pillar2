@@ -89,6 +89,44 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
 
     }
+
+    "handle LimitedLiabilityPartnership entity type correctly" - {
+      "when all required data is present" in {
+        when(
+          mockSubscriptionConnector
+            .sendCreateSubscriptionInformation(any[RequestDetail]())(any[HeaderCarrier](), any[ExecutionContext]())
+        ).thenReturn(
+          Future.successful(
+            HttpResponse.apply(OK, "Success")
+          )
+        )
+
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryWithIdUpeFmUserDataLLPUserAnswers.arbitrary) {
+          (upeSafeId, fmSafeId, userAnswers) =>
+            service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
+              response.status mustBe OK
+            }
+        }
+      }
+
+      // "throw exception when company profile is missing" in {
+      //   forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryWithIdUpeFmUserDataLLP.arbitrary) {
+      //     (upeSafeId, fmSafeId, userAnswers) =>
+      //       val invalidUserAnswers = userAnswers.copy(
+      //         data = userAnswers.data.as[JsObject] ++
+      //           Json.obj("upeGrsResponse" -> Json.obj(
+      //             "partnershipEntityRegistrationData" -> Json.obj(
+      //               "companyProfile" -> JsNull
+      //             )
+      //           ))
+      //       )
+
+      //       val result = service.sendCreateSubscription(upeSafeId, fmSafeId, invalidUserAnswers)
+
+      //       result.failed.futureValue.getMessage must include("Malformed company Profile")
+      //   }
+      // }
+    }
   }
 
   "storeSubscriptionResponse " - {
@@ -141,6 +179,24 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         .thenReturn(Future.successful(AuditResult.Success))
       val resultFuture = service.readSubscriptionData("plrReference")
       resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+    }
+
+    "handle LimitedLiabilityPartnership entity type correctly" - {
+      "when all required data is present" in {
+        forAll(plrReferenceGen, arbitrary[SubscriptionResponse], arbitraryWithIdUpeFmUserDataLLP.arbitrary) { (plrReference, response, _) =>
+          val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
+
+          when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+            .thenReturn(Future.successful(mockResponse))
+
+          when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(any[HeaderCarrier]()))
+            .thenReturn(Future.successful(AuditResult.Success))
+
+          val resultFuture = service.readSubscriptionData(plrReference).futureValue
+
+          resultFuture mustEqual mockResponse
+        }
+      }
     }
   }
   "sendAmendedData" - {
