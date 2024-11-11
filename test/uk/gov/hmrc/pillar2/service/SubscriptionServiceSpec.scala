@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.service
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -92,6 +93,11 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "handle LimitedLiabilityPartnership entity type correctly" - {
       "when all required data is present" in {
+        val llpWithCompanyProfile = arbitraryWithIdUpeFmUserDataLLP.arbitrary.suchThat { jsValue =>
+          (jsValue \ "upeGRSResponse" \ "partnershipEntityRegistrationData" \ "companyProfile").asOpt[JsValue].isDefined
+        }
+        val userAnswersGen = userAnswersFromGenerators(Arbitrary(llpWithCompanyProfile))
+
         when(
           mockSubscriptionConnector
             .sendCreateSubscriptionInformation(any[RequestDetail]())(any[HeaderCarrier](), any[ExecutionContext]())
@@ -101,31 +107,35 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
           )
         )
 
-        forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryWithIdUpeFmUserDataLLPUserAnswers.arbitrary) {
-          (upeSafeId, fmSafeId, userAnswers) =>
-            service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
-              response.status mustBe OK
-            }
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
+          service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
+            response.status mustBe OK
+          }
         }
       }
 
-      // "throw exception when company profile is missing" in {
-      //   forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryWithIdUpeFmUserDataLLP.arbitrary) {
-      //     (upeSafeId, fmSafeId, userAnswers) =>
-      //       val invalidUserAnswers = userAnswers.copy(
-      //         data = userAnswers.data.as[JsObject] ++
-      //           Json.obj("upeGrsResponse" -> Json.obj(
-      //             "partnershipEntityRegistrationData" -> Json.obj(
-      //               "companyProfile" -> JsNull
-      //             )
-      //           ))
-      //       )
+      "throw exception when company profile is missing" in {
+        val llpWithoutCompanyProfile = arbitraryWithIdUpeFmUserDataLLP.arbitrary
+        val userAnswersGen           = userAnswersFromGenerators(Arbitrary(llpWithoutCompanyProfile))
 
-      //       val result = service.sendCreateSubscription(upeSafeId, fmSafeId, invalidUserAnswers)
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
+          val modifiedData = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
+          val updatedGrsResponse = userAnswers.data.as[JsObject] ++ Json.obj(
+            "upeGRSResponse" -> Json.obj(
+              "partnershipEntityRegistrationData" -> modifiedData
+            )
+          )
 
-      //       result.failed.futureValue.getMessage must include("Malformed company Profile")
-      //   }
-      // }
+          val userAnswersWithoutCompanyProfile = userAnswers.copy(
+            data = updatedGrsResponse
+          )
+
+          intercept[Exception] {
+            val result = service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswersWithoutCompanyProfile).failed.futureValue
+            result.getMessage mustEqual "Malformed company Profile"
+          }
+        }
+      }
     }
   }
 

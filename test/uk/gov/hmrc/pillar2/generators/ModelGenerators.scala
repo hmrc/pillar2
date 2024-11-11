@@ -123,6 +123,23 @@ trait ModelGenerators {
 
   //---------------------------------------------------
 
+  /** Generates a UserAnswers object with a random id and a user data from the provided generators.
+    * @param generators
+    *   The generators to use for generating the user data.
+    * @return
+    *   An Arbitrary[UserAnswers] object.
+    */
+  def userAnswersFromGenerators(generators: Arbitrary[JsValue]*): Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      id       <- nonEmptyString
+      userData <- oneOf(generators.map(_.arbitrary))
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
+    )
+  }
+
   val arbitraryAnyIdUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
       id <- nonEmptyString
@@ -137,17 +154,6 @@ trait ModelGenerators {
                       arbitraryWithoutIdUpeNoNominatedFilingMember.arbitrary
                     )
                   )
-    } yield UserAnswers(
-      id = id,
-      data = Json.toJson(userData).as[JsObject],
-      lastUpdated = Instant.now
-    )
-  }
-
-  val arbitraryWithIdUpeFmUserDataLLPUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
-    for {
-      id       <- nonEmptyString
-      userData <- arbitraryWithIdUpeFmUserDataLLP.arbitrary
     } yield UserAnswers(
       id = id,
       data = Json.toJson(userData).as[JsObject],
@@ -295,7 +301,6 @@ trait ModelGenerators {
 
   val arbitraryWithIdUpeFmUserDataLLP: Arbitrary[JsValue] = Arbitrary {
     for {
-
       upeGRSResponse           <- arbitraryWithIdRegDataFoLLP.arbitrary
       fmGRSResponse            <- arbitraryWithIdRegDataFoLLP.arbitrary
       subAccountingPeriod      <- arbitrary[AccountingPeriod]
@@ -567,10 +572,8 @@ trait ModelGenerators {
 
   val arbitraryWithIdRegDataFoLLP: Arbitrary[GrsResponse] = Arbitrary {
     for {
-      companyProfile                    <- arbitrary[CompanyProfile]
       partnershipEntityRegistrationData <- arbitrary[PartnershipEntityRegistrationData]
-
-    } yield GrsResponse(partnershipEntityRegistrationData = Some(partnershipEntityRegistrationData.copy(companyProfile = Some(companyProfile))))
+    } yield GrsResponse(partnershipEntityRegistrationData = Some(partnershipEntityRegistrationData))
   }
 
   implicit val arbitraryIncorporatedEntityRegistrationData: Arbitrary[IncorporatedEntityRegistrationData] = Arbitrary {
