@@ -41,25 +41,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
   "RepaymentConnector" - {
 
     "successfully send repayment details and receive success response" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "XMPLR0123456789",
-          name = "John Doe",
-          utr = Some("1234567890"),
-          reasonForRepayment = "Overpayment",
-          refundAmount = 100.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "John Doe",
-          bankName = "Bank of Test",
-          sortCode = Some("123456"),
-          accountNumber = Some("12345678"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("john.doe@example.com, 0123456789")
-      )
+      val repaymentRequest = createRepaymentRequest()
 
       val successfulRepaymentResponseBody =
         """{
@@ -68,15 +50,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  }
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(201)
-              .withHeader("Content-Type", "application/json")
-              .withBody(successfulRepaymentResponseBody)
-          )
-      )
+      stubRepaymentResponse(201, successfulRepaymentResponseBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 201
@@ -84,24 +58,10 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     }
 
     "handle BAD_REQUEST response with single error code" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "INVALID_PLR",
-          name = "",
-          utr = Some("invalid_utr"),
-          reasonForRepayment = "",
-          refundAmount = -100.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "",
-          bankName = "",
-          sortCode = Some("invalid_sc"),
-          accountNumber = Some("invalid_acc"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("")
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "INVALID_PLR",
+        name = "",
+        utr = Some("invalid_utr")
       )
 
       val badRequestResponseBody =
@@ -114,15 +74,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  ]
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(400)
-              .withHeader("Content-Type", "application/json")
-              .withBody(badRequestResponseBody)
-          )
-      )
+      stubRepaymentResponse(400, badRequestResponseBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 400
@@ -133,24 +85,10 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     }
 
     "handle BAD_REQUEST response with multiple error codes" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "INVALID_PLR",
-          name = "",
-          utr = None,
-          reasonForRepayment = "",
-          refundAmount = -50.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "",
-          bankName = "",
-          sortCode = Some("invalid_sc"),
-          accountNumber = Some("invalid_acc"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("")
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "INVALID_PLR",
+        name = "",
+        utr = None
       )
 
       val badRequestMultipleErrorsBody =
@@ -167,15 +105,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  ]
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(400)
-              .withHeader("Content-Type", "application/json")
-              .withBody(badRequestMultipleErrorsBody)
-          )
-      )
+      stubRepaymentResponse(400, badRequestMultipleErrorsBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 400
@@ -195,25 +125,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     }
 
     "handle CONFLICT response (409) for duplicate submission" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "XMPLR0123456789",
-          name = "John Doe",
-          utr = Some("1234567890"),
-          reasonForRepayment = "Overpayment",
-          refundAmount = 100.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "John Doe",
-          bankName = "Bank of Test",
-          sortCode = Some("123456"),
-          accountNumber = Some("12345678"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("john.doe@example.com, 0123456789")
-      )
+      val repaymentRequest = createRepaymentRequest()
 
       val conflictResponseBody =
         """{
@@ -225,15 +137,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  ]
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(409)
-              .withHeader("Content-Type", "application/json")
-              .withBody(conflictResponseBody)
-          )
-      )
+      stubRepaymentResponse(409, conflictResponseBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 409
@@ -244,24 +148,10 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     }
 
     "handle UNPROCESSABLE_ENTITY response (422) when request could not be processed" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "XMPLR0123456789",
-          name = "John Doe",
-          utr = Some("1234567890"),
-          reasonForRepayment = "Error correction",
-          refundAmount = 150.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "John Doe",
-          bankName = "Bank of Test",
-          sortCode = Some("123456"),
-          accountNumber = Some("12345678"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("john.doe@example.com, 0123456789")
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "XMPLR0123456789",
+        name = "John Doe",
+        utr = Some("1234567890")
       )
 
       val unprocessableEntityBody =
@@ -274,15 +164,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  ]
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(422)
-              .withHeader("Content-Type", "application/json")
-              .withBody(unprocessableEntityBody)
-          )
-      )
+      stubRepaymentResponse(422, unprocessableEntityBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 422
@@ -293,24 +175,10 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     }
 
     "handle INTERNAL_SERVER_ERROR response (500)" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "XMPLR0123456789",
-          name = "Jane Smith",
-          utr = Some("0987654321"),
-          reasonForRepayment = "Error correction",
-          refundAmount = 150.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "Jane Smith",
-          bankName = "Bank of Test",
-          sortCode = Some("654321"),
-          accountNumber = Some("87654321"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("jane.smith@example.com, 0987654321")
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "XMPLR0123456789",
+        name = "Jane Smith",
+        utr = Some("0987654321")
       )
 
       val internalServerErrorBody =
@@ -323,15 +191,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  ]
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(500)
-              .withHeader("Content-Type", "application/json")
-              .withBody(internalServerErrorBody)
-          )
-      )
+      stubRepaymentResponse(500, internalServerErrorBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 500
@@ -342,24 +202,10 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     }
 
     "handle SERVICE_UNAVAILABLE response (503)" in {
-      val repaymentRequest = RepaymentRequestDetail(
-        RepaymentDetails(
-          plrReference = "XMPLR0123456789",
-          name = "Alice Johnson",
-          utr = Some("1122334455"),
-          reasonForRepayment = "Refund adjustment",
-          refundAmount = 200.00
-        ),
-        BankDetails(
-          nameOnBankAccount = "Alice Johnson",
-          bankName = "Springfield Bank",
-          sortCode = Some("789012"),
-          accountNumber = Some("23456789"),
-          iban = None,
-          bic = None,
-          countryCode = None
-        ),
-        contactDetails = RepaymentContactDetails("alice.johnson@example.com, 0123456789")
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "XMPLR0123456789",
+        name = "Alice Johnson",
+        utr = Some("1122334455")
       )
 
       val serviceUnavailableBody =
@@ -372,15 +218,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
           |  ]
           |}""".stripMargin
 
-      server.stubFor(
-        post(urlEqualTo("/pillar2/repayment"))
-          .willReturn(
-            aResponse()
-              .withStatus(503)
-              .withHeader("Content-Type", "application/json")
-              .withBody(serviceUnavailableBody)
-          )
-      )
+      stubRepaymentResponse(503, serviceUnavailableBody)
 
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 503
@@ -390,5 +228,71 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
       )
     }
 
+    "handle empty response body" in {
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "XMPLR0123456789",
+        name = "Alice Johnson",
+        utr = Some("1122334455")
+      )
+
+      stubRepaymentResponse(200, "")
+
+      val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
+      response.status mustBe 200
+      response.body mustBe empty
+    }
+
+    "handle malformed JSON response" in {
+      val repaymentRequest = createRepaymentRequest(
+        plrReference = "XMPLR0123456789",
+        name = "Alice Johnson",
+        utr = Some("1122334455")
+      )
+
+      stubRepaymentResponse(200, "{malformed json}")
+
+      val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
+      response.status mustBe 200
+      response.body mustBe "{malformed json}"
+    }
+
   }
+
+  private def createRepaymentRequest(
+    plrReference: String = "XMPLR0123456789",
+    name:         String = "John Doe",
+    utr:          Option[String] = Some("1234567890")
+  ): RepaymentRequestDetail = RepaymentRequestDetail(
+    RepaymentDetails(
+      plrReference = plrReference,
+      name = name,
+      utr = utr,
+      reasonForRepayment = "Overpayment",
+      refundAmount = 100.00
+    ),
+    BankDetails(
+      nameOnBankAccount = "John Doe",
+      bankName = "Bank of Test",
+      sortCode = Some("123456"),
+      accountNumber = Some("12345678"),
+      iban = None,
+      bic = None,
+      countryCode = None
+    ),
+    contactDetails = RepaymentContactDetails("john.doe@example.com, 0123456789")
+  )
+
+  private def stubRepaymentResponse(
+    status: Int,
+    body:   String
+  ) =
+    server.stubFor(
+      post(urlEqualTo("/pillar2/repayment"))
+        .willReturn(
+          aResponse()
+            .withStatus(status)
+            .withHeader("Content-Type", "application/json")
+            .withBody(body)
+        )
+    )
 }
