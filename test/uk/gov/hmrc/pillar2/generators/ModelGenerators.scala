@@ -572,7 +572,7 @@ trait ModelGenerators {
 
   val arbitraryWithIdRegDataFoLLP: Arbitrary[GrsResponse] = Arbitrary {
     for {
-      partnershipEntityRegistrationData <- arbitrary[PartnershipEntityRegistrationData]
+      partnershipEntityRegistrationData <- arbitrary[PartnershipEntityRegistrationData].suchThat(_.companyProfile.isDefined)
     } yield GrsResponse(partnershipEntityRegistrationData = Some(partnershipEntityRegistrationData))
   }
 

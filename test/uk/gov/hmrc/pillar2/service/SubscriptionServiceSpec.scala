@@ -93,10 +93,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "handle LimitedLiabilityPartnership entity type correctly" - {
       "when all required data is present" in {
-        val llpWithCompanyProfile = arbitraryWithIdUpeFmUserDataLLP.arbitrary.suchThat { jsValue =>
-          (jsValue \ "upeGRSResponse" \ "partnershipEntityRegistrationData" \ "companyProfile").asOpt[JsValue].isDefined
-        }
-        val userAnswersGen = userAnswersFromGenerators(Arbitrary(llpWithCompanyProfile))
+        val userAnswersGen = userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP)
 
         when(
           mockSubscriptionConnector
