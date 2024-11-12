@@ -1,19 +1,15 @@
-import scoverage.ScoverageKeys
-import play.sbt.PlayImport.PlayKeys.playDefaultPort
-import uk.gov.hmrc.DefaultBuildSettings
-import uk.gov.hmrc.DefaultBuildSettings.*
-import uk.gov.hmrc.DefaultBuildSettings.integrationTestSettings
-import uk.gov.hmrc.sbtdistributables.SbtDistributablesPlugin.publishingSettings
 import org.typelevel.scalacoptions.ScalacOptions
+import scoverage.ScoverageKeys
+import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "pillar2"
 
 ThisBuild / scalaVersion := "2.13.12"
 ThisBuild / majorVersion := 0
 
-//revert
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
+  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     ScoverageKeys.coverageExcludedFiles :=
       "<empty>;com.kenshoo.play.metrics.*;.*definition.*;prod.*;testOnlyDoNotUseInAppConf.*;.*stubs.*;.*models.*;" +
@@ -35,9 +31,7 @@ lazy val microservice = Project(appName, file("."))
     Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
     tpolecatExcludeOptions ++= Set(
       ScalacOptions.warnNonUnitStatement
-//      ScalacOptions.warnValueDiscard,
-//      ScalacOptions.warnUnusedNoWarn
-    ) //++ ScalacOptions.warnUnusedOptions
+    )
   )
   .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
