@@ -123,13 +123,31 @@ trait ModelGenerators {
 
   //---------------------------------------------------
 
+  /** Generates a UserAnswers object with a random id and a user data from the provided generators.
+    * @param generators
+    *   The generators to use for generating the user data.
+    * @return
+    *   An Arbitrary[UserAnswers] object.
+    */
+  def userAnswersFromGenerators(generators: Arbitrary[JsValue]*): Arbitrary[UserAnswers] = Arbitrary {
+    for {
+      id       <- nonEmptyString
+      userData <- oneOf(generators.map(_.arbitrary))
+    } yield UserAnswers(
+      id = id,
+      data = Json.toJson(userData).as[JsObject],
+      lastUpdated = Instant.now
+    )
+  }
+
   val arbitraryAnyIdUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
       id <- nonEmptyString
       userData <- oneOf(
                     Seq(
                       arbitraryWithoutIdUpeFmUserData.arbitrary,
-                      arbitraryWithIdUpeFmUserData.arbitrary,
+                      arbitraryWithIdUpeFmUserDataLimitedCompany.arbitrary,
+                      arbitraryWithIdUpeFmUserDataLLP.arbitrary,
                       arbitraryWithIdUpeAndNoIdFmUserData.arbitrary,
                       arbitraryWithoutIdUpeAndWithIdFmUserData.arbitrary,
                       arbitraryWithIdUpeAndNoNominatedFilingMember.arbitrary,
@@ -243,7 +261,7 @@ trait ModelGenerators {
     )
   }
 
-  val arbitraryWithIdUpeFmUserData: Arbitrary[JsValue] = Arbitrary {
+  val arbitraryWithIdUpeFmUserDataLimitedCompany: Arbitrary[JsValue] = Arbitrary {
     for {
 
       upeGRSResponse           <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
@@ -278,6 +296,44 @@ trait ModelGenerators {
       "subSecondaryPhonePreference" -> true,
       "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
       "subRegisteredAddress"        -> subRegisteredAddress
+    )
+  }
+
+  val arbitraryWithIdUpeFmUserDataLLP: Arbitrary[JsValue] = Arbitrary {
+    for {
+      upeGRSResponse           <- arbitraryWithIdRegDataFoLLP.arbitrary
+      fmGRSResponse            <- arbitraryWithIdRegDataFoLLP.arbitrary
+      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+      subPrimaryCapturePhone   <- arbitrary[Int]
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> true,
+      "GrsUpStatus"                 -> RowStatus.Completed.value,
+      "upeEntityType"               -> "limitedLiabilityPartnership",
+      "upeGRSResponse"              -> upeGRSResponse,
+      "fmGRSResponse"               -> fmGRSResponse,
+      "NominateFilingMember"        -> true,
+      "fmRegisteredInUK"            -> true,
+      "GrsFilingMemberStatus"       -> RowStatus.Completed.value,
+      "fmEntityType"                -> "limitedLiabilityPartnership",
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriod,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress,
+      "subPrimaryCapturePhone"      -> subPrimaryCapturePhone
     )
   }
 
@@ -516,8 +572,7 @@ trait ModelGenerators {
 
   val arbitraryWithIdRegDataFoLLP: Arbitrary[GrsResponse] = Arbitrary {
     for {
-      partnershipEntityRegistrationData <- arbitrary[PartnershipEntityRegistrationData]
-
+      partnershipEntityRegistrationData <- arbitrary[PartnershipEntityRegistrationData].suchThat(_.companyProfile.isDefined)
     } yield GrsResponse(partnershipEntityRegistrationData = Some(partnershipEntityRegistrationData))
   }
 

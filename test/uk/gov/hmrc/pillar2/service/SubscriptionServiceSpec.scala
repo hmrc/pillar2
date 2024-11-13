@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.service
 import org.apache.pekko.Done
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.{reset, when}
+import org.scalacheck.Arbitrary
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -89,6 +90,50 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
 
     }
+
+    "handle LimitedLiabilityPartnership entity type correctly" - {
+      "when all required data is present" in {
+        val userAnswersGen = userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP)
+
+        when(
+          mockSubscriptionConnector
+            .sendCreateSubscriptionInformation(any[RequestDetail]())(any[HeaderCarrier](), any[ExecutionContext]())
+        ).thenReturn(
+          Future.successful(
+            HttpResponse.apply(OK, "Success")
+          )
+        )
+
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
+          service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
+            response.status mustBe OK
+          }
+        }
+      }
+
+      "throw exception when company profile is missing" in {
+        val llpWithoutCompanyProfile = arbitraryWithIdUpeFmUserDataLLP.arbitrary
+        val userAnswersGen           = userAnswersFromGenerators(Arbitrary(llpWithoutCompanyProfile))
+
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
+          val modifiedData = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
+          val updatedGrsResponse = userAnswers.data.as[JsObject] ++ Json.obj(
+            "upeGRSResponse" -> Json.obj(
+              "partnershipEntityRegistrationData" -> modifiedData
+            )
+          )
+
+          val userAnswersWithoutCompanyProfile = userAnswers.copy(
+            data = updatedGrsResponse
+          )
+
+          intercept[Exception] {
+            val result = service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswersWithoutCompanyProfile).failed.futureValue
+            result.getMessage mustEqual "Malformed company Profile"
+          }
+        }
+      }
+    }
   }
 
   "storeSubscriptionResponse " - {
@@ -141,6 +186,24 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         .thenReturn(Future.successful(AuditResult.Success))
       val resultFuture = service.readSubscriptionData("plrReference")
       resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+    }
+
+    "handle LimitedLiabilityPartnership entity type correctly" - {
+      "when all required data is present" in {
+        forAll(plrReferenceGen, arbitrary[SubscriptionResponse], arbitraryWithIdUpeFmUserDataLLP.arbitrary) { (plrReference, response, _) =>
+          val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
+
+          when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+            .thenReturn(Future.successful(mockResponse))
+
+          when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(any[HeaderCarrier]()))
+            .thenReturn(Future.successful(AuditResult.Success))
+
+          val resultFuture = service.readSubscriptionData(plrReference).futureValue
+
+          resultFuture mustEqual mockResponse
+        }
+      }
     }
   }
   "sendAmendedData" - {
