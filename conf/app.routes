@@ -27,3 +27,6 @@ POST          /repayment                                                   uk.go
 GET           /transaction-history/:plrReference/:dateFrom/:dateTo         uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String)
 
 GET           /get-obligation/:plrReference/:dateFrom/:dateTo              uk.gov.hmrc.pillar2.controllers.ObligationController.getObligation(plrReference: String, dateFrom: String, dateTo: String)
+
+POST        /uk-tax-return        controllers.UKTaxReturnController.submitUKTaxReturn()
+PUT         /uk-tax-return        controllers.UKTaxReturnController.amendUKTaxReturn()
