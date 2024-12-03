@@ -38,7 +38,7 @@ object UktrSubmission {
 
   implicit val uktrSubmissionWrites: Writes[UktrSubmission] = new Writes[UktrSubmission] {
     def writes(submission: UktrSubmission): JsValue = submission match {
-      case data: UktrSubmissionData => Json.toJson(data)(Json.writes[UktrSubmissionData])
+      case data:      UktrSubmissionData      => Json.toJson(data)(Json.writes[UktrSubmissionData])
       case nilReturn: UktrSubmissionNilReturn => Json.toJson(nilReturn)(Json.writes[UktrSubmissionNilReturn])
       case _ => throw new IllegalArgumentException("Unknown UktrSubmission type")
     }

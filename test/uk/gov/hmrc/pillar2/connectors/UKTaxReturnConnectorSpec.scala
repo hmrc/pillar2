@@ -61,7 +61,16 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       totalLiabilityDTT = BigDecimal(300),
       totalLiabilityIIR = BigDecimal(400),
       totalLiabilityUTPR = BigDecimal(300),
-      liableEntities = Seq.empty
+      liableEntities = Seq(
+        LiableEntity(
+          ukChargeableEntityName = "Newco PLC",
+          idType = "CRN",
+          idValue = "12345678",
+          amountOwedDTT = BigDecimal(100),
+          amountOwedIIR = BigDecimal(200),
+          amountOwedUTPR = BigDecimal(300)
+        )
+      )
     )
   )
 
