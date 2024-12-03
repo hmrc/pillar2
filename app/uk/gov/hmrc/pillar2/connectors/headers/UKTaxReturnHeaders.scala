@@ -22,16 +22,15 @@ import java.util.UUID
 
 trait UKTaxReturnHeaders {
   def generateCorrelationId(): String = UUID.randomUUID().toString
-  
-  def generateReceiptDate(): String = 
+
+  def generateReceiptDate(): String =
     ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT)
 
   def generateHeaders(pillar2Id: String): Seq[(String, String)] = Seq(
-    "correlationid" -> generateCorrelationId(),
-    "X-Originating-System" -> "MDTP",
-    "X-Pillar2-Id" -> pillar2Id,
-    "X-Receipt-Date" -> generateReceiptDate(),
+    "correlationid"         -> generateCorrelationId(),
+    "X-Originating-System"  -> "MDTP",
+    "X-Pillar2-Id"          -> pillar2Id,
+    "X-Receipt-Date"        -> generateReceiptDate(),
     "X-Transmitting-System" -> "HIP"
   )
 }
-

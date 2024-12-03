@@ -21,9 +21,11 @@ import play.api.mvc.Result
 import play.api.mvc.Results._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.connectors.headers.UKTaxReturnHeaders
+import uk.gov.hmrc.pillar2.models.uktrsubmissions.UktrSubmission
+
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-import uk.gov.hmrc.pillar2.connectors.headers.UKTaxReturnHeaders
 @Singleton
 class UKTaxReturnConnector @Inject() (
   val http:    HttpClient,
@@ -32,26 +34,33 @@ class UKTaxReturnConnector @Inject() (
     extends UKTaxReturnHeaders {
 
   def submitUKTaxReturn(
-    payload:     JsValue,
+    payload:     UktrSubmission,
     pillar2Id:   String
   )(implicit hc: HeaderCarrier): Future[Either[Result, JsValue]] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
 
     http
-      .POST[JsValue, HttpResponse](
+      .POST[UktrSubmission, HttpResponse](
         url,
         payload,
-        generateHeaders(pillar2Id)
+        Seq("X-Pillar2-Id" -> pillar2Id)
       )
       .map { response =>
         response.status match {
-          case 201    => Right(response.json)
-          case 400    => Left(BadRequest(response.json))
-          case 422    => Left(UnprocessableEntity(response.json))
-          case 500    => Left(InternalServerError(response.json))
-          case status => Left(Status(status)(response.json))
+          case 201 =>
+            // Handle empty response body case
+            if (response.body.isEmpty) Right(Json.obj())
+            else Right(response.json)
+          case 400    => Left(BadRequest(handleEmptyBody(response)))
+          case 422    => Left(UnprocessableEntity(handleEmptyBody(response)))
+          case 500    => Left(InternalServerError(handleEmptyBody(response)))
+          case status => Left(Status(status)(handleEmptyBody(response)))
         }
       }
   }
+
+  private def handleEmptyBody(response: HttpResponse): JsValue =
+    if (response.body.isEmpty) Json.obj()
+    else response.json
 }
