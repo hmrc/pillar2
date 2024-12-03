@@ -28,4 +28,4 @@ GET           /transaction-history/:plrReference/:dateFrom/:dateTo         uk.go
 
 GET           /get-obligation/:plrReference/:dateFrom/:dateTo              uk.gov.hmrc.pillar2.controllers.ObligationController.getObligation(plrReference: String, dateFrom: String, dateTo: String)
 
-POST          /submit-uk-tax-return                                                uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.submitUKTaxReturn()
+POST          /submit-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.submitUKTaxReturn()

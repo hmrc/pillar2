@@ -23,35 +23,18 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
-
+import uk.gov.hmrc.pillar2.connectors.headers.UKTaxReturnHeaders
 @Singleton
 class UKTaxReturnConnector @Inject() (
-  http:        HttpClient,
-  config:      AppConfig
-)(implicit ec: ExecutionContext) {
-
-  private def headers(
-    correlationId:      Option[String],
-    pillar2Id:          Option[String],
-    receiptDate:        Option[String],
-    originatingSystem:  Option[String],
-    transmittingSystem: Option[String]
-  ): Seq[(String, String)] = Seq(
-    "correlationid"         -> correlationId,
-    "X-Pillar2-Id"          -> pillar2Id,
-    "X-Receipt-Date"        -> receiptDate,
-    "X-Originating-System"  -> originatingSystem,
-    "X-Transmitting-System" -> transmittingSystem
-  ).collect { case (key, Some(value)) => (key, value) }
+  val http:    HttpClient,
+  val config:  AppConfig
+)(implicit ec: ExecutionContext)
+    extends UKTaxReturnHeaders {
 
   def submitUKTaxReturn(
-    payload:            JsValue,
-    correlationId:      Option[String],
-    pillar2Id:          Option[String],
-    receiptDate:        Option[String],
-    originatingSystem:  Option[String],
-    transmittingSystem: Option[String]
-  )(implicit hc:        HeaderCarrier): Future[Either[Result, JsValue]] = {
+    payload:     JsValue,
+    pillar2Id:   String
+  )(implicit hc: HeaderCarrier): Future[Either[Result, JsValue]] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
 
@@ -59,7 +42,7 @@ class UKTaxReturnConnector @Inject() (
       .POST[JsValue, HttpResponse](
         url,
         payload,
-        headers(correlationId, pillar2Id, receiptDate, originatingSystem, transmittingSystem)
+        generateHeaders(pillar2Id)
       )
       .map { response =>
         response.status match {

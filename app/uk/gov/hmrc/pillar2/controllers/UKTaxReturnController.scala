@@ -23,27 +23,28 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import scala.concurrent.Future
 
 @Singleton
 class UKTaxReturnController @Inject() (
   cc:                   ControllerComponents,
-  ukTaxReturnConnector: UKTaxReturnConnector
+  ukTaxReturnConnector: UKTaxReturnConnector,
+  authenticate:         AuthAction
 )(implicit ec:          ExecutionContext)
     extends BackendController(cc) {
 
-  def submitUKTaxReturn(): Action[JsValue] = Action.async(parse.json) { implicit request =>
-    ukTaxReturnConnector
-      .submitUKTaxReturn(
-        request.body,
-        request.headers.get("correlationid"),
-        request.headers.get("X-Pillar2-Id"),
-        request.headers.get("X-Receipt-Date"),
-        request.headers.get("X-Originating-System"),
-        request.headers.get("X-Transmitting-System")
-      )
-      .map {
-        case Right(response) => Ok(response)
-        case Left(error)     => error
-      }
+  def submitUKTaxReturn(): Action[JsValue] = authenticate(parse.json).async { implicit request =>
+    request.headers.get("X-Pillar2-Id") match {
+      case Some(pillar2Id) =>
+        ukTaxReturnConnector
+          .submitUKTaxReturn(request.body, pillar2Id)
+          .map {
+            case Right(response) => Ok(response)
+            case Left(error)     => error
+          }
+      case None =>
+        Future.successful(BadRequest("Missing X-Pillar2-Id header"))
+    }
   }
 }
