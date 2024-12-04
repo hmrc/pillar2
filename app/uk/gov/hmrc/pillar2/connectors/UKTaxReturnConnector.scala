@@ -39,7 +39,7 @@ class UKTaxReturnConnector @Inject() (
       .POST[UktrSubmission, HttpResponse](
         url,
         payload,
-        hipHeaders(serviceName, config, pillar2Id)
+        hipHeaders(pillar2Id = pillar2Id, config = config, serviceName = serviceName)
       )
   }
 }

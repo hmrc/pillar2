@@ -17,13 +17,11 @@
 package uk.gov.hmrc.pillar2.models.hip
 
 import play.api.libs.json.{Json, OFormat}
-import play.api.mvc.Result
-import play.api.mvc.Results.InternalServerError
 
-case class ErrorSummary(code: String, message: String)
+import java.time.LocalDateTime
 
-object ErrorSummary {
-  implicit val format: OFormat[ErrorSummary] = Json.format[ErrorSummary]
+case class ApiSuccess(processingDate: LocalDateTime, formBundleNumber: String, chargeReference: String)
 
-  val result_500: Result = InternalServerError(Json.toJson(ErrorSummary("500", "Internal server error")))
+object ApiSuccess {
+  implicit val format: OFormat[ApiSuccess] = Json.format[ApiSuccess]
 }
