@@ -14,15 +14,6 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models
+package uk.gov.hmrc.pillar2.models.hip.uktrsubmissions
 
-import play.api.libs.json.{Json, OFormat}
-
-case class SimpleError(
-  code: String,
-  message: String
-)
-
-object SimpleError {
-  implicit val format: OFormat[SimpleError] = Json.format[SimpleError]
-} 
+abstract class Liability

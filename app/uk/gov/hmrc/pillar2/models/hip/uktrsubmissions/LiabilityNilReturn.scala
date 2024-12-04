@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.uktrsubmissions
+package uk.gov.hmrc.pillar2.models.hip.uktrsubmissions
 
 import play.api.libs.json.{Json, OFormat}
 
-case class LiableEntity(
-  ukChargeableEntityName: String,
-  idType:                 String,
-  idValue:                String,
-  amountOwedDTT:          BigDecimal,
-  amountOwedIIR:          BigDecimal,
-  amountOwedUTPR:         BigDecimal
-)
+case class LiabilityNilReturn(returnType: ReturnType) extends Liability
 
-object LiableEntity {
-  implicit val format: OFormat[LiableEntity] = Json.format[LiableEntity]
+object LiabilityNilReturn {
+  implicit val liabilityNilReturnFormat: OFormat[LiabilityNilReturn] = Json.format[LiabilityNilReturn]
 }

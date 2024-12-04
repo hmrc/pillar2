@@ -17,11 +17,11 @@
 package uk.gov.hmrc.pillar2.service
 
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.connectors.UKTaxReturnConnector
-import uk.gov.hmrc.pillar2.models.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 
 import javax.inject.{Inject, Singleton}
-import uk.gov.hmrc.http.HttpResponse
 import scala.concurrent.Future
 
 @Singleton
@@ -30,8 +30,8 @@ class UKTaxReturnService @Inject() (
 ) {
 
   def submitUKTaxReturn(
-    payload: UktrSubmission,
-    pillar2Id: String
+    payload:     UktrSubmission,
+    pillar2Id:   String
   )(implicit hc: HeaderCarrier): Future[HttpResponse] =
     ukTaxReturnConnector.submitUKTaxReturn(payload, pillar2Id)
-} 
+}

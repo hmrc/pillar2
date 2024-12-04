@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.uktrsubmissions
+package uk.gov.hmrc.pillar2.models.hip.uktrsubmissions
 
-import enumeratum.EnumEntry.UpperSnakecase
-import enumeratum._
+import play.api.libs.json.{Json, OFormat}
 
-sealed trait ReturnType extends EnumEntry with UpperSnakecase
+import java.time.LocalDate
 
-object ReturnType extends Enum[ReturnType] with PlayJsonEnum[ReturnType] {
+case class UktrSubmissionNilReturn(
+  accountingPeriodFrom: LocalDate,
+  accountingPeriodTo:   LocalDate,
+  obligationMTT:        Boolean,
+  electionUKGAAP:       Boolean,
+  liabilities:          LiabilityNilReturn
+) extends UktrSubmission
 
-  val values: IndexedSeq[ReturnType] = findValues
-
-  case object NIL_RETURN extends ReturnType
+object UktrSubmissionNilReturn {
+  implicit val uktrSubmissionNilReturnFormat: OFormat[UktrSubmissionNilReturn] = Json.format[UktrSubmissionNilReturn]
 }

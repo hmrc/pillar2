@@ -16,18 +16,16 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import play.api.mvc._
 import play.api.libs.json._
-import uk.gov.hmrc.pillar2.service.UKTaxReturnService
+import play.api.mvc._
 import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
-import uk.gov.hmrc.pillar2.models.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.ErrorSummary
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future
-import uk.gov.hmrc.http.HttpResponse
-import scala.concurrent.ExecutionContext
-import uk.gov.hmrc.pillar2.models.SimpleError
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class UKTaxReturnController @Inject() (
@@ -42,12 +40,12 @@ class UKTaxReturnController @Inject() (
       case Some(pillar2Id) =>
         ukTaxReturnService
           .submitUKTaxReturn(request.body, pillar2Id)
-          .map(convertToResult)
+          .map(convertToApiResult)
       case None =>
         Future.successful(
           BadRequest(
             Json.toJson(
-              SimpleError(
+              ErrorSummary(
                 "400",
                 "Missing X-Pillar2-Id header"
               ) // TODO: Does this need to be a 400 or a 500 as the only way this happens is if submissions-api doesn't provde the header
@@ -56,29 +54,4 @@ class UKTaxReturnController @Inject() (
         )
     }
   }
-
-  private def convertToResult(response: HttpResponse): Result =
-    response.status match {
-      case 201 =>
-        response.json.validate[SuccessResponse] match {
-          case JsSuccess(success, _) => Ok(Json.toJson(success))
-          case JsError(errors) =>
-            InternalServerError(
-              Json.toJson(
-                SimpleError("500", s"Failed to parse success response: $errors")
-              )
-            )
-        }
-      case 422 =>
-        response.json.validate[ValidationErrors] match {
-          case JsSuccess(validationErrors, _) => UnprocessableEntity(Json.toJson(SimpleError(validationErrors.code, validationErrors.text)))
-          case JsError(_)                   =>
-            //logger.error(s"Failed to parse validation errors: $errors")
-            InternalServerError(Json.toJson(SimpleError("500", "Internal server error")))
-        }
-      case _ =>
-        InternalServerError(
-          Json.toJson(SimpleError("500", "Internal server error"))
-        ) // TODO: This loses a lot of infomation on what the error actually is and we rely on the implicit logs provided by play logging, maybe set this up to decode the message
-    }
 }

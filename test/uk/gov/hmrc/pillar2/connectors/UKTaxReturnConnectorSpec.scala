@@ -17,15 +17,15 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.pillar2.models.uktrsubmissions._
+import uk.gov.hmrc.pillar2.generators.Generators
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, ReturnType, UktrSubmissionNilReturn}
 
 import java.time.LocalDate
-import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.generators.Generators
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 

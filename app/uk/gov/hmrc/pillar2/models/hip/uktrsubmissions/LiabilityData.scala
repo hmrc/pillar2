@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.uktrsubmissions
+package uk.gov.hmrc.pillar2.models.hip.uktrsubmissions
 
 import play.api.libs.json.{Json, OFormat}
 

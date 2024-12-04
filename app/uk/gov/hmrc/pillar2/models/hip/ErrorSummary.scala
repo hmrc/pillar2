@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.uktrsubmissions
+package uk.gov.hmrc.pillar2.models.hip
 
-abstract class Liability
+import play.api.libs.json.{Json, OFormat}
+import play.api.mvc.Result
+import play.api.mvc.Results.InternalServerError
+
+case class ErrorSummary(code: String, message: String)
+
+object ErrorSummary {
+  val result_500: Result = InternalServerError(Json.toJson(ErrorSummary("500", "Internal server error")))
+
+  implicit val format: OFormat[ErrorSummary] = Json.format[ErrorSummary]
+}
