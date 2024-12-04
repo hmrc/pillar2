@@ -56,7 +56,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
         forAll(arbitrary[UktrSubmission]) { submission =>
           val successResponse = Json.obj(
             "success" -> Json.obj(
-              "processingDate" -> "2024-03-14T09:26:17Z",
+              "processingDate"   -> "2024-03-14T09:26:17Z",
               "formBundleNumber" -> "123456789012345"
             )
           )
@@ -137,7 +137,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
       "should return BAD_REQUEST when request body is invalid" in {
         val invalidJson = Json.obj("invalid" -> "data")
-        
+
         val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
           .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")
           .withJsonBody(invalidJson)

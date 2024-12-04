@@ -22,6 +22,12 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models._
 import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.grs._
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityData
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityNilReturn
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.ReturnType
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionData
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionNilReturn
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
@@ -31,12 +37,6 @@ import uk.gov.hmrc.pillar2.models.registration._
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
 
 import java.time.{Instant, LocalDate}
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionNilReturn
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityNilReturn
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionData
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityData
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.ReturnType
 
 trait ModelGenerators {
   self: Generators =>
