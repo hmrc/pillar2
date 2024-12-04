@@ -17,24 +17,26 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.uktrsubmissions._
 
 import java.time.LocalDate
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.generators.Generators
+import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 
 class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-  override lazy val app: Application = applicationBuilder()
-    .configure(
-      "microservice.services.submit-uk-tax-return.port" -> server.port()
-    )
-    .build()
+  override implicit lazy val app: Application =
+    new GuiceApplicationBuilder()
+      .configure(
+        "microservice.services.submit-uk-tax-return.port" -> server.port()
+      )
+      .build()
 
-  lazy val connector: UKTaxReturnConnector =
+  private lazy val connector =
     app.injector.instanceOf[UKTaxReturnConnector]
 
   private val nilReturnPayload = UktrSubmissionNilReturn(
@@ -47,37 +49,10 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
     )
   )
 
-  private val dataPayload = UktrSubmissionData(
-    accountingPeriodFrom = LocalDate.parse("2024-08-14"),
-    accountingPeriodTo = LocalDate.parse("2024-12-14"),
-    obligationMTT = true,
-    electionUKGAAP = true,
-    liabilities = LiabilityData(
-      electionDTTSingleMember = true,
-      electionUTPRSingleMember = true,
-      numberSubGroupDTT = 1,
-      numberSubGroupUTPR = 1,
-      totalLiability = BigDecimal(1000),
-      totalLiabilityDTT = BigDecimal(300),
-      totalLiabilityIIR = BigDecimal(400),
-      totalLiabilityUTPR = BigDecimal(300),
-      liableEntities = Seq(
-        LiableEntity(
-          ukChargeableEntityName = "Newco PLC",
-          idType = "CRN",
-          idValue = "12345678",
-          amountOwedDTT = BigDecimal(100),
-          amountOwedIIR = BigDecimal(200),
-          amountOwedUTPR = BigDecimal(300)
-        )
-      )
-    )
-  )
-
   private val pillar2Id = "XMPLR0000000012"
 
   "UKTaxReturnConnector" - {
-    "successfully submit UK tax return with nil return and receive success response" in {
+    "successfully submit UK tax return and receive success response" in {
       val successResponse = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-14T09:26:17Z",
@@ -87,132 +62,98 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
 
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
           .willReturn(
             aResponse()
-              .withStatus(201)
+              .withStatus(CREATED)
+              .withHeader("Content-Type", "application/json")
               .withBody(successResponse.toString())
           )
       )
 
       val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
 
-      result match {
-        case Right(response) =>
-          (response \ "success" \ "formBundleNumber").as[String] mustBe "123456789012345"
-        case Left(_) => fail("Expected Right but got Left")
-      }
-    }
-
-    "successfully submit UK tax return with data payload and receive success response" in {
-      val successResponse = Json.obj(
-        "success" -> Json.obj(
-          "processingDate"   -> "2024-03-14T09:26:17Z",
-          "formBundleNumber" -> "123456789012345"
-        )
-      )
-
-      server.stubFor(
-        post(urlEqualTo("/submit-uk-tax-return"))
-          .willReturn(
-            aResponse()
-              .withStatus(201)
-              .withBody(successResponse.toString())
-          )
-      )
-
-      val result = connector.submitUKTaxReturn(dataPayload, pillar2Id).futureValue
-
-      result match {
-        case Right(response) =>
-          (response \ "success" \ "formBundleNumber").as[String] mustBe "123456789012345"
-        case Left(_) => fail("Expected Right but got Left")
-      }
-    }
-
-    "handle empty response body" in {
-      server.stubFor(
-        post(urlEqualTo("/submit-uk-tax-return"))
-          .willReturn(
-            aResponse()
-              .withStatus(201)
-          )
-      )
-
-      val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
-
-      result match {
-        case Right(response) => response mustBe Json.obj()
-        case Left(_)         => fail("Expected Right but got Left")
-      }
+      result.status mustBe CREATED
+      result.json mustBe successResponse
     }
 
     "handle BAD_REQUEST (400) response" in {
       val errorResponse = Json.obj(
-        "failures" -> Json.arr(
-          Json.obj(
-            "code"   -> "INVALID_PAYLOAD",
-            "reason" -> "Submission has not passed validation. Invalid Payload."
-          )
+        "error" -> Json.obj(
+          "code"    -> "400",
+          "message" -> "Bad Request",
+          "logId"   -> "123456789"
         )
       )
 
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
           .willReturn(
             aResponse()
-              .withStatus(400)
+              .withStatus(BAD_REQUEST)
+              .withHeader("Content-Type", "application/json")
               .withBody(errorResponse.toString())
           )
       )
 
       val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
-      result.isLeft mustBe true
+      result.status mustBe BAD_REQUEST
+      result.json mustBe errorResponse
     }
 
     "handle UNPROCESSABLE_ENTITY (422) response" in {
       val errorResponse = Json.obj(
-        "failures" -> Json.arr(
-          Json.obj(
-            "code"   -> "REQUEST_NOT_PROCESSED",
-            "reason" -> "The backend has indicated that the request could not be processed."
-          )
+        "errors" -> Json.obj(
+          "processingDate" -> "2024-03-14T09:26:17Z",
+          "code"           -> "003",
+          "text"           -> "Request could not be processed"
         )
       )
 
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
           .willReturn(
             aResponse()
-              .withStatus(422)
+              .withStatus(UNPROCESSABLE_ENTITY)
+              .withHeader("Content-Type", "application/json")
               .withBody(errorResponse.toString())
           )
       )
 
       val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
-      result.isLeft mustBe true
+      result.status mustBe UNPROCESSABLE_ENTITY
+      result.json mustBe errorResponse
     }
 
     "handle INTERNAL_SERVER_ERROR (500) response" in {
       val errorResponse = Json.obj(
-        "failures" -> Json.arr(
-          Json.obj(
-            "code"   -> "SERVER_ERROR",
-            "reason" -> "IF is currently experiencing problems that require live service intervention."
-          )
+        "error" -> Json.obj(
+          "code"    -> "500",
+          "message" -> "Internal Server Error",
+          "logId"   -> "123456789"
         )
       )
 
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
           .willReturn(
             aResponse()
-              .withStatus(500)
+              .withStatus(INTERNAL_SERVER_ERROR)
+              .withHeader("Content-Type", "application/json")
               .withBody(errorResponse.toString())
           )
       )
 
       val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
-      result.isLeft mustBe true
+      result.status mustBe INTERNAL_SERVER_ERROR
+      result.json mustBe errorResponse
     }
   }
 }

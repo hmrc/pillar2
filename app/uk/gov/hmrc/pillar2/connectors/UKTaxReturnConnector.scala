@@ -16,9 +16,6 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
-import play.api.libs.json._
-import play.api.mvc.Result
-import play.api.mvc.Results._
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.connectors.headers.UKTaxReturnHeaders
@@ -36,7 +33,7 @@ class UKTaxReturnConnector @Inject() (
   def submitUKTaxReturn(
     payload:     UktrSubmission,
     pillar2Id:   String
-  )(implicit hc: HeaderCarrier): Future[Either[Result, JsValue]] = {
+  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
 
@@ -44,23 +41,8 @@ class UKTaxReturnConnector @Inject() (
       .POST[UktrSubmission, HttpResponse](
         url,
         payload,
-        Seq("X-Pillar2-Id" -> pillar2Id)
+        generateHeaders(pillar2Id)
       )
-      .map { response =>
-        response.status match {
-          case 201 =>
-            // Handle empty response body case
-            if (response.body.isEmpty) Right(Json.obj())
-            else Right(response.json)
-          case 400    => Left(BadRequest(handleEmptyBody(response)))
-          case 422    => Left(UnprocessableEntity(handleEmptyBody(response)))
-          case 500    => Left(InternalServerError(handleEmptyBody(response)))
-          case status => Left(Status(status)(handleEmptyBody(response)))
-        }
-      }
   }
 
-  private def handleEmptyBody(response: HttpResponse): JsValue =
-    if (response.body.isEmpty) Json.obj()
-    else response.json
 }

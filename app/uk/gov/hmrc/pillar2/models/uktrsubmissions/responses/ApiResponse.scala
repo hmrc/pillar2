@@ -21,37 +21,37 @@ import play.api.libs.json._
 sealed trait ApiResponse
 
 case class SuccessResponse(
-  processingDate: String,
+  processingDate:   String,
   formBundleNumber: String,
-  chargeReference: Option[String]
+  chargeReference:  Option[String]
 ) extends ApiResponse
 
 sealed trait ErrorResponse extends ApiResponse
 
 case class SingleError(
-  code: String,
+  code:    String,
   message: String,
-  logId: String
+  logId:   String
 ) extends ErrorResponse
 
 case class ValidationErrors(
   processingDate: String,
-  code: String,
-  text: String
+  code:           String,
+  text:           String
 ) extends ErrorResponse
 
 case class EmptyErrorResponse(statusCode: Int) extends ErrorResponse
 
 object ApiResponse {
-  implicit val successResponseFormat: Format[SuccessResponse] = Json.format[SuccessResponse]
-  implicit val singleErrorFormat: Format[SingleError] = Json.format[SingleError]
-  implicit val validationErrorsFormat: Format[ValidationErrors] = Json.format[ValidationErrors]
+  implicit val successResponseFormat:    Format[SuccessResponse]    = Json.format[SuccessResponse]
+  implicit val singleErrorFormat:        Format[SingleError]        = Json.format[SingleError]
+  implicit val validationErrorsFormat:   Format[ValidationErrors]   = Json.format[ValidationErrors]
   implicit val emptyErrorResponseFormat: Format[EmptyErrorResponse] = Json.format[EmptyErrorResponse]
 
   implicit val apiResponseWrites: Writes[ApiResponse] = Writes {
-    case success: SuccessResponse => Json.toJson(success)(successResponseFormat)
-    case error: SingleError => Json.toJson(error)(singleErrorFormat)
-    case errors: ValidationErrors => Json.toJson(errors)(validationErrorsFormat)
+    case success: SuccessResponse  => Json.toJson(success)(successResponseFormat)
+    case error:   SingleError      => Json.toJson(error)(singleErrorFormat)
+    case errors:  ValidationErrors => Json.toJson(errors)(validationErrorsFormat)
     case EmptyErrorResponse(_) => Json.obj()
   }
-} 
+}
