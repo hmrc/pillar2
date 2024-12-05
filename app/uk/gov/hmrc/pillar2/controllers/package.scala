@@ -22,8 +22,6 @@ import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.Result
 import play.api.mvc.Results._
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.pillar2.models.hip.ErrorSummary.result_500
-import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse, ErrorSummary}
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 
 import scala.util.{Success, Try}
@@ -78,22 +76,6 @@ package object controllers {
         logDownStreamError(httpResponse.body)
         InternalServerError(httpResponse.body)
 
-    }
-
-  private[controllers] def convertToApiResult(response: HttpResponse): Result =
-    response.status match {
-      case 201 =>
-        response.json.validate[ApiSuccessResponse] match {
-          case JsSuccess(success, _) => Ok(Json.toJson(success))
-          case JsError(error)        => BadRequest(error.toString())
-        }
-      case 422 =>
-        response.json.validate[ApiFailureResponse] match {
-          case JsSuccess(apiFailure, _) => UnprocessableEntity(Json.toJson(ErrorSummary(apiFailure.errors.code, apiFailure.errors.text)))
-          case JsError(_)               => result_500
-        }
-      case _ =>
-        result_500 // TODO: This loses a lot of infomation on what the error actually is and we rely on the implicit logs provided by play logging, maybe set this up to decode the message
     }
 
   private def logDownStreamError(

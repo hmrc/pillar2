@@ -16,22 +16,25 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.connectors.UKTaxReturnConnector
+import uk.gov.hmrc.pillar2.models.hip.ApiSuccessResponse
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class UKTaxReturnService @Inject() (
   ukTaxReturnConnector: UKTaxReturnConnector
-) {
+)(implicit ec:          ExecutionContext) {
 
   def submitUKTaxReturn(
     payload:     UktrSubmission,
     pillar2Id:   String
-  )(implicit hc: HeaderCarrier): Future[HttpResponse] =
-    ukTaxReturnConnector.submitUKTaxReturn(payload, pillar2Id)
+  )(implicit hc: HeaderCarrier): Future[ApiSuccessResponse] =
+    ukTaxReturnConnector
+      .submitUKTaxReturn(payload, pillar2Id)
+      .flatMap(convertToApiResult)
 }

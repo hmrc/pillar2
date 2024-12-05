@@ -24,7 +24,7 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.connectors._
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service._
 import uk.gov.hmrc.pillar2.service.audit.AuditService

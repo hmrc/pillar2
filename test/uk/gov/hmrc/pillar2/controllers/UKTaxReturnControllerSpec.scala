@@ -28,13 +28,14 @@ import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
+import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hip.ErrorSummary
+import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse, ErrorSummary}
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 
+import java.time.{LocalDateTime, ZoneId}
 import scala.concurrent.Future
 
 class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -54,15 +55,10 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
     "submitUKTaxReturn" - {
       "should return OK with success response when service returns CREATED (201)" in {
         forAll(arbitrary[UktrSubmission]) { submission =>
-          val successResponse = Json.obj(
-            "success" -> Json.obj(
-              "processingDate"   -> "2024-03-14T09:26:17Z",
-              "formBundleNumber" -> "123456789012345"
-            )
-          )
+        val response =  ApiSuccessResponse(ApiSuccess(LocalDateTime.now(ZoneId.of("UTC")), "123456789012345", "dummyChargeReference"))
 
           when(mockUKTaxReturnService.submitUKTaxReturn(eqTo(submission), any[String])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(CREATED, successResponse.toString())))
+            .thenReturn(Future.successful(response))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
             .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")
@@ -71,7 +67,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
           val result = route(application, request).value
 
           status(result) mustBe OK
-          contentAsJson(result) mustBe successResponse \ "success"
+          contentAsJson(result).as[ApiSuccessResponse] mustEqual response
         }
       }
 
@@ -85,7 +81,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
           )
 
           when(mockUKTaxReturnService.submitUKTaxReturn(eqTo(submission), any[String])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, errorResponse.toString())))
+            .thenThrow()
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
             .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")

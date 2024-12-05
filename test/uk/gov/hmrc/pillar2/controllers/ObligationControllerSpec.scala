@@ -29,7 +29,7 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.ObligationConnector
 import uk.gov.hmrc.pillar2.controllers.ObligationControllerSpec._
-import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
+import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.obligation.ObligationStatus.Fulfilled
