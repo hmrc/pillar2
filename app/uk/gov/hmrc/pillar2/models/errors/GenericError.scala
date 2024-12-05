@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hip
+package uk.gov.hmrc.pillar2.models.errors
 
 import play.api.libs.json.{Json, OFormat}
-import play.api.mvc.Result
-import play.api.mvc.Results.InternalServerError
 
-case class ErrorSummary(code: String, message: String)
+case class Pillar2ApiError(code: String, message: String)
 
-object ErrorSummary {
-  implicit val format: OFormat[ErrorSummary] = Json.format[ErrorSummary]
-
-  val result_500: Result = InternalServerError(Json.toJson(ErrorSummary("500", "Internal server error")))
+object Pillar2ApiError {
+  implicit val format: OFormat[Pillar2ApiError] = Json.format[Pillar2ApiError]
 }

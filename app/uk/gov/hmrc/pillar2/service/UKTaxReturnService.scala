@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import play.api.mvc.Result
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.UKTaxReturnConnector
 import uk.gov.hmrc.pillar2.models.hip.ApiSuccessResponse

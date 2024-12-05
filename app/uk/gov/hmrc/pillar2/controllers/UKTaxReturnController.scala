@@ -19,13 +19,12 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.libs.json._
 import play.api.mvc._
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
-import uk.gov.hmrc.pillar2.models.hip.ErrorSummary
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 @Singleton
 class UKTaxReturnController @Inject() (
@@ -38,7 +37,7 @@ class UKTaxReturnController @Inject() (
 
   def submitUKTaxReturn(): Action[UktrSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UktrSubmission]) { implicit request =>
     ukTaxReturnService
-      .submitUKTaxReturn(request.body, request.pillar2Id).map(Ok(Json.toJson(_)))
-
+      .submitUKTaxReturn(request.body, request.pillar2Id)
+      .map(response => Ok(Json.toJson(response)))
   }
 }

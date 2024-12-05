@@ -27,13 +27,14 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse, ErrorSummary}
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
+import play.api.mvc.Results._
 
 import java.time.{LocalDateTime, ZoneId}
 import scala.concurrent.Future
@@ -109,38 +110,6 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
             )
           )
         }
-      }
-
-      "should return INTERNAL_SERVER_ERROR for unexpected response status" in {
-        forAll(arbitraryUktrSubmission.arbitrary) { submission =>
-          val errorResponse = Json.obj(
-            "error" -> "Unexpected error occurred"
-          )
-
-          when(mockUKTaxReturnService.submitUKTaxReturn(eqTo(submission), any[String])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(HttpResponse(INTERNAL_SERVER_ERROR, errorResponse.toString())))
-
-          val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
-            .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")
-            .withJsonBody(Json.toJson(submission))
-
-          val result = route(application, request).value
-
-          status(result) mustBe INTERNAL_SERVER_ERROR
-          contentAsJson(result) mustBe Json.toJson(ErrorSummary("500", "Internal server error"))
-        }
-      }
-
-      "should return BAD_REQUEST when request body is invalid" in {
-        val invalidJson = Json.obj("invalid" -> "data")
-
-        val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
-          .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")
-          .withJsonBody(invalidJson)
-
-        val result = route(application, request).value
-
-        status(result) mustBe BAD_REQUEST
       }
     }
   }

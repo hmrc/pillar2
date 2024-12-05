@@ -1,11 +1,25 @@
+/*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package uk.gov.hmrc.pillar2
 
-import play.api.libs.json.{JsError, JsSuccess, Json}
-import play.api.mvc.Results._
+import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.pillar2.models.hip.ErrorSummary.result_500
-import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse, ErrorSummary}
 import uk.gov.hmrc.pillar2.models.errors._
+import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 
 import scala.concurrent.Future
 
@@ -20,11 +34,11 @@ package object service {
         }
       case 422 =>
         response.json.validate[ApiFailureResponse] match {
-          case JsSuccess(apiFailure, _) => UnprocessableEntity(Json.toJson(ErrorSummary(apiFailure.errors.code, apiFailure.errors.text)))
-          case JsError(_)               => result_500
+          case JsSuccess(apiFailure, _) => Future.failed(ValidationError(apiFailure.errors.code, apiFailure.errors.text))
+          case JsError(_)               => Future.failed(InvalidJsonError(response.body))
         }
       case _ =>
-        result_500 // TODO: This loses a lot of infomation on what the error actually is and we rely on the implicit logs provided by play logging, maybe set this up to decode the message
+        Future.failed(GenericInternalServerError)
     }
 
 }
