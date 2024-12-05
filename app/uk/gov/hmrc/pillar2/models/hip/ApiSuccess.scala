@@ -18,9 +18,9 @@ package uk.gov.hmrc.pillar2.models.hip
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDateTime
+import java.time.ZonedDateTime
 
-case class ApiSuccess(processingDate: LocalDateTime, formBundleNumber: String, chargeReference: String)
+case class ApiSuccess(processingDate: ZonedDateTime, formBundleNumber: String, chargeReference: String)
 
 object ApiSuccess {
   implicit val format: OFormat[ApiSuccess] = Json.format[ApiSuccess]

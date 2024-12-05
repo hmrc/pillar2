@@ -22,23 +22,28 @@ import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
 
 package object service {
 
   private[service] def convertToApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
     response.status match {
       case 201 =>
-        response.json.validate[ApiSuccessResponse] match {
-          case JsSuccess(success, _) => Future.successful(success)
-          case JsError(error)        => Future.failed(InvalidJsonError(error.toString))
+        // we're using try because HttpResponse.json is not a pure function and can throw an exception
+        Try(response.json.validate[ApiSuccessResponse]) match {
+          case Success(JsSuccess(success, _)) => Future.successful(success)
+          case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
+          case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case 422 =>
-        response.json.validate[ApiFailureResponse] match {
-          case JsSuccess(apiFailure, _) => Future.failed(ValidationError(apiFailure.errors.code, apiFailure.errors.text))
-          case JsError(_)               => Future.failed(InvalidJsonError(response.body))
+        Try(response.json.validate[ApiFailureResponse]) match {
+          case Success(JsSuccess(apiFailure, _)) =>
+            Future.failed(ValidationError(apiFailure.errors.code, apiFailure.errors.text))
+          case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
+          case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case _ =>
-        Future.failed(GenericInternalServerError)
+        Future.failed(P2ApiInternalServerError)
     }
 
 }

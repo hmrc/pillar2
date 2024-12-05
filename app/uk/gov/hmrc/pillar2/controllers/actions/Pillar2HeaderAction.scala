@@ -29,7 +29,7 @@ class Pillar2HeaderAction @Inject() (implicit val executionContext: ExecutionCon
 
   private val logger = Logger(this.getClass)
 
-  override protected def transform[A](request: Request[A]): Future[Pillar2Request[A]] =
+  override protected[actions] def transform[A](request: Request[A]): Future[Pillar2Request[A]] =
     request.headers.get("X-Pillar2-Id") match {
       case Some(pillar2Id) =>
         Future.successful(Pillar2Request(pillar2Id, request))

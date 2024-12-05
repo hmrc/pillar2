@@ -26,32 +26,19 @@ case class MissingHeaderError(headerName: String) extends Pillar2Error {
   val code:    String = "001"
 }
 
+// we probably don't need this error as any json decoding errors should probably be made into an internal server error
 case class InvalidJsonError(decodeError: String) extends Pillar2Error {
-  val code: String = "002"
+  val code:    String = "002"
   val message: String = s"Invalid JSON payload: $decodeError"
 
 }
 
-case object GenericInternalServerError extends Pillar2Error {
+case object P2ApiInternalServerError extends Pillar2Error {
   val message: String = "Internal server error"
   val code:    String = "003"
 }
 
 case class ValidationError(validationErrorCode: String, validationError: String) extends Pillar2Error {
-  val code: String = validationErrorCode
+  val code:    String = validationErrorCode
   val message: String = validationError
 }
-
-
-
-// case object UnauthorizedError extends Pillar2Error {
-//   val message: String = "Unauthorized access"
-//   val code:    String = "004"
-// }
-
-// case class UnexpectedError(errorMessage: String) extends Pillar2Error {
-//   val code: String = "005"
-//   val message: String = s"An unexpected error occurred: $errorMessage"
-// }
-
-

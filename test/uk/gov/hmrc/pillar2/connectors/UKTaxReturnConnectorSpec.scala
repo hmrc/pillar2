@@ -39,7 +39,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
   private lazy val connector =
     app.injector.instanceOf[UKTaxReturnConnector]
 
-  private val nilReturnPayload = UktrSubmissionNilReturn(
+  private val submissionPayload = UktrSubmissionNilReturn(
     accountingPeriodFrom = LocalDate.parse("2024-08-14"),
     accountingPeriodTo = LocalDate.parse("2024-12-14"),
     obligationMTT = true,
@@ -63,7 +63,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
+          .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
             aResponse()
               .withStatus(CREATED)
@@ -72,7 +72,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
 
       result.status mustBe CREATED
       result.json mustBe successResponse
@@ -90,7 +90,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
+          .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
             aResponse()
               .withStatus(BAD_REQUEST)
@@ -99,7 +99,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
       result.status mustBe BAD_REQUEST
       result.json mustBe errorResponse
     }
@@ -116,7 +116,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
+          .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
             aResponse()
               .withStatus(UNPROCESSABLE_ENTITY)
@@ -125,7 +125,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
       result.json mustBe errorResponse
     }
@@ -142,7 +142,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       server.stubFor(
         post(urlEqualTo("/submit-uk-tax-return"))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(nilReturnPayload).toString()))
+          .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
             aResponse()
               .withStatus(INTERNAL_SERVER_ERROR)
@@ -151,7 +151,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(nilReturnPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe errorResponse
     }

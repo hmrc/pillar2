@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -31,20 +31,18 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse, ErrorSummary}
+import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
-import play.api.mvc.Results._
 
-import java.time.{LocalDateTime, ZoneId}
+import java.time.ZonedDateTime
 import scala.concurrent.Future
 
 class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
   val application: Application = new GuiceApplicationBuilder()
-    .configure(
-      Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
-    )
+    .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
     .overrides(
       bind[UKTaxReturnService].toInstance(mockUKTaxReturnService),
       bind[AuthConnector].toInstance(mockAuthConnector),
@@ -52,63 +50,103 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
     )
     .build()
 
+  val successResponse: ApiSuccessResponse = ApiSuccessResponse(
+    ApiSuccess(
+      processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
+      formBundleNumber = "123456789012345",
+      chargeReference = "12345678"
+    )
+  )
+
   "UKTaxReturnController" - {
     "submitUKTaxReturn" - {
-      "should return OK with success response when service returns CREATED (201)" in {
+      "should return OK with ApiSuccessResponse when submission is successful" in {
         forAll(arbitrary[UktrSubmission]) { submission =>
-        val response =  ApiSuccessResponse(ApiSuccess(LocalDateTime.now(ZoneId.of("UTC")), "123456789012345", "dummyChargeReference"))
-
-          when(mockUKTaxReturnService.submitUKTaxReturn(eqTo(submission), any[String])(any[HeaderCarrier]))
-            .thenReturn(Future.successful(response))
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+            .thenReturn(Future.successful(successResponse))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
-            .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")
+            .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
             .withJsonBody(Json.toJson(submission))
 
           val result = route(application, request).value
 
-          status(result) mustBe OK
-          contentAsJson(result).as[ApiSuccessResponse] mustEqual response
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(successResponse)
         }
       }
 
-      "should return UNPROCESSABLE_ENTITY when service returns 422" in {
-        forAll(arbitraryUktrSubmission.arbitrary) { submission =>
-          val errorResponse = Json.obj(
-            "errors" -> Json.obj(
-              "code" -> "003",
-              "text" -> "Request could not be processed"
-            )
-          )
-
-          when(mockUKTaxReturnService.submitUKTaxReturn(eqTo(submission), any[String])(any[HeaderCarrier]))
-            .thenThrow()
-
+      "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
+        forAll(arbitrary[UktrSubmission]) { submission =>
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
-            .withHeaders("X-Pillar2-Id" -> "XMPLR0000000012")
             .withJsonBody(Json.toJson(submission))
 
-          val result = route(application, request).value
-
-          status(result) mustBe UNPROCESSABLE_ENTITY
-          contentAsJson(result) mustBe Json.toJson(ErrorSummary("003", "Request could not be processed"))
+          val result = intercept[MissingHeaderError](await(route(application, request).value))
+          result mustEqual MissingHeaderError("X-Pillar2-Id")
         }
       }
 
-      "should return BAD_REQUEST when X-Pillar2-Id header is missing" in {
-        forAll(arbitraryUktrSubmission.arbitrary) { submission =>
+      // Maybe we should update the auth action to make use of the error handler?
+
+      "should return UNAUTHORIZED when authentication fails" in {
+        val unauthorizedApp = new GuiceApplicationBuilder()
+          .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
+          .overrides(
+            bind[UKTaxReturnService].toInstance(mockUKTaxReturnService)
+          )
+          .build()
+
+        forAll(arbitrary[UktrSubmission]) { submission =>
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
+            .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
             .withJsonBody(Json.toJson(submission))
 
-          val result = route(application, request).value
+          val result = route(unauthorizedApp, request).value
+          status(result) mustEqual UNAUTHORIZED
+        }
+      }
 
-          status(result) mustBe BAD_REQUEST
-          contentAsJson(result) mustBe Json.toJson(
-            ErrorSummary(
-              "400",
-              "Missing X-Pillar2-Id header"
-            )
-          )
+      //Everything after this is perhaps useless
+
+      "should handle ValidationError from service" in {
+        forAll(arbitrary[UktrSubmission]) { submission =>
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+            .thenReturn(Future.failed(ValidationError("422", "Validation failed")))
+
+          val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
+            .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[ValidationError](await(route(application, request).value))
+          result mustEqual ValidationError("422", "Validation failed")
+        }
+      }
+
+      "should handle InvalidJsonError from service" in {
+        forAll(arbitrary[UktrSubmission]) { submission =>
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+            .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
+
+          val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
+            .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[InvalidJsonError](await(route(application, request).value))
+          result mustEqual InvalidJsonError("Invalid JSON")
+        }
+      }
+
+      "should handle P2ApiInternalServerError from service" in {
+        forAll(arbitrary[UktrSubmission]) { submission =>
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+            .thenReturn(Future.failed(P2ApiInternalServerError))
+
+          val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
+            .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[P2ApiInternalServerError.type](await(route(application, request).value))
+          result mustEqual P2ApiInternalServerError
         }
       }
     }

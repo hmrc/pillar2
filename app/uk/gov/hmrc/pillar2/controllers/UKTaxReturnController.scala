@@ -22,9 +22,9 @@ import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import scala.concurrent.ExecutionContext
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
 
 @Singleton
 class UKTaxReturnController @Inject() (
