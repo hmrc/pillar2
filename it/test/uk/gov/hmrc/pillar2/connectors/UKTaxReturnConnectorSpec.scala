@@ -23,10 +23,11 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, ReturnType, UktrSubmissionNilReturn}
-
 import java.time.LocalDate
+import org.scalatest.concurrent.IntegrationPatience
 
-class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+
+class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
 
   override lazy val app: Application =
     applicationBuilder()
@@ -55,7 +56,8 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       val successResponse = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-14T09:26:17Z",
-          "formBundleNumber" -> "123456789012345"
+          "formBundleNumber" -> "123456789012345",
+          "chargeReference"  -> "123456789012345"
         )
       )
 
