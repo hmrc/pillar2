@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.controllers.auth
+package uk.gov.hmrc.pillar2.controllers.actions
 
 import org.apache.pekko.util.Timeout
 import org.mockito.ArgumentMatchers.any
@@ -33,7 +33,7 @@ import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
