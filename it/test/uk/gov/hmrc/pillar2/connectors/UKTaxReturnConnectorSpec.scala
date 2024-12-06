@@ -19,7 +19,6 @@ package uk.gov.hmrc.pillar2.connectors
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
-import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -29,8 +28,8 @@ import java.time.LocalDate
 
 class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-  override implicit lazy val app: Application =
-    new GuiceApplicationBuilder()
+  override lazy val app: Application =
+    applicationBuilder()
       .configure(
         "microservice.services.submit-uk-tax-return.port" -> server.port()
       )
