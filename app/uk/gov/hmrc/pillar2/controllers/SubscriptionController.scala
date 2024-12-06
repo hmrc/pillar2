@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.libs.json._
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Logger, Logging}
-import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
+import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
