@@ -111,14 +111,14 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
       "should handle ValidationError from service" in {
         forAll(arbitrary[UktrSubmission]) { submission =>
           when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
-            .thenReturn(Future.failed(ValidationError("422", "Validation failed")))
+            .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
             .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
             .withJsonBody(Json.toJson(submission))
 
-          val result = intercept[ValidationError](await(route(application, request).value))
-          result mustEqual ValidationError("422", "Validation failed")
+          val result = intercept[ETMPValidationError](await(route(application, request).value))
+          result mustEqual ETMPValidationError("422", "Validation failed")
         }
       }
 
@@ -136,17 +136,17 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
 
-      "should handle P2ApiInternalServerError from service" in {
+      "should handle ApiInternalServerError from service" in {
         forAll(arbitrary[UktrSubmission]) { submission =>
           when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
-            .thenReturn(Future.failed(P2ApiInternalServerError))
+            .thenReturn(Future.failed(ApiInternalServerError))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
             .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
             .withJsonBody(Json.toJson(submission))
 
-          val result = intercept[P2ApiInternalServerError.type](await(route(application, request).value))
-          result mustEqual P2ApiInternalServerError
+          val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
+          result mustEqual ApiInternalServerError
         }
       }
     }

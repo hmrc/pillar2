@@ -25,7 +25,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.errors.{InvalidJsonError, P2ApiInternalServerError, ValidationError}
+import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip._
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
 
@@ -59,7 +59,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UktrSubmission]) { submission =>
-          val error = intercept[ValidationError] {
+          val error = intercept[ETMPValidationError] {
             await(service.submitUKTaxReturn(submission, "XMPLR0000000012"))
           }
           error.code mustBe "422"
@@ -81,14 +81,14 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
         }
       }
 
-      "should throw P2ApiInternalServerError for non-201/422 responses" in {
+      "should throw ApiInternalServerError for non-201/422 responses" in {
         val httpResponse = HttpResponse(500, "{}")
 
         when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UktrSubmission]) { submission =>
-          intercept[P2ApiInternalServerError.type] {
+          intercept[ApiInternalServerError.type] {
             await(service.submitUKTaxReturn(submission, "XMPLR0000000012"))
           }
         }

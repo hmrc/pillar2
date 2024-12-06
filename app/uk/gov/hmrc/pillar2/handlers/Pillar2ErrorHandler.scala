@@ -28,16 +28,17 @@ import scala.concurrent.Future
 @Singleton
 class Pillar2ErrorHandler extends HttpErrorHandler {
 
-  override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] = ???
+  override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
+    Future.successful(BadRequest(Json.toJson(Pillar2ApiError(statusCode.toString, message))))
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
     exception match {
       case e: Pillar2Error =>
         e match {
-          case error: MissingHeaderError => Future.successful(BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message))))
-          case error: ValidationError    => Future.successful(UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message))))
-          case error: InvalidJsonError   => Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message))))
-          case error @ P2ApiInternalServerError => Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message))))
+          case error: MissingHeaderError  => Future.successful(BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message))))
+          case error: ETMPValidationError => Future.successful(UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message))))
+          case error: InvalidJsonError    => Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message))))
+          case error @ ApiInternalServerError => Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message))))
         }
       case _ =>
         Future.successful(InternalServerError(Json.toJson(Pillar2ApiError("006", "An unexpected error occurred"))))

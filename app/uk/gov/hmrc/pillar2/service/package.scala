@@ -38,12 +38,12 @@ package object service {
       case 422 =>
         Try(response.json.validate[ApiFailureResponse]) match {
           case Success(JsSuccess(apiFailure, _)) =>
-            Future.failed(ValidationError(apiFailure.errors.code, apiFailure.errors.text))
+            Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text))
           case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case _ =>
-        Future.failed(P2ApiInternalServerError)
+        Future.failed(ApiInternalServerError)
     }
 
 }
