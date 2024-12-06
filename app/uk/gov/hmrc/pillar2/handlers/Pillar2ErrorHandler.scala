@@ -29,7 +29,10 @@ import scala.concurrent.Future
 class Pillar2ErrorHandler extends HttpErrorHandler {
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
-    Future.successful(BadRequest(Json.toJson(Pillar2ApiError(statusCode.toString, message))))
+    statusCode match {
+      case 404 => Future.successful(NotFound(Json.toJson(Pillar2ApiError(statusCode.toString, message))))
+      case _   => Future.successful(BadRequest(Json.toJson(Pillar2ApiError(statusCode.toString, message))))
+    }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
     exception match {

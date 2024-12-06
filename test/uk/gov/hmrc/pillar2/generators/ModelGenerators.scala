@@ -1120,48 +1120,37 @@ trait ModelGenerators {
   }
 
   implicit val arbitraryUktrSubmission: Arbitrary[UktrSubmission] = Arbitrary {
+    Gen.oneOf(arbitraryUktrSubmissionNilReturn.arbitrary, arbitraryUktrSubmissionData.arbitrary)
+  }
+
+  implicit val arbitraryUktrSubmissionNilReturn: Arbitrary[UktrSubmissionNilReturn] = Arbitrary {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
-      accountingPeriodTo   <- arbitrary[LocalDate].map(date => if (date.isBefore(accountingPeriodFrom)) accountingPeriodFrom.plusMonths(1) else date)
       obligationMTT        <- arbitrary[Boolean]
       electionUKGAAP       <- arbitrary[Boolean]
-      // Generate either a nil return or a data return
-      isNilReturn <- arbitrary[Boolean]
-      liabilities <- if (isNilReturn) {
-                       arbitrary[LiabilityNilReturn].map(nilReturn => nilReturn.copy(returnType = ReturnType.NIL_RETURN))
-                     } else {
-                       arbitrary[BigDecimal].map(amount =>
-                         LiabilityData(
-                           electionDTTSingleMember = false,
-                           electionUTPRSingleMember = false,
-                           numberSubGroupDTT = 0,
-                           numberSubGroupUTPR = 0,
-                           totalLiability = amount,
-                           totalLiabilityDTT = amount,
-                           totalLiabilityIIR = amount,
-                           totalLiabilityUTPR = amount,
-                           liableEntities = Seq.empty
-                         )
-                       )
-                     }
-    } yield
-      if (isNilReturn) {
-        UktrSubmissionNilReturn(
-          accountingPeriodFrom = accountingPeriodFrom,
-          accountingPeriodTo = accountingPeriodTo,
-          obligationMTT = obligationMTT,
-          electionUKGAAP = electionUKGAAP,
-          liabilities = liabilities.asInstanceOf[LiabilityNilReturn]
-        )
-      } else {
-        UktrSubmissionData(
-          accountingPeriodFrom = accountingPeriodFrom,
-          accountingPeriodTo = accountingPeriodTo,
-          obligationMTT = obligationMTT,
-          electionUKGAAP = electionUKGAAP,
-          liabilities = liabilities.asInstanceOf[LiabilityData]
-        )
-      }
+      liabilities          <- arbitrary[LiabilityNilReturn]
+    } yield UktrSubmissionNilReturn(
+      accountingPeriodFrom = accountingPeriodFrom,
+      accountingPeriodTo = accountingPeriodFrom.plusYears(1),
+      obligationMTT = obligationMTT,
+      electionUKGAAP = electionUKGAAP,
+      liabilities = liabilities.copy(returnType = ReturnType.NIL_RETURN)
+    )
+  }
+
+  implicit val arbitraryUktrSubmissionData: Arbitrary[UktrSubmissionData] = Arbitrary {
+    for {
+      accountingPeriodFrom <- arbitrary[LocalDate]
+      obligationMTT        <- arbitrary[Boolean]
+      electionUKGAAP       <- arbitrary[Boolean]
+      liabilities          <- arbitrary[LiabilityData]
+    } yield UktrSubmissionData(
+      accountingPeriodFrom = accountingPeriodFrom,
+      accountingPeriodTo = accountingPeriodFrom.plusYears(1),
+      obligationMTT = obligationMTT,
+      electionUKGAAP = electionUKGAAP,
+      liabilities = liabilities
+    )
   }
 
   // Helper generators for the liability types
