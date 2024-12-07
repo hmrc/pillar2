@@ -50,14 +50,6 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     )
     .build()
 
-  val successResponse: ApiSuccessResponse = ApiSuccessResponse(
-    ApiSuccess(
-      processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
-      formBundleNumber = "123456789012345",
-      chargeReference = "12345678"
-    )
-  )
-
   private val btnPayload =
     BTNRequest(
       accountingPeriodFrom = LocalDate.now(),
@@ -70,6 +62,14 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
   "submitBtn" - {
     "should return OK with ApiSuccessResponse when submission is successful" in {
+      val successResponse: ApiSuccessResponse = ApiSuccessResponse(
+        ApiSuccess(
+          processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
+          formBundleNumber = "123456789012345",
+          chargeReference = "12345678"
+        )
+      )
+
       when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
         .thenReturn(Future.successful(successResponse))
 
@@ -91,14 +91,8 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     "should return UNAUTHORIZED when authentication fails" in {
       val unauthorizedApp = new GuiceApplicationBuilder()
         .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
-        .overrides(
-          bind[BTNService].toInstance(mockBTNService)
-        )
+        .overrides(bind[BTNService].toInstance(mockBTNService))
         .build()
-
-      val request = FakeRequest(POST, routes.BTNController.submitBtn().url)
-        .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
-        .withJsonBody(Json.toJson(btnPayload))
 
       val result = route(unauthorizedApp, request).value
       status(result) mustEqual UNAUTHORIZED
@@ -116,22 +110,13 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
         .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
 
-      val request = FakeRequest(POST, routes.BTNController.submitBtn().url)
-        .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
-        .withJsonBody(Json.toJson(btnPayload))
-
       val result = intercept[InvalidJsonError](await(route(application, request).value))
       result mustEqual InvalidJsonError("Invalid JSON")
-
     }
 
     "should handle ApiInternalServerError from service" in {
       when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
         .thenReturn(Future.failed(ApiInternalServerError))
-
-      val request = FakeRequest(POST, routes.BTNController.submitBtn().url)
-        .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
-        .withJsonBody(Json.toJson(btnPayload))
 
       val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
       result mustEqual ApiInternalServerError
