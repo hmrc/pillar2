@@ -50,6 +50,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
   )
 
   private val pillar2Id = "XMPLR0000000012"
+  private val etmpUrl = "/RESTAdapter/PLR/UKTaxReturn"
 
   "UKTaxReturnConnector" - {
     "successfully submit UK tax return and receive success response" in {
@@ -62,7 +63,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       )
 
       server.stubFor(
-        post(urlEqualTo("/submit-uk-tax-return"))
+        post(urlEqualTo(etmpUrl))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
@@ -89,7 +90,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       )
 
       server.stubFor(
-        post(urlEqualTo("/submit-uk-tax-return"))
+        post(urlEqualTo(etmpUrl))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
@@ -115,7 +116,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       )
 
       server.stubFor(
-        post(urlEqualTo("/submit-uk-tax-return"))
+        post(urlEqualTo(etmpUrl))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
@@ -141,7 +142,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
       )
 
       server.stubFor(
-        post(urlEqualTo("/submit-uk-tax-return"))
+        post(urlEqualTo(etmpUrl))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
           .willReturn(
