@@ -22,6 +22,12 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models._
 import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.grs._
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityData
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityNilReturn
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.ReturnType
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionData
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionNilReturn
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
@@ -1111,5 +1117,60 @@ trait ModelGenerators {
       contactDetails = RepaymentContactDetails(s"$name , $email, $telephoneNo")
     )
 
+  }
+
+  implicit val arbitraryUktrSubmission: Arbitrary[UktrSubmission] = Arbitrary {
+    Gen.oneOf(arbitraryUktrSubmissionNilReturn.arbitrary, arbitraryUktrSubmissionData.arbitrary)
+  }
+
+  implicit val arbitraryUktrSubmissionNilReturn: Arbitrary[UktrSubmissionNilReturn] = Arbitrary {
+    for {
+      accountingPeriodFrom <- arbitrary[LocalDate]
+      obligationMTT        <- arbitrary[Boolean]
+      electionUKGAAP       <- arbitrary[Boolean]
+      liabilities          <- arbitrary[LiabilityNilReturn]
+    } yield UktrSubmissionNilReturn(
+      accountingPeriodFrom = accountingPeriodFrom,
+      accountingPeriodTo = accountingPeriodFrom.plusYears(1),
+      obligationMTT = obligationMTT,
+      electionUKGAAP = electionUKGAAP,
+      liabilities = liabilities.copy(returnType = ReturnType.NIL_RETURN)
+    )
+  }
+
+  implicit val arbitraryUktrSubmissionData: Arbitrary[UktrSubmissionData] = Arbitrary {
+    for {
+      accountingPeriodFrom <- arbitrary[LocalDate]
+      obligationMTT        <- arbitrary[Boolean]
+      electionUKGAAP       <- arbitrary[Boolean]
+      liabilities          <- arbitrary[LiabilityData]
+    } yield UktrSubmissionData(
+      accountingPeriodFrom = accountingPeriodFrom,
+      accountingPeriodTo = accountingPeriodFrom.plusYears(1),
+      obligationMTT = obligationMTT,
+      electionUKGAAP = electionUKGAAP,
+      liabilities = liabilities
+    )
+  }
+
+  // Helper generators for the liability types
+  implicit val arbitraryLiabilityNilReturn: Arbitrary[LiabilityNilReturn] = Arbitrary {
+    Gen.const(LiabilityNilReturn(returnType = ReturnType.NIL_RETURN))
+  }
+
+  implicit val arbitraryLiabilityData: Arbitrary[LiabilityData] = Arbitrary {
+    for {
+      amount <- arbitrary[BigDecimal].map(_.abs.max(BigDecimal(0.00)))
+    } yield LiabilityData(
+      electionDTTSingleMember = false,
+      electionUTPRSingleMember = false,
+      numberSubGroupDTT = 0,
+      numberSubGroupUTPR = 0,
+      totalLiability = amount,
+      totalLiabilityDTT = amount,
+      totalLiabilityIIR = amount,
+      totalLiabilityUTPR = amount,
+      liableEntities = Seq.empty
+    )
   }
 }

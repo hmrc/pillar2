@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logging
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 

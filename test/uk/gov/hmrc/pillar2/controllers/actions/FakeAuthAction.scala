@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.controllers.auth
+package uk.gov.hmrc.pillar2.controllers.actions
 
 import com.google.inject.Inject
 import play.api.mvc.{BodyParsers, Request, Result}
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 
 import scala.concurrent.{ExecutionContext, Future}
 
