@@ -20,7 +20,7 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.connectors.ObligationConnector
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.LocalDate

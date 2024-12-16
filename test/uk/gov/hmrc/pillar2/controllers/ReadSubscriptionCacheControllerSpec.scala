@@ -27,7 +27,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
-import uk.gov.hmrc.pillar2.controllers.auth.{AuthAction, FakeAuthAction}
+import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 

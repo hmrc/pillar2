@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.controllers.auth
+package uk.gov.hmrc.pillar2.controllers.actions
 
 import com.google.inject.{ImplementedBy, Inject}
 import play.api.http.Status.UNAUTHORIZED

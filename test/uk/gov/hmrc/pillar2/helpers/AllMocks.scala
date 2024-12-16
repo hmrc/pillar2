@@ -24,7 +24,7 @@ import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.HttpClient
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.connectors._
-import uk.gov.hmrc.pillar2.controllers.auth.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service._
 import uk.gov.hmrc.pillar2.service.audit.AuditService
@@ -47,6 +47,8 @@ trait AllMocks extends MockitoSugar {
   val mockDataSubmissionsService:      RegistrationService         = mock[RegistrationService]
   val mockSubscriptionConnector:       SubscriptionConnector       = mock[SubscriptionConnector]
   val mockSubscriptionService:         SubscriptionService         = mock[SubscriptionService]
+  val mockUKTaxReturnService:          UKTaxReturnService          = mock[UKTaxReturnService]
+  val mockUKTaxReturnConnector:        UKTaxReturnConnector        = mock[UKTaxReturnConnector]
   val mockRepaymentService:            RepaymentService            = mock[RepaymentService]
   val mockCountryOptions:              CountryOptions              = mock[CountryOptions]
   val mockAuditService:                AuditService                = mock[AuditService]
@@ -55,6 +57,8 @@ trait AllMocks extends MockitoSugar {
   val mockFinancialDataConnector:      FinancialDataConnector      = mock[FinancialDataConnector]
   val mockFinancialService:            FinancialService            = mock[FinancialService]
   val mockObligationConnector:         ObligationConnector         = mock[ObligationConnector]
+  val mockBTNService:                  BTNService                  = mock[BTNService]
+  val mockBTNConnector:                BTNConnector                = mock[BTNConnector]
 
   @nowarn
   override protected def beforeEach(): Unit =
