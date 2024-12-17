@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2
 
+import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.errors._
@@ -24,9 +25,10 @@ import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-package object service {
+package object service extends Logging {
 
-  private[service] def convertToApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
+  private[service] def convertToApiResult(response: HttpResponse): Future[ApiSuccessResponse] = {
+    logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
       case 201 =>
         // we're using try because HttpResponse.json is not a pure function and can throw an exception
@@ -42,8 +44,10 @@ package object service {
           case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
-      case _ =>
+      case status =>
+        logger.error(s"Received invalid status from downstream: $status with error body: ${response.json}")
         Future.failed(ApiInternalServerError)
     }
+  }
 
 }

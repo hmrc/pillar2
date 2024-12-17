@@ -60,7 +60,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
   "UKTaxReturnController" - {
     "submitUKTaxReturn" - {
-      "should return OK with ApiSuccessResponse when submission is successful" in {
+      "should return Created with ApiSuccessResponse when submission is successful" in {
         forAll(arbitrary[UktrSubmission]) { submission =>
           when(mockUKTaxReturnService.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
             .thenReturn(Future.successful(successResponse))
@@ -71,8 +71,8 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
           val result = route(application, request).value
 
-          status(result) mustEqual OK
-          contentAsJson(result) mustEqual Json.toJson(successResponse)
+          status(result) mustEqual CREATED
+          contentAsJson(result) mustEqual Json.toJson(successResponse.success)
         }
       }
 
