@@ -19,10 +19,12 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.service.BTNService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
@@ -37,8 +39,9 @@ class BTNController @Inject() (
     with Logging {
 
   def submitBtn: Action[BTNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[BTNRequest]) { implicit request =>
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request).withExtraHeaders("X-Pillar2-Id" -> request.pillar2Id)
     btnService
-      .sendBtn(request.body, request.pillar2Id)
-      .map(response => Ok(Json.toJson(response)))
+      .sendBtn(request.body, request.pillar2Id)(hc)
+      .map(response => Created(Json.toJson(response.success)))
   }
 }
