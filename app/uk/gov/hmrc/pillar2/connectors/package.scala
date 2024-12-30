@@ -28,16 +28,19 @@ package object connectors {
   implicit val httpReads: HttpReads[HttpResponse] =
     (_: String, _: String, response: HttpResponse) => response
 
-  private[connectors] def hipHeaders(pillar2Id: String, config: AppConfig, serviceName: String)(implicit
-    headerCarrier:                              HeaderCarrier
+  private[connectors] def hipHeaders(config: AppConfig, serviceName: String)(implicit
+    headerCarrier:                           HeaderCarrier
   ): Seq[(String, String)] = {
     val authHeader = headerCarrier
       .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
 
     Seq(
-      "correlationid"         -> UUID.randomUUID().toString,
-      "X-Originating-System"  -> "MDTP",
-      "X-Pillar2-Id"          -> pillar2Id,
+      "correlationid"        -> UUID.randomUUID().toString,
+      "X-Originating-System" -> "MDTP",
+      "X-Pillar2-Id" ->
+        headerCarrier.extraHeaders
+          .collectFirst { case (key, value) if key.equals("X-Pillar2-Id") => value }
+          .getOrElse(""),
       "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
       "X-Transmitting-System" -> "HIP"
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))
@@ -53,7 +56,7 @@ package object connectors {
     newHeaders.headers(Seq(HeaderNames.authorisation)) ++ addHeaders(config.environment(serviceName))
   }
 
-  val stripSession: String => String = (input: String) => input.replace("session-", "")
+  private val stripSession: String => String = (input: String) => input.replace("session-", "")
 
   private def addHeaders(
     eisEnvironment:         String
