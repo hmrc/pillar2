@@ -29,8 +29,7 @@ class UKTaxReturnConnector @Inject() (
 )(implicit ec: ExecutionContext) {
 
   def submitUKTaxReturn(
-    payload:     UktrSubmission,
-    pillar2Id:   String
+    payload:     UktrSubmission
   )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
@@ -39,7 +38,7 @@ class UKTaxReturnConnector @Inject() (
       .POST[UktrSubmission, HttpResponse](
         url,
         payload,
-        hipHeaders(pillar2Id = pillar2Id, config = config, serviceName = serviceName)
+        hipHeaders(config = config, serviceName = serviceName)
       )
   }
 }

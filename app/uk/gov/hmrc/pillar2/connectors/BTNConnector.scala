@@ -26,14 +26,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class BTNConnector @Inject() (val config: AppConfig, val http: HttpClient)(implicit ec: ExecutionContext) extends Logging {
 
-  def sendBtn(btnRequest: BTNRequest, plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "below-threshold-notification"
     val url         = config.baseUrl(serviceName)
     logger.info(s"Calling $url to submit a BTN")
     http.POST[BTNRequest, HttpResponse](
       url,
       btnRequest,
-      hipHeaders(pillar2Id = plrReference, config = config, serviceName = serviceName)
+      hipHeaders(config = config, serviceName = serviceName)
     )
   }
 }

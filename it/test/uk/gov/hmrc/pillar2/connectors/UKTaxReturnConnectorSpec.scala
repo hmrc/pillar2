@@ -17,15 +17,15 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, ReturnType, UktrSubmissionNilReturn}
-import java.time.LocalDate
-import org.scalatest.concurrent.IntegrationPatience
 
+import java.time.LocalDate
 
 class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
 
@@ -49,11 +49,10 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
     )
   )
 
-  private val pillar2Id = "XMPLR0000000012"
   private val etmpUrl = "/RESTAdapter/PLR/UKTaxReturn"
 
   "UKTaxReturnConnector" - {
-    "successfully submit UK tax return and receive success response" in {
+    "successfully submit UK tax return with X-PILLAR2-Id and receive success response" in {
       val successResponse = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-14T09:26:17Z",
@@ -74,10 +73,15 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload)(hcWithPillar2Id).futureValue
 
       result.status mustBe CREATED
       result.json mustBe successResponse
+      server.verify(
+        postRequestedFor(urlEqualTo(etmpUrl))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
+      )
     }
 
     "handle BAD_REQUEST (400) response" in {
@@ -101,7 +105,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload)(hcWithPillar2Id).futureValue
       result.status mustBe BAD_REQUEST
       result.json mustBe errorResponse
     }
@@ -127,7 +131,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload)(hcWithPillar2Id).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
       result.json mustBe errorResponse
     }
@@ -153,7 +157,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           )
       )
 
-      val result = connector.submitUKTaxReturn(submissionPayload, pillar2Id).futureValue
+      val result = connector.submitUKTaxReturn(submissionPayload)(hcWithPillar2Id).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe errorResponse
     }

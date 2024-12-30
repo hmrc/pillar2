@@ -51,10 +51,12 @@ trait BaseSpec
     with OptionValues
     with Configs
     with Status
-    with WireMockServerHandler {
+    with WireMockServerHandler
+    with UKTaxReturnDataFixture {
 
   implicit lazy val ec:           ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit lazy val hc:           HeaderCarrier    = HeaderCarrier()
+  lazy val hcWithPillar2Id:       HeaderCarrier    = hc.withExtraHeaders("X-Pillar2-Id" -> pillar2Id)
   implicit lazy val system:       ActorSystem      = ActorSystem()
   implicit lazy val materializer: Materializer     = Materializer(system)
   val contentType:                (String, String) = "Content-Type" -> "application/json"

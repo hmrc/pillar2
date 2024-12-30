@@ -39,9 +39,12 @@ class BTNController @Inject() (
     with Logging {
 
   def submitBtn: Action[BTNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[BTNRequest]) { implicit request =>
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request).withExtraHeaders("X-Pillar2-Id" -> request.pillar2Id)
+    implicit val hc: HeaderCarrier = HeaderCarrierConverter
+      .fromRequest(request)
+      .withExtraHeaders("X-Pillar2-Id" -> request.pillar2Id)
+
     btnService
-      .sendBtn(request.body, request.pillar2Id)(hc)
+      .sendBtn(request.body)
       .map(response => Created(Json.toJson(response.success)))
   }
 }

@@ -29,8 +29,8 @@ class BTNService @Inject() (
   btnConnector: BTNConnector
 )(implicit ec:  ExecutionContext) {
 
-  def sendBtn(btnRequest: BTNRequest, pillar2Id: String)(implicit hc: HeaderCarrier): Future[ApiSuccessResponse] =
+  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier): Future[ApiSuccessResponse] =
     btnConnector
-      .sendBtn(btnRequest, pillar2Id)
+      .sendBtn(btnRequest)
       .flatMap(convertToApiResult)
 }

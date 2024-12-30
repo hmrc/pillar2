@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -38,15 +39,26 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
 
   "UKTaxReturnService" - {
     "submitUKTaxReturn" - {
-      "should return ApiSuccessResponse for successful submission (201)" in {
-        val successResponse = ApiSuccessResponse(ApiSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345", "12345678"))
-        val httpResponse    = HttpResponse(201, Json.toJson(successResponse).toString())
+      "forward the X-Pillar2-Id header" in {
+        val captor = ArgumentCaptor.forClass(classOf[HeaderCarrier])
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
-          .thenReturn(Future.successful(httpResponse))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(captor.capture()))
+          .thenReturn(Future.successful(httpCreated))
 
         forAll(arbitrary[UktrSubmission]) { submission =>
-          val result = service.submitUKTaxReturn(submission, "XMPLR0000000012").futureValue
+          val result = service.submitUKTaxReturn(submission)(hcWithPillar2Id).futureValue
+          result mustBe successResponse
+          captor.getValue.extraHeaders.map(_._1) must contain("X-Pillar2-Id")
+          captor.getValue.extraHeaders.map(_._2).head mustEqual pillar2Id
+        }
+      }
+
+      "should return ApiSuccessResponse for successful submission (201)" in {
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
+          .thenReturn(Future.successful(httpCreated))
+
+        forAll(arbitrary[UktrSubmission]) { submission =>
+          val result = service.submitUKTaxReturn(submission)(hcWithPillar2Id).futureValue
           result mustBe successResponse
         }
       }
@@ -55,12 +67,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
         val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UktrSubmission]) { submission =>
           val error = intercept[ETMPValidationError] {
-            await(service.submitUKTaxReturn(submission, "XMPLR0000000012"))
+            await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
           }
           error.code mustBe "422"
           error.message mustBe "Validation failed"
@@ -70,12 +82,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw InvalidJsonError for malformed success response" in {
         val httpResponse = HttpResponse(201, "{invalid json}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UktrSubmission]) { submission =>
           val error = intercept[InvalidJsonError] {
-            await(service.submitUKTaxReturn(submission, "XMPLR0000000012"))
+            await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
           }
           error.code mustBe "002"
         }
@@ -84,12 +96,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw ApiInternalServerError for non-201/422 responses" in {
         val httpResponse = HttpResponse(500, "{}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission], any[String])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UktrSubmission]) { submission =>
           intercept[ApiInternalServerError.type] {
-            await(service.submitUKTaxReturn(submission, "XMPLR0000000012"))
+            await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
           }
         }
       }
