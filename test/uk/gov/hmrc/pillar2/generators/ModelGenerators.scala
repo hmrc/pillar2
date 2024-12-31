@@ -25,9 +25,9 @@ import uk.gov.hmrc.pillar2.models.grs._
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityData
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityNilReturn
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.ReturnType
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionData
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmissionNilReturn
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmissionData
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmissionNilReturn
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
@@ -1119,17 +1119,17 @@ trait ModelGenerators {
 
   }
 
-  implicit val arbitraryUktrSubmission: Arbitrary[UktrSubmission] = Arbitrary {
+  implicit val arbitraryUktrSubmission: Arbitrary[UKTRSubmission] = Arbitrary {
     Gen.oneOf(arbitraryUktrSubmissionNilReturn.arbitrary, arbitraryUktrSubmissionData.arbitrary)
   }
 
-  implicit val arbitraryUktrSubmissionNilReturn: Arbitrary[UktrSubmissionNilReturn] = Arbitrary {
+  implicit val arbitraryUktrSubmissionNilReturn: Arbitrary[UKTRSubmissionNilReturn] = Arbitrary {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
       obligationMTT        <- arbitrary[Boolean]
       electionUKGAAP       <- arbitrary[Boolean]
       liabilities          <- arbitrary[LiabilityNilReturn]
-    } yield UktrSubmissionNilReturn(
+    } yield UKTRSubmissionNilReturn(
       accountingPeriodFrom = accountingPeriodFrom,
       accountingPeriodTo = accountingPeriodFrom.plusYears(1),
       obligationMTT = obligationMTT,
@@ -1138,13 +1138,13 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUktrSubmissionData: Arbitrary[UktrSubmissionData] = Arbitrary {
+  implicit val arbitraryUktrSubmissionData: Arbitrary[UKTRSubmissionData] = Arbitrary {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
       obligationMTT        <- arbitrary[Boolean]
       electionUKGAAP       <- arbitrary[Boolean]
       liabilities          <- arbitrary[LiabilityData]
-    } yield UktrSubmissionData(
+    } yield UKTRSubmissionData(
       accountingPeriodFrom = accountingPeriodFrom,
       accountingPeriodTo = accountingPeriodFrom.plusYears(1),
       obligationMTT = obligationMTT,

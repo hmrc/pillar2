@@ -16,8 +16,10 @@
 
 package uk.gov.hmrc.pillar2
 
+import play.api.i18n.Lang.logger
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -39,8 +41,11 @@ package object connectors {
       "X-Originating-System" -> "MDTP",
       "X-Pillar2-Id" ->
         headerCarrier.extraHeaders
-          .collectFirst { case (key, value) if key.equals("X-Pillar2-Id") => value }
-          .getOrElse(""),
+          .collectFirst { case ("X-Pillar2-Id", value) => value }
+          .getOrElse {
+            logger.warn("Connector missing a X-Pillar2-Id header")
+            throw MissingHeaderError("X-Pillar2-Id")
+          },
       "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
       "X-Transmitting-System" -> "HIP"
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))

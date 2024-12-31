@@ -23,7 +23,8 @@ import play.api.Application
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, ReturnType, UktrSubmissionNilReturn}
+import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, ReturnType, UKTRSubmissionNilReturn}
 
 import java.time.LocalDate
 
@@ -39,7 +40,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
   private lazy val connector =
     app.injector.instanceOf[UKTaxReturnConnector]
 
-  private val submissionPayload = UktrSubmissionNilReturn(
+  private val submissionPayload = UKTRSubmissionNilReturn(
     accountingPeriodFrom = LocalDate.parse("2024-08-14"),
     accountingPeriodTo = LocalDate.parse("2024-12-14"),
     obligationMTT = true,
@@ -82,6 +83,12 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
       )
+    }
+
+    "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
+      val result = intercept[MissingHeaderError](connector.submitUKTaxReturn(submissionPayload).futureValue)
+
+      result mustEqual MissingHeaderError("X-Pillar2-Id")
     }
 
     "handle BAD_REQUEST (400) response" in {

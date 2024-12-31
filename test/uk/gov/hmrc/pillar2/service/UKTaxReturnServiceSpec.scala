@@ -28,7 +28,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip._
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 
 import java.time.ZonedDateTime
 import scala.concurrent.Future
@@ -42,10 +42,10 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "forward the X-Pillar2-Id header" in {
         val captor = ArgumentCaptor.forClass(classOf[HeaderCarrier])
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(captor.capture()))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(captor.capture()))
           .thenReturn(Future.successful(httpCreated))
 
-        forAll(arbitrary[UktrSubmission]) { submission =>
+        forAll(arbitrary[UKTRSubmission]) { submission =>
           val result = service.submitUKTaxReturn(submission)(hcWithPillar2Id).futureValue
           result mustBe successResponse
           captor.getValue.extraHeaders.map(_._1) must contain("X-Pillar2-Id")
@@ -54,10 +54,10 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       }
 
       "should return ApiSuccessResponse for successful submission (201)" in {
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpCreated))
 
-        forAll(arbitrary[UktrSubmission]) { submission =>
+        forAll(arbitrary[UKTRSubmission]) { submission =>
           val result = service.submitUKTaxReturn(submission)(hcWithPillar2Id).futureValue
           result mustBe successResponse
         }
@@ -67,10 +67,10 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
         val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
-        forAll(arbitrary[UktrSubmission]) { submission =>
+        forAll(arbitrary[UKTRSubmission]) { submission =>
           val error = intercept[ETMPValidationError] {
             await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
           }
@@ -82,10 +82,10 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw InvalidJsonError for malformed success response" in {
         val httpResponse = HttpResponse(201, "{invalid json}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
-        forAll(arbitrary[UktrSubmission]) { submission =>
+        forAll(arbitrary[UKTRSubmission]) { submission =>
           val error = intercept[InvalidJsonError] {
             await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
           }
@@ -96,10 +96,10 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw ApiInternalServerError for non-201/422 responses" in {
         val httpResponse = HttpResponse(500, "{}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UktrSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
           .thenReturn(Future.successful(httpResponse))
 
-        forAll(arbitrary[UktrSubmission]) { submission =>
+        forAll(arbitrary[UKTRSubmission]) { submission =>
           intercept[ApiInternalServerError.type] {
             await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
           }

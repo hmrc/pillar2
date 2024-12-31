@@ -20,7 +20,7 @@ import play.api.libs.json._
 import play.api.mvc._
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
@@ -37,7 +37,7 @@ class UKTaxReturnController @Inject() (
 )(implicit ec:         ExecutionContext)
     extends BackendController(cc) {
 
-  def submitUKTaxReturn(): Action[UktrSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UktrSubmission]) { implicit request =>
+  def submitUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { implicit request =>
     implicit val hc: HeaderCarrier = HeaderCarrierConverter
       .fromRequest(request)
       .withExtraHeaders("X-Pillar2-Id" -> request.pillar2Id)

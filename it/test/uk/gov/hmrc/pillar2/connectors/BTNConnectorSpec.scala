@@ -24,6 +24,7 @@ import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
+import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
 
 import java.time.LocalDate
 
@@ -75,6 +76,12 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(btnPayload).toString()))
       )
+    }
+
+    "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
+      val result = intercept[MissingHeaderError](connector.sendBtn(btnPayload).futureValue)
+
+      result mustEqual MissingHeaderError("X-Pillar2-Id")
     }
 
     "handle BAD_REQUEST (400) response" in {
