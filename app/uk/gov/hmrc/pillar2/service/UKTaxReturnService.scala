@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.service
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.UKTaxReturnConnector
 import uk.gov.hmrc.pillar2.models.hip.ApiSuccessResponse
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UktrSubmission
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -30,7 +30,7 @@ class UKTaxReturnService @Inject() (
 )(implicit ec:          ExecutionContext) {
 
   def submitUKTaxReturn(
-    payload:     UktrSubmission
+    payload:     UKTRSubmission
   )(implicit hc: HeaderCarrier): Future[ApiSuccessResponse] =
     ukTaxReturnConnector
       .submitUKTaxReturn(payload)
