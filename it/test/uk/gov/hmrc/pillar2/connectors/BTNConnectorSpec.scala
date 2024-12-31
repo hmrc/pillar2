@@ -41,8 +41,6 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       accountingPeriodTo = LocalDate.now().plusYears(1)
     )
 
-  private val pillar2Id = "XMPLR0000000012"
-
   private def stubResponseFor(status: Int)(implicit response: JsObject): StubMapping =
     server.stubFor(
       post(urlEqualTo("/RESTAdapter/plr/below-threshold-notification"))
@@ -57,7 +55,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     )
 
   "sendBtn" - {
-    "successfully submit a BTN request and receive Success response" in {
+    "successfully submit a BTN request with X-PILLAR2-Id and receive Success response" in {
       implicit val response: JsObject = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-14T09:26:17Z",
@@ -68,10 +66,15 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(CREATED)
 
-      val result = connector.sendBtn(btnPayload, pillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
 
       result.status mustBe CREATED
       result.json mustBe response
+      server.verify(
+        postRequestedFor(urlEqualTo("/RESTAdapter/plr/below-threshold-notification"))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(btnPayload).toString()))
+      )
     }
 
     "handle BAD_REQUEST (400) response" in {
@@ -85,7 +88,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(BAD_REQUEST)
 
-      val result = connector.sendBtn(btnPayload, pillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe BAD_REQUEST
       result.json mustBe response
     }
@@ -101,7 +104,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(UNPROCESSABLE_ENTITY)
 
-      val result = connector.sendBtn(btnPayload, pillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
       result.json mustBe response
     }
@@ -117,7 +120,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(INTERNAL_SERVER_ERROR)
 
-      val result = connector.sendBtn(btnPayload, pillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
     }

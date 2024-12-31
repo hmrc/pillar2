@@ -33,10 +33,9 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors._
-import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.service.BTNService
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -57,20 +56,12 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     )
 
   private val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.BTNController.submitBtn().url)
-    .withHeaders("X-Pillar2-ID" -> "XMPLR0000000012")
+    .withHeaders("X-Pillar2-ID" -> pillar2Id)
     .withJsonBody(Json.toJson(btnPayload))
 
   "submitBtn" - {
     "should return OK with ApiSuccessResponse when submission is successful" in {
-      val successResponse: ApiSuccessResponse = ApiSuccessResponse(
-        ApiSuccess(
-          processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
-          formBundleNumber = "123456789012345",
-          chargeReference = "12345678"
-        )
-      )
-
-      when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
+      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(successResponse))
 
       val result = route(application, request).value
@@ -99,7 +90,7 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle ValidationError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
+      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
 
       val result = intercept[ETMPValidationError](await(route(application, request).value))
@@ -107,16 +98,14 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle InvalidJsonError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
-        .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
+      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
 
       val result = intercept[InvalidJsonError](await(route(application, request).value))
       result mustEqual InvalidJsonError("Invalid JSON")
     }
 
     "should handle ApiInternalServerError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
-        .thenReturn(Future.failed(ApiInternalServerError))
+      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
 
       val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
       result mustEqual ApiInternalServerError
