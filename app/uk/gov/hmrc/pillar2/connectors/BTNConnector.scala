@@ -25,7 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class BTNConnector @Inject() (val config: AppConfig, val http: HttpClient)(implicit ec: ExecutionContext) {
 
-  def sendBtn(btnRequst: BTNRequest)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendBtn(btnRequst: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "below-threshold-notification"
     http.POST[BTNRequest, HttpResponse](
       config.baseUrl(serviceName),

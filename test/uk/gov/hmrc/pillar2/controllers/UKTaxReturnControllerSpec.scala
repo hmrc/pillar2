@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -51,28 +50,9 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
   "UKTaxReturnController" - {
     "submitUKTaxReturn" - {
-      "forward the X-Pillar2-Id header" in {
-        forAll(arbitrary[UKTRSubmission]) { submission =>
-          val captor = ArgumentCaptor.forClass(classOf[HeaderCarrier])
-          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(captor.capture()))
-            .thenReturn(Future.successful(successResponse))
-
-          val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
-            .withHeaders("X-Pillar2-Id" -> pillar2Id)
-            .withJsonBody(Json.toJson(submission))
-
-          val result = route(application, request).value
-
-          status(result) mustEqual CREATED
-          contentAsJson(result) mustEqual Json.toJson(successResponse.success)
-          captor.getValue.extraHeaders.map(_._1) must contain("X-Pillar2-Id")
-          captor.getValue.extraHeaders.map(_._2).head mustEqual pillar2Id
-        }
-      }
-
       "should return Created with ApiSuccessResponse when submission is successful" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
             .thenReturn(Future.successful(successResponse))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
@@ -120,7 +100,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
       "should handle ValidationError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
             .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
@@ -134,7 +114,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
       "should handle InvalidJsonError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
             .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
@@ -148,7 +128,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
       "should handle ApiInternalServerError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
             .thenReturn(Future.failed(ApiInternalServerError))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)

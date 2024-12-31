@@ -16,10 +16,8 @@
 
 package uk.gov.hmrc.pillar2
 
-import play.api.i18n.Lang.logger
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
 
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -31,21 +29,16 @@ package object connectors {
     (_: String, _: String, response: HttpResponse) => response
 
   private[connectors] def hipHeaders(config: AppConfig, serviceName: String)(implicit
-    headerCarrier:                           HeaderCarrier
+    headerCarrier:                           HeaderCarrier,
+    pillar2Id:                               String
   ): Seq[(String, String)] = {
     val authHeader = headerCarrier
       .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
 
     Seq(
-      "correlationid"        -> UUID.randomUUID().toString,
-      "X-Originating-System" -> "MDTP",
-      "X-Pillar2-Id" ->
-        headerCarrier.extraHeaders
-          .collectFirst { case ("X-Pillar2-Id", value) => value }
-          .getOrElse {
-            logger.warn("Connector missing a X-Pillar2-Id header")
-            throw MissingHeaderError("X-Pillar2-Id")
-          },
+      "correlationid"         -> UUID.randomUUID().toString,
+      "X-Originating-System"  -> "MDTP",
+      "X-Pillar2-Id"          -> pillar2Id,
       "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
       "X-Transmitting-System" -> "HIP"
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))
