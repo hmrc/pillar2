@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalacheck.Arbitrary.arbitrary
@@ -39,26 +38,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
 
   "UKTaxReturnService" - {
     "submitUKTaxReturn" - {
-      "forward the X-Pillar2-Id header" in {
-        val captor = ArgumentCaptor.forClass(classOf[HeaderCarrier])
-
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(captor.capture()))
-          .thenReturn(Future.successful(httpCreated))
-
-        forAll(arbitrary[UKTRSubmission]) { submission =>
-          val result = service.submitUKTaxReturn(submission)(hcWithPillar2Id).futureValue
-          result mustBe successResponse
-          captor.getValue.extraHeaders.map(_._1) must contain("X-Pillar2-Id")
-          captor.getValue.extraHeaders.map(_._2).head mustEqual pillar2Id
-        }
-      }
-
       "should return ApiSuccessResponse for successful submission (201)" in {
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpCreated))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          val result = service.submitUKTaxReturn(submission)(hcWithPillar2Id).futureValue
+          val result = service.submitUKTaxReturn(submission).futureValue
           result mustBe successResponse
         }
       }
@@ -67,12 +52,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
         val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
           val error = intercept[ETMPValidationError] {
-            await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
+            await(service.submitUKTaxReturn(submission))
           }
           error.code mustBe "422"
           error.message mustBe "Validation failed"
@@ -82,12 +67,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw InvalidJsonError for malformed success response" in {
         val httpResponse = HttpResponse(201, "{invalid json}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
           val error = intercept[InvalidJsonError] {
-            await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
+            await(service.submitUKTaxReturn(submission))
           }
           error.code mustBe "002"
         }
@@ -96,12 +81,12 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw ApiInternalServerError for non-201/422 responses" in {
         val httpResponse = HttpResponse(500, "{}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
           intercept[ApiInternalServerError.type] {
-            await(service.submitUKTaxReturn(submission)(hcWithPillar2Id))
+            await(service.submitUKTaxReturn(submission))
           }
         }
       }

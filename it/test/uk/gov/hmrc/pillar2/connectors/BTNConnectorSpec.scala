@@ -24,7 +24,6 @@ import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
-import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
 
 import java.time.LocalDate
 
@@ -67,7 +66,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(CREATED)
 
-      val result = connector.sendBtn(btnPayload)(hcWithPillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
 
       result.status mustBe CREATED
       result.json mustBe response
@@ -76,12 +75,6 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(btnPayload).toString()))
       )
-    }
-
-    "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
-      val result = intercept[MissingHeaderError](connector.sendBtn(btnPayload).futureValue)
-
-      result mustEqual MissingHeaderError("X-Pillar2-Id")
     }
 
     "handle BAD_REQUEST (400) response" in {
@@ -95,7 +88,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(BAD_REQUEST)
 
-      val result = connector.sendBtn(btnPayload)(hcWithPillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe BAD_REQUEST
       result.json mustBe response
     }
@@ -111,7 +104,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(UNPROCESSABLE_ENTITY)
 
-      val result = connector.sendBtn(btnPayload)(hcWithPillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
       result.json mustBe response
     }
@@ -127,7 +120,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(INTERNAL_SERVER_ERROR)
 
-      val result = connector.sendBtn(btnPayload)(hcWithPillar2Id).futureValue
+      val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
     }

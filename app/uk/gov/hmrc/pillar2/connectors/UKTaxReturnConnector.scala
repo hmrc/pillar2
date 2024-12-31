@@ -30,7 +30,7 @@ class UKTaxReturnConnector @Inject() (
 
   def submitUKTaxReturn(
     payload:     UKTRSubmission
-  )(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
 
