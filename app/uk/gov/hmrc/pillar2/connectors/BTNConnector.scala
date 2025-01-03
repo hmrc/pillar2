@@ -17,19 +17,22 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
+import play.api.Logging
 import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BTNConnector @Inject() (val config: AppConfig, val http: HttpClient)(implicit ec: ExecutionContext) {
+class BTNConnector @Inject() (val config: AppConfig, val http: HttpClient)(implicit ec: ExecutionContext) extends Logging {
 
-  def sendBtn(btnRequst: BTNRequest, plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendBtn(btnRequest: BTNRequest, plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "below-threshold-notification"
+    val url         = config.baseUrl(serviceName)
+    logger.info(s"Calling $url to submit a BTN")
     http.POST[BTNRequest, HttpResponse](
-      config.baseUrl(serviceName),
-      btnRequst,
+      url,
+      btnRequest,
       hipHeaders(pillar2Id = plrReference, config = config, serviceName = serviceName)
     )
   }

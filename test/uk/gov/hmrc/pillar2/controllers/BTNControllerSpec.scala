@@ -61,7 +61,7 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     .withJsonBody(Json.toJson(btnPayload))
 
   "submitBtn" - {
-    "should return OK with ApiSuccessResponse when submission is successful" in {
+    "should return Created with ApiSuccessResponse when submission is successful" in {
       val successResponse: ApiSuccessResponse = ApiSuccessResponse(
         ApiSuccess(
           processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
@@ -75,8 +75,8 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
       val result = route(application, request).value
 
-      status(result) mustEqual OK
-      contentAsJson(result) mustEqual Json.toJson(successResponse)
+      status(result) mustEqual CREATED
+      contentAsJson(result) mustEqual Json.toJson(successResponse.success)
     }
 
     "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
