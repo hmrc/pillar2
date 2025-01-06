@@ -18,8 +18,9 @@ package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
 import play.api.Logging
-import play.api.libs.json.Writes
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import play.api.libs.json.{Json, Writes}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
@@ -28,7 +29,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class RepaymentConnector @Inject() (implicit
   ec:         ExecutionContext,
   val config: AppConfig,
-  val http:   HttpClient
+  val http:   HttpClientV2
 ) extends Logging {
 
   def sendRepaymentDetails(
@@ -37,11 +38,10 @@ class RepaymentConnector @Inject() (implicit
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
     implicit val writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
-    http.POST[RepaymentRequestDetail, HttpResponse](
-      url,
-      repaymentRequest,
-      extraHeaders(config, serviceName)
-    )(writes, httpReads, hc, ec)
+    http
+      .post(url"$url")
+      .setHeader(extraHeaders(config, serviceName): _*)
+      .withBody(Json.toJson(repaymentRequest))
+      .execute[HttpResponse]
   }
-
 }
