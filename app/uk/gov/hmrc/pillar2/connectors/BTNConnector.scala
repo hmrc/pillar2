@@ -17,10 +17,11 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
+import play.api.Logging
 import play.api.libs.json.Json
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 
@@ -35,9 +36,6 @@ class BTNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
     http
       .post(url"$url")
       .withBody(Json.toJson(btnRequest))
-      .post(url"config.baseUrl(below-threshold-notification)")
-      .post(url"${config.baseUrl("below-threshold-notification")}")
-      .withBody(Json.toJson(btnRequst))
       .setHeader(hipHeaders(pillar2Id = plrReference, config = config, serviceName = serviceName): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
