@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.apache.commons.lang3.RandomUtils
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
@@ -34,6 +33,7 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 
 import java.time.Instant
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random.nextBytes
 
 class RegistrationCacheControllerSpec extends BaseSpec {
   trait Setup {
@@ -66,7 +66,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
     "return 413 when request is not right" in new Setup {
       when(mockRegistrationCacheRepository.upsert(any[String](), any[JsValue]())(any[ExecutionContext]())) thenReturn Future.successful((): Unit)
       val request: FakeRequest[AnyContentAsRaw] =
-        FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
+        FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(nextBytes(512001)))
       val result: Future[Result] = route(application, request).value
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
@@ -75,7 +75,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       when(mockRegistrationCacheRepository.upsert(any[String](), any[JsValue]())(any[ExecutionContext]())) thenReturn Future.failed(new Exception(""))
 
       val request: FakeRequest[AnyContentAsRaw] =
-        FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
+        FakeRequest(POST, routes.RegistrationCacheController.save("id").url).withRawBody(ByteString(nextBytes(512001)))
       val result: Future[Result] = route(application, request).value
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
