@@ -25,7 +25,6 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.financial.FinancialDataResponse
 import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
 
-import java.net.URLEncoder
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,16 +44,10 @@ class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: H
       "includeLocks"               -> "false",
       "calculateAccruedInterest"   -> "true",
       "customerPaymentInformation" -> "true"
-    )
-    def encode(params: Seq[(String, String)]): String =
-      params
-        .map { case (key, value) =>
-          s"${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
-        }
-        .mkString("&")
-    val queryString = encode(queryParams)
+    ).map { case (key, value) => s"$key=$value" }.mkString("&")
+    val url = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR?$queryParams"
     httpClient
-      .get(url"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR$queryString")
+      .get(url"$url")
       .setHeader(extraHeaders(config, serviceName): _*)
       .execute[HttpResponse]
       .flatMap { response =>
