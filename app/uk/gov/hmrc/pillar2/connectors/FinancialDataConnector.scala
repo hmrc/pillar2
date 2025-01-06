@@ -20,11 +20,10 @@ import com.google.inject.Inject
 import play.api.Logger
 import play.api.http.Status.OK
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.financial.FinancialDataResponse
 import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
-import uk.gov.hmrc.http.StringContextOps
 
 import java.net.URLEncoder
 import java.time.LocalDate
@@ -32,7 +31,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
   implicit val logger: Logger = Logger(this.getClass.getName)
-  private val headers: Seq[(String, String)] = Seq("Content-Type" -> "application/json")
+  Seq("Content-Type" -> "application/json")
 
   def retrieveFinancialData(idNumber: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     hc:                               HeaderCarrier,
@@ -40,22 +39,23 @@ class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: H
   ): Future[FinancialDataResponse] = {
     val serviceName = "financial-data"
     val queryParams = Seq(
-              "dateFrom"                   -> dateFrom.toString,
-              "dateTo"                     -> dateTo.toString,
-              "onlyOpenItems"              -> "false",
-              "includeLocks"               -> "false",
-              "calculateAccruedInterest"   -> "true",
-              "customerPaymentInformation" -> "true"
+      "dateFrom"                   -> dateFrom.toString,
+      "dateTo"                     -> dateTo.toString,
+      "onlyOpenItems"              -> "false",
+      "includeLocks"               -> "false",
+      "calculateAccruedInterest"   -> "true",
+      "customerPaymentInformation" -> "true"
     )
-    def encode(params: Seq[(String, String)]): String = {
-      params.map {
-        case (key, value) => s"${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
-      }.mkString("&")
-    }
+    def encode(params: Seq[(String, String)]): String =
+      params
+        .map { case (key, value) =>
+          s"${URLEncoder.encode(key, "UTF-8")}=${URLEncoder.encode(value, "UTF-8")}"
+        }
+        .mkString("&")
     val queryString = encode(queryParams)
     httpClient
       .get(url"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR$queryString")
-      .setHeader(headers :+ (extraHeaders(config, serviceName)): _*)
+      .setHeader(extraHeaders(config, serviceName): _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
