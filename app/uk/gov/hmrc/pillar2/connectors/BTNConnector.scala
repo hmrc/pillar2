@@ -36,6 +36,7 @@ class BTNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
       .post(url"$url")
       .withBody(Json.toJson(btnRequest))
       .post(url"config.baseUrl(below-threshold-notification)")
+      .post(url"${config.baseUrl("below-threshold-notification")}")
       .withBody(Json.toJson(btnRequst))
       .setHeader(hipHeaders(pillar2Id = plrReference, config = config, serviceName = serviceName): _*)
       .execute[HttpResponse]

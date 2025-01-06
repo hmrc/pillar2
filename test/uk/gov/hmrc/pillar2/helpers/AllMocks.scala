@@ -21,7 +21,7 @@ import org.mockito.Mockito
 import org.scalatest.BeforeAndAfterEach
 import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
-import uk.gov.hmrc.http.HttpClient
+import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.connectors._
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
@@ -41,7 +41,7 @@ trait AllMocks extends MockitoSugar {
   val mockAuthConnector:               AuthConnector               = mock[AuthConnector]
   val mockAppConfig:                   AppConfig                   = mock[AppConfig]
   val mockRegistrationCacheRepository: RegistrationCacheRepository = mock[RegistrationCacheRepository]
-  val mockHttpClient:                  HttpClient                  = mock[HttpClient]
+  val mockHttpClient:                  HttpClientV2                = mock[HttpClientV2]
   val mockDataSubmissionsConnector:    RegistrationConnector       = mock[RegistrationConnector]
   val mockRepaymentConnector:          RepaymentConnector          = mock[RepaymentConnector]
   val mockDataSubmissionsService:      RegistrationService         = mock[RegistrationService]
