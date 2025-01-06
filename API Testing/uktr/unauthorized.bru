@@ -1,0 +1,34 @@
+meta {
+  name: Submit UKTR - Unauthorized
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/submit-uk-tax-return
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Pillar2-Id: {{testPlrId}}
+}
+
+body:json {
+  {
+    "accountingPeriodFrom": "2024-08-14",
+    "accountingPeriodTo": "2024-12-14",
+    "obligationMTT": true,
+    "electionUKGAAP": true,
+    "liabilities": {
+      "totalLiability": 10000.99
+    }
+  }
+}
+
+tests {
+  test("should return 401 when no auth token provided", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+} 
