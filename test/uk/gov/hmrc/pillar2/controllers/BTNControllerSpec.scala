@@ -30,15 +30,16 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.helpers.{BaseSpec, UKTaxReturnDataFixture}
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors._
+import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.service.BTNService
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.Future
 
-class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with UKTaxReturnDataFixture {
 
   val application: Application = new GuiceApplicationBuilder()
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
@@ -60,9 +61,6 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     .withJsonBody(Json.toJson(btnPayload))
 
   "submitBtn" - {
-    "should return OK with ApiSuccessResponse when submission is successful" in {
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier]))
     "should return Created with ApiSuccessResponse when submission is successful" in {
       val successResponse: ApiSuccessResponse = ApiSuccessResponse(
         ApiSuccess(
@@ -72,8 +70,7 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         )
       )
 
-      when(mockBTNService.sendBtn(any[BTNRequest], any[String])(any[HeaderCarrier]))
-        .thenReturn(Future.successful(successResponse))
+      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
 
       val result = route(application, request).value
 
