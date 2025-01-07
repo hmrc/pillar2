@@ -51,7 +51,8 @@ trait BaseSpec
     with OptionValues
     with Configs
     with Status
-    with WireMockServerHandler {
+    with WireMockServerHandler
+    with UKTaxReturnDataFixture {
 
   implicit lazy val ec:           ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
   implicit lazy val hc:           HeaderCarrier    = HeaderCarrier()

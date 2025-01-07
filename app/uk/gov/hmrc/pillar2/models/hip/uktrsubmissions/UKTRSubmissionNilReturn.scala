@@ -20,14 +20,14 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.LocalDate
 
-case class UktrSubmissionData(
+case class UKTRSubmissionNilReturn(
   accountingPeriodFrom: LocalDate,
   accountingPeriodTo:   LocalDate,
   obligationMTT:        Boolean,
   electionUKGAAP:       Boolean,
-  liabilities:          LiabilityData
-) extends UktrSubmission
+  liabilities:          LiabilityNilReturn
+) extends UKTRSubmission
 
-object UktrSubmissionData {
-  implicit val uktrSubmissionDataFormat: OFormat[UktrSubmissionData] = Json.format[UktrSubmissionData]
+object UKTRSubmissionNilReturn {
+  implicit val uktrSubmissionNilReturnFormat: OFormat[UKTRSubmissionNilReturn] = Json.format[UKTRSubmissionNilReturn]
 }

@@ -28,8 +28,9 @@ package object connectors {
   implicit val httpReads: HttpReads[HttpResponse] =
     (_: String, _: String, response: HttpResponse) => response
 
-  private[connectors] def hipHeaders(pillar2Id: String, config: AppConfig, serviceName: String)(implicit
-    headerCarrier:                              HeaderCarrier
+  private[connectors] def hipHeaders(config: AppConfig, serviceName: String)(implicit
+    headerCarrier:                           HeaderCarrier,
+    pillar2Id:                               String
   ): Seq[(String, String)] = {
     val authHeader = headerCarrier
       .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
@@ -53,7 +54,7 @@ package object connectors {
     newHeaders.headers(Seq(HeaderNames.authorisation)) ++ addHeaders(config.environment(serviceName))
   }
 
-  val stripSession: String => String = (input: String) => input.replace("session-", "")
+  private val stripSession: String => String = (input: String) => input.replace("session-", "")
 
   private def addHeaders(
     eisEnvironment:         String
