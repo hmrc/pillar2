@@ -1,0 +1,36 @@
+meta {
+  name: Submit Below Threshold Notification
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/below-threshold-notification/submit
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Pillar2-Id: {{testPlrId}}
+  Authorization: {{bearerToken}}
+}
+
+body:json {
+  {
+    "accountingPeriodFrom": "2024-01-01",
+    "accountingPeriodTo": "2024-12-31"
+  }
+}
+
+tests {
+  test("should return 201 Created", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+  
+  test("should contain all required fields", function() {
+    expect(res.body.chargeReference).to.not.be.undefined;
+    expect(res.body.formBundleNumber).to.not.be.undefined;
+    expect(res.body.processingDate).to.not.be.undefined;
+  });
+}
