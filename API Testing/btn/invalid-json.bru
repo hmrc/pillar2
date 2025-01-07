@@ -31,6 +31,6 @@ tests {
   
   test("should contain error about invalid JSON", function() {
     expect(res.body.code).to.equal("400");
-    expect(res.body.message).to.include("Invalid Json");
+    expect(res.body.message).to.include("Json validation error");
   });
 } 
