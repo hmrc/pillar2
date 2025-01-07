@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.apache.commons.lang3.RandomUtils
 import org.apache.pekko.util.ByteString
 import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
@@ -32,6 +31,7 @@ import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Random.nextBytes
 
 class ReadSubscriptionCacheControllerSpec extends BaseSpec {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
@@ -63,7 +63,7 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
 
     "throw exception when mongo is down" in new Setup {
 
-      val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withRawBody(ByteString(RandomUtils.nextBytes(512001)))
+      val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withRawBody(ByteString(nextBytes(512001)))
       val result  = route(application, request).value
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE

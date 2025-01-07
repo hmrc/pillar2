@@ -19,7 +19,8 @@ package uk.gov.hmrc.pillar2.connectors
 import com.google.inject.Inject
 import play.api.Logger
 import play.api.http.Status.OK
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient, HttpResponse}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.financial.FinancialDataResponse
 import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
@@ -27,33 +28,33 @@ import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorRespons
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
-class FinancialDataConnector @Inject() (val config: AppConfig, val http: HttpClient) {
+class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
   implicit val logger: Logger = Logger(this.getClass.getName)
+  Seq("Content-Type" -> "application/json")
 
   def retrieveFinancialData(idNumber: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     hc:                               HeaderCarrier,
     ec:                               ExecutionContext
   ): Future[FinancialDataResponse] = {
     val serviceName = "financial-data"
-    http
-      .GET[HttpResponse](
-        url = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR",
-        queryParams = Seq(
-          "dateFrom"                   -> dateFrom.toString,
-          "dateTo"                     -> dateTo.toString,
-          "onlyOpenItems"              -> "false",
-          "includeLocks"               -> "false",
-          "calculateAccruedInterest"   -> "true",
-          "customerPaymentInformation" -> "true"
-        ),
-        headers = extraHeaders(config, serviceName)
-      )(httpReads, hc, ec)
+    val queryParams = Seq(
+      "dateFrom"                   -> dateFrom.toString,
+      "dateTo"                     -> dateTo.toString,
+      "onlyOpenItems"              -> "false",
+      "includeLocks"               -> "false",
+      "calculateAccruedInterest"   -> "true",
+      "customerPaymentInformation" -> "true"
+    ).map { case (key, value) => s"$key=$value" }.mkString("&")
+    val url = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR?$queryParams"
+    httpClient
+      .get(url"$url")
+      .setHeader(extraHeaders(config, serviceName): _*)
+      .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
           case OK => Future successful response.json.as[FinancialDataResponse]
           case _  => Future failed response.json.asOpt[FinancialDataError].getOrElse(response.json.as[FinancialDataErrorResponses])
         }
       }
-
   }
 }
