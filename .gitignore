@@ -35,3 +35,4 @@ tmp
 .idea_modules
 bin
 .vscode/
+project/metals.sbt

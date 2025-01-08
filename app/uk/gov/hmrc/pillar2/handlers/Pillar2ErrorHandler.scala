@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.handlers
 
+import play.api.Logging
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -26,7 +27,7 @@ import javax.inject.Singleton
 import scala.concurrent.Future
 
 @Singleton
-class Pillar2ErrorHandler extends HttpErrorHandler {
+class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
     Future.successful(
@@ -36,13 +37,16 @@ class Pillar2ErrorHandler extends HttpErrorHandler {
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
     exception match {
       case e: Pillar2Error =>
-        e match {
-          case error: MissingHeaderError  => Future.successful(BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message))))
-          case error: ETMPValidationError => Future.successful(UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message))))
-          case error: InvalidJsonError    => Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message))))
-          case error @ ApiInternalServerError => Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message))))
+        val ret = e match {
+          case error: MissingHeaderError  => BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message)))
+          case error: ETMPValidationError => UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message)))
+          case error: InvalidJsonError    => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
+          case error @ ApiInternalServerError => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
         }
+        logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} statuscode", exception)
+        Future.successful(ret)
       case _ =>
+        logger.warn(s"Caught unhandled exception. Returning InternalServerError", exception)
         Future.successful(InternalServerError(Json.toJson(Pillar2ApiError("006", "An unexpected error occurred"))))
     }
 }
