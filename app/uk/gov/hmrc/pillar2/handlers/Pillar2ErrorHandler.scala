@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.handlers
 
+import play.api.Logging
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
 import play.api.mvc.Results._
@@ -24,7 +25,6 @@ import uk.gov.hmrc.pillar2.models.errors._
 
 import javax.inject.Singleton
 import scala.concurrent.Future
-import play.api.Logging
 
 @Singleton
 class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
