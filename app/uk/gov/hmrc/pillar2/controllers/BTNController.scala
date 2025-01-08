@@ -37,8 +37,9 @@ class BTNController @Inject() (
     with Logging {
 
   def submitBtn: Action[BTNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[BTNRequest]) { implicit request =>
+    implicit val pillar2Id: String = request.pillar2Id
     btnService
-      .sendBtn(request.body, request.pillar2Id)
-      .map(response => Ok(Json.toJson(response)))
+      .sendBtn(request.body)
+      .map(response => Created(Json.toJson(response.success)))
   }
 }

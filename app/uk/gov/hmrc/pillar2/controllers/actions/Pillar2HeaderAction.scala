@@ -34,7 +34,7 @@ class Pillar2HeaderAction @Inject() (implicit val executionContext: ExecutionCon
       case Some(pillar2Id) =>
         Future.successful(Pillar2Request(pillar2Id, request))
       case None =>
-        logger.warn("Missing X-Pillar2-Id header in request")
+        logger.error("Missing X-Pillar2-Id header in request")
         Future.failed(MissingHeaderError("X-Pillar2-Id"))
     }
 }

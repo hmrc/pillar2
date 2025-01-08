@@ -20,7 +20,7 @@ import play.api.libs.json._
 
 import java.time.LocalDate
 
-trait UktrSubmission {
+trait UKTRSubmission {
   val accountingPeriodFrom: LocalDate
   val accountingPeriodTo:   LocalDate
   val obligationMTT:        Boolean
@@ -28,19 +28,19 @@ trait UktrSubmission {
   val liabilities:          Liability
 }
 
-object UktrSubmission {
-  implicit val uktrSubmissionReads: Reads[UktrSubmission] = (json: JsValue) =>
+object UKTRSubmission {
+  implicit val uktrSubmissionReads: Reads[UKTRSubmission] = (json: JsValue) =>
     if ((json \ "liabilities" \ "returnType").isEmpty) {
-      json.validate[UktrSubmissionData]
+      json.validate[UKTRSubmissionData]
     } else {
-      json.validate[UktrSubmissionNilReturn]
+      json.validate[UKTRSubmissionNilReturn]
     }
 
-  implicit val uktrSubmissionWrites: Writes[UktrSubmission] = new Writes[UktrSubmission] {
-    def writes(submission: UktrSubmission): JsValue = submission match {
-      case data:      UktrSubmissionData      => Json.toJson(data)(Json.writes[UktrSubmissionData])
-      case nilReturn: UktrSubmissionNilReturn => Json.toJson(nilReturn)(Json.writes[UktrSubmissionNilReturn])
-      case _ => throw new IllegalArgumentException("Unknown UktrSubmission type")
+  implicit val uktrSubmissionWrites: Writes[UKTRSubmission] = new Writes[UKTRSubmission] {
+    def writes(submission: UKTRSubmission): JsValue = submission match {
+      case data:      UKTRSubmissionData      => Json.toJson(data)(Json.writes[UKTRSubmissionData])
+      case nilReturn: UKTRSubmissionNilReturn => Json.toJson(nilReturn)(Json.writes[UKTRSubmissionNilReturn])
+      case _ => throw new IllegalArgumentException("Unknown UKTRSubmission type")
     }
   }
 }

@@ -19,14 +19,15 @@ package uk.gov.hmrc.pillar2.connectors
 import com.google.inject.Inject
 import play.api.Logger
 import uk.gov.hmrc.http.HttpReads.Implicits._
-import uk.gov.hmrc.http.{HeaderCarrier, HttpClient}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.obligation.ObligationInformation
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
-class ObligationConnector @Inject() (val config: AppConfig, val http: HttpClient) {
+class ObligationConnector @Inject() (val config: AppConfig, val http: HttpClientV2) {
   implicit val logger: Logger = Logger(this.getClass.getName)
 
   def getObligations(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
@@ -35,9 +36,9 @@ class ObligationConnector @Inject() (val config: AppConfig, val http: HttpClient
   ): Future[ObligationInformation] = {
     val serviceName = "get-obligation"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference/${dateFrom.toString}/${dateTo.toString}"
-
     http
-      .GET[ObligationInformation](url, headers = extraHeaders(config, serviceName))
+      .get(url"$url")
+      .setHeader(extraHeaders(config, serviceName): _*)
+      .execute[ObligationInformation]
   }
-
 }
