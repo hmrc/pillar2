@@ -31,3 +31,5 @@ GET           /get-obligation/:plrReference/:dateFrom/:dateTo              uk.go
 POST          /below-threshold-notification/submit                         uk.gov.hmrc.pillar2.controllers.BTNController.submitBtn()
 
 POST          /submit-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.submitUKTaxReturn()
+
+PUT           /amend-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.amendUKTaxReturn()

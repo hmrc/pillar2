@@ -35,4 +35,11 @@ class UKTaxReturnService @Inject() (
     ukTaxReturnConnector
       .submitUKTaxReturn(payload)
       .flatMap(convertToApiResult)
+
+  def amendUKTaxReturn(
+    payload:     UKTRSubmission
+  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[ApiSuccessResponse] =
+    ukTaxReturnConnector
+      .amendUKTaxReturn(payload)
+      .flatMap(convertToApiResult)
 }

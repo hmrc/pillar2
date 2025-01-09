@@ -41,4 +41,11 @@ class UKTaxReturnController @Inject() (
       .submitUKTaxReturn(request.body)
       .map(response => Created(Json.toJson(response.success)))
   }
+
+  def amendUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { implicit request =>
+    implicit val pillar2Id: String = request.pillar2Id
+    ukTaxReturnService
+      .amendUKTaxReturn(request.body)
+      .map(response => Ok(Json.toJson(response.success)))
+  }
 }

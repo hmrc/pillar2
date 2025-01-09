@@ -30,7 +30,7 @@ package object service extends Logging {
   private[service] def convertToApiResult(response: HttpResponse): Future[ApiSuccessResponse] = {
     logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
-      case 201 =>
+      case 200 | 201 =>
         // we're using try because HttpResponse.json is not a pure function and can throw an exception
         Try(response.json.validate[ApiSuccessResponse]) match {
           case Success(JsSuccess(success, _)) => Future.successful(success)
