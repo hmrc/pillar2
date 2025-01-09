@@ -32,7 +32,8 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
   override lazy val app: Application =
     applicationBuilder()
       .configure(
-        "microservice.services.submit-uk-tax-return.port" -> server.port()
+        "microservice.services.submit-uk-tax-return.port" -> server.port(),
+        "microservice.services.amend-uk-tax-return.port" -> server.port()
       )
       .build()
 
