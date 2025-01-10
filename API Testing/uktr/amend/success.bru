@@ -1,11 +1,11 @@
 meta {
-  name: Submit UK Tax Return - Happy Path
+  name: Amend UK Tax Return - Success
   type: http
   seq: 1
 }
 
-post {
-  url: {{baseUrl}}/submit-uk-tax-return
+put {
+  url: {{baseUrl}}/amend-uk-tax-return
   body: json
   auth: none
 }
@@ -46,8 +46,8 @@ body:json {
 }
 
 tests {
-  test("should return 201 Created", function() {
-    expect(res.getStatus()).to.equal(201);
+  test("should return 200 OK", function() {
+    expect(res.getStatus()).to.equal(200);
   });
   
   test("should contain all required fields", function() {
