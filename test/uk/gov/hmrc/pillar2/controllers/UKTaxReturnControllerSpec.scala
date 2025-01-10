@@ -152,7 +152,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
             .withJsonBody(Json.toJson(submission))
 
           val result = route(application, request).value
-          status(result) mustEqual CREATED
+          status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(successResponse.success)
         }
       }
