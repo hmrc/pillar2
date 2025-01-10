@@ -52,9 +52,26 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
 
   private val etmpUKTRUrl = "/RESTAdapter/PLR/UKTaxReturn"
 
+  private def verifyHipHeaders(method: String, expectedBody: String): Unit = {
+    val requestBuilder = method match {
+      case "POST" => postRequestedFor(urlEqualTo(etmpUKTRUrl))
+      case "PUT"  => putRequestedFor(urlEqualTo(etmpUKTRUrl))
+    }
+
+    server.verify(
+      requestBuilder
+        .withHeader("correlationid", matching("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+        .withHeader("X-Originating-System", equalTo("MDTP"))
+        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+        .withHeader("X-Receipt-Date", matching("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z"))
+        .withHeader("X-Transmitting-System", equalTo("HIP"))
+        .withRequestBody(equalToJson(expectedBody))
+    )
+  }
+
   "UKTaxReturnConnector" - {
     "submit UK tax return" - {
-      "successfully submit UK tax return with X-PILLAR2-Id and receive success response" in {
+      "successfully submit UK tax return with all required HIP headers" in {
         val successResponse = Json.obj(
           "success" -> Json.obj(
             "processingDate"   -> "2024-03-14T09:26:17Z",
@@ -65,8 +82,6 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
 
         server.stubFor(
           post(urlEqualTo(etmpUKTRUrl))
-            .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-            .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
             .willReturn(
               aResponse()
                 .withStatus(CREATED)
@@ -79,11 +94,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
 
         result.status mustBe CREATED
         result.json mustBe successResponse
-        server.verify(
-          postRequestedFor(urlEqualTo(etmpUKTRUrl))
-            .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-            .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
-        )
+        verifyHipHeaders("POST", Json.toJson(submissionPayload).toString())
       }
 
       "handle BAD_REQUEST (400) response" in {
@@ -166,7 +177,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
     }
 
     "amend UK tax return" - {
-      "successfully amend UK tax return with X-PILLAR2-Id and receive success response" in {
+      "successfully amend UK tax return with all required HIP headers" in {
         val successResponse = Json.obj(
           "success" -> Json.obj(
             "processingDate"   -> "2024-03-14T09:26:17Z",
@@ -177,8 +188,6 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
 
         server.stubFor(
           put(urlEqualTo(etmpUKTRUrl))
-            .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-            .withRequestBody(equalToJson(Json.toJson(submissionPayload).toString()))
             .willReturn(
               aResponse()
                 .withStatus(OK)
@@ -190,6 +199,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
         val result = connector.amendUKTaxReturn(submissionPayload).futureValue
         result.status mustBe OK
         result.json mustBe successResponse
+        verifyHipHeaders("PUT", Json.toJson(submissionPayload).toString())
       }
 
       "handle BAD_REQUEST (400) response" in {
