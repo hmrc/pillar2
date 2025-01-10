@@ -140,5 +140,93 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
     }
+
+    "amendUKTaxReturn" - {
+      "should return Created with ApiSuccessResponse when submission is successful" in {
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+            .thenReturn(Future.successful(successResponse))
+
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = route(application, request).value
+          status(result) mustEqual CREATED
+          contentAsJson(result) mustEqual Json.toJson(successResponse.success)
+        }
+      }
+
+      "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[MissingHeaderError](await(route(application, request).value))
+          result mustEqual MissingHeaderError("X-Pillar2-Id")
+        }
+      }
+
+      "should return UNAUTHORIZED when authentication fails" in {
+        val unauthorizedApp = new GuiceApplicationBuilder()
+          .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
+          .overrides(
+            bind[UKTaxReturnService].toInstance(mockUKTaxReturnService)
+          )
+          .build()
+
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = route(unauthorizedApp, request).value
+          status(result) mustEqual UNAUTHORIZED
+        }
+      }
+
+      "should handle ValidationError from service" in {
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+            .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[ETMPValidationError](await(route(application, request).value))
+          result mustEqual ETMPValidationError("422", "Validation failed")
+        }
+      }
+
+      "should handle InvalidJsonError from service" in {
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+            .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
+
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[InvalidJsonError](await(route(application, request).value))
+          result mustEqual InvalidJsonError("Invalid JSON")
+        }
+      }
+
+      "should handle ApiInternalServerError from service" in {
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+            .thenReturn(Future.failed(ApiInternalServerError))
+
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
+          result mustEqual ApiInternalServerError
+        }
+      }
+
+    }
   }
 }

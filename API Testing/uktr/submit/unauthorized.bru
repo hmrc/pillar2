@@ -1,7 +1,7 @@
 meta {
-  name: Submit UK Tax Return - Missing Header
+  name: Submit UK Tax Return - Unauthorized
   type: http
-  seq: 4
+  seq: 3
 }
 
 post {
@@ -12,7 +12,7 @@ post {
 
 headers {
   Content-Type: application/json
-  Authorization: {{bearerToken}}
+  X-Pillar2-Id: {{testPlrId}}
 }
 
 body:json {
@@ -45,9 +45,7 @@ body:json {
 }
 
 tests {
-  test("should return 400 when X-Pillar2-Id header is missing", function() {
-    const response = res;
-    expect(response.status).to.equal(400);
-    expect(response.body.message).to.include("X-Pillar2-Id");
+  test("should return 401 when no auth token provided", function() {
+    expect(res.getStatus()).to.equal(401);
   });
-}
+} 

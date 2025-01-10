@@ -1,0 +1,40 @@
+meta {
+  name: Submit UK Tax Return - Invalid JSON
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/submit-uk-tax-return
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  X-Pillar2-Id: {{testPlrId}}
+  Authorization: {{bearerToken}}
+}
+
+body:json {
+  {
+    "accountingPeriodFrom": "2024-08-14",
+    "accountingPeriodTo": "2024-12-14",
+    "obligationMTT": true
+    invalid_json_here
+    "liabilities": {
+      "totalLiability": 10000.99
+    }
+  }
+}
+
+tests {
+  test("should return 400 for Json validation error", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+  
+  test("should contain error about Json validation error", function() {
+    expect(res.body.code).to.equal("400");
+    expect(res.body.message).to.include("Json validation error");
+  });
+} 

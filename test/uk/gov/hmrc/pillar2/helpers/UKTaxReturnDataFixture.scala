@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.helpers
 
-import play.api.http.Status.CREATED
+import play.api.http.Status.{CREATED, OK}
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse}
@@ -34,5 +34,6 @@ trait UKTaxReturnDataFixture {
     )
   )
   val httpCreated: HttpResponse = HttpResponse(CREATED, Json.toJson(successResponse).toString())
+  val httpOk:      HttpResponse = HttpResponse(OK, Json.toJson(successResponse).toString())
 
 }
