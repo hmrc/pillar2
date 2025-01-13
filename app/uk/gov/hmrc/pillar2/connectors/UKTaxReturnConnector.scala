@@ -42,4 +42,17 @@ class UKTaxReturnConnector @Inject() (
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
   }
+
+  def amendUKTaxReturn(
+    payload:     UKTRSubmission
+  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+    val serviceName = "amend-uk-tax-return"
+    val url         = s"${config.baseUrl(serviceName)}"
+
+    http
+      .put(url"$url")
+      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .withBody(Json.toJson(payload))
+      .execute[HttpResponse]
+  }
 }

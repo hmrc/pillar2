@@ -1,12 +1,12 @@
 meta {
-  name: Submit UKTR - Invalid JSON
+  name: Amend UK Tax Return - Invalid JSON
   type: http
-  seq: 7
+  seq: 2
 }
 
-post {
-  url: {{baseUrl}}/submit-uk-tax-return
-  body: jsom
+put {
+  url: {{baseUrl}}/amend-uk-tax-return
+  body: json
   auth: none
 }
 
@@ -29,12 +29,12 @@ body:json {
 }
 
 tests {
-  test("should return 400 for invalid JSON", function() {
+  test("should return 400 for Json validation error", function() {
     expect(res.getStatus()).to.equal(400);
   });
   
-  test("should contain error about invalid JSON", function() {
+  test("should contain error about Json validation error", function() {
     expect(res.body.code).to.equal("400");
-    expect(res.body.message).to.include("Invalid Json");
+    expect(res.body.message).to.include("Json validation error");
   });
 } 
