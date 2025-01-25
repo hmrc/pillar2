@@ -31,9 +31,8 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, UKTaxReturnDataFixture}
-import uk.gov.hmrc.pillar2.models.btn.BTNRequest
+import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessResponse}
 import uk.gov.hmrc.pillar2.models.errors._
-import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.service.BTNService
 
 import java.time.{LocalDate, ZonedDateTime}
@@ -62,12 +61,8 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
   "submitBtn" - {
     "should return Created with ApiSuccessResponse when submission is successful" in {
-      val successResponse: ApiSuccessResponse = ApiSuccessResponse(
-        ApiSuccess(
-          processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
-          formBundleNumber = "123456789012345",
-          chargeReference = "12345678"
-        )
+      val successResponse: BTNSuccessResponse = BTNSuccessResponse(
+        BTNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"))
       )
 
       when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))

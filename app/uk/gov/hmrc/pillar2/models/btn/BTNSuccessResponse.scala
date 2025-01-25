@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.models.btn
 
-import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.connectors.BTNConnector
-import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccessResponse}
+import play.api.libs.json.{Json, OFormat}
 
-import javax.inject.{Inject, Singleton}
-import scala.concurrent.{ExecutionContext, Future}
+case class BTNSuccessResponse(success: BTNSuccess)
 
-@Singleton
-class BTNService @Inject() (
-  btnConnector: BTNConnector
-)(implicit ec:  ExecutionContext) {
-
-  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[BTNSuccessResponse] =
-    btnConnector
-      .sendBtn(btnRequest)
-      .flatMap(convertToBTNApiResult)
+object BTNSuccessResponse {
+  implicit val format: OFormat[BTNSuccessResponse] = Json.format[BTNSuccessResponse]
 }
