@@ -32,4 +32,6 @@ POST          /below-threshold-notification/submit                         uk.go
 
 POST          /submit-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.submitUKTaxReturn()
 
-PUT           /amend-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.amendUKTaxReturn()
+PUT           /amend-uk-tax-return                                         uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.amendUKTaxReturn()
+
+GET           /obligations-and-submissions/:plrReference                   uk.gov.hmrc.pillar2.controllers.ObligationsAndSubmissionsController.getObligationsAndSubmissions(plrReference: String)
