@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import org.scalacheck.Gen
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -23,15 +24,67 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status}
 import uk.gov.hmrc.pillar2.handlers.Pillar2ErrorHandler
-import uk.gov.hmrc.pillar2.models.errors.{ObligationsAndSubmissionsError, Pillar2ApiError}
+import uk.gov.hmrc.pillar2.models.errors._
 
 class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks {
 
   val classUnderTest = new Pillar2ErrorHandler
   val dummyRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
 
-  test("Internal server error") {
-    val response = classUnderTest.onServerError(dummyRequest, ObligationsAndSubmissionsError("500", "Internal server error"))
+  test("client errors should be returned") {
+    val validStatus = Gen.choose(400, 499)
+    val messageGen  = Gen.alphaStr
+    forAll(validStatus, messageGen) { (statusCode, message) =>
+      val result = classUnderTest.onClientError(dummyRequest, statusCode, message)
+      status(result) mustEqual statusCode
+      val response = contentAsJson(result).as[Pillar2ApiError]
+      response.message mustEqual message
+      response.code mustEqual statusCode.toString
+    }
+  }
+
+  test("Catch-all error response") {
+    val response = classUnderTest.onServerError(dummyRequest, new RuntimeException("Generic Error"))
+    status(response) mustEqual 500
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "006"
+    result.message mustEqual "An unexpected error occurred"
+  }
+
+  test("MissingHeaderError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, MissingHeaderError("test"))
+    status(response) mustEqual 400
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "001"
+    result.message mustEqual "Missing test header"
+  }
+
+  test("ETMPValidationError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, ETMPValidationError("test code", "test ETMP validation error"))
+    status(response) mustEqual 422
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "test code"
+    result.message mustEqual "test ETMP validation error"
+  }
+
+  test("InvalidJsonError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, InvalidJsonError("test decode error"))
+    status(response) mustEqual 500
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "002"
+    result.message mustEqual "Invalid JSON payload: test decode error"
+  }
+
+  test("ApiInternalServerError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, ApiInternalServerError)
+    status(response) mustEqual 500
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "003"
+    result.message mustEqual "Internal server error"
+  }
+
+  test("ObligationsAndSubmissionsError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, ObligationsAndSubmissionsError)
     status(response) mustEqual 500
     val result = contentAsJson(response).as[Pillar2ApiError]
     result.code mustEqual "500"

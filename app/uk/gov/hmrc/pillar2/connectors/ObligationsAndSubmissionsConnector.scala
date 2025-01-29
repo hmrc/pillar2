@@ -33,7 +33,8 @@ class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val h
     ec:                                          ExecutionContext
   ): Future[ObligationsAndSubmissionsResponse] = {
     val serviceName = "obligations-and-submissions"
-    val url         = s"${config.baseUrl(serviceName)}/$plrReference" //TODO: Add query params for start and end date? Where does plrReference fit in?
+    val url =
+      s"${config.baseUrl(serviceName)}/$plrReference" //TODO: Add query params in url (e.g ?01-01-2023&?01-31-12-2024) for start and end date? Pass plr through implicitly?
     httpClient
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName): _*)
@@ -42,7 +43,7 @@ class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val h
         response.status match {
           case OK => Future successful response.json.as[ObligationsAndSubmissionsResponse]
           case _ =>
-            Future failed response.json.as[ObligationsAndSubmissionsError]
+            Future.failed(ObligationsAndSubmissionsError)
         }
       }
   }

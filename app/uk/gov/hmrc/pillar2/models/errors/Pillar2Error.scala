@@ -16,8 +16,6 @@
 
 package uk.gov.hmrc.pillar2.models.errors
 
-import play.api.libs.json.{Json, OFormat}
-
 sealed trait Pillar2Error extends Exception {
   val message: String
   val code:    String
@@ -44,11 +42,7 @@ case class ETMPValidationError(validationErrorCode: String, validationError: Str
   val message: String = validationError
 }
 
-case class ObligationsAndSubmissionsError(errorCode: String, reason: String) extends Pillar2Error {
+case object ObligationsAndSubmissionsError extends Pillar2Error {
   val message: String = "Internal server error"
   val code:    String = "500"
-}
-
-object ObligationsAndSubmissionsError {
-  implicit val formatException: OFormat[ObligationsAndSubmissionsError] = Json.format[ObligationsAndSubmissionsError]
 }
