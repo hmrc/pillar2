@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2
 import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess}
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
 import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 
@@ -46,6 +47,28 @@ package object service extends Logging {
         }
       case status =>
         logger.error(s"Received invalid status from downstream: $status with error body: ${response.json}")
+        Future.failed(ApiInternalServerError)
+    }
+  }
+
+  private[service] def convertToBTNApiResult(response: HttpResponse): Future[BTNSuccessResponse] = {
+    logger.info(s"Converting to BTN API result with status ${response.status}")
+    response.status match {
+      case 201 =>
+        Try(response.json.validate[BTNSuccessResponse]) match {
+          case Success(JsSuccess(success, _)) => Future.successful(success)
+          case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
+          case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case 422 =>
+        Try(response.json.validate[ApiFailureResponse]) match {
+          case Success(JsSuccess(apiFailure, _)) =>
+            Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text))
+          case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
+          case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case status =>
+        logger.error(s"Received invalid BTN Submit status from downstream: $status with error body: ${response.json}")
         Future.failed(ApiInternalServerError)
     }
   }
