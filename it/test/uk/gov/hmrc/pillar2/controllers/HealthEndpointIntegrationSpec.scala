@@ -16,33 +16,34 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.scalatest.concurrent.{IntegrationPatience, ScalaFutures}
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.ws.WSClient
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.pillar2.helpers.AuthStubs
+import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
+import uk.gov.hmrc.http.HttpReads.Implicits._
 
-class HealthEndpointIntegrationSpec extends AnyWordSpec with Matchers with ScalaFutures with IntegrationPatience with GuiceOneServerPerSuite {
+import java.net.URI
+import scala.concurrent.ExecutionContext.Implicits.global
 
-  private val wsClient = app.injector.instanceOf[WSClient]
-  private val baseUrl  = s"http://localhost:$port"
+class HealthEndpointIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler with AuthStubs {
 
   override def fakeApplication(): Application =
     GuiceApplicationBuilder()
       .configure("metrics.enabled" -> false)
       .build()
 
-  "service health endpoint" should {
-    "respond with 200 status" in {
-      val response =
-        wsClient
-          .url(s"$baseUrl/ping/ping")
-          .get()
-          .futureValue
-
-      response.status shouldBe 200
-    }
+  test("service health endpoint returns 200") {
+    val url         = URI.create(s"http://localhost:$port/ping/ping").toURL
+    val httpClient  = app.injector.instanceOf[HttpClientV2]
+    implicit val hc = HeaderCarrier()
+    val request     = httpClient.get(url)
+    val result      = await(request.execute[HttpResponse])
+    result.status shouldEqual 200
   }
 }

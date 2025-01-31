@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.helpers
 
 import org.mongodb.scala.bson.BsonDocument
 import org.scalatest.{BeforeAndAfterAll, TestSuite}
-import org.scalatestplus.play.BaseOneAppPerSuite
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.inject.ApplicationLifecycle
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.PlayMongoRepository
@@ -28,7 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration.Inf
 import scala.concurrent.{Await, Future}
 
-trait CleanMongo extends BeforeAndAfterAll { this: TestSuite with BaseOneAppPerSuite =>
+trait CleanMongo extends BeforeAndAfterAll { this: TestSuite with GuiceOneServerPerSuite =>
 
   override protected def beforeAll(): Unit = {
     lazy val repositories: Seq[PlayMongoRepository[_]] = Seq(
