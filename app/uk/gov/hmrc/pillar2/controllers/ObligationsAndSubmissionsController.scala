@@ -19,25 +19,37 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
-import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
+import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsController @Inject() (
   submissionsAndObligationsService: ObligationsAndSubmissionsService,
   authenticate:                     AuthAction,
+  pillar2HeaderExists:              Pillar2HeaderAction,
   cc:                               ControllerComponents
 )(implicit executionContext:        ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def getObligationsAndSubmissions(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
-    submissionsAndObligationsService.getObligationsAndSubmissions(plrReference).map { data =>
-      Ok(Json.toJson(data))
-    }
+  def getObligationsAndSubmissions(fromDate: String, toDate: String): Action[AnyContent] = { authenticate andThen pillar2HeaderExists }.async {
+    implicit request =>
+      implicit val pillar2Id: String = request.pillar2Id
+      try {
+        val from = LocalDate.parse(fromDate)
+        val to   = LocalDate.parse(toDate)
+        submissionsAndObligationsService.getObligationsAndSubmissions(from, to).map { data =>
+          Ok(Json.toJson(data))
+        }
+      } catch {
+        case _: DateTimeParseException =>
+          Future.successful(BadRequest(Json.obj("error" -> "Invalid date format. Expected format: YYYY-MM-DD")))
+      }
   }
 
 }

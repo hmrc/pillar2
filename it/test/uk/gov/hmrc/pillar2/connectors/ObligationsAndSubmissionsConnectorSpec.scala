@@ -16,39 +16,72 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.Json
-import play.api.test.Helpers.await
-import uk.gov.hmrc.pillar2.connectors.FinancialDataConnectorSpec._
+import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{F, O}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.{Obligation, ObligationsAndSubmissionsResponse, Submission}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 
 class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.obligatiobs-and-submissions.port" -> server.port()
+      "microservice.services.obligations-and-submissions.port" -> server.port()
     )
     .build()
 
   lazy val connector: ObligationsAndSubmissionsConnector =
     app.injector.instanceOf[ObligationsAndSubmissionsConnector]
 
-  val url: String =
-    "/RESTAdapter/plr/obligations-and-submissions" //TODO: Where does the PLR ref fit in and do we need to add query params for start and end dates?
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now().plusYears(1)
 
-  "ObligationsAndSubmissionsConnector" - {
+  val url: String =
+    s"/RESTAdapter/plr/obligations-and-submissions/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
+
+  val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
+    processingDate = LocalDateTime.now(),
+    accountingPeriodDetails = Seq(
+      AccountingPeriodDetails(
+        startDate = LocalDate.now(),
+        endDate = LocalDate.now(),
+        dueDate = LocalDate.now(),
+        underEnquiry = false,
+        obligations = Seq(
+          Obligation(
+            obligationType = Pillar2TaxReturn,
+            status = Fulfilled,
+            canAmend = false,
+            submissions = Seq(
+              Submission(
+                submissionType = UKTR,
+                receivedDate = LocalDateTime.now()
+              )
+            )
+          ),
+          Obligation(
+            obligationType = GlobeInformationReturn,
+            status = Open,
+            canAmend = true,
+            submissions = Seq.empty
+          )
+        )
+      )
+    )
+  )
+
     "must return status as OK when obligations and submissions data is returned" in {
       server.stubFor(
         get(urlEqualTo(url))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .willReturn(
             aResponse()
               .withStatus(200)
@@ -56,36 +89,25 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
           )
       )
 
-      val result = await(connector.getObligationsAndSubmissions(PlrReference))
+      val result = connector.getObligationsAndSubmissions(fromDate, toDate).futureValue
+
       result mustBe response
     }
-  }
-}
 
-object ObligationsAndSubmissionsConnectorSpec {
-
-  val PlrReference = "XMPLR0123456789"
-
-  val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    LocalDate.now(),
-    LocalDate.now(),
-    LocalDate.now(),
-    Seq(
-      Obligation(
-        Pillar2TaxReturn,
-        F,
-        Seq(
-          Submission(
-            UKTR,
-            LocalDate.now()
+    "must return status as 500 when obligations and submissions data is not returned" in {
+      server.stubFor(
+        get(urlEqualTo(url))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .willReturn(
+            aResponse()
+              .withStatus(500)
+              .withBody(Json.stringify(Json.obj()))
           )
-        )
-      ),
-      Obligation(
-        GlobeInformationReturn,
-        O,
-        Seq.empty
       )
-    )
-  )
+
+      val result = connector.getObligationsAndSubmissions(fromDate, toDate).failed
+      result.failed.map { ex =>
+        ex mustBe a[InternalServerException]
+      }
+    }
 }

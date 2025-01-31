@@ -20,26 +20,26 @@ import play.api.libs.json._
 
 sealed trait ObligationStatus
 object ObligationStatus {
-  case object F extends ObligationStatus
-  case object O extends ObligationStatus
+  case object Fulfilled extends ObligationStatus
+  case object Open extends ObligationStatus
 
   val values: Seq[ObligationStatus] = Seq(
-    F,
-    O
+    Fulfilled,
+    Open
   )
 
   implicit val format: Format[ObligationStatus] = new Format[ObligationStatus] {
     override def reads(json: JsValue): JsResult[ObligationStatus] =
       json.as[String] match {
-        case "F" => JsSuccess(F)
-        case "O" => JsSuccess(O)
-        case _   => JsError("Invalid obligation status")
+        case "Fulfilled" => JsSuccess(Fulfilled)
+        case "Open"      => JsSuccess(Open)
+        case _           => JsError("Invalid obligation status")
       }
 
     override def writes(ObligationStatus: ObligationStatus): JsValue =
       ObligationStatus match {
-        case F => JsString("F")
-        case O => JsString("O")
+        case Fulfilled => JsString("Fulfilled")
+        case Open      => JsString("Open")
       }
   }
 }

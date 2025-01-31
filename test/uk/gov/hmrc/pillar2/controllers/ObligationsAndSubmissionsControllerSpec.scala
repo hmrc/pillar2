@@ -16,16 +16,32 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import org.mockito.Mockito.reset
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.{reset, when}
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.Json
+import play.api.test.FakeRequest
+import play.api.test.Helpers._
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.ObligationsAndSubmissionsError
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
+
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDate, LocalDateTime, ZonedDateTime}
+import java.util.UUID
+import scala.concurrent.Future
 
 class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   val application: Application = new GuiceApplicationBuilder()
@@ -45,11 +61,115 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
     super.afterEach()
   }
 
+  val fromDate:           LocalDate = LocalDate.now()
+  val toDate:             LocalDate = LocalDate.now().plusYears(1)
+  override val pillar2Id: String    = "XMPLR0123456789"
+  val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
+    LocalDateTime.now(),
+    Seq(
+      AccountingPeriodDetails(
+        LocalDate.now(),
+        LocalDate.now(),
+        LocalDate.now(),
+        underEnquiry = false,
+        Seq(
+          Obligation(
+            Pillar2TaxReturn,
+            Fulfilled,
+            canAmend = false,
+            Seq(
+              Submission(
+                UKTR,
+                LocalDateTime.now()
+              )
+            )
+          ),
+          Obligation(
+            GlobeInformationReturn,
+            Open,
+            canAmend = true,
+            Seq.empty
+          )
+        )
+      )
+    )
+  )
+
   "ObligationsAndSubmissionsController" - {
 
-//    "should return OK with obligations and submissions when data is found for plrReference" in {
-//        ??? //TODO: How do we specify plrReference as the only query params seem to be date related
-//    }
+    "should return OK with obligations and submissions when data is found for pillar2Id" in {
+
+      when(
+        mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+          any[HeaderCarrier],
+          ArgumentMatchers.eq(pillar2Id)
+        )
+      )
+        .thenReturn(Future.successful(response))
+
+      val request =
+        FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url)
+          .withHeaders(
+            "correlationid"         -> UUID.randomUUID().toString,
+            "X-Transmitting-System" -> "HIP",
+            "X-Originating-System"  -> "MDTP",
+            "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
+            "X-Pillar2-ID"          -> pillar2Id
+          )
+
+      val result = route(application, request).value
+
+      status(result) mustEqual OK
+      contentAsJson(result) mustEqual Json.toJson(response)
+    }
+
+    "should return BadRequest when an invalid date format is provided" in {
+
+      val invalidFromDate = "2025-13-01"
+      val invalidToDate   = "not a date"
+
+      val request = FakeRequest(
+        GET,
+        routes.ObligationsAndSubmissionsController
+          .getObligationsAndSubmissions(invalidFromDate, invalidToDate)
+          .url
+      )
+        .withHeaders(
+          "correlationid"         -> UUID.randomUUID().toString,
+          "X-Transmitting-System" -> "HIP",
+          "X-Originating-System"  -> "MDTP",
+          "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
+          "X-Pillar2-ID"          -> pillar2Id
+        )
+
+      val result = route(application, request).value
+
+      status(result) mustEqual BAD_REQUEST
+      contentAsJson(result) mustEqual Json.obj("error" -> "Invalid date format. Expected format: YYYY-MM-DD")
+    }
+
+    "should handle ObligationsAndSubmissionsError from service" in {
+      when(
+        mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+          any[HeaderCarrier],
+          ArgumentMatchers.eq(pillar2Id)
+        )
+      )
+        .thenReturn(Future.failed(ObligationsAndSubmissionsError))
+
+      val request =
+        FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url)
+          .withHeaders(
+            "correlationid"         -> UUID.randomUUID().toString,
+            "X-Transmitting-System" -> "HIP",
+            "X-Originating-System"  -> "MDTP",
+            "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
+            "X-Pillar2-ID"          -> pillar2Id
+          )
+
+      val result = route(application, request).value.failed.futureValue
+      result mustEqual ObligationsAndSubmissionsError
+    }
   }
 
 }

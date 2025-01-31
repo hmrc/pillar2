@@ -24,20 +24,22 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.errors.ObligationsAndSubmissionsError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
 
-  def getObligationsAndSubmissions(plrReference: String)(implicit
-    hc:                                          HeaderCarrier,
-    ec:                                          ExecutionContext
+  def getObligationsAndSubmissions(fromDate: LocalDate, toDate: LocalDate)(implicit
+    hc:                                      HeaderCarrier,
+    ec:                                      ExecutionContext,
+    pillar2Id:                               String
   ): Future[ObligationsAndSubmissionsResponse] = {
     val serviceName = "obligations-and-submissions"
     val url =
-      s"${config.baseUrl(serviceName)}/$plrReference" //TODO: Add query params in url (e.g ?01-01-2023&?01-31-12-2024) for start and end date? Pass plr through implicitly?
+      s"${config.baseUrl(serviceName)}/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
     httpClient
       .get(url"$url")
-      .setHeader(extraHeaders(config, serviceName): _*)
+      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {

@@ -21,10 +21,11 @@ import play.api.libs.json.{Json, OFormat}
 import java.time.LocalDate
 
 final case class AccountingPeriodDetails(
-  startDate:   LocalDate,
-  endDate:     LocalDate,
-  dueDate:     LocalDate,
-  obligations: Seq[Obligation]
+  startDate:    LocalDate,
+  endDate:      LocalDate,
+  dueDate:      LocalDate,
+  underEnquiry: Boolean,
+  obligations:  Seq[Obligation]
 )
 
 object AccountingPeriodDetails {

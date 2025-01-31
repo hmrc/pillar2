@@ -46,3 +46,8 @@ case object ObligationsAndSubmissionsError extends Pillar2Error {
   val message: String = "Internal server error"
   val code:    String = "500"
 }
+
+case object DateParseError extends Pillar2Error {
+  val message: String = "Bad request. Invalid date format. Expected format: YYYY-MM-DD"
+  val code:    String = "400"
+}

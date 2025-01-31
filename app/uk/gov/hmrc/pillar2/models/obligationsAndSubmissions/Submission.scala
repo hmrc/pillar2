@@ -18,11 +18,11 @@ package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 final case class Submission(
   submissionType: SubmissionType,
-  receivedDate:   LocalDate
+  receivedDate:   LocalDateTime
 )
 
 object Submission {

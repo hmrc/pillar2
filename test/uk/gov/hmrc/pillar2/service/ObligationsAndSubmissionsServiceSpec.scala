@@ -16,12 +16,91 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import org.mockito.ArgumentMatchers
+import org.mockito.ArgumentMatchers.any
+import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.ObligationsAndSubmissionsError
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
+
+import java.time.{LocalDate, LocalDateTime}
+import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-//  private val service = new ObligationsAndSubmissionsService(mockObligationsAndSubmissionsConnector)
+  val service = new ObligationsAndSubmissionsService(mockObligationsAndSubmissionsConnector)
+
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now().plusYears(1)
+  val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
+    LocalDateTime.now(),
+    Seq(
+      AccountingPeriodDetails(
+        LocalDate.now(),
+        LocalDate.now(),
+        LocalDate.now(),
+        underEnquiry = false,
+        Seq(
+          Obligation(
+            Pillar2TaxReturn,
+            Fulfilled,
+            canAmend = false,
+            Seq(
+              Submission(
+                UKTR,
+                LocalDateTime.now
+              )
+            )
+          ),
+          Obligation(
+            GlobeInformationReturn,
+            Open,
+            canAmend = true,
+            Seq.empty
+          )
+        )
+      )
+    )
+  )
+
+  "getObligationsAndSubmissions" - {
+    "should return successful response pillar2Id" in {
+      when(
+        mockObligationsAndSubmissionsConnector
+          .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      )
+        .thenReturn(Future.successful(response))
+
+      val result = service.getObligationsAndSubmissions(fromDate, toDate).futureValue
+      result mustBe response
+    }
+
+    "should throw a ObligationsAndSubmissionsError" in {
+
+      when(
+        mockObligationsAndSubmissionsConnector
+          .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      )
+        .thenReturn(Future.failed(ObligationsAndSubmissionsError))
+
+      val error: Throwable = service.getObligationsAndSubmissions(fromDate, toDate).failed.futureValue
+
+      error mustBe ObligationsAndSubmissionsError
+    }
+  }
 
 }

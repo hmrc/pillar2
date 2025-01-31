@@ -21,6 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.ObligationsAndSubmissionsConnector
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 
+import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -31,8 +32,9 @@ class ObligationsAndSubmissionsService @Inject() (
 ) extends Logging {
 
   def getObligationsAndSubmissions(
-    plrReference: String
-  )(implicit hc:  HeaderCarrier): Future[ObligationsAndSubmissionsResponse] =
+    fromDate:    LocalDate,
+    toDate:      LocalDate
+  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[ObligationsAndSubmissionsResponse] =
     obligationsAndSubmissionsConnector
-      .getObligationsAndSubmissions(plrReference)
+      .getObligationsAndSubmissions(fromDate, toDate)
 }
