@@ -17,23 +17,41 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.scalatest.OptionValues
+import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatestplus.play.guice.GuiceOneServerPerSuite
+import play.api.Application
+import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.pillar2.helpers.{BaseISpec, WireMockConfig, WireMockSupport}
+import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.client.HttpClientV2
+import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
+import uk.gov.hmrc.pillar2.helpers.{AuthStubs, CleanMongo}
 import uk.gov.hmrc.pillar2.repositories.{RegistrationCacheRepository, RegistrationDataEntry}
-import uk.gov.hmrc.pillar2.service.test.TestService
 
+import java.net.URI
 import java.time.Instant
+import scala.concurrent.ExecutionContext.Implicits.global
 
-class RegistrationCacheControllerISpec extends BaseISpec with WireMockSupport with WireMockConfig with OptionValues {
+class RegistrationCacheControllerISpec
+    extends AnyFunSuite
+    with GuiceOneServerPerSuite
+    with WireMockServerHandler
+    with AuthStubs
+    with OptionValues
+    with CleanMongo {
 
-  val testService: TestService = app.injector.instanceOf[TestService]
-  override def beforeEach(): Unit = {
-    super.beforeEach()
-    await(testService.clearAllData)
-  }
+  override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
+    .configure("microservice.services.auth.port" -> wiremockPort)
+    .configure("metrics.enabled" -> false)
+    .build()
 
-  val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
-  val controller:                  RegistrationCacheController = app.injector.instanceOf[RegistrationCacheController]
+  implicit val headerCarrier: HeaderCarrier =
+    HeaderCarrier(authorization = Option(Authorization("bearerToken"))).withExtraHeaders("Content-Type" -> "application/json")
+
   private val userAnswersCache =
     RegistrationDataEntry(
       "id",
@@ -41,51 +59,43 @@ class RegistrationCacheControllerISpec extends BaseISpec with WireMockSupport wi
       Instant.now()
     )
 
-  "save" should {
-    "successfully save data" in {
-      stubAuthenticate()
-      val example = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
-      val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
-          .withHeaders(contentType)
-          .withBody(example)
-      )
-      status(result) shouldBe 200
-      val expectedResult = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
-      example shouldBe expectedResult
-    }
-
+  test("Save data successfully") {
+    val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
+    stubAuthenticate()
+    val example    = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
+    val httpClient = app.injector.instanceOf[HttpClientV2]
+    val url        = routes.RegistrationCacheController.save(userAnswersCache.id).url
+    val request    = httpClient.post(URI.create(s"http://localhost:$port$url").toURL).withBody(example)
+    val result     = await(request.execute[HttpResponse])
+    result.status shouldBe 200
+    val expectedResult = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
+    example shouldBe expectedResult
   }
 
-  "get" should {
-    "successfully get the record" in {
-      stubAuthenticate()
-      val example = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
-      val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
-          .withHeaders(contentType)
-          .withBody(example)
-      )
-      status(result) shouldBe 200
-      val expectedResult = registrationCacheRepository.get(userAnswersCache.id).futureValue.value
-      example shouldBe expectedResult
-    }
-
+  test("Get registration cache") {
+    val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
+    stubAuthenticate()
+    val example    = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
+    await(registrationCacheRepository.upsert(userAnswersCache.id, example))
+    val httpClient = app.injector.instanceOf[HttpClientV2]
+    val url        = routes.RegistrationCacheController.get(userAnswersCache.id)
+    val request    = httpClient.get(URI.create(s"http://localhost:$port$url").toURL).withBody(example)
+    val result     = await(request.execute[HttpResponse])
+    result.status shouldBe 200
+    result.json shouldEqual example
   }
-  "remove" should {
-    "successfully remove the record" in {
-      stubAuthenticate()
-      val example = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
-      val result = callRoute(
-        fakeRequest(routes.RegistrationCacheController.save(userAnswersCache.id))
-          .withHeaders(contentType)
-          .withBody(example)
-      )
-      status(result) shouldBe 200
-      val expectedResult = registrationCacheRepository.remove(userAnswersCache.id).futureValue
-      expectedResult shouldBe true
 
-    }
+  test("Remove item from registration cache") {
+    val registrationCacheRepository: RegistrationCacheRepository = app.injector.instanceOf[RegistrationCacheRepository]
+    stubAuthenticate()
+    val example    = Json.parse(getClass.getResourceAsStream("/data/userAnswers_request.json"))
+    await(registrationCacheRepository.upsert(userAnswersCache.id, example))
+    val httpClient = app.injector.instanceOf[HttpClientV2]
+    val url        = routes.RegistrationCacheController.remove(userAnswersCache.id)
+    val request    = httpClient.delete(URI.create(s"http://localhost:$port$url").toURL)
+    val result     = await(request.execute[HttpResponse])
+    result.status shouldBe 200
+     registrationCacheRepository.get(userAnswersCache.id).futureValue.isEmpty shouldBe true
   }
 
 }

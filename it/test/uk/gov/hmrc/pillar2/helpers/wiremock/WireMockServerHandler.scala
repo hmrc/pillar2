@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,38 +14,33 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.helpers
+package uk.gov.hmrc.pillar2.helpers.wiremock
 
 import com.github.tomakehurst.wiremock.WireMockServer
-import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, Suite}
 
-trait WireMockSupport extends BeforeAndAfterAll with BeforeAndAfterEach {
-  me: Suite =>
+trait WireMockServerHandler extends BeforeAndAfterAll with BeforeAndAfterEach {
+  this: Suite =>
 
-  val mockServerHost: String = "localhost"
-  val mockServerPort: Int    = 1234
-  val mockServerUrl = s"http://$mockServerHost:$mockServerPort"
+  val wiremockPort = 11223
 
-  val mockServer = new WireMockServer(wireMockConfig().port(mockServerPort))
+  protected val server: WireMockServer = new WireMockServer(
+    wireMockConfig.port(wiremockPort)
+  )
 
   override protected def beforeAll(): Unit = {
+    server.start()
     super.beforeAll()
-    WireMock.configureFor("localhost", mockServerPort)
-    mockServer.start()
   }
 
-  override protected def beforeEach(): Unit =
+  override protected def beforeEach(): Unit = {
+    server.resetAll()
     super.beforeEach()
-
-  override protected def afterEach(): Unit = {
-    WireMock.reset()
-    super.afterEach()
   }
 
   override protected def afterAll(): Unit = {
-    mockServer.stop()
     super.afterAll()
+    server.stop()
   }
 }

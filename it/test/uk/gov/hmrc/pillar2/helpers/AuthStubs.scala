@@ -19,14 +19,14 @@ package uk.gov.hmrc.pillar2.helpers
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import play.api.http.Status.OK
-import uk.gov.hmrc.pillar2.helpers.WireMockHelper._
-trait AuthStubs { self: WireMockStubs =>
+import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
+trait AuthStubs { self: WireMockServerHandler =>
   def stubAuthenticate(): StubMapping =
-    stub(
-      post(urlEqualTo("/auth/authorise")),
-      aResponse()
-        .withStatus(OK)
-        .withBody(s"""
+    server.stubFor(
+      post(urlEqualTo("/auth/authorise")).willReturn(
+        aResponse()
+          .withStatus(OK)
+          .withBody(s"""
              |{
              |  "internalId": "id",
              |  "loginTimes": {
@@ -37,6 +37,7 @@ trait AuthStubs { self: WireMockStubs =>
              |  "confidenceLevel": 50
              |}
          """.stripMargin)
+      )
     )
 
 }
