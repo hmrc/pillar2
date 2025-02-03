@@ -114,7 +114,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
             "X-Transmitting-System" -> "HIP",
             "X-Originating-System"  -> "MDTP",
             "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
-            "X-Pillar2-ID"          -> pillar2Id
+            "X-Pillar2-Id"          -> pillar2Id
           )
 
       val result = route(application, request).value
@@ -131,7 +131,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
             "X-Transmitting-System" -> "HIP",
             "X-Originating-System"  -> "MDTP",
             "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
-            "X-Pillar2-ID"          -> pillar2Id
+            "X-Pillar2-Id"          -> pillar2Id
           )
 
       val result = route(application, request).value.failed.futureValue
@@ -154,7 +154,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
             "X-Transmitting-System" -> "HIP",
             "X-Originating-System"  -> "MDTP",
             "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
-            "X-Pillar2-ID"          -> pillar2Id
+            "X-Pillar2-Id"          -> pillar2Id
           )
 
       val result = route(application, request).value.failed.futureValue
