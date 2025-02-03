@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.errors.ObligationsAndSubmissionsError
+import uk.gov.hmrc.pillar2.models.errors.{DateParseError, ObligationsAndSubmissionsError}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
@@ -123,29 +123,19 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
       contentAsJson(result) mustEqual Json.toJson(response)
     }
 
-    "should return BadRequest when an invalid date format is provided" in {
+    "should handle DateParseError from an invalid input date" in {
+      val request =
+        FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions("2025-01-32", "2025-13-13").url)
+          .withHeaders(
+            "correlationid"         -> UUID.randomUUID().toString,
+            "X-Transmitting-System" -> "HIP",
+            "X-Originating-System"  -> "MDTP",
+            "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
+            "X-Pillar2-ID"          -> pillar2Id
+          )
 
-      val invalidFromDate = "2025-13-01"
-      val invalidToDate   = "not a date"
-
-      val request = FakeRequest(
-        GET,
-        routes.ObligationsAndSubmissionsController
-          .getObligationsAndSubmissions(invalidFromDate, invalidToDate)
-          .url
-      )
-        .withHeaders(
-          "correlationid"         -> UUID.randomUUID().toString,
-          "X-Transmitting-System" -> "HIP",
-          "X-Originating-System"  -> "MDTP",
-          "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
-          "X-Pillar2-ID"          -> pillar2Id
-        )
-
-      val result = route(application, request).value
-
-      status(result) mustEqual BAD_REQUEST
-      contentAsJson(result) mustEqual Json.obj("error" -> "Invalid date format. Expected format: YYYY-MM-DD")
+      val result = route(application, request).value.failed.futureValue
+      result mustEqual DateParseError
     }
 
     "should handle ObligationsAndSubmissionsError from service" in {

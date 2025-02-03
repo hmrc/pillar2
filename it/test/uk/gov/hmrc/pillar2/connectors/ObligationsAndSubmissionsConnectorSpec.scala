@@ -48,30 +48,30 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
     s"/RESTAdapter/plr/obligations-and-submissions/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
 
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    processingDate = LocalDateTime.now(),
-    accountingPeriodDetails = Seq(
+    LocalDateTime.now(),
+    Seq(
       AccountingPeriodDetails(
-        startDate = LocalDate.now(),
-        endDate = LocalDate.now(),
-        dueDate = LocalDate.now(),
+        LocalDate.now(),
+        LocalDate.now(),
+        LocalDate.now(),
         underEnquiry = false,
-        obligations = Seq(
+        Seq(
           Obligation(
-            obligationType = Pillar2TaxReturn,
-            status = Fulfilled,
+            Pillar2TaxReturn,
+            Fulfilled,
             canAmend = false,
-            submissions = Seq(
+            Seq(
               Submission(
-                submissionType = UKTR,
-                receivedDate = LocalDateTime.now()
+                UKTR,
+                LocalDateTime.now()
               )
             )
           ),
           Obligation(
-            obligationType = GlobeInformationReturn,
-            status = Open,
+            GlobeInformationReturn,
+            Open,
             canAmend = true,
-            submissions = Seq.empty
+            Seq.empty
           )
         )
       )
