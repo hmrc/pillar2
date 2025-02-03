@@ -24,7 +24,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.btn.BTNRequest
+import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessResponse}
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip._
 
@@ -43,6 +43,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
   "sendBtn" - {
     "should return ApiSuccessResponse for valid btnPayload (201)" in {
+      val successResponse = BTNSuccessResponse(BTNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z")))
       when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpCreated))
 

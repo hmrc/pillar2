@@ -58,9 +58,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     "successfully submit a BTN request with X-PILLAR2-Id and receive Success response" in {
       implicit val response: JsObject = Json.obj(
         "success" -> Json.obj(
-          "processingDate"   -> "2024-03-14T09:26:17Z",
-          "formBundleNumber" -> "123456789012345",
-          "chargeReference"  -> "dummyChargeReference"
+          "processingDate"   -> "2024-03-14T09:26:17Z"
         )
       )
 

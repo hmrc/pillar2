@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.helpers
+package uk.gov.hmrc.pillar2.models.btn
 
-trait WireMockConfig {
-  me: BaseISpec with WireMockSupport =>
+import play.api.libs.json.{Json, OFormat}
 
-  additionalAppConfig ++=
-    setWireMockPort(
-      "eis"
-    )
+import java.time.ZonedDateTime
 
-  private def setWireMockPort(services: String*): Map[String, Any] =
-    services.foldLeft(Map.empty[String, Any]) { case (map, service) =>
-      map + (s"microservice.services.$service.port" -> mockServerPort)
-    }
+case class BTNSuccess(processingDate: ZonedDateTime)
+
+object BTNSuccess {
+  implicit val format: OFormat[BTNSuccess] = Json.format[BTNSuccess]
 }

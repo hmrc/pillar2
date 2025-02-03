@@ -18,8 +18,7 @@ package uk.gov.hmrc.pillar2.service
 
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.BTNConnector
-import uk.gov.hmrc.pillar2.models.btn.BTNRequest
-import uk.gov.hmrc.pillar2.models.hip.ApiSuccessResponse
+import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccessResponse}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -29,8 +28,8 @@ class BTNService @Inject() (
   btnConnector: BTNConnector
 )(implicit ec:  ExecutionContext) {
 
-  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[ApiSuccessResponse] =
+  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[BTNSuccessResponse] =
     btnConnector
       .sendBtn(btnRequest)
-      .flatMap(convertToApiResult)
+      .flatMap(convertToBTNApiResult)
 }
