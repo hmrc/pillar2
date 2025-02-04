@@ -29,7 +29,7 @@ import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{Glob
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -39,7 +39,7 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
   val fromDate: LocalDate = LocalDate.now()
   val toDate:   LocalDate = LocalDate.now().plusYears(1)
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    LocalDateTime.now(),
+    ZonedDateTime.now(),
     Seq(
       AccountingPeriodDetails(
         LocalDate.now(),
@@ -54,7 +54,7 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
             Seq(
               Submission(
                 UKTR,
-                LocalDateTime.now
+                ZonedDateTime.now
               )
             )
           ),

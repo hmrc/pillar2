@@ -16,34 +16,15 @@
 
 package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
-import play.api.libs.json._
+import enumeratum._
 
-sealed trait SubmissionType
-object SubmissionType {
+sealed trait SubmissionType extends EnumEntry
+
+object SubmissionType extends Enum[SubmissionType] with PlayJsonEnum[SubmissionType] {
+
+  val values: IndexedSeq[SubmissionType] = findValues
+
   case object BTN extends SubmissionType
   case object GIR extends SubmissionType
   case object UKTR extends SubmissionType
-
-  val values: Seq[SubmissionType] = Seq(
-    BTN,
-    GIR,
-    UKTR
-  )
-
-  implicit val format: Format[SubmissionType] = new Format[SubmissionType] {
-    override def reads(json: JsValue): JsResult[SubmissionType] =
-      json.as[String] match {
-        case "BTN"  => JsSuccess(BTN)
-        case "GIR"  => JsSuccess(GIR)
-        case "UKTR" => JsSuccess(UKTR)
-        case _      => JsError("Invalid submission type")
-      }
-
-    override def writes(SubmissionType: SubmissionType): JsValue =
-      SubmissionType match {
-        case BTN  => JsString("BTN")
-        case GIR  => JsString("GIR")
-        case UKTR => JsString("UKTR")
-      }
-  }
 }

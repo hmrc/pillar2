@@ -39,7 +39,7 @@ import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 
 import java.time.format.DateTimeFormatter
-import java.time.{LocalDate, LocalDateTime, ZonedDateTime}
+import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import scala.concurrent.Future
 
@@ -65,7 +65,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
   val toDate:             LocalDate = LocalDate.now().plusYears(1)
   override val pillar2Id: String    = "XMPLR0123456789"
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    LocalDateTime.now(),
+    ZonedDateTime.now(),
     Seq(
       AccountingPeriodDetails(
         LocalDate.now(),
@@ -80,7 +80,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
             Seq(
               Submission(
                 UKTR,
-                LocalDateTime.now()
+                ZonedDateTime.now()
               )
             )
           ),

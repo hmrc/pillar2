@@ -16,30 +16,14 @@
 
 package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
-import play.api.libs.json._
+import enumeratum._
 
-sealed trait ObligationStatus
-object ObligationStatus {
+sealed trait ObligationStatus extends EnumEntry
+
+object ObligationStatus extends Enum[ObligationStatus] with PlayJsonEnum[ObligationStatus] {
+
+  val values: IndexedSeq[ObligationStatus] = findValues
+
   case object Fulfilled extends ObligationStatus
   case object Open extends ObligationStatus
-
-  val values: Seq[ObligationStatus] = Seq(
-    Fulfilled,
-    Open
-  )
-
-  implicit val format: Format[ObligationStatus] = new Format[ObligationStatus] {
-    override def reads(json: JsValue): JsResult[ObligationStatus] =
-      json.as[String] match {
-        case "Fulfilled" => JsSuccess(Fulfilled)
-        case "Open"      => JsSuccess(Open)
-        case _           => JsError("Invalid obligation status")
-      }
-
-    override def writes(ObligationStatus: ObligationStatus): JsValue =
-      ObligationStatus match {
-        case Fulfilled => JsString("Fulfilled")
-        case Open      => JsString("Open")
-      }
-  }
 }

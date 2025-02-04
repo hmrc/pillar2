@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.{AccountingPeriodDetails, Obligation, ObligationsAndSubmissionsResponse, Submission}
 
 import java.net.{URI, URL}
-import java.time.{LocalDate, LocalDateTime}
+import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.DurationInt
@@ -49,7 +49,7 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
     .build()
 
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    LocalDateTime.now(),
+    ZonedDateTime.now(),
     Seq(
       AccountingPeriodDetails(
         LocalDate.now(),
@@ -64,7 +64,7 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
             Seq(
               Submission(
                 UKTR,
-                LocalDateTime.now()
+                ZonedDateTime.now()
               )
             )
           ),

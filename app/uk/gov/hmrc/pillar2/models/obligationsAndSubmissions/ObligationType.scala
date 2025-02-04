@@ -16,30 +16,14 @@
 
 package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
-import play.api.libs.json._
+import enumeratum._
 
-sealed trait ObligationType
-object ObligationType {
+sealed trait ObligationType extends EnumEntry
+
+object ObligationType extends Enum[ObligationType] with PlayJsonEnum[ObligationType] {
+
+  val values: IndexedSeq[ObligationType] = findValues
+
   case object Pillar2TaxReturn extends ObligationType
   case object GlobeInformationReturn extends ObligationType
-
-  val values: Seq[ObligationType] = Seq(
-    Pillar2TaxReturn,
-    GlobeInformationReturn
-  )
-
-  implicit val format: Format[ObligationType] = new Format[ObligationType] {
-    override def reads(json: JsValue): JsResult[ObligationType] =
-      json.as[String] match {
-        case "Pillar2TaxReturn"       => JsSuccess(Pillar2TaxReturn)
-        case "GlobeInformationReturn" => JsSuccess(GlobeInformationReturn)
-        case _                        => JsError("Invalid obligation type")
-      }
-
-    override def writes(ObligationType: ObligationType): JsValue =
-      ObligationType match {
-        case Pillar2TaxReturn       => JsString("Pillar2TaxReturn")
-        case GlobeInformationReturn => JsString("GlobeInformationReturn")
-      }
-  }
 }
