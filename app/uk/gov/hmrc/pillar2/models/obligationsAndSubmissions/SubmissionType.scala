@@ -26,5 +26,6 @@ object SubmissionType extends Enum[SubmissionType] with PlayJsonEnum[SubmissionT
 
   case object BTN extends SubmissionType
   case object GIR extends SubmissionType
+  case object ORN extends SubmissionType
   case object UKTR extends SubmissionType
 }
