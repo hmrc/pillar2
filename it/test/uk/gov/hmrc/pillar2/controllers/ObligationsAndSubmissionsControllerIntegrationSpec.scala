@@ -64,7 +64,8 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
             Seq(
               Submission(
                 UKTR,
-                ZonedDateTime.now()
+                ZonedDateTime.now(),
+                None
               )
             )
           ),

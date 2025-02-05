@@ -22,7 +22,8 @@ import java.time.ZonedDateTime
 
 final case class Submission(
   submissionType: SubmissionType,
-  receivedDate:   ZonedDateTime
+  receivedDate:   ZonedDateTime,
+  country:        Option[String]
 )
 
 object Submission {

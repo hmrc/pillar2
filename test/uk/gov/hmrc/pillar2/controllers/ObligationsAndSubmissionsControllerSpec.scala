@@ -34,7 +34,7 @@ import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.{DateParseError, ObligationsAndSubmissionsError}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 
@@ -79,8 +79,9 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
             canAmend = false,
             Seq(
               Submission(
-                UKTR,
-                ZonedDateTime.now()
+                ORN,
+                ZonedDateTime.now(),
+                Some("Country details")
               )
             )
           ),

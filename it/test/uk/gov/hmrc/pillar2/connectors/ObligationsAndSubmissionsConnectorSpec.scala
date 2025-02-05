@@ -25,7 +25,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.BTN
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 
 import java.time.{LocalDate, ZonedDateTime}
@@ -62,8 +62,9 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
             canAmend = false,
             Seq(
               Submission(
-                UKTR,
-                ZonedDateTime.now()
+                BTN,
+                ZonedDateTime.now(),
+                None
               )
             )
           ),

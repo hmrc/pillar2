@@ -54,7 +54,8 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
             Seq(
               Submission(
                 UKTR,
-                ZonedDateTime.now
+                ZonedDateTime.now,
+                None
               )
             )
           ),
