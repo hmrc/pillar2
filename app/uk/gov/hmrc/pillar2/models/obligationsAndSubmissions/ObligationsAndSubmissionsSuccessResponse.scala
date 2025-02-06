@@ -18,10 +18,13 @@ package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
 import play.api.libs.json.{Json, OFormat}
 
-final case class ObligationsAndSubmissionsResponse(
-  success: ObligationsAndSubmissionsSuccessResponse
+import java.time.ZonedDateTime
+
+final case class ObligationsAndSubmissionsSuccessResponse(
+  processingDate:          ZonedDateTime,
+  accountingPeriodDetails: Seq[AccountingPeriodDetails]
 )
 
-object ObligationsAndSubmissionsResponse {
-  implicit val format: OFormat[ObligationsAndSubmissionsResponse] = Json.format[ObligationsAndSubmissionsResponse]
+object ObligationsAndSubmissionsSuccessResponse {
+  implicit val format: OFormat[ObligationsAndSubmissionsSuccessResponse] = Json.format[ObligationsAndSubmissionsSuccessResponse]
 }

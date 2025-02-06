@@ -65,31 +65,33 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
   val toDate:             LocalDate = LocalDate.now().plusYears(1)
   override val pillar2Id: String    = "XMPLR0123456789"
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    ZonedDateTime.now(),
-    Seq(
-      AccountingPeriodDetails(
-        LocalDate.now(),
-        LocalDate.now(),
-        LocalDate.now(),
-        underEnquiry = false,
-        Seq(
-          Obligation(
-            Pillar2TaxReturn,
-            Fulfilled,
-            canAmend = false,
-            Seq(
-              Submission(
-                ORN,
-                ZonedDateTime.now(),
-                Some("Country details")
+    ObligationsAndSubmissionsSuccessResponse(
+      ZonedDateTime.now(),
+      Seq(
+        AccountingPeriodDetails(
+          LocalDate.now(),
+          LocalDate.now(),
+          LocalDate.now(),
+          underEnquiry = false,
+          Seq(
+            Obligation(
+              Pillar2TaxReturn,
+              Fulfilled,
+              canAmend = false,
+              Seq(
+                Submission(
+                  ORN,
+                  ZonedDateTime.now(),
+                  Some("Country details")
+                )
               )
+            ),
+            Obligation(
+              GlobeInformationReturn,
+              Open,
+              canAmend = true,
+              Seq.empty
             )
-          ),
-          Obligation(
-            GlobeInformationReturn,
-            Open,
-            canAmend = true,
-            Seq.empty
           )
         )
       )

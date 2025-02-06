@@ -48,67 +48,69 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
     s"/RESTAdapter/plr/obligations-and-submissions/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
 
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    ZonedDateTime.now(),
-    Seq(
-      AccountingPeriodDetails(
-        LocalDate.now(),
-        LocalDate.now(),
-        LocalDate.now(),
-        underEnquiry = false,
-        Seq(
-          Obligation(
-            Pillar2TaxReturn,
-            Fulfilled,
-            canAmend = false,
-            Seq(
-              Submission(
-                BTN,
-                ZonedDateTime.now(),
-                None
+    ObligationsAndSubmissionsSuccessResponse(
+      ZonedDateTime.now(),
+      Seq(
+        AccountingPeriodDetails(
+          LocalDate.now(),
+          LocalDate.now(),
+          LocalDate.now(),
+          underEnquiry = false,
+          Seq(
+            Obligation(
+              Pillar2TaxReturn,
+              Fulfilled,
+              canAmend = false,
+              Seq(
+                Submission(
+                  BTN,
+                  ZonedDateTime.now(),
+                  None
+                )
               )
+            ),
+            Obligation(
+              GlobeInformationReturn,
+              Open,
+              canAmend = true,
+              Seq.empty
             )
-          ),
-          Obligation(
-            GlobeInformationReturn,
-            Open,
-            canAmend = true,
-            Seq.empty
           )
         )
       )
     )
   )
 
-    "must return status as OK when obligations and submissions data is returned" in {
-      server.stubFor(
-        get(urlEqualTo(url))
-          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .willReturn(
-            aResponse()
-              .withStatus(200)
-              .withBody(Json.stringify(Json.toJson(response)))
-          )
-      )
+  "must return status as OK when obligations and submissions data is returned" in {
+    server.stubFor(
+      get(urlEqualTo(url))
+        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withBody(Json.stringify(Json.toJson(response)))
+        )
+    )
 
-      val result = connector.getObligationsAndSubmissions(fromDate, toDate).futureValue
+    val result = connector.getObligationsAndSubmissions(fromDate, toDate).futureValue
 
-      result mustBe response
+    result mustBe response
+  }
+
+  "must return status as 500 when obligations and submissions data is not returned" in {
+    server.stubFor(
+      get(urlEqualTo(url))
+        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+        .willReturn(
+          aResponse()
+            .withStatus(500)
+            .withBody(Json.stringify(Json.obj()))
+        )
+    )
+
+    val result = connector.getObligationsAndSubmissions(fromDate, toDate).failed
+    result.failed.map { ex =>
+      ex mustBe a[InternalServerException]
     }
-
-    "must return status as 500 when obligations and submissions data is not returned" in {
-      server.stubFor(
-        get(urlEqualTo(url))
-          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .willReturn(
-            aResponse()
-              .withStatus(500)
-              .withBody(Json.stringify(Json.obj()))
-          )
-      )
-
-      val result = connector.getObligationsAndSubmissions(fromDate, toDate).failed
-      result.failed.map { ex =>
-        ex mustBe a[InternalServerException]
-      }
-    }
+  }
 }

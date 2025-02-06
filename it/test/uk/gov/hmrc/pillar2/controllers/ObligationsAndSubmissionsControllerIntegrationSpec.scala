@@ -32,7 +32,7 @@ import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.{AccountingPeriodDetails, Obligation, ObligationsAndSubmissionsResponse, Submission}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 
 import java.net.{URI, URL}
 import java.time.{LocalDate, ZonedDateTime}
@@ -49,31 +49,33 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
     .build()
 
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    ZonedDateTime.now(),
-    Seq(
-      AccountingPeriodDetails(
-        LocalDate.now(),
-        LocalDate.now(),
-        LocalDate.now(),
-        underEnquiry = false,
-        Seq(
-          Obligation(
-            Pillar2TaxReturn,
-            Fulfilled,
-            canAmend = false,
-            Seq(
-              Submission(
-                UKTR,
-                ZonedDateTime.now(),
-                None
+    ObligationsAndSubmissionsSuccessResponse(
+      ZonedDateTime.now(),
+      Seq(
+        AccountingPeriodDetails(
+          LocalDate.now(),
+          LocalDate.now(),
+          LocalDate.now(),
+          underEnquiry = false,
+          Seq(
+            Obligation(
+              Pillar2TaxReturn,
+              Fulfilled,
+              canAmend = false,
+              Seq(
+                Submission(
+                  UKTR,
+                  ZonedDateTime.now(),
+                  None
+                )
               )
+            ),
+            Obligation(
+              GlobeInformationReturn,
+              Open,
+              canAmend = true,
+              Seq.empty
             )
-          ),
-          Obligation(
-            GlobeInformationReturn,
-            Open,
-            canAmend = true,
-            Seq.empty
           )
         )
       )
@@ -81,9 +83,13 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
   )
 
   val fromDate: LocalDate = LocalDate.now()
-  val toDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now()
 
-  lazy val url: URL = URI.create( s"http://localhost:$port${routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url}").toURL
+  lazy val url: URL = URI
+    .create(
+      s"http://localhost:$port${routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url}"
+    )
+    .toURL
 
   test("Successful obligations and submissions request") {
     stubAuthenticate()
@@ -117,10 +123,10 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
-      .withExtraHeaders( "Content-Type" -> "application/json")
+      .withExtraHeaders("Content-Type" -> "application/json")
     val request = httpClient.get(url)
 
-    val result  = Await.result(request.execute[HttpResponse], 5.seconds)
+    val result = Await.result(request.execute[HttpResponse], 5.seconds)
     result.status mustEqual 400
     val error = result.json.as[Pillar2ApiError]
     error.code mustEqual "001"

@@ -39,31 +39,33 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
   val fromDate: LocalDate = LocalDate.now()
   val toDate:   LocalDate = LocalDate.now().plusYears(1)
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
-    ZonedDateTime.now(),
-    Seq(
-      AccountingPeriodDetails(
-        LocalDate.now(),
-        LocalDate.now(),
-        LocalDate.now(),
-        underEnquiry = false,
-        Seq(
-          Obligation(
-            Pillar2TaxReturn,
-            Fulfilled,
-            canAmend = false,
-            Seq(
-              Submission(
-                UKTR,
-                ZonedDateTime.now,
-                None
+    ObligationsAndSubmissionsSuccessResponse(
+      ZonedDateTime.now(),
+      Seq(
+        AccountingPeriodDetails(
+          LocalDate.now(),
+          LocalDate.now(),
+          LocalDate.now(),
+          underEnquiry = false,
+          Seq(
+            Obligation(
+              Pillar2TaxReturn,
+              Fulfilled,
+              canAmend = false,
+              Seq(
+                Submission(
+                  UKTR,
+                  ZonedDateTime.now,
+                  None
+                )
               )
+            ),
+            Obligation(
+              GlobeInformationReturn,
+              Open,
+              canAmend = true,
+              Seq.empty
             )
-          ),
-          Obligation(
-            GlobeInformationReturn,
-            Open,
-            canAmend = true,
-            Seq.empty
           )
         )
       )
