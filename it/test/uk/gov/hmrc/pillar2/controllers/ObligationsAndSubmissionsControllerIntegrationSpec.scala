@@ -90,7 +90,11 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
     val pillar2Id = "pillar2Id"
     server.stubFor(
       get(urlEqualTo(s"/RESTAdapter/plr/obligations-and-submissions/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"))
-        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+        .withHeader("correlationid", matching(".+"))
+        .withHeader("X-Transmitting-System", equalTo("HIP"))
+        .withHeader("X-Originating-System", equalTo("MDTP"))
+        .withHeader("X-Receipt-Date", matching(".+"))
+        .withHeader("X-Pillar2-Id", equalTo("pillar2Id"))
         .willReturn(
           aResponse()
             .withStatus(200)
