@@ -33,6 +33,7 @@ package object service extends Logging {
     response.status match {
       case 200 | 201 =>
         // we're using try because HttpResponse.json is not a pure function and can throw an exception
+        println(response.json)
         Try(response.json.validate[ApiSuccessResponse]) match {
           case Success(JsSuccess(success, _)) => Future.successful(success)
           case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
