@@ -16,8 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models
 
-import play.api.libs.json.Json
-import play.api.libs.json.OFormat
+import play.api.libs.json.{Json, OFormat}
 
 trait ApiErrors extends Throwable
 
