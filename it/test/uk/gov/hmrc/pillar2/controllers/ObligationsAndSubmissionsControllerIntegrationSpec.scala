@@ -115,7 +115,7 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
     val request = httpClient.get(url)
     val result  = Await.result(request.execute[HttpResponse], 5.seconds)
     result.status mustEqual 200
-    Json.parse(result.body) mustBe Json.toJson(response)
+    Json.parse(result.body) mustBe Json.toJson(response.success)
   }
 
   test("Missing header error") {

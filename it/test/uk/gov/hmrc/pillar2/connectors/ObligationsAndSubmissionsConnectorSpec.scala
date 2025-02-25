@@ -94,7 +94,7 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
 
     val result = connector.getObligationsAndSubmissions(fromDate, toDate).futureValue
 
-    result mustBe response
+    result.status mustBe 200
   }
 
   "must return status as 500 when obligations and submissions data is not returned" in {

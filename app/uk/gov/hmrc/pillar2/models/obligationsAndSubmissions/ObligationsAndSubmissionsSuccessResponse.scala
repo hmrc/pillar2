@@ -20,10 +20,7 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.ZonedDateTime
 
-final case class ObligationsAndSubmissionsSuccessResponse(
-  processingDate:          ZonedDateTime,
-  accountingPeriodDetails: Seq[AccountingPeriodDetails]
-)
+final case class ObligationsAndSubmissionsSuccessResponse(processingDate: ZonedDateTime, accountingPeriodDetails: Seq[AccountingPeriodDetails])
 
 object ObligationsAndSubmissionsSuccessResponse {
   implicit val format: OFormat[ObligationsAndSubmissionsSuccessResponse] = Json.format[ObligationsAndSubmissionsSuccessResponse]

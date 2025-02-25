@@ -37,4 +37,5 @@ class ObligationsAndSubmissionsService @Inject() (
   )(implicit hc: HeaderCarrier, pillar2Id: String): Future[ObligationsAndSubmissionsResponse] =
     obligationsAndSubmissionsConnector
       .getObligationsAndSubmissions(fromDate, toDate)
+      .flatMap(convertToObligationsAndSubmissionsApiResult)
 }

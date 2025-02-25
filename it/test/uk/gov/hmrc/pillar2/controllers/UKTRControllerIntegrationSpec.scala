@@ -85,7 +85,6 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
         .post(url)
         .withBody(Json.toJson(payload))
       val result = Await.result(request.execute[HttpResponse], 5.seconds)
-      println(result.body)
       result.status mustEqual 201
       server.resetAll()
     }}
@@ -120,7 +119,6 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
         .post(url)
         .withBody(Json.toJson(uktrPayload))
       val result = Await.result(request.execute[HttpResponse], 5.seconds)
-      println(result.body)
       result.status mustEqual 201
 
   }

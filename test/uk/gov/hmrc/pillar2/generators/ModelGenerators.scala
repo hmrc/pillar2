@@ -22,12 +22,7 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models._
 import uk.gov.hmrc.pillar2.models.audit._
 import uk.gov.hmrc.pillar2.models.grs._
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityData
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.LiabilityNilReturn
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.ReturnType
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmissionData
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmissionNilReturn
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions._
 import uk.gov.hmrc.pillar2.models.hods._
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
@@ -1149,7 +1144,14 @@ trait ModelGenerators {
       accountingPeriodTo = accountingPeriodFrom.plusYears(1),
       obligationMTT = obligationMTT,
       electionUKGAAP = electionUKGAAP,
-      liabilities = liabilities
+      liabilities = liabilities.copy(
+        numberSubGroupDTT = 0,
+        numberSubGroupUTPR = 0,
+        totalLiability = BigDecimal(0),
+        totalLiabilityDTT = BigDecimal(0),
+        totalLiabilityIIR = BigDecimal(0),
+        totalLiabilityUTPR = BigDecimal(0)
+      )
     )
   }
 

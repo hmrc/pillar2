@@ -20,14 +20,12 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
-import uk.gov.hmrc.pillar2.models.errors.DateParseError
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.LocalDate
-import java.time.format.DateTimeParseException
 import javax.inject.Inject
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
 class ObligationsAndSubmissionsController @Inject() (
   submissionsAndObligationsService: ObligationsAndSubmissionsService,
@@ -38,19 +36,11 @@ class ObligationsAndSubmissionsController @Inject() (
     extends BackendController(cc)
     with Logging {
 
-  def getObligationsAndSubmissions(fromDate: String, toDate: String): Action[AnyContent] = { authenticate andThen pillar2HeaderExists }.async {
+  def getObligationsAndSubmissions(fromDate: String, toDate: String): Action[AnyContent] = (authenticate andThen pillar2HeaderExists).async {
     implicit request =>
       implicit val pillar2Id: String = request.pillar2Id
-      try {
-        val from = LocalDate.parse(fromDate)
-        val to   = LocalDate.parse(toDate)
-        submissionsAndObligationsService.getObligationsAndSubmissions(from, to).map { data =>
-          Ok(Json.toJson(data))
-        }
-      } catch {
-        case _: DateTimeParseException =>
-          Future.failed(DateParseError)
-      }
+      submissionsAndObligationsService
+        .getObligationsAndSubmissions(fromDate = LocalDate.parse(fromDate), LocalDate.parse(toDate))
+        .map(data => Ok(Json.toJson(data.success)))
   }
-
 }
