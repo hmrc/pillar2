@@ -20,10 +20,11 @@ import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import uk.gov.hmrc.http.HeaderCarrier
+import play.api.libs.json.Json
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.errors.ObligationsAndSubmissionsError
+import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
@@ -82,13 +83,13 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
             ArgumentMatchers.eq(pillar2Id)
           )
       )
-        .thenReturn(Future.successful(response))
+        .thenReturn(Future.successful(HttpResponse(OK, Json.toJson(response).toString())))
 
       val result = service.getObligationsAndSubmissions(fromDate, toDate).futureValue
       result mustBe response
     }
 
-    "should throw a ObligationsAndSubmissionsError" in {
+    "should throw a ApiInternalServerError" in {
 
       when(
         mockObligationsAndSubmissionsConnector
@@ -98,11 +99,11 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
             ArgumentMatchers.eq(pillar2Id)
           )
       )
-        .thenReturn(Future.failed(ObligationsAndSubmissionsError))
+        .thenReturn(Future.failed(ApiInternalServerError))
 
       val error: Throwable = service.getObligationsAndSubmissions(fromDate, toDate).failed.futureValue
 
-      error mustBe ObligationsAndSubmissionsError
+      error mustBe ApiInternalServerError
     }
   }
 
