@@ -17,11 +17,10 @@
 package uk.gov.hmrc.pillar2.controllers.actions
 
 import com.google.inject.{ImplementedBy, Inject}
-import play.api.http.Status.UNAUTHORIZED
-import play.api.mvc.Results.Status
 import play.api.mvc._
-import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions, NoActiveSession}
+import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions}
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.pillar2.models.errors.AuthorizationError
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,8 +40,8 @@ class AuthActionImpl @Inject() (
 
     authorised() {
       block(request)
-    } recover { case _: NoActiveSession =>
-      Status(UNAUTHORIZED)
+    } recoverWith { case _: AuthorisationException =>
+      Future.failed(AuthorizationError)
     }
   }
 
