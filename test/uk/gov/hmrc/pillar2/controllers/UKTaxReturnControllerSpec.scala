@@ -91,8 +91,8 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
             .withHeaders("X-Pillar2-Id" -> pillar2Id)
             .withJsonBody(Json.toJson(submission))
 
-          val result = route(unauthorizedApp, request).value
-          status(result) mustEqual UNAUTHORIZED
+          val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, request).value))
+          result mustEqual AuthorizationError
         }
       }
 
@@ -167,7 +167,7 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
 
-      "should return UNAUTHORIZED when authentication fails" in {
+      "should return AuthorizationError when authentication fails" in {
         val unauthorizedApp = new GuiceApplicationBuilder()
           .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
           .overrides(
@@ -180,8 +180,8 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
             .withHeaders("X-Pillar2-Id" -> pillar2Id)
             .withJsonBody(Json.toJson(submission))
 
-          val result = route(unauthorizedApp, request).value
-          status(result) mustEqual UNAUTHORIZED
+          val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, request).value))
+          result mustEqual AuthorizationError
         }
       }
 

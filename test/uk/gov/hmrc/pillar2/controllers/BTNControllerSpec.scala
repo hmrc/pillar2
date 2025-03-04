@@ -82,14 +82,14 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       result mustEqual MissingHeaderError("X-Pillar2-Id")
     }
 
-    "should return UNAUTHORIZED when authentication fails" in {
+    "should return AuthorizationError when authentication fails" in {
       val unauthorizedApp = new GuiceApplicationBuilder()
         .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
         .overrides(bind[BTNService].toInstance(mockBTNService))
         .build()
 
-      val result = route(unauthorizedApp, request).value
-      status(result) mustEqual UNAUTHORIZED
+      val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, request).value))
+      result mustEqual AuthorizationError
     }
 
     "should handle ValidationError from service" in {

@@ -98,4 +98,12 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
     result.message mustEqual "Bad request. Invalid date format. Expected format: YYYY-MM-DD"
   }
 
+  test("AuthorizationError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, AuthorizationError)
+    status(response) mustEqual 401
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "401"
+    result.message mustEqual "Not Authorized"
+  }
+
 }
