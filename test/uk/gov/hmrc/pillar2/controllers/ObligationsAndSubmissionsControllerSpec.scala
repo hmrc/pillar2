@@ -31,7 +31,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.errors.{DateParseError, ObligationsAndSubmissionsError}
+import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN
@@ -123,32 +123,17 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
       val result = route(application, request).value
 
       status(result) mustEqual OK
-      contentAsJson(result) mustEqual Json.toJson(response)
+      contentAsJson(result) mustEqual Json.toJson(response.success)
     }
 
-    "should handle DateParseError from an invalid input date" in {
-      val request =
-        FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions("2025-01-32", "2025-13-13").url)
-          .withHeaders(
-            "correlationid"         -> UUID.randomUUID().toString,
-            "X-Transmitting-System" -> "HIP",
-            "X-Originating-System"  -> "MDTP",
-            "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
-            "X-Pillar2-Id"          -> pillar2Id
-          )
-
-      val result = route(application, request).value.failed.futureValue
-      result mustEqual DateParseError
-    }
-
-    "should handle ObligationsAndSubmissionsError from service" in {
+    "should handle ApiInternalServerError from service" in {
       when(
         mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
       )
-        .thenReturn(Future.failed(ObligationsAndSubmissionsError))
+        .thenReturn(Future.failed(ApiInternalServerError))
 
       val request =
         FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url)
@@ -161,7 +146,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
           )
 
       val result = route(application, request).value.failed.futureValue
-      result mustEqual ObligationsAndSubmissionsError
+      result mustEqual ApiInternalServerError
     }
   }
 

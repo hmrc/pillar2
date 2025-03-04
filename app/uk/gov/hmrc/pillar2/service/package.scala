@@ -17,23 +17,23 @@
 package uk.gov.hmrc.pillar2
 
 import play.api.Logging
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, Reads}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
 import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 package object service extends Logging {
-
-  private[service] def convertToApiResult(response: HttpResponse): Future[ApiSuccessResponse] = {
+  private[service] def convertToResult[A](response: HttpResponse)(implicit reads: Reads[A]): Future[A] = {
     logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
       case 200 | 201 =>
         // we're using try because HttpResponse.json is not a pure function and can throw an exception
-        Try(response.json.validate[ApiSuccessResponse]) match {
+        Try(response.json.validate[A]) match {
           case Success(JsSuccess(success, _)) => Future.successful(success)
           case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
           case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
@@ -46,31 +46,17 @@ package object service extends Logging {
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case status =>
-        logger.error(s"Received invalid status from downstream: $status with error body: ${response.json}")
+        logger.error(s"Received invalid status from downstream: $status")
         Future.failed(ApiInternalServerError)
     }
   }
 
-  private[service] def convertToBTNApiResult(response: HttpResponse): Future[BTNSuccessResponse] = {
-    logger.info(s"Converting to BTN API result with status ${response.status}")
-    response.status match {
-      case 201 =>
-        Try(response.json.validate[BTNSuccessResponse]) match {
-          case Success(JsSuccess(success, _)) => Future.successful(success)
-          case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
-          case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
-        }
-      case 422 =>
-        Try(response.json.validate[ApiFailureResponse]) match {
-          case Success(JsSuccess(apiFailure, _)) =>
-            Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text))
-          case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
-          case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
-        }
-      case status =>
-        logger.error(s"Received invalid BTN Submit status from downstream: $status with error body: ${response.json}")
-        Future.failed(ApiInternalServerError)
-    }
-  }
+  private[service] def convertToUKTRApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
+    convertToResult[ApiSuccessResponse](response)
 
+  private[service] def convertToBTNApiResult(response: HttpResponse): Future[BTNSuccessResponse] =
+    convertToResult[BTNSuccessResponse](response)
+
+  private[service] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
+    convertToResult[ObligationsAndSubmissionsResponse](response)
 }
