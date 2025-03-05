@@ -42,16 +42,6 @@ case class ETMPValidationError(validationErrorCode: String, validationError: Str
   val message: String = validationError
 }
 
-case object ObligationsAndSubmissionsError extends Pillar2Error {
-  val message: String = "Internal server error"
-  val code:    String = "500"
-}
-
-case object DateParseError extends Pillar2Error {
-  val message: String = "Bad request. Invalid date format. Expected format: YYYY-MM-DD"
-  val code:    String = "400"
-}
-
 case object AuthorizationError extends Pillar2Error {
   val message: String = "Not Authorized"
   val code:    String = "401"

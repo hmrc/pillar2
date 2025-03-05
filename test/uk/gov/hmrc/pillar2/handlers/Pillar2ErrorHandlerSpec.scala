@@ -82,22 +82,6 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
     result.message mustEqual "Internal server error"
   }
 
-  test("ObligationsAndSubmissionsError error response") {
-    val response = classUnderTest.onServerError(dummyRequest, ObligationsAndSubmissionsError)
-    status(response) mustEqual 500
-    val result = contentAsJson(response).as[Pillar2ApiError]
-    result.code mustEqual "500"
-    result.message mustEqual "Internal server error"
-  }
-
-  test("DateParseError error response") {
-    val response = classUnderTest.onServerError(dummyRequest, DateParseError)
-    status(response) mustEqual 400
-    val result = contentAsJson(response).as[Pillar2ApiError]
-    result.code mustEqual "400"
-    result.message mustEqual "Bad request. Invalid date format. Expected format: YYYY-MM-DD"
-  }
-
   test("AuthorizationError error response") {
     val response = classUnderTest.onServerError(dummyRequest, AuthorizationError)
     status(response) mustEqual 401
