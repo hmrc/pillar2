@@ -81,4 +81,13 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
     result.code mustEqual "003"
     result.message mustEqual "Internal server error"
   }
+
+  test("AuthorizationError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, AuthorizationError)
+    status(response) mustEqual 401
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "401"
+    result.message mustEqual "Not Authorized"
+  }
+
 }

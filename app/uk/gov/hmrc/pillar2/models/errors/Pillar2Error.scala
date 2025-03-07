@@ -41,3 +41,8 @@ case class ETMPValidationError(validationErrorCode: String, validationError: Str
   val code:    String = validationErrorCode
   val message: String = validationError
 }
+
+case object AuthorizationError extends Pillar2Error {
+  val message: String = "Not Authorized"
+  val code:    String = "401"
+}

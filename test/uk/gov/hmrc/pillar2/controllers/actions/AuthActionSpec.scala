@@ -22,7 +22,7 @@ import org.mockito.Mockito.when
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play.PlaySpec
 import org.scalatestplus.play.guice.GuiceOneAppPerSuite
-import play.api.http.Status.{OK, UNAUTHORIZED}
+import play.api.http.Status.OK
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.mvc.{Action, AnyContent, InjectedController}
@@ -33,7 +33,7 @@ import uk.gov.hmrc.auth.core.authorise.Predicate
 import uk.gov.hmrc.auth.core.retrieve.Retrieval
 import uk.gov.hmrc.auth.core.{AuthConnector, MissingBearerToken}
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
+import uk.gov.hmrc.pillar2.models.errors.AuthorizationError
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -61,7 +61,7 @@ class AuthActionSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar
 
   "Auth Action" when {
     "the user is not logged in" must {
-      "must return unauthorised" in {
+      "must return AuthorizationError" in {
         when(
           mockAuthConnector.authorise(any[Predicate](), any[Retrieval[_]]())(
             any[HeaderCarrier](),
@@ -73,8 +73,9 @@ class AuthActionSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar
         val authAction = application.injector.instanceOf[AuthAction]
         val controller = new Harness(authAction)
         val result     = controller.onPageLoad()(FakeRequest("", ""))
-        status(result) mustBe UNAUTHORIZED
 
+        val response = intercept[AuthorizationError.type](result.value.get.get)
+        response mustEqual AuthorizationError
       }
     }
 
