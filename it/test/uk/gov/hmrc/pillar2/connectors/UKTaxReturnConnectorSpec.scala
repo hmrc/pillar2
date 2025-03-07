@@ -50,7 +50,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
     )
   )
 
-  private val etmpUKTRUrl = "/RESTAdapter/PLR/UKTaxReturn"
+  private val etmpUKTRUrl = "/RESTAdapter/plr/uk-tax-return"
 
   private def verifyHipHeaders(method: String, expectedBody: String): Unit = {
     val requestBuilder = method match {

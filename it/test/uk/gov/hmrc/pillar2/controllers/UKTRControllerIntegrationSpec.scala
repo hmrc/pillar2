@@ -71,7 +71,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
     forAll(arbitrary[UKTRSubmissionData]) {payload =>
       stubAuthenticate()
       server.stubFor(
-        post(urlEqualTo("/RESTAdapter/PLR/UKTaxReturn"))
+        post(urlEqualTo("/RESTAdapter/plr/uk-tax-return"))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(payload).toString()))
           .willReturn(
@@ -100,7 +100,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
       LiabilityNilReturn(returnType = NIL_RETURN)
     )
     server.stubFor(
-      post(urlEqualTo("/RESTAdapter/PLR/UKTaxReturn"))
+      post(urlEqualTo("/RESTAdapter/plr/uk-tax-return"))
         .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
         .withRequestBody(equalToJson(Json.toJson(uktrPayload).toString()))
         .willReturn(
