@@ -30,7 +30,7 @@ trait UKTaxReturnDataFixture {
     ApiSuccess(
       processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
       formBundleNumber = "123456789012345",
-      chargeReference = "12345678"
+      chargeReference = Some("12345678")
     )
   )
   val httpCreated: HttpResponse = HttpResponse(CREATED, Json.toJson(successResponse).toString())
