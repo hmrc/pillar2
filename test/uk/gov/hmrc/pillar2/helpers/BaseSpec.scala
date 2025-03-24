@@ -116,4 +116,23 @@ trait BaseSpec
         )
     )
 
+  protected def verifyHipHeaders(method: String, etmpUrl: String, expectedBody: Option[String] = None): Unit = {
+    val requestBuilder = method match {
+      case "GET"  => getRequestedFor(urlEqualTo(etmpUrl))
+      case "POST" => postRequestedFor(urlEqualTo(etmpUrl))
+      case "PUT"  => putRequestedFor(urlEqualTo(etmpUrl))
+    }
+
+    val getVerification = requestBuilder
+      .withHeader("correlationid", matching("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
+      .withHeader("X-Originating-System", equalTo("MDTP"))
+      .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+      .withHeader("X-Receipt-Date", matching("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"))
+      .withHeader("X-Transmitting-System", equalTo("HIP"))
+
+    val ifHasBody = expectedBody.fold(getVerification)(body => getVerification.withRequestBody(equalToJson(body)))
+
+    server.verify(ifHasBody)
+  }
+
 }

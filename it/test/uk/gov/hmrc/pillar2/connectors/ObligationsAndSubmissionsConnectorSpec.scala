@@ -81,7 +81,7 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
     )
   )
 
-  "must return status as OK when obligations and submissions data is returned" in {
+  "must return status as OK when obligations when a successful request with all required HIP headers is submitted" in {
     server.stubFor(
       get(urlEqualTo(url))
         .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
@@ -95,6 +95,7 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
     val result = connector.getObligationsAndSubmissions(fromDate, toDate).futureValue
 
     result.status mustBe 200
+    verifyHipHeaders("GET", url)
   }
 
   "must return status as 500 when obligations and submissions data is not returned" in {

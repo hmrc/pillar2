@@ -41,6 +41,8 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       accountingPeriodTo = LocalDate.now().plusYears(1)
     )
 
+  private val etmpBTNUrl: String = "/RESTAdapter/plr/below-threshold-notification"
+
   private def stubResponseFor(status: Int)(implicit response: JsObject): StubMapping =
     server.stubFor(
       post(urlEqualTo("/RESTAdapter/plr/below-threshold-notification"))
@@ -55,10 +57,10 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     )
 
   "sendBtn" - {
-    "successfully submit a BTN request with X-PILLAR2-Id and receive Success response" in {
+    "successfully submit a BTN request with all required HIP headers" in {
       implicit val response: JsObject = Json.obj(
         "success" -> Json.obj(
-          "processingDate"   -> "2024-03-14T09:26:17Z"
+          "processingDate" -> "2024-03-14T09:26:17Z"
         )
       )
 
@@ -73,6 +75,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
           .withRequestBody(equalToJson(Json.toJson(btnPayload).toString()))
       )
+      verifyHipHeaders("POST", etmpBTNUrl, Some(Json.toJson(btnPayload).toString()))
     }
 
     "handle BAD_REQUEST (400) response" in {
