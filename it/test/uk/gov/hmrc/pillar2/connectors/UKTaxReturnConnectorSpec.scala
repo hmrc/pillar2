@@ -33,7 +33,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
     applicationBuilder()
       .configure(
         "microservice.services.submit-uk-tax-return.port" -> server.port(),
-        "microservice.services.amend-uk-tax-return.port" -> server.port()
+        "microservice.services.amend-uk-tax-return.port"  -> server.port()
       )
       .build()
 
@@ -51,23 +51,6 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
   )
 
   private val etmpUKTRUrl = "/RESTAdapter/plr/uk-tax-return"
-
-  private def verifyHipHeaders(method: String, expectedBody: String): Unit = {
-    val requestBuilder = method match {
-      case "POST" => postRequestedFor(urlEqualTo(etmpUKTRUrl))
-      case "PUT"  => putRequestedFor(urlEqualTo(etmpUKTRUrl))
-    }
-
-    server.verify(
-      requestBuilder
-        .withHeader("correlationid", matching("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"))
-        .withHeader("X-Originating-System", equalTo("MDTP"))
-        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-        .withHeader("X-Receipt-Date", matching("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,9})?Z"))
-        .withHeader("X-Transmitting-System", equalTo("HIP"))
-        .withRequestBody(equalToJson(expectedBody))
-    )
-  }
 
   "UKTaxReturnConnector" - {
     "submit UK tax return" - {
@@ -94,7 +77,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
 
         result.status mustBe CREATED
         result.json mustBe successResponse
-        verifyHipHeaders("POST", Json.toJson(submissionPayload).toString())
+        verifyHipHeaders("POST", etmpUKTRUrl, Some(Json.toJson(submissionPayload).toString()))
       }
 
       "handle BAD_REQUEST (400) response" in {
@@ -199,7 +182,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
         val result = connector.amendUKTaxReturn(submissionPayload).futureValue
         result.status mustBe OK
         result.json mustBe successResponse
-        verifyHipHeaders("PUT", Json.toJson(submissionPayload).toString())
+        verifyHipHeaders("PUT", etmpUKTRUrl, Some(Json.toJson(submissionPayload).toString()))
       }
 
       "handle BAD_REQUEST (400) response" in {

@@ -19,14 +19,14 @@ package uk.gov.hmrc.pillar2
 import uk.gov.hmrc.http._
 import uk.gov.hmrc.pillar2.config.AppConfig
 
-import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 package object connectors {
 
-  implicit val httpReads: HttpReads[HttpResponse] =
-    (_: String, _: String, response: HttpResponse) => response
+  implicit val httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
 
   private[connectors] def hipHeaders(config: AppConfig, serviceName: String)(implicit
     headerCarrier:                           HeaderCarrier,
@@ -39,7 +39,7 @@ package object connectors {
       "correlationid"         -> UUID.randomUUID().toString,
       "X-Originating-System"  -> "MDTP",
       "X-Pillar2-Id"          -> pillar2Id,
-      "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
+      "X-Receipt-Date"        -> ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS).toString,
       "X-Transmitting-System" -> "HIP"
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))
   }
