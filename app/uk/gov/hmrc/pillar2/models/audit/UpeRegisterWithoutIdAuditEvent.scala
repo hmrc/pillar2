@@ -41,7 +41,6 @@ object FmRegisterWithoutIdAuditEvent {
 }
 
 case class UpeRegistration(
-  registeredinUK:           Boolean,
   entityType:               String,
   ultimateParentEntityName: String,
   addressLine1:             String,
@@ -61,7 +60,6 @@ object UpeRegistration {
 
 case class NominatedFilingMember(
   registerNomFilingMember:   Boolean,
-  registeredinUK:            Boolean,
   nominatedFilingMemberName: String,
   addressLine1:              String,
   addressLine2:              String,

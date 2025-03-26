@@ -1015,41 +1015,35 @@ trait ModelGenerators {
   }
 
   implicit val arbitraryUpeRegistration: Arbitrary[UpeRegistration] = Arbitrary {
-
     for {
-      registeredinUK           <- arbitrary[Boolean]
-      entityType               <- arbitrary[String]
-      ultimateParentEntityName <- arbitrary[String]
-      addressLine1             <- arbitrary[String]
-      addressLine2             <- arbitrary[String]
-      townOrCity               <- arbitrary[String]
-      region                   <- arbitrary[String]
-      postCode                 <- arbitrary[String]
-      country                  <- arbitrary[String]
-      name                     <- arbitrary[String]
+      entityType               <- stringsWithMaxLength(50)
+      ultimateParentEntityName <- stringsWithMaxLength(200)
+      addressLine1             <- stringsWithMaxLength(35)
+      addressLine2             <- stringsWithMaxLength(35)
+      townOrCity               <- stringsWithMaxLength(35)
+      region                   <- stringsWithMaxLength(35)
+      postCode                 <- stringsWithMaxLength(10)
+      country                  <- stringsWithMaxLength(2)
+      name                     <- stringsWithMaxLength(200)
       email                    <- arbitrary[String]
       telephoneNo              <- arbitrary[String]
     } yield UpeRegistration(
-      registeredinUK,
-      entityType,
-      ultimateParentEntityName,
-      addressLine1,
-      addressLine2,
-      townOrCity,
-      region,
-      postCode,
-      country,
-      name,
-      email,
-      telephoneNo
+      entityType = entityType,
+      ultimateParentEntityName = ultimateParentEntityName,
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      townOrCity = townOrCity,
+      region = region,
+      postCode = postCode,
+      country = country,
+      name = name,
+      email = email,
+      telephoneNo = telephoneNo
     )
-
   }
 
   implicit val arbitraryNominatedFilingMember: Arbitrary[NominatedFilingMember] = Arbitrary {
-
     for {
-      registeredinUK            <- arbitrary[Boolean]
       registerNomFilingMember   <- arbitrary[Boolean]
       nominatedFilingMemberName <- arbitrary[String]
       addressLine1              <- arbitrary[String]
@@ -1062,20 +1056,18 @@ trait ModelGenerators {
       email                     <- arbitrary[String]
       telephoneNo               <- arbitrary[String]
     } yield NominatedFilingMember(
-      registerNomFilingMember,
-      registeredinUK,
-      nominatedFilingMemberName,
-      addressLine1,
-      addressLine2,
-      townOrCity,
-      region,
-      postCode,
-      country,
-      name,
-      email,
-      telephoneNo
+      registerNomFilingMember = registerNomFilingMember,
+      nominatedFilingMemberName = nominatedFilingMemberName,
+      addressLine1 = addressLine1,
+      addressLine2 = addressLine2,
+      townOrCity = townOrCity,
+      region = region,
+      postCode = postCode,
+      country = country,
+      name = name,
+      email = email,
+      telephoneNo = telephoneNo
     )
-
   }
 
   implicit val arbitraryRepaymentPayload: Arbitrary[RepaymentRequestDetail] = Arbitrary {
