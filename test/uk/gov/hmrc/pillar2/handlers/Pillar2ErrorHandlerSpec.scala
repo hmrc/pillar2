@@ -46,8 +46,8 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
     val response = classUnderTest.onServerError(dummyRequest, new RuntimeException("Generic Error"))
     status(response) mustEqual 500
     val result = contentAsJson(response).as[Pillar2ApiError]
-    result.code mustEqual "006"
-    result.message mustEqual "An unexpected error occurred"
+    result.code mustEqual "003"
+    result.message mustEqual "Internal server error"
   }
 
   test("MissingHeaderError error response") {

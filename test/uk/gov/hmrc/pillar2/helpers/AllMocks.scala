@@ -60,6 +60,8 @@ trait AllMocks extends MockitoSugar {
   val mockBTNConnector:                       BTNConnector                       = mock[BTNConnector]
   val mockObligationsAndSubmissionsService:   ObligationsAndSubmissionsService   = mock[ObligationsAndSubmissionsService]
   val mockObligationsAndSubmissionsConnector: ObligationsAndSubmissionsConnector = mock[ObligationsAndSubmissionsConnector]
+  val mockOrnService:                         ORNService                         = mock[ORNService]
+  val mockOrnConnector:                       ORNConnector                       = mock[ORNConnector]
 
   @nowarn
   override protected def beforeEach(): Unit =

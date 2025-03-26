@@ -49,6 +49,6 @@ class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
         Future.successful(ret)
       case _ =>
         logger.warn(s"Caught unhandled exception. Returning InternalServerError", exception)
-        Future.successful(InternalServerError(Json.toJson(Pillar2ApiError("006", "An unexpected error occurred"))))
+        Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(ApiInternalServerError.code, ApiInternalServerError.message))))
     }
 }

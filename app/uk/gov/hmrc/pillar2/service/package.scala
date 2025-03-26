@@ -23,6 +23,7 @@ import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
 import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
+import uk.gov.hmrc.pillar2.models.orn.ORNSuccessResponse
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -59,4 +60,7 @@ package object service extends Logging {
 
   private[service] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
     convertToResult[ObligationsAndSubmissionsResponse](response)
+
+  private[service] def convertToSubmitORNApiResult(response: HttpResponse): Future[ORNSuccessResponse] =
+    convertToResult[ORNSuccessResponse](response)
 }
