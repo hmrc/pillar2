@@ -104,7 +104,6 @@ class RegistrationService @Inject() (
 
   private def convertUpeAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): UpeRegistration =
     UpeRegistration(
-      registeredinUK = true,
       entityType = "not Listed",
       ultimateParentEntityName = registerWithoutIDRequest.organisation.organisationName,
       addressLine1 = registerWithoutIDRequest.address.addressLine1,
@@ -121,7 +120,6 @@ class RegistrationService @Inject() (
   private def convertNfmAuditDetails(registerWithoutIDRequest: RegisterWithoutIDRequest): NominatedFilingMember =
     NominatedFilingMember(
       registerNomFilingMember = true,
-      registeredinUK = true,
       nominatedFilingMemberName = registerWithoutIDRequest.organisation.organisationName,
       addressLine1 = registerWithoutIDRequest.address.addressLine1,
       addressLine2 = registerWithoutIDRequest.address.addressLine2.getOrElse(""),
