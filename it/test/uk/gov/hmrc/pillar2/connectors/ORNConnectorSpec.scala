@@ -34,6 +34,8 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     .build()
 
   private lazy val connector = app.injector.instanceOf[ORNConnector]
+  private val POST = "POST"
+  private val PUT = "PUT"
 
   private val ornPayload =
     ORNRequest(
@@ -46,9 +48,14 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       issuingCountryTIN = "US"
     )
 
-  private def stubResponseFor(status: Int)(implicit response: JsObject): StubMapping =
+  private def stubResponseFor(status: Int, method: String)(implicit response: JsObject): StubMapping = {
+    val requestBuilder = method match {
+      case "POST" => post(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
+      case "PUT" => put(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
+    }
+
     server.stubFor(
-      post(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
+      requestBuilder
         .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
         .withRequestBody(equalToJson(Json.toJson(ornPayload).toString()))
         .willReturn(
@@ -58,6 +65,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
             .withBody(response.toString())
         )
     )
+  }
 
   "submitOrn" - {
     "successfully submit a ORN request with X-PILLAR2-Id and receive Success response" in {
@@ -68,7 +76,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(CREATED)
+      stubResponseFor(CREATED, POST)
 
       val result = connector.submitOrn(ornPayload).futureValue
 
@@ -90,7 +98,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(BAD_REQUEST)
+      stubResponseFor(BAD_REQUEST, POST)
 
       val result = connector.submitOrn(ornPayload).futureValue
       result.status mustBe BAD_REQUEST
@@ -106,7 +114,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(UNPROCESSABLE_ENTITY)
+      stubResponseFor(UNPROCESSABLE_ENTITY, POST)
 
       val result = connector.submitOrn(ornPayload).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
@@ -122,11 +130,83 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(INTERNAL_SERVER_ERROR)
+      stubResponseFor(INTERNAL_SERVER_ERROR, POST)
 
       val result = connector.submitOrn(ornPayload).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
     }
   }
+
+  "amendOrn" - {
+    "successfully amend an ORN request with X-PILLAR2-ID and receive a Success response" in {
+      implicit val response: JsObject = Json.obj(
+        "success" -> Json.obj(
+          "processingDate"   -> "2024-03-15T016:07:22Z",
+          "formBundleNumber" -> "123456789012345"
+        )
+      )
+
+      stubResponseFor(OK, PUT)
+
+      val result = connector.amendOrn(ornPayload).futureValue
+
+      result.status mustBe OK
+      result.json mustBe response
+      server.verify(
+        putRequestedFor(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
+          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+          .withRequestBody(equalToJson(Json.toJson(ornPayload).toString()))
+      )
+    }
+    "handle BAD_REQUEST (400) response" in {
+      implicit val response: JsObject = Json.obj(
+        "error" -> Json.obj(
+          "code"    -> "400",
+          "message" -> "Bad Request",
+          "logId"   -> "123456789"
+        )
+      )
+
+      stubResponseFor(BAD_REQUEST, PUT)
+
+      val result = connector.amendOrn(ornPayload).futureValue
+      result.status mustBe BAD_REQUEST
+      result.json mustBe response
+    }
+
+    "handle UNPROCESSABLE_ENTITY (422) response" in {
+      implicit val response: JsObject = Json.obj(
+        "errors" -> Json.obj(
+          "processingDate" -> "2024-03-14T09:26:17Z",
+          "code"           -> "003",
+          "text"           -> "Request could not be processed"
+        )
+      )
+
+      stubResponseFor(UNPROCESSABLE_ENTITY, PUT)
+
+      val result = connector.amendOrn(ornPayload).futureValue
+      result.status mustBe UNPROCESSABLE_ENTITY
+      result.json mustBe response
+    }
+
+    "handle INTERNAL_SERVER_ERROR (500) response" in {
+      implicit val response: JsObject = Json.obj(
+        "error" -> Json.obj(
+          "code"    -> "500",
+          "message" -> "Internal Server Error",
+          "logId"   -> "123456789"
+        )
+      )
+
+      stubResponseFor(INTERNAL_SERVER_ERROR, PUT)
+
+      val result = connector.amendOrn(ornPayload).futureValue
+      result.status mustBe INTERNAL_SERVER_ERROR
+      result.json mustBe response
+    }
+  }
+
+
 }

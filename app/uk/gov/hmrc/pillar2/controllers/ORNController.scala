@@ -43,4 +43,11 @@ class ORNController @Inject() (
       .map(response => Created(Json.toJson(response.success)))
   }
 
+  def amendOrn: Action[ORNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[ORNRequest]) { implicit request =>
+    implicit val pillar2Id: String = request.pillar2Id
+    ornService
+      .amendOrn(request.body)
+      .map(response => Ok(Json.toJson(response.success)))
+  }
+
 }

@@ -28,13 +28,23 @@ import uk.gov.hmrc.pillar2.models.orn.ORNRequest
 import scala.concurrent.{ExecutionContext, Future}
 
 class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(implicit ec: ExecutionContext) extends Logging {
+  val serviceName = "overseas-return-notification"
+  val url: String = config.baseUrl(serviceName)
 
   def submitOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
-    val serviceName = "overseas-return-notification"
-    val url         = config.baseUrl(serviceName)
     logger.info(s"Calling $url to submit a ORN")
     http
       .post(url"$url")
+      .withBody(Json.toJson(ornRequest))
+      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
+  }
+
+  def amendOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+    logger.info(s"Calling $url to amend a ORN")
+    http
+      .put(url"$url")
       .withBody(Json.toJson(ornRequest))
       .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
       .execute[HttpResponse]

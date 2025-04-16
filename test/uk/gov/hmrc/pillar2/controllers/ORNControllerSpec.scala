@@ -60,7 +60,11 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       issuingCountryTIN = "US"
     )
 
-  private val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.ORNController.submitOrn().url)
+  private val submitOrnRequest: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.ORNController.submitOrn().url)
+    .withHeaders("X-Pillar2-ID" -> pillar2Id)
+    .withJsonBody(Json.toJson(ornPayload))
+
+  private val amendOrnRequest: FakeRequest[AnyContentAsJson] = FakeRequest(PUT, routes.ORNController.amendOrn().url)
     .withHeaders("X-Pillar2-ID" -> pillar2Id)
     .withJsonBody(Json.toJson(ornPayload))
 
@@ -72,7 +76,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
       when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
 
-      val result = route(application, request).value
+      val result = route(application, submitOrnRequest).value
 
       status(result) mustEqual CREATED
       contentAsJson(result) mustEqual Json.toJson(successResponse.success)
@@ -93,7 +97,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         .overrides(bind[ORNService].toInstance(mockOrnService))
         .build()
 
-      val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, request).value))
+      val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, submitOrnRequest).value))
       result mustEqual AuthorizationError
     }
 
@@ -101,7 +105,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
 
-      val result = intercept[ETMPValidationError](await(route(application, request).value))
+      val result = intercept[ETMPValidationError](await(route(application, submitOrnRequest).value))
       result mustEqual ETMPValidationError("422", "Validation failed")
     }
 
@@ -109,14 +113,61 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
 
-      val result = intercept[InvalidJsonError](await(route(application, request).value))
+      val result = intercept[InvalidJsonError](await(route(application, submitOrnRequest).value))
       result mustEqual InvalidJsonError("Invalid JSON")
     }
 
     "should handle ApiInternalServerError from service" in {
       when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
 
-      val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
+      val result = intercept[ApiInternalServerError.type](await(route(application, submitOrnRequest).value))
+      result mustEqual ApiInternalServerError
+    }
+  }
+
+  "amendOrn" - {
+    "should return Accepted with ORNSuccessResponse when amendment is successful" in {
+      val successResponse: ORNSuccessResponse = ORNSuccessResponse(
+        ORNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"), formBundleNumber = "123456789012345")
+      )
+
+      when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
+
+      val result = route(application, amendOrnRequest).value
+
+      status(result) mustEqual OK
+      contentAsJson(result) mustEqual Json.toJson(successResponse.success)
+    }
+
+    "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
+
+      val headlessRequest: FakeRequest[AnyContentAsJson] = FakeRequest(PUT, routes.ORNController.amendOrn().url)
+        .withJsonBody(Json.toJson(ornPayload))
+
+      val result = intercept[MissingHeaderError](await(route(application, headlessRequest).value))
+      result mustEqual MissingHeaderError("X-Pillar2-Id")
+    }
+
+    "should handle ValidationError from service" in {
+      when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+
+      val result = intercept[ETMPValidationError](await(route(application, amendOrnRequest).value))
+      result mustEqual ETMPValidationError("422", "Validation failed")
+    }
+
+    "should handle InvalidJsonError from service" in {
+      when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
+
+      val result = intercept[InvalidJsonError](await(route(application, amendOrnRequest).value))
+      result mustEqual InvalidJsonError("Invalid JSON")
+    }
+
+    "should handle ApiInternalServerError from service" in {
+      when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
+
+      val result = intercept[ApiInternalServerError.type](await(route(application, amendOrnRequest).value))
       result mustEqual ApiInternalServerError
     }
   }
