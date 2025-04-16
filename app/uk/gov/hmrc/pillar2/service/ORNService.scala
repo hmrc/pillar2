@@ -31,5 +31,10 @@ class ORNService @Inject() (
   def submitOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
     ornConnector
       .submitOrn(ornRequest)
-      .flatMap(convertToSubmitORNApiResult)
+      .flatMap(convertToORNApiResult)
+
+  def amendOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
+    ornConnector
+      .amendOrn(ornRequest)
+      .flatMap(convertToORNApiResult)
 }
