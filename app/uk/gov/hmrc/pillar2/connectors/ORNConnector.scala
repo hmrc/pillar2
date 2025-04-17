@@ -25,6 +25,7 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.orn.ORNRequest
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(implicit ec: ExecutionContext) extends Logging {
@@ -46,6 +47,21 @@ class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
     http
       .put(url"$url")
       .withBody(Json.toJson(ornRequest))
+      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
+  }
+
+  def getOrn(fromDate: LocalDate, toDate: LocalDate)(implicit
+    hc:                HeaderCarrier,
+    ec:                ExecutionContext,
+    pillar2Id:         String
+  ): Future[HttpResponse] = {
+    val serviceName = "overseas-return-notification"
+    val url =
+      s"${config.baseUrl(serviceName)}?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
+    http
+      .get(url"$url")
       .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }

@@ -35,5 +35,5 @@ PUT           /amend-uk-tax-return                                         uk.go
 GET           /obligations-and-submissions/:fromDate/:toDate               uk.gov.hmrc.pillar2.controllers.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate: String, toDate: String)
 
 POST          /overseas-return-notification/submit                         uk.gov.hmrc.pillar2.controllers.ORNController.submitOrn()
-
 PUT           /overseas-return-notification/amend                         uk.gov.hmrc.pillar2.controllers.ORNController.amendOrn()
+GET           /overseas-return-notification/:fromDate/:toDate              uk.gov.hmrc.pillar2.controllers.ORNController.getOrn(fromDate: String, toDate: String)
