@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -26,10 +27,10 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip._
-import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
+import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccess, GetORNSuccessResponse, ORNRequest, ORNSuccess, ORNSuccessResponse}
 
 import java.time.{LocalDate, ZonedDateTime}
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
@@ -45,6 +46,8 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       TIN = "US12345678",
       issuingCountryTIN = "US"
     )
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now().plusYears(1)
 
   "submitOrn" - {
     "should return SuccessResponse for valid ornPayload (201)" in {
@@ -91,6 +94,91 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
       intercept[ApiInternalServerError.type] {
         await(service.submitOrn(ornPayload))
+      }
+    }
+  }
+
+  "getOrn" - {
+    "should return SuccessResponse when orn exists (201)" in {
+      val successResponse = GetORNSuccessResponse(
+        GetORNSuccess(
+          processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
+          accountingPeriodFrom = LocalDate.now(),
+          accountingPeriodTo = LocalDate.now().plusYears(1),
+          filedDateGIR = LocalDate.now().plusYears(1),
+          countryGIR = "US",
+          reportingEntityName = "Newco PLC",
+          TIN = "US12345678",
+          issuingCountryTIN = "US"
+        )
+      )
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(HttpResponse(OK, Json.toJson(successResponse).toString())))
+
+      val result = service.getOrn(fromDate, toDate).futureValue
+      result mustBe successResponse
+    }
+
+    "should throw ValidationError for 422 response" in {
+      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(httpResponse))
+
+      val error = intercept[ETMPValidationError] {
+        await(service.getOrn(fromDate, toDate))
+      }
+
+      error.code mustBe "422"
+      error.message mustBe "Validation failed"
+    }
+
+    "should throw InvalidJsonError for malformed success response" in {
+      val httpResponse = HttpResponse(201, "{invalid json}")
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(httpResponse))
+
+      val error = intercept[InvalidJsonError] {
+        await(service.getOrn(fromDate, toDate))
+      }
+      error.code mustBe "002"
+    }
+
+    "should throw ApiInternalServerError for non-201/422 responses" in {
+      val httpResponse = HttpResponse(500, "{}")
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(httpResponse))
+
+      intercept[ApiInternalServerError.type] {
+        await(service.getOrn(fromDate, toDate))
       }
     }
   }

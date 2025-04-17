@@ -29,10 +29,10 @@ import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.helpers.AuthStubs
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
-import uk.gov.hmrc.pillar2.models.orn.ORNRequest
+import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccess, GetORNSuccessResponse, ORNRequest}
 
-import java.net.URI
-import java.time.LocalDate
+import java.net.{URI, URL}
+import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.DurationInt
@@ -45,24 +45,48 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     .configure("metrics.enabled" -> false)
     .build()
 
-  val successfulResponse =  Json.obj(
+  val successfulResponse = Json.obj(
     "success" -> Json.obj(
       "processingDate"   -> "2024-03-14T09:26:17Z",
       "formBundleNumber" -> "123456789012345"
     )
   )
 
-  val ornPayload = Json.toJson(ORNRequest(
-    accountingPeriodFrom = LocalDate.now(),
-    accountingPeriodTo = LocalDate.now().plusYears(1),
-    filedDateGIR = LocalDate.now().plusYears(1),
-    countryGIR = "US",
-    reportingEntityName = "Newco PLC",
-    TIN = "US12345678",
-    issuingCountryTIN = "US"
-  ))
+  val ornPayload = Json.toJson(
+    ORNRequest(
+      accountingPeriodFrom = LocalDate.now(),
+      accountingPeriodTo = LocalDate.now().plusYears(1),
+      filedDateGIR = LocalDate.now().plusYears(1),
+      countryGIR = "US",
+      reportingEntityName = "Newco PLC",
+      TIN = "US12345678",
+      issuingCountryTIN = "US"
+    )
+  )
 
-  lazy val url = URI.create( s"http://localhost:$port${routes.ORNController.submitOrn().url}").toURL
+  val response: GetORNSuccessResponse = GetORNSuccessResponse(
+    GetORNSuccess(
+      processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
+      accountingPeriodFrom = LocalDate.now(),
+      accountingPeriodTo = LocalDate.now().plusYears(1),
+      filedDateGIR = LocalDate.now().plusYears(1),
+      countryGIR = "US",
+      reportingEntityName = "Newco PLC",
+      TIN = "US12345678",
+      issuingCountryTIN = "US"
+    )
+  )
+
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now()
+
+  lazy val getUrl: URL = URI
+    .create(
+      s"http://localhost:$port${routes.ORNController.getOrn(fromDate.toString, toDate.toString).url}"
+    )
+    .toURL
+
+  lazy val submitUrl = URI.create(s"http://localhost:$port${routes.ORNController.submitOrn().url}").toURL
 
   test("Successful ORN submission") {
     stubAuthenticate()
@@ -83,9 +107,10 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     val httpClient = app.injector.instanceOf[HttpClientV2]
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
-    val request = httpClient.post(url)
+    val request = httpClient
+      .post(submitUrl)
       .withBody(ornPayload)
-    val result  = Await.result(request.execute[HttpResponse], 5.seconds)
+    val result = Await.result(request.execute[HttpResponse], 5.seconds)
     result.status mustEqual 201
   }
 
@@ -94,13 +119,43 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
     implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
-      .withExtraHeaders( "Content-Type" -> "application/json")
-    val request = httpClient.post(url)
+      .withExtraHeaders("Content-Type" -> "application/json")
+    val request = httpClient
+      .post(submitUrl)
       .withBody(ornPayload)
-    val result  = Await.result(request.execute[HttpResponse], 5.seconds)
+    val result = Await.result(request.execute[HttpResponse], 5.seconds)
     result.status mustEqual 400
     val error = result.json.as[Pillar2ApiError]
     error.code mustEqual "001"
     error.message mustEqual "Missing X-Pillar2-Id header"
+  }
+
+  test("Successful ORN get request") {
+    stubAuthenticate()
+    val pillar2Id = "pillar2Id"
+    server.stubFor(
+      get(
+        urlEqualTo(s"/RESTAdapter/plr/overseas-return-notification/?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}")
+      )
+        .withHeader("correlationid", matching(".+"))
+        .withHeader("X-Transmitting-System", equalTo("HIP"))
+        .withHeader("X-Originating-System", equalTo("MDTP"))
+        .withHeader("X-Receipt-Date", matching(".+"))
+        .withHeader("X-Pillar2-Id", equalTo("pillar2Id"))
+        .willReturn(
+          aResponse()
+            .withStatus(200)
+            .withHeader("Content-Type", "application/json")
+            .withBody(Json.stringify(Json.toJson(response)))
+        )
+    )
+
+    val httpClient = app.injector.instanceOf[HttpClientV2]
+    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+      .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
+    val request = httpClient.get(getUrl)
+    val result  = Await.result(request.execute[HttpResponse], 5.seconds)
+    result.status mustEqual 200
+    Json.parse(result.body) mustBe Json.toJson(response.success)
   }
 }
