@@ -21,11 +21,12 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.{JsObject, Json}
+import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.orn.ORNRequest
+import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccess, GetORNSuccessResponse, ORNRequest}
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 
 class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
@@ -34,6 +35,12 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     .build()
 
   private lazy val connector = app.injector.instanceOf[ORNConnector]
+
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now().plusYears(1)
+
+  val url: String =
+    s"/RESTAdapter/plr/overseas-return-notification/?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
 
   private val ornPayload =
     ORNRequest(
@@ -46,7 +53,20 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       issuingCountryTIN = "US"
     )
 
-  private def stubResponseFor(status: Int)(implicit response: JsObject): StubMapping =
+  val response: GetORNSuccessResponse = GetORNSuccessResponse(
+    GetORNSuccess(
+      processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
+      accountingPeriodFrom = LocalDate.now(),
+      accountingPeriodTo = LocalDate.now().plusYears(1),
+      filedDateGIR = LocalDate.now().plusYears(1),
+      countryGIR = "US",
+      reportingEntityName = "Newco PLC",
+      TIN = "US12345678",
+      issuingCountryTIN = "US"
+    )
+  )
+
+  private def stubResponseForSubmit(status: Int)(implicit response: JsObject): StubMapping =
     server.stubFor(
       post(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
         .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
@@ -59,6 +79,17 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
     )
 
+  private def stubResponseForGet(status: Int): StubMapping =
+    server.stubFor(
+      get(urlEqualTo(url))
+        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+        .willReturn(
+          aResponse()
+            .withStatus(status)
+            .withBody(Json.stringify(Json.toJson(response)))
+        )
+    )
+
   "submitOrn" - {
     "successfully submit a ORN request with X-PILLAR2-Id and receive Success response" in {
       implicit val response: JsObject = Json.obj(
@@ -68,7 +99,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(CREATED)
+      stubResponseForSubmit(CREATED)
 
       val result = connector.submitOrn(ornPayload).futureValue
 
@@ -90,7 +121,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(BAD_REQUEST)
+      stubResponseForSubmit(BAD_REQUEST)
 
       val result = connector.submitOrn(ornPayload).futureValue
       result.status mustBe BAD_REQUEST
@@ -106,7 +137,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(UNPROCESSABLE_ENTITY)
+      stubResponseForSubmit(UNPROCESSABLE_ENTITY)
 
       val result = connector.submitOrn(ornPayload).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
@@ -122,11 +153,34 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
       )
 
-      stubResponseFor(INTERNAL_SERVER_ERROR)
+      stubResponseForSubmit(INTERNAL_SERVER_ERROR)
 
       val result = connector.submitOrn(ornPayload).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
+    }
+  }
+
+  "getOrn" - {
+    "successfully get a ORN with X-PILLAR2-Id and receive Success response" in {
+
+      stubResponseForGet(OK)
+
+      val result = connector.getOrn(fromDate, toDate).futureValue
+
+      result.status mustBe OK
+      verifyHipHeaders("GET", url)
+    }
+
+    "must return status as 500 when ORN is not returned" in {
+
+      stubResponseForGet(INTERNAL_SERVER_ERROR)
+
+      val result = connector.getOrn(fromDate, toDate).failed
+
+      result.failed.map { ex =>
+        ex mustBe a[InternalServerException]
+      }
     }
   }
 }
