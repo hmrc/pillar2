@@ -30,8 +30,8 @@ import uk.gov.hmrc.pillar2.helpers.AuthStubs
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR_CREATE
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 
 import java.net.{URI, URL}
@@ -59,19 +59,19 @@ class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite wit
           underEnquiry = false,
           Seq(
             Obligation(
-              Pillar2TaxReturn,
+              UKTR,
               Fulfilled,
               canAmend = false,
               Seq(
                 Submission(
-                  UKTR,
+                  UKTR_CREATE,
                   ZonedDateTime.now(),
                   None
                 )
               )
             ),
             Obligation(
-              GlobeInformationReturn,
+              GIR,
               Open,
               canAmend = true,
               Seq.empty

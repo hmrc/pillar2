@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.BTN
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 
@@ -58,7 +58,7 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
           underEnquiry = false,
           Seq(
             Obligation(
-              Pillar2TaxReturn,
+              UKTR,
               Fulfilled,
               canAmend = false,
               Seq(
@@ -70,7 +70,7 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
               )
             ),
             Obligation(
-              GlobeInformationReturn,
+              GIR,
               Open,
               canAmend = true,
               Seq.empty

@@ -33,8 +33,8 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GlobeInformationReturn, Pillar2TaxReturn}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN_CREATE
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 
@@ -75,19 +75,19 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
           underEnquiry = false,
           Seq(
             Obligation(
-              Pillar2TaxReturn,
+              UKTR,
               Fulfilled,
               canAmend = false,
               Seq(
                 Submission(
-                  ORN,
+                  ORN_CREATE,
                   ZonedDateTime.now(),
                   Some("Country details")
                 )
               )
             ),
             Obligation(
-              GlobeInformationReturn,
+              GIR,
               Open,
               canAmend = true,
               Seq.empty
