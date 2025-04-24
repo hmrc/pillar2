@@ -61,6 +61,6 @@ package object service extends Logging {
   private[service] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
     convertToResult[ObligationsAndSubmissionsResponse](response)
 
-  private[service] def convertToSubmitORNApiResult(response: HttpResponse): Future[ORNSuccessResponse] =
+  private[service] def convertToORNApiResult(response: HttpResponse): Future[ORNSuccessResponse] =
     convertToResult[ORNSuccessResponse](response)
 }

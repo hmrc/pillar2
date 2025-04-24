@@ -94,4 +94,53 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       }
     }
   }
+
+  "amendOrn" - {
+    "should return SuccessResponse for valid ornPayload (200)" in {
+      val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.successful(httpOk))
+
+      val result = service.amendOrn(ornPayload).futureValue
+      result mustBe successResponse
+    }
+
+    "should throw ValidationError for 422 response" in {
+      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
+
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.successful(httpResponse))
+
+      val error = intercept[ETMPValidationError] {
+        await(service.amendOrn(ornPayload))
+      }
+
+      error.code mustBe "422"
+      error.message mustBe "Validation failed"
+    }
+
+    "should throw InvalidJsonError for malformed success response" in {
+      val httpResponse = HttpResponse(200, "{invalid json}")
+
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.successful(httpResponse))
+
+      val error = intercept[InvalidJsonError] {
+        await(service.amendOrn(ornPayload))
+      }
+      error.code mustBe "002"
+    }
+
+    "should throw ApiInternalServerError for non-200/422 responses" in {
+      val httpResponse = HttpResponse(500, "{}")
+
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.successful(httpResponse))
+
+      intercept[ApiInternalServerError.type] {
+        await(service.amendOrn(ornPayload))
+      }
+    }
+  }
 }
