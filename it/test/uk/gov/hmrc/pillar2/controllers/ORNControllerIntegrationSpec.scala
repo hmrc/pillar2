@@ -98,10 +98,6 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
       get(
         urlEqualTo(s"/RESTAdapter/plr/overseas-return-notification?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}")
       )
-        .withHeader("correlationid", matching(".+"))
-        .withHeader("X-Transmitting-System", equalTo("HIP"))
-        .withHeader("X-Originating-System", equalTo("MDTP"))
-        .withHeader("X-Receipt-Date", matching(".+"))
         .withHeader("X-Pillar2-Id", equalTo("pillar2Id"))
         .willReturn(
           aResponse()

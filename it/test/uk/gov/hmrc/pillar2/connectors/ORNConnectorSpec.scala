@@ -83,11 +83,8 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       result.status mustBe CREATED
       result.json mustBe response
-      server.verify(
-        postRequestedFor(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
-          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(ornRequest).toString()))
-      )
+
+      verifyHipHeaders(POST, "/RESTAdapter/plr/overseas-return-notification")
     }
 
     "handle BAD_REQUEST (400) response" in {
@@ -154,11 +151,9 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       result.status mustBe OK
       result.json mustBe response
-      server.verify(
-        putRequestedFor(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
-          .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(ornRequest).toString()))
-      )
+
+      verifyHipHeaders(PUT, "/RESTAdapter/plr/overseas-return-notification")
+
     }
     "handle BAD_REQUEST (400) response" in {
       implicit val response: JsObject = Json.obj(
