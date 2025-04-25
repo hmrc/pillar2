@@ -32,8 +32,8 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     .build()
 
   private lazy val connector = app.injector.instanceOf[ORNConnector]
-  private val POST = "POST"
-  private val PUT = "PUT"
+  private val POST           = "POST"
+  private val PUT            = "PUT"
 
   val getUrl: String =
     s"/RESTAdapter/plr/overseas-return-notification?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
@@ -41,7 +41,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   private def stubResponseFor(status: Int, method: String)(implicit response: JsObject): StubMapping = {
     val requestBuilder = method match {
       case "POST" => post(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
-      case "PUT" => put(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
+      case "PUT"  => put(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
     }
 
     server.stubFor(
@@ -56,6 +56,17 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         )
     )
   }
+
+  private def stubResponseForGet(status: Int): StubMapping =
+    server.stubFor(
+      get(urlEqualTo(getUrl))
+        .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
+        .willReturn(
+          aResponse()
+            .withStatus(status)
+            .withBody(Json.stringify(Json.toJson(ornResponse)))
+        )
+    )
 
   "submitOrn" - {
     "successfully submit a ORN request with X-PILLAR2-Id and receive Success response" in {
@@ -139,14 +150,14 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(OK, PUT)
 
-      val result = connector.amendOrn(ornPayload).futureValue
+      val result = connector.amendOrn(ornRequest).futureValue
 
       result.status mustBe OK
       result.json mustBe response
       server.verify(
         putRequestedFor(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
           .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
-          .withRequestBody(equalToJson(Json.toJson(ornPayload).toString()))
+          .withRequestBody(equalToJson(Json.toJson(ornRequest).toString()))
       )
     }
     "handle BAD_REQUEST (400) response" in {
@@ -160,7 +171,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(BAD_REQUEST, PUT)
 
-      val result = connector.amendOrn(ornPayload).futureValue
+      val result = connector.amendOrn(ornRequest).futureValue
       result.status mustBe BAD_REQUEST
       result.json mustBe response
     }
@@ -176,7 +187,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(UNPROCESSABLE_ENTITY, PUT)
 
-      val result = connector.amendOrn(ornPayload).futureValue
+      val result = connector.amendOrn(ornRequest).futureValue
       result.status mustBe UNPROCESSABLE_ENTITY
       result.json mustBe response
     }
@@ -192,17 +203,14 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
       stubResponseFor(INTERNAL_SERVER_ERROR, PUT)
 
-      val result = connector.amendOrn(ornPayload).futureValue
+      val result = connector.amendOrn(ornRequest).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
     }
   }
 
-
-
   "getOrn" - {
     "successfully get a ORN with X-PILLAR2-Id and receive Success response" in {
-
       stubResponseForGet(OK)
 
       val result = connector.getOrn(fromDate, toDate).futureValue

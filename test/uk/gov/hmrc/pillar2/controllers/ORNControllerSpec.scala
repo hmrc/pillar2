@@ -50,17 +50,17 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     )
     .build()
 
-  private val submitRequest: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.ORNController.submitOrn().url)
+  private val submitOrnRequest: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.ORNController.submitOrn().url)
     .withHeaders("X-Pillar2-ID" -> pillar2Id)
     .withJsonBody(Json.toJson(ornRequest))
 
-  private val submitOrnRequest: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.ORNController.submitOrn().url)
-    .withHeaders("X-Pillar2-ID" -> pillar2Id)
-    .withJsonBody(Json.toJson(ornPayload))
-
   private val amendOrnRequest: FakeRequest[AnyContentAsJson] = FakeRequest(PUT, routes.ORNController.amendOrn().url)
-  private val getRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, routes.ORNController.getOrn(fromDate.toString, toDate.toString).url)
     .withHeaders("X-Pillar2-ID" -> pillar2Id)
+    .withJsonBody(Json.toJson(ornRequest))
+
+  private val getOrnRequest: FakeRequest[AnyContentAsEmpty.type] =
+    FakeRequest(GET, routes.ORNController.getOrn(fromDate.toString, toDate.toString).url)
+      .withHeaders("X-Pillar2-ID" -> pillar2Id)
 
   "submitOrn" - {
     "should return Created with OrnSuccessResponse when submission is successful" in {
@@ -136,7 +136,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
 
       val headlessRequest: FakeRequest[AnyContentAsJson] = FakeRequest(PUT, routes.ORNController.amendOrn().url)
-        .withJsonBody(Json.toJson(ornPayload))
+        .withJsonBody(Json.toJson(ornRequest))
 
       val result = intercept[MissingHeaderError](await(route(application, headlessRequest).value))
       result mustEqual MissingHeaderError("X-Pillar2-Id")
@@ -175,7 +175,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         )
       ).thenReturn(Future.successful(ornResponse))
 
-      val result = route(application, getRequest).value
+      val result = route(application, getOrnRequest).value
 
       status(result) mustEqual OK
       contentAsJson(result) mustEqual Json.toJson(ornResponse.success)
@@ -196,7 +196,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         .overrides(bind[ORNService].toInstance(mockOrnService))
         .build()
 
-      val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, getRequest).value))
+      val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, getOrnRequest).value))
       result mustEqual AuthorizationError
     }
 
@@ -208,7 +208,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         )
       ).thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
 
-      val result = intercept[ETMPValidationError](await(route(application, getRequest).value))
+      val result = intercept[ETMPValidationError](await(route(application, getOrnRequest).value))
       result mustEqual ETMPValidationError("422", "Validation failed")
     }
 
@@ -220,7 +220,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         )
       ).thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
 
-      val result = intercept[InvalidJsonError](await(route(application, getRequest).value))
+      val result = intercept[InvalidJsonError](await(route(application, getOrnRequest).value))
       result mustEqual InvalidJsonError("Invalid JSON")
     }
 
@@ -232,7 +232,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         )
       ).thenReturn(Future.failed(ApiInternalServerError))
 
-      val result = intercept[ApiInternalServerError.type](await(route(application, getRequest).value))
+      val result = intercept[ApiInternalServerError.type](await(route(application, getOrnRequest).value))
       result mustEqual ApiInternalServerError
     }
   }

@@ -38,7 +38,6 @@ class ORNService @Inject() (
     ornConnector
       .amendOrn(ornRequest)
       .flatMap(convertToORNApiResult)
-      .flatMap(convertToSubmitORNApiResult)
 
   def getOrn(
     fromDate:    LocalDate,
