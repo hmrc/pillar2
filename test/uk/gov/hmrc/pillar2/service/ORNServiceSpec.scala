@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service
 
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -23,36 +24,25 @@ import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip._
 import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
 
-import java.time.{LocalDate, ZonedDateTime}
-import scala.concurrent.Future
+import java.time.ZonedDateTime
+import scala.concurrent.{ExecutionContext, Future}
 
-class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixture {
 
   val service = new ORNService(mockOrnConnector)
 
-  private val ornPayload =
-    ORNRequest(
-      accountingPeriodFrom = LocalDate.now(),
-      accountingPeriodTo = LocalDate.now().plusYears(1),
-      filedDateGIR = LocalDate.now().plusYears(1),
-      countryGIR = "US",
-      reportingEntityName = "Newco PLC",
-      TIN = "US12345678",
-      issuingCountryTIN = "US"
-    )
-
   "submitOrn" - {
-    "should return SuccessResponse for valid ornPayload (201)" in {
+    "should return SuccessResponse for valid ornRequest (201)" in {
       val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
       when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpCreated))
 
-      val result = service.submitOrn(ornPayload).futureValue
+      val result = service.submitOrn(ornRequest).futureValue
       result mustBe successResponse
     }
 
@@ -64,7 +54,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[ETMPValidationError] {
-        await(service.submitOrn(ornPayload))
+        await(service.submitOrn(ornRequest))
       }
 
       error.code mustBe "422"
@@ -78,7 +68,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[InvalidJsonError] {
-        await(service.submitOrn(ornPayload))
+        await(service.submitOrn(ornRequest))
       }
       error.code mustBe "002"
     }
@@ -90,18 +80,90 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
         .thenReturn(Future.successful(httpResponse))
 
       intercept[ApiInternalServerError.type] {
-        await(service.submitOrn(ornPayload))
+        await(service.submitOrn(ornRequest))
+      }
+    }
+  }
+
+  "getOrn" - {
+    "should return SuccessResponse when orn exists (200)" in {
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(HttpResponse(OK, Json.toJson(ornResponse).toString)))
+
+      val result = service.getOrn(fromDate, toDate).futureValue
+      result mustBe ornResponse
+    }
+
+    "should throw ValidationError for 422 response" in {
+      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(httpResponse))
+
+      val error = intercept[ETMPValidationError] {
+        await(service.getOrn(fromDate, toDate))
+      }
+
+      error.code mustBe "422"
+      error.message mustBe "Validation failed"
+    }
+
+    "should throw InvalidJsonError for malformed success response" in {
+      val httpResponse = HttpResponse(201, "{invalid json}")
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(httpResponse))
+
+      val error = intercept[InvalidJsonError] {
+        await(service.getOrn(fromDate, toDate))
+      }
+      error.code mustBe "002"
+    }
+
+    "should throw ApiInternalServerError for non-201/422 responses" in {
+      val httpResponse = HttpResponse(500, "{}")
+
+      when(
+        mockOrnConnector
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            any[HeaderCarrier],
+            any[ExecutionContext],
+            ArgumentMatchers.eq(pillar2Id)
+          )
+      ).thenReturn(Future.successful(httpResponse))
+
+      intercept[ApiInternalServerError.type] {
+        await(service.getOrn(fromDate, toDate))
       }
     }
   }
 
   "amendOrn" - {
-    "should return SuccessResponse for valid ornPayload (200)" in {
+    "should return SuccessResponse for valid ORN request (200)" in {
       val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
       when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpOk))
 
-      val result = service.amendOrn(ornPayload).futureValue
+      val result = service.amendOrn(ornRequest).futureValue
       result mustBe successResponse
     }
 
@@ -113,7 +175,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[ETMPValidationError] {
-        await(service.amendOrn(ornPayload))
+        await(service.amendOrn(ornRequest))
       }
 
       error.code mustBe "422"
@@ -127,7 +189,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[InvalidJsonError] {
-        await(service.amendOrn(ornPayload))
+        await(service.amendOrn(ornRequest))
       }
       error.code mustBe "002"
     }
@@ -139,7 +201,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
         .thenReturn(Future.successful(httpResponse))
 
       intercept[ApiInternalServerError.type] {
-        await(service.amendOrn(ornPayload))
+        await(service.amendOrn(ornRequest))
       }
     }
   }

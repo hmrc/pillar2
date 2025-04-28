@@ -18,8 +18,9 @@ package uk.gov.hmrc.pillar2.service
 
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.ORNConnector
-import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccessResponse}
+import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNRequest, ORNSuccessResponse}
 
+import java.time.LocalDate
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,4 +38,12 @@ class ORNService @Inject() (
     ornConnector
       .amendOrn(ornRequest)
       .flatMap(convertToORNApiResult)
+
+  def getOrn(
+    fromDate:    LocalDate,
+    toDate:      LocalDate
+  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[GetORNSuccessResponse] =
+    ornConnector
+      .getOrn(fromDate, toDate)
+      .flatMap(convertToGetORNApiResult)
 }

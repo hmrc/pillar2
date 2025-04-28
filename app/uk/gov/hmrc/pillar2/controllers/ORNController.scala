@@ -18,12 +18,13 @@ package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logging
 import play.api.libs.json.Json
-import play.api.mvc.{Action, ControllerComponents}
+import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.orn.ORNRequest
 import uk.gov.hmrc.pillar2.service.ORNService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
+import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
@@ -48,6 +49,13 @@ class ORNController @Inject() (
     ornService
       .amendOrn(request.body)
       .map(response => Ok(Json.toJson(response.success)))
+  }
+
+  def getOrn(fromDate: String, toDate: String): Action[AnyContent] = (authenticate andThen pillar2HeaderExists).async { implicit request =>
+    implicit val pillar2Id: String = request.pillar2Id
+    ornService
+      .getOrn(LocalDate.parse(fromDate), LocalDate.parse(toDate))
+      .map(data => Ok(Json.toJson(data.success)))
   }
 
 }
