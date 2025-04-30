@@ -20,9 +20,9 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.pillar2.config.AppConfig
 
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
+import java.time.temporal.ChronoUnit
 
 package object connectors {
 
@@ -36,10 +36,13 @@ package object connectors {
       .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
 
     Seq(
-      "correlationid"         -> UUID.randomUUID().toString,
-      "X-Originating-System"  -> "MDTP",
-      "X-Pillar2-Id"          -> pillar2Id,
-      "X-Receipt-Date"        -> ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.SECONDS).toString,
+      "correlationid"        -> UUID.randomUUID().toString,
+      "X-Originating-System" -> "MDTP",
+      "X-Pillar2-Id"         -> pillar2Id,
+      "X-Receipt-Date" -> ZonedDateTime
+        .now(ZoneOffset.UTC)
+        .truncatedTo(ChronoUnit.SECONDS)
+        .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")),
       "X-Transmitting-System" -> "HIP"
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))
   }
