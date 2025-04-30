@@ -20,9 +20,9 @@ import uk.gov.hmrc.http._
 import uk.gov.hmrc.pillar2.config.AppConfig
 
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
-import java.time.temporal.ChronoUnit
 
 package object connectors {
 
