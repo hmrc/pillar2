@@ -129,6 +129,7 @@ trait BaseSpec
       .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
       .withHeader("X-Receipt-Date", matching("\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z"))
       .withHeader("X-Transmitting-System", equalTo("HIP"))
+      .withHeader("Authorization", equalTo("Basic hip-key"))
 
     val ifHasBody = expectedBody.fold(getVerification)(body => getVerification.withRequestBody(equalToJson(body)))
 

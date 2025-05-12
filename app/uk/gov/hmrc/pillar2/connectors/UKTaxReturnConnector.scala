@@ -38,7 +38,7 @@ class UKTaxReturnConnector @Inject() (
 
     http
       .post(url"$url")
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
   }
@@ -51,7 +51,7 @@ class UKTaxReturnConnector @Inject() (
 
     http
       .put(url"$url")
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
   }

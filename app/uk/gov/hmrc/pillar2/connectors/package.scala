@@ -28,12 +28,12 @@ package object connectors {
 
   implicit val httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
 
-  private[connectors] def hipHeaders(config: AppConfig, serviceName: String)(implicit
+  private[connectors] def hipHeaders(config: AppConfig)(implicit
     headerCarrier:                           HeaderCarrier,
     pillar2Id:                               String
   ): Seq[(String, String)] = {
     val authHeader = headerCarrier
-      .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
+      .copy(authorization = Some(Authorization(s"Basic ${config.hipKey}")))
 
     Seq(
       "correlationid"        -> UUID.randomUUID().toString,
