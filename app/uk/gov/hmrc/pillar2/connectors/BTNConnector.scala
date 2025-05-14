@@ -36,7 +36,7 @@ class BTNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
     http
       .post(url"$url")
       .withBody(Json.toJson(btnRequest))
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }

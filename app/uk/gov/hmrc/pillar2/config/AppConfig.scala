@@ -35,6 +35,7 @@ class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesCo
   val cryptoToggle:               Boolean = config.get[Boolean]("encryptionToggle")
 
   val bearerToken:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.bearer-token")
+  lazy val hipKey:                String           = config.get[String]("hip.key")
   val environment:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.environment")
   lazy val locationCanonicalList: String           = config.get[String]("location.canonical.list.all")
 }

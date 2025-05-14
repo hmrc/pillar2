@@ -37,7 +37,7 @@ class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val h
       s"${config.baseUrl(serviceName)}/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
     httpClient
       .get(url"$url")
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }

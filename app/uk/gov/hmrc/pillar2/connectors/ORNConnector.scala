@@ -37,7 +37,7 @@ class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
     http
       .post(url"$url")
       .withBody(Json.toJson(ornRequest))
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
@@ -47,7 +47,7 @@ class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
     http
       .put(url"$url")
       .withBody(Json.toJson(ornRequest))
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
@@ -62,7 +62,7 @@ class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
       s"${config.baseUrl(serviceName)}?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
     http
       .get(url"$url")
-      .setHeader(hipHeaders(config = config, serviceName = serviceName): _*)
+      .setHeader(hipHeaders(config = config): _*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
