@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import play.api.libs.json.{JsSuccess, Json}
+
 import java.time.{LocalDate, ZonedDateTime}
 
 class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matchers {
