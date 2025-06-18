@@ -16,7 +16,11 @@
 
 package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.functional.syntax.toFunctionalBuilderOps
+import play.api.libs.json._
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.Submission
 
 final case class Obligation(
   obligationType: ObligationType,
@@ -26,5 +30,15 @@ final case class Obligation(
 )
 
 object Obligation {
-  implicit val format: OFormat[Obligation] = Json.format[Obligation]
+  implicit val reads: Reads[Obligation] =
+    (
+      (JsPath \ "obligationType").read[ObligationType] and
+        (JsPath \ "status").read[ObligationStatus] and
+        (JsPath \ "canAmend").read[Boolean] and
+        (JsPath \ "submissions").readWithDefault[Seq[Submission]](Seq.empty)
+    )(Obligation.apply _)
+
+  implicit val writes: OWrites[Obligation] = Json.writes[Obligation]
+
+  implicit val format: OFormat[Obligation] = OFormat(reads, writes)
 }
