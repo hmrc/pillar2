@@ -32,6 +32,8 @@ import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN_CREATE
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
@@ -40,8 +42,6 @@ import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, ZonedDateTime}
 import java.util.UUID
 import scala.concurrent.Future
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
 
 class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   val application: Application = new GuiceApplicationBuilder()

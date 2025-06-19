@@ -166,6 +166,7 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
                 "obligationType" -> "UKTR",
                 "status"         -> "Open",
                 "canAmend"       -> true
+                // submissions field intentionally omitted
               )
             )
           )

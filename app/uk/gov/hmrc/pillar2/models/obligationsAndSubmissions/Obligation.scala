@@ -18,10 +18,6 @@ package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
 import play.api.libs.functional.syntax.toFunctionalBuilderOps
 import play.api.libs.json._
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.Submission
-
 final case class Obligation(
   obligationType: ObligationType,
   status:         ObligationStatus,
