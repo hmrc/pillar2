@@ -128,15 +128,38 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
       result mustEqual JsSuccess(response)
     }
 
-    "must fail to deserialize when submissions field is missing" in {
+    "must deserialize from JSON when submissions field is missing" in {
       val processingDate = ZonedDateTime.now()
+
+      val accountingPeriodDetails = Seq(
+        AccountingPeriodDetails(
+          startDate = LocalDate.now(),
+          endDate = LocalDate.now().plusMonths(3),
+          dueDate = LocalDate.now().plusMonths(4),
+          underEnquiry = false,
+          obligations = Seq(
+            Obligation(
+              obligationType = ObligationType.UKTR,
+              status = ObligationStatus.Open,
+              canAmend = true,
+              submissions = Seq.empty
+            )
+          )
+        )
+      )
+
+      val response = ObligationsAndSubmissionsSuccessResponse(
+        processingDate = processingDate,
+        accountingPeriodDetails = accountingPeriodDetails
+      )
+
       val json = Json.obj(
         "processingDate" -> processingDate,
         "accountingPeriodDetails" -> Json.arr(
           Json.obj(
-            "startDate"    -> LocalDate.now(),
-            "endDate"      -> LocalDate.now().plusMonths(3),
-            "dueDate"      -> LocalDate.now().plusMonths(4),
+            "startDate"    -> accountingPeriodDetails.head.startDate,
+            "endDate"      -> accountingPeriodDetails.head.endDate,
+            "dueDate"      -> accountingPeriodDetails.head.dueDate,
             "underEnquiry" -> false,
             "obligations" -> Json.arr(
               Json.obj(
@@ -151,7 +174,7 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
       )
 
       val result = json.validate[ObligationsAndSubmissionsSuccessResponse]
-      result.isError mustBe true
+      result mustEqual JsSuccess(response)
     }
 
     "must fail to deserialize from invalid JSON" in {
