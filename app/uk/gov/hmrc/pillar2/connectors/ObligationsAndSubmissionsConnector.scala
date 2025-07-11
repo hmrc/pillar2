@@ -34,7 +34,7 @@ class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val h
   ): Future[HttpResponse] = {
     val serviceName = "obligations-and-submissions"
     val url =
-      s"${config.baseUrl(serviceName)}/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
+      s"${config.baseUrl(serviceName)}?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
     httpClient
       .get(url"$url")
       .setHeader(hipHeaders(config = config): _*)
