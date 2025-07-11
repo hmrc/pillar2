@@ -45,7 +45,7 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
   val toDate:   LocalDate = LocalDate.now().plusYears(1)
 
   val url: String =
-    s"/RESTAdapter/plr/obligations-and-submissions/?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
+    s"/RESTAdapter/plr/obligations-and-submissions?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
 
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
     ObligationsAndSubmissionsSuccessResponse(
