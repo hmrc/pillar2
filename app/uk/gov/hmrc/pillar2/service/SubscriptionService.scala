@@ -441,6 +441,8 @@ class SubscriptionService @Inject() (
       }
       .getOrElse((None, None, None))
 
+    val organisationName: Option[String] = Some(sub.upeDetails.organisationName)
+
     ReadSubscriptionCachedData(
       plrReference = Some(plrReference),
       subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
@@ -455,7 +457,8 @@ class SubscriptionService @Inject() (
       subSecondaryPhonePreference = Some(secContactTel._1),
       subRegisteredAddress = nonUKAddress,
       subAccountingPeriod = accountingPeriod,
-      accountStatus = sub.accountStatus
+      accountStatus = sub.accountStatus,
+      organisationName = organisationName
     )
   }
 

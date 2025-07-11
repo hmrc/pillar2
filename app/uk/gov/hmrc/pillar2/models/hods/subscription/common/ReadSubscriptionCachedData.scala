@@ -34,7 +34,8 @@ case class ReadSubscriptionCachedData(
   subSecondaryCapturePhone:    Option[String],
   subSecondaryPhonePreference: Option[Boolean],
   subRegisteredAddress:        NonUKAddress,
-  accountStatus:               Option[AccountStatus]
+  accountStatus:               Option[AccountStatus],
+  organisationName:            Option[String]
 )
 
 object ReadSubscriptionCachedData {
