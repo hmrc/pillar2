@@ -88,7 +88,7 @@ class FinancialService @Inject() (
 object FinancialService {
 
   val Payment              = "Payment"
-  val Refund               = "Refund"
+  val Refund               = "Repayment"
   val PAYMENT_IDENTIFIER   = "0060"
   val REPAYMENT_IDENTIFIER = "Outgoing payment - Paid"
 

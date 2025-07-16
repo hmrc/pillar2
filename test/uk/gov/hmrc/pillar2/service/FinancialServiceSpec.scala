@@ -41,7 +41,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
   val endDate:   LocalDate = LocalDate.now().plusDays(364)
 
   "getPaymentHistory" - {
-    "return payment history if relevant fields are defined with both payment and Refund sorted by date" in {
+    "return payment history if relevant fields are defined with both payment and Repayment sorted by date" in {
       when(
         mockFinancialDataConnector
           .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
@@ -60,7 +60,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         mockFinancialDataConnector
           .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
       )
-        .thenReturn(Future.successful(financialResponseWithNeitherPaymentAndRefund))
+        .thenReturn(Future.successful(financialResponseWithNeitherPaymentAndRepayment))
 
       forAll(plrReferenceGen) { plrReference =>
         val response = await(service.getTransactionHistory(plrReference, startDate, endDate))
@@ -68,12 +68,12 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       }
     }
 
-    "return payment history when the response contains both payment and refund" in {
+    "return payment history when the response contains both payment and repayment" in {
       when(
         mockFinancialDataConnector
           .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
       )
-        .thenReturn(Future.successful(financialResponseWithPaymentAndRefund))
+        .thenReturn(Future.successful(financialResponseWithPaymentAndRepayment))
 
       forAll(plrReferenceGen) { plrReference =>
         val result = await(service.getTransactionHistory(plrReference, startDate, endDate))
@@ -81,7 +81,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       }
     }
 
-    "return payment description first if Refund and payments are made on the same day" in {
+    "return payment description first if Repayment and payments are made on the same day" in {
       when(
         mockFinancialDataConnector
           .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
@@ -286,7 +286,7 @@ object FinancialServiceSpec {
     )
   )
 
-  val financialResponseWithPaymentAndRefund: FinancialDataResponse = FinancialDataResponse(
+  val financialResponseWithPaymentAndRepayment: FinancialDataResponse = FinancialDataResponse(
     idType = "ZPLR",
     idNumber = "XPLR00000000001",
     regimeType = "PLR",
@@ -307,7 +307,7 @@ object FinancialServiceSpec {
     )
   )
 
-  val financialResponseWithNeitherPaymentAndRefund: FinancialDataResponse = FinancialDataResponse(
+  val financialResponseWithNeitherPaymentAndRepayment: FinancialDataResponse = FinancialDataResponse(
     idType = "ZPLR",
     idNumber = "XPLR00000000001",
     regimeType = "PLR",
@@ -332,7 +332,7 @@ object FinancialServiceSpec {
     TransactionHistory(
       plrReference,
       List(
-        FinancialHistory(LocalDate.now.plusDays(2), "Refund", 0.0, 100.0),
+        FinancialHistory(LocalDate.now.plusDays(2), "Repayment", 0.0, 100.0),
         FinancialHistory(LocalDate.now.plusDays(1), "Payment", 100.0, 0.00)
       )
     )
@@ -342,11 +342,11 @@ object FinancialServiceSpec {
       plrReference,
       List(
         FinancialHistory(LocalDate.now.plusDays(1), "Payment", 200.0, 0.00),
-        FinancialHistory(LocalDate.now.plusDays(1), "Refund", 0.0, 200.0),
+        FinancialHistory(LocalDate.now.plusDays(1), "Repayment", 0.0, 200.0),
         FinancialHistory(LocalDate.now, "Payment", 100.0, 0.00),
         FinancialHistory(LocalDate.now, "Payment", 300.0, 0.00),
-        FinancialHistory(LocalDate.now, "Refund", 0.0, 100.0),
-        FinancialHistory(LocalDate.now, "Refund", 0.0, 111.0)
+        FinancialHistory(LocalDate.now, "Repayment", 0.0, 100.0),
+        FinancialHistory(LocalDate.now, "Repayment", 0.0, 111.0)
       )
     )
 
