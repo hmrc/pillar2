@@ -81,14 +81,14 @@ class FinancialService @Inject() (
       financialItems <- financialData.items.filter(_.clearingReason.contains(REPAYMENT_IDENTIFIER))
       clearingDate   <- financialItems.clearingDate
       amount         <- financialItems.amount
-    } yield FinancialHistory(date = clearingDate, paymentType = Refund, amountPaid = 0.00, amountRepaid = amount.abs)
+    } yield FinancialHistory(date = clearingDate, paymentType = Repayment, amountPaid = 0.00, amountRepaid = amount.abs)
 
 }
 
 object FinancialService {
 
   val Payment              = "Payment"
-  val Refund               = "Repayment"
+  val Repayment            = "Repayment"
   val PAYMENT_IDENTIFIER   = "0060"
   val REPAYMENT_IDENTIFIER = "Outgoing payment - Paid"
 
