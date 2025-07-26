@@ -35,8 +35,12 @@ object FinancialDataResponse {
 }
 
 final case class FinancialTransaction(
-  mainTransaction: Option[String],
-  items:           Seq[FinancialItem]
+  mainTransaction:   Option[String],
+  subTransaction:    Option[String],
+  taxPeriodFrom:     Option[LocalDate],
+  taxPeriodTo:       Option[LocalDate],
+  outstandingAmount: Option[BigDecimal],
+  items:             Seq[FinancialItem]
 )
 
 object FinancialTransaction {

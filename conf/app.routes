@@ -25,6 +25,7 @@ DELETE        /user-cache/read-subscription/:id                            uk.go
 POST          /repayment                                                   uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
 
 GET           /transaction-history/:plrReference/:dateFrom/:dateTo         uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String)
+GET           /financial-data/:plrReference/:dateFrom/:dateTo              uk.gov.hmrc.pillar2.controllers.FinancialDataController.getFinancialData(plrReference: String, dateFrom: String, dateTo: String)
 
 POST          /below-threshold-notification/submit                         uk.gov.hmrc.pillar2.controllers.BTNController.submitBtn()
 
