@@ -53,7 +53,6 @@ class FinancialDataController @Inject() (
         case e: FinancialDataError if e.code == "NOT_FOUND"                                       => NotFound(Json.toJson(e))
         case e: FinancialDataError if e.code == "SERVER_ERROR" || e.code == "SERVICE_UNAVAILABLE" => FailedDependency(Json.toJson(e))
         case e: FinancialDataError                                                                => BadRequest(Json.toJson(e))
-        case _ => InternalServerError
       }
   }
 }
