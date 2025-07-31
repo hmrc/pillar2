@@ -33,7 +33,6 @@ lazy val microservice = Project(appName, file("."))
       ScalacOptions.warnNonUnitStatement
     )
   )
-  .settings(resolvers += Resolver.jcenterRepo)
   .settings(CodeCoverageSettings.settings *)
 
 addCommandAlias("prePrChecks", ";scalafmtCheckAll;scalafmtSbtCheck;scalafixAll --check")
