@@ -118,8 +118,8 @@ object FinancialDataConnectorSpec {
     LocalDateTime.now(),
     Seq(
       FinancialTransaction(
-        Some("0600"),
-        Seq(FinancialItem(Some(LocalDate.now()), Some(100.00), None, None, None))
+        mainTransaction = Some("0600"),
+        items = Seq(FinancialItem(Some(LocalDate.now()), Some(100.00), None, None, None))
       )
     )
   )

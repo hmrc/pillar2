@@ -20,6 +20,7 @@ import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
+import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.service.FinancialService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -44,4 +45,14 @@ class FinancialDataController @Inject() (
     }
   }
 
+  def getFinancialData(plrReference: String, dateFrom: String, dateTo: String): Action[AnyContent] = authenticate.async { implicit request =>
+    financialService
+      .retrieveCompleteFinancialDataResponse(plrReference, LocalDate.parse(dateFrom), LocalDate.parse(dateTo))
+      .map(response => Ok(Json.toJson(response)))
+      .recover {
+        case e: FinancialDataError if e.code == "NOT_FOUND"                                       => NotFound(Json.toJson(e))
+        case e: FinancialDataError if e.code == "SERVER_ERROR" || e.code == "SERVICE_UNAVAILABLE" => FailedDependency(Json.toJson(e))
+        case e: FinancialDataError                                                                => BadRequest(Json.toJson(e))
+      }
+  }
 }

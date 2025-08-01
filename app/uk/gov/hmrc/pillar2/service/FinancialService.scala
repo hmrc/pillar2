@@ -55,8 +55,8 @@ class FinancialService @Inject() (
         Left(e)
       }
 
-  private def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
-    headerCarrier:                                                HeaderCarrier
+  def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+    headerCarrier:                                        HeaderCarrier
   ): Future[FinancialDataResponse] = {
 
     val adjustedStartDate = {

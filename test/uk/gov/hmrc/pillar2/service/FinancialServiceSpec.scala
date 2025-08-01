@@ -40,7 +40,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
   val startDate: LocalDate = LocalDate.now()
   val endDate:   LocalDate = LocalDate.now().plusDays(364)
 
-  "getPaymentHistory" - {
+  ".getPaymentHistory" - {
     "return payment history if relevant fields are defined with both payment and Repayment sorted by date" in {
       when(
         mockFinancialDataConnector
@@ -141,6 +141,50 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         await(service.getTransactionHistory(plrReference, startDate, endDate))
         verify(mockFinancialDataConnector, times(1))
           .retrieveFinancialData(eqTo(plrReference), eqTo(startDate), eqTo(endDate))(any[HeaderCarrier](), any[ExecutionContext]())
+      }
+    }
+  }
+
+  ".retrieveCompleteFinancialDataResponse" - {
+    "return financial data response when successful" in {
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
+        .thenReturn(Future.successful(financialDataResponse))
+
+      val result = await(service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate))
+      result mustBe financialDataResponse
+    }
+
+    "truncate dateFrom to last 7 years if more than 7 years are requested" in {
+      val startDate               = LocalDate.now().minusYears(8)
+      val endDate                 = LocalDate.now()
+      val sevenYearsBeforeEndDate = LocalDate.now().minusYears(7)
+
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
+        .thenReturn(Future.successful(financialDataResponse))
+
+      await(service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate))
+      verify(mockFinancialDataConnector, times(1))
+        .retrieveFinancialData(eqTo(pillar2Id), eqTo(sevenYearsBeforeEndDate), eqTo(endDate))(any[HeaderCarrier](), any[ExecutionContext]())
+    }
+
+    "propagate financial data errors" in {
+      val error = FinancialDataError("NOT_FOUND", "not found")
+
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      )
+        .thenReturn(Future.failed(error))
+
+      val future = service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate)
+      whenReady(future.failed) { exception =>
+        exception mustBe error
       }
     }
   }

@@ -33,10 +33,10 @@ import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.FinancialDataError
-import uk.gov.hmrc.pillar2.models.financial.{FinancialHistory, TransactionHistory}
+import uk.gov.hmrc.pillar2.models.financial._
 import uk.gov.hmrc.pillar2.service.FinancialService
 
-import java.time.LocalDate
+import java.time.{LocalDate, LocalDateTime}
 import scala.concurrent.Future
 
 class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -66,60 +66,134 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       )
     )
 
+  val sampleFinancialDataResponse: FinancialDataResponse = FinancialDataResponse(
+    idType = "PLRID",
+    idNumber = pillar2Id,
+    regimeType = "PLR",
+    processingDate = LocalDateTime.now(),
+    financialTransactions = Seq(
+      FinancialTransaction(
+        mainTransaction = Some("0060"),
+        items = Seq(
+          FinancialItem(
+            dueDate = Some(LocalDate.now()),
+            amount = Some(100.0),
+            paymentAmount = Some(100.0),
+            clearingDate = Some(LocalDate.now()),
+            clearingReason = None
+          )
+        )
+      )
+    )
+  )
+
   val startDate: String = LocalDate.now().toString
   val endDate:   String = LocalDate.now().plusYears(1).toString
 
   "FinancialDataController" - {
+    ".getTransactionHistory" - {
+      "should return OK with payment history when payment history is found for plrReference" in {
+        forAll(plrReferenceGen) { plrReference =>
+          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+            .thenReturn(Future successful Right(paymentHistoryResult(plrReference)))
 
-    "should return OK with payment history when payment history is found for plrReference" in {
-      forAll(plrReferenceGen) { plrReference =>
-        when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
-          .thenReturn(Future successful Right(paymentHistoryResult(plrReference)))
+          val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+          val result: Future[Result] = route(application, request).value
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
-        val result: Future[Result] = route(application, request).value
-
-        status(result) mustBe 200
-        contentAsJson(result) mustBe Json.toJson(paymentHistoryResult(plrReference))
+          status(result) mustBe 200
+          contentAsJson(result) mustBe Json.toJson(paymentHistoryResult(plrReference))
+        }
       }
-    }
 
-    "should return Not found when api returns not found" in {
-      val dataError = FinancialDataError("NOT_FOUND", "Some reason")
-      when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
-        .thenReturn(Future successful Left(dataError))
-
-      val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789", startDate, endDate).url)
-      val result: Future[Result] = route(application, request).value
-
-      status(result) mustBe 404
-      contentAsJson(result) mustBe Json.toJson(dataError)
-    }
-
-    "should return failed dependency when api returns server error or service unavailable" in {
-      forAll(plrReferenceGen, Gen.oneOf(Seq("SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
-        val dataError = FinancialDataError(errorCode, "Some reason")
-
+      "should return Not found when api returns not found" in {
+        val dataError = FinancialDataError("NOT_FOUND", "Some reason")
         when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
           .thenReturn(Future successful Left(dataError))
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789", startDate, endDate).url)
+        val result: Future[Result] = route(application, request).value
+
+        status(result) mustBe 404
+        contentAsJson(result) mustBe Json.toJson(dataError)
+      }
+
+      "should return failed dependency when api returns server error or service unavailable" in {
+        forAll(plrReferenceGen, Gen.oneOf(Seq("SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
+          val dataError = FinancialDataError(errorCode, "Some reason")
+
+          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+            .thenReturn(Future successful Left(dataError))
+
+          val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+          val result: Future[Result] = route(application, request).value
+
+          status(result) mustBe 424
+          contentAsJson(result) mustBe Json.toJson(dataError)
+        }
+      }
+
+      "should return bad request for all other errors" in {
+
+        forAll(plrReferenceGen, stringsExceptSpecificValues(Seq("NOT_FOUND", "SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
+          val dataError = FinancialDataError(errorCode, "Some reason")
+
+          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+            .thenReturn(Future successful Left(dataError))
+
+          val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+          val result: Future[Result] = route(application, request).value
+
+          status(result) mustBe 400
+          contentAsJson(result) mustBe Json.toJson(dataError)
+        }
+      }
+    }
+
+    ".getFinancialData" - {
+      "should return OK with a financial data response when successful" in {
+        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          .thenReturn(Future.successful(sampleFinancialDataResponse))
+
+        val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
+        val result  = route(application, request).value
+
+        status(result) mustBe OK
+        contentAsJson(result).as[FinancialDataResponse] mustBe sampleFinancialDataResponse
+      }
+
+      "should return NOT_FOUND when api returns not found" in {
+        val dataError = FinancialDataError("NOT_FOUND", "Some reason")
+        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          .thenReturn(Future failed dataError)
+
+        val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
+        val result: Future[Result] = route(application, request).value
+
+        status(result) mustBe 404
+        contentAsJson(result) mustBe Json.toJson(dataError)
+      }
+
+      "should return FAILED_DEPENDENCY when api returns server error" in {
+        val dataError = FinancialDataError("SERVER_ERROR", "Some reason")
+
+        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          .thenReturn(Future failed dataError)
+
+        val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 424
         contentAsJson(result) mustBe Json.toJson(dataError)
       }
-    }
 
-    "should return bad request for all other errors" in {
+      "should return BAD_REQUEST for all other errors" in {
 
-      forAll(plrReferenceGen, stringsExceptSpecificValues(Seq("NOT_FOUND", "SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
-        val dataError = FinancialDataError(errorCode, "Some reason")
+        val dataError = FinancialDataError("NEW_ERROR", "Some reason")
 
-        when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
-          .thenReturn(Future successful Left(dataError))
+        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          .thenReturn(Future failed dataError)
 
-        val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
+        val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
         val result: Future[Result] = route(application, request).value
 
         status(result) mustBe 400
@@ -127,5 +201,4 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       }
     }
   }
-
 }
