@@ -35,9 +35,6 @@ lazy val microservice = Project(appName, file("."))
   )
   .settings(CodeCoverageSettings.settings *)
 
-addCommandAlias("prePrChecks", ";scalafmtCheckAll;scalafmtSbtCheck;scalafixAll --check")
-addCommandAlias("lint", ";scalafmtAll;scalafmtSbt;scalafixAll")
-
 lazy val it = project
   .enablePlugins(play.sbt.PlayScala)
   .dependsOn(microservice % "test->test")
@@ -55,3 +52,7 @@ inThisBuild(
     semanticdbVersion := scalafixSemanticdb.revision
   )
 )
+
+addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
+addCommandAlias("checkCodeCoverage", "; clean; coverage; test; it/test; coverageReport")
+addCommandAlias("lint", "; scalafmtAll; scalafmtSbt; scalafixAll")
