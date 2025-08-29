@@ -102,9 +102,7 @@ object FinancialService {
   private val Repayment:         PaymentType = "Repayment"
   private val RepaymentInterest: PaymentType = "Repayment interest"
 
-  private val PaymentIdentifier: MainTransactionRefNumber = "0060"
-  // FIXME: can we use this identifier instead of the "flaky" RepaymentReason?
-  // private val RepaymentIdentifier: MainTransactionRefNumber = "0100"
+  private val PaymentIdentifier:           MainTransactionRefNumber = "0060"
   private val RepaymentInterestIdentifier: MainTransactionRefNumber = "6504"
 
   private val RepaymentReason: String = "Outgoing payment - Paid"
