@@ -30,14 +30,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
   implicit val logger: Logger = Logger(this.getClass.getName)
-  Seq("Content-Type" -> "application/json")
 
   def retrieveFinancialData(idNumber: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
     hc:                               HeaderCarrier,
     ec:                               ExecutionContext
   ): Future[FinancialDataResponse] = {
-    val serviceName = "financial-data"
-    val queryParams = Seq(
+    val serviceName: String = "financial-data"
+    val queryParams: String = Seq(
       "dateFrom"                   -> dateFrom.toString,
       "dateTo"                     -> dateTo.toString,
       "onlyOpenItems"              -> "false",
@@ -45,15 +44,15 @@ class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: H
       "calculateAccruedInterest"   -> "true",
       "customerPaymentInformation" -> "true"
     ).map { case (key, value) => s"$key=$value" }.mkString("&")
-    val url = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR?$queryParams"
+    val url: String = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR?$queryParams"
     httpClient
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName): _*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {
-          case OK => Future successful response.json.as[FinancialDataResponse]
-          case _  => Future failed response.json.asOpt[FinancialDataError].getOrElse(response.json.as[FinancialDataErrorResponses])
+          case OK => Future.successful(response.json.as[FinancialDataResponse])
+          case _  => Future.failed(response.json.asOpt[FinancialDataError].getOrElse(response.json.as[FinancialDataErrorResponses]))
         }
       }
   }

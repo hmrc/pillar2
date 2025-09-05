@@ -38,13 +38,14 @@ class FinancialService @Inject() (
   ): Future[Either[FinancialDataError, TransactionHistory]] =
     retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
       .map { financialData =>
-        val repaymentData = getRepaymentData(financialData)
-        val paymentData   = getPaymentData(financialData)
+        val paymentData:   Seq[FinancialHistory] = getPaymentData(financialData)
+        val repaymentData: Seq[FinancialHistory] = getRepaymentData(financialData)
+        val interestData:  Seq[FinancialHistory] = getInterestData(financialData)
 
-        if (repaymentData.isEmpty && paymentData.isEmpty) {
+        if (repaymentData.isEmpty && paymentData.isEmpty && interestData.isEmpty) {
           Left(FinancialDataError("NOT_FOUND", "No relevant financial data found"))
         } else {
-          val sortedFinancialHistory = (paymentData ++ repaymentData)
+          val sortedFinancialHistory: Seq[FinancialHistory] = (paymentData ++ repaymentData ++ interestData)
             .sortBy(_.paymentType)
             .sortBy(_.date)(Ordering[LocalDate].reverse)
           Right(TransactionHistory(plrReference, sortedFinancialHistory))
@@ -69,7 +70,7 @@ class FinancialService @Inject() (
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {
-      financialData  <- response.financialTransactions.filter(_.mainTransaction.contains(PAYMENT_IDENTIFIER))
+      financialData  <- response.financialTransactions.filter(_.mainTransaction.contains(PaymentIdentifier))
       financialItems <- financialData.items
       dueDate        <- financialItems.dueDate
       paymentAmount  <- financialItems.paymentAmount
@@ -78,19 +79,31 @@ class FinancialService @Inject() (
   private def getRepaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {
       financialData  <- response.financialTransactions
-      financialItems <- financialData.items.filter(_.clearingReason.contains(REPAYMENT_IDENTIFIER))
+      financialItems <- financialData.items.filter(_.clearingReason.contains(RepaymentReason))
       clearingDate   <- financialItems.clearingDate
       amount         <- financialItems.amount
     } yield FinancialHistory(date = clearingDate, paymentType = Repayment, amountPaid = 0.00, amountRepaid = amount.abs)
 
+  private def getInterestData(response: FinancialDataResponse): Seq[FinancialHistory] =
+    for {
+      financialData  <- response.financialTransactions.filter(_.mainTransaction.contains(RepaymentInterestIdentifier))
+      financialItems <- financialData.items
+      clearingDate   <- financialItems.clearingDate
+      amount         <- financialItems.amount
+    } yield FinancialHistory(date = clearingDate, paymentType = RepaymentInterest, amountPaid = 0.00, amountRepaid = amount.abs)
 }
 
 object FinancialService {
 
-  val Payment              = "Payment"
-  val Repayment            = "Repayment"
-  val PAYMENT_IDENTIFIER   = "0060"
-  val REPAYMENT_IDENTIFIER = "Outgoing payment - Paid"
+  private type PaymentType              = String
+  private type MainTransactionRefNumber = String
 
-  private[service] case class Years(startDate: LocalDate, endDate: LocalDate)
+  private val Payment:           PaymentType = "Payment"
+  private val Repayment:         PaymentType = "Repayment"
+  private val RepaymentInterest: PaymentType = "Repayment interest"
+
+  private val PaymentIdentifier:           MainTransactionRefNumber = "0060"
+  private val RepaymentInterestIdentifier: MainTransactionRefNumber = "6504"
+
+  private val RepaymentReason: String = "Outgoing payment - Paid"
 }

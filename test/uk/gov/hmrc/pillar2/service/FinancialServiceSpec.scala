@@ -33,9 +33,10 @@ import uk.gov.hmrc.pillar2.service.FinancialServiceSpec._
 import java.time.LocalDate
 import java.time.LocalDateTime
 import scala.concurrent.{ExecutionContext, Future}
+
 class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-  private val service = new FinancialService(mockFinancialDataConnector)
+  private val service: FinancialService = new FinancialService(mockFinancialDataConnector)
 
   val startDate: LocalDate = LocalDate.now()
   val endDate:   LocalDate = LocalDate.now().plusDays(364)
@@ -49,13 +50,13 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         .thenReturn(Future.successful(financialDataResponse))
 
       forAll(plrReferenceGen) { plrReference =>
-        val result = await(service.getTransactionHistory(plrReference, startDate, endDate))
-        result mustBe Right(paymentHistoryResult(plrReference))
+        val result: Either[FinancialDataError, TransactionHistory] = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        result mustBe Right(transactionHistoryWithPaymentAndRepayment(plrReference))
       }
     }
 
     "return payment a not found error if no relevant history is found" in {
-      val result = FinancialDataError("NOT_FOUND", "No relevant financial data found")
+      val result: FinancialDataError = FinancialDataError("NOT_FOUND", "No relevant financial data found")
       when(
         mockFinancialDataConnector
           .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
@@ -63,7 +64,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         .thenReturn(Future.successful(financialResponseWithNeitherPaymentAndRepayment))
 
       forAll(plrReferenceGen) { plrReference =>
-        val response = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        val response: Either[FinancialDataError, TransactionHistory] = await(service.getTransactionHistory(plrReference, startDate, endDate))
         response mustBe Left(result)
       }
     }
@@ -76,8 +77,20 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
         .thenReturn(Future.successful(financialResponseWithPaymentAndRepayment))
 
       forAll(plrReferenceGen) { plrReference =>
-        val result = await(service.getTransactionHistory(plrReference, startDate, endDate))
-        result mustBe Right(paymentHistoryResult(plrReference))
+        val result: Either[FinancialDataError, TransactionHistory] = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        result mustBe Right(transactionHistoryWithPaymentAndRepayment(plrReference))
+      }
+    }
+
+    "return payment history when the response contains Payment, Repayment and Repayment Interest data" in {
+      when(
+        mockFinancialDataConnector
+          .retrieveFinancialData(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier](), any[ExecutionContext]())
+      ).thenReturn(Future.successful(financialResponseWithPaymentRepaymentAndInterest))
+
+      forAll(plrReferenceGen) { plrReference =>
+        val result: Either[FinancialDataError, TransactionHistory] = await(service.getTransactionHistory(plrReference, startDate, endDate))
+        result mustBe Right(transactionHistoryWithPaymentRepaymentAndInterest(plrReference))
       }
     }
 
@@ -88,12 +101,12 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       )
         .thenReturn(Future.successful(financialDataResponseSameDay))
 
-      val result = await(service.getTransactionHistory(plrReference = "123", startDate, endDate))
-      result mustBe Right(paymentHistoryResultSameDay("123"))
+      val result: Either[FinancialDataError, TransactionHistory] = await(service.getTransactionHistory(plrReference = "123", startDate, endDate))
+      result mustBe Right(transactionHistoryWithSameDayTransactions("123"))
     }
 
     "return the error financial data responds" in {
-      val result = FinancialDataError("NOT_FOUND", "not found")
+      val result: FinancialDataError = FinancialDataError("NOT_FOUND", "not found")
 
       when(
         mockFinancialDataConnector
@@ -109,10 +122,9 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     }
 
     "truncate dateFrom to last 7 years if more than 7 years are requested" in {
-      val startDate = LocalDate.now().minusYears(8)
-      val endDate   = LocalDate.now()
-
-      val sevenYearsBeforeEndDate = LocalDate.now().minusYears(7)
+      val startDate:               LocalDate = LocalDate.now().minusYears(8)
+      val endDate:                 LocalDate = LocalDate.now()
+      val sevenYearsBeforeEndDate: LocalDate = LocalDate.now().minusYears(7)
 
       when(
         mockFinancialDataConnector
@@ -128,8 +140,8 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     }
 
     "should use original dateFrom if it is within the last seven years" in {
-      val startDate = LocalDate.now().minusYears(6)
-      val endDate   = LocalDate.now()
+      val startDate: LocalDate = LocalDate.now().minusYears(6)
+      val endDate:   LocalDate = LocalDate.now()
 
       when(
         mockFinancialDataConnector
@@ -153,14 +165,14 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       )
         .thenReturn(Future.successful(financialDataResponse))
 
-      val result = await(service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate))
+      val result: FinancialDataResponse = await(service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate))
       result mustBe financialDataResponse
     }
 
     "truncate dateFrom to last 7 years if more than 7 years are requested" in {
-      val startDate               = LocalDate.now().minusYears(8)
-      val endDate                 = LocalDate.now()
-      val sevenYearsBeforeEndDate = LocalDate.now().minusYears(7)
+      val startDate:               LocalDate = LocalDate.now().minusYears(8)
+      val endDate:                 LocalDate = LocalDate.now()
+      val sevenYearsBeforeEndDate: LocalDate = LocalDate.now().minusYears(7)
 
       when(
         mockFinancialDataConnector
@@ -174,7 +186,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
     }
 
     "propagate financial data errors" in {
-      val error = FinancialDataError("NOT_FOUND", "not found")
+      val error: FinancialDataError = FinancialDataError("NOT_FOUND", "not found")
 
       when(
         mockFinancialDataConnector
@@ -182,7 +194,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
       )
         .thenReturn(Future.failed(error))
 
-      val future = service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate)
+      val future: Future[FinancialDataResponse] = service.retrieveCompleteFinancialDataResponse(pillar2Id, startDate, endDate)
       whenReady(future.failed) { exception =>
         exception mustBe error
       }
@@ -192,6 +204,7 @@ class FinancialServiceSpec extends BaseSpec with Generators with ScalaCheckPrope
 }
 
 object FinancialServiceSpec {
+
   val financialDataResponse: FinancialDataResponse = FinancialDataResponse(
     idType = "ZPLR",
     idNumber = "XPLR00000000001",
@@ -372,7 +385,77 @@ object FinancialServiceSpec {
     )
   )
 
-  val paymentHistoryResult: String => TransactionHistory = (plrReference: String) =>
+  val paymentFinancialTransaction: FinancialTransaction = FinancialTransaction(
+    mainTransaction = Some("0060"),
+    subTransaction = Some("0400"),
+    taxPeriodFrom = None,
+    taxPeriodTo = None,
+    outstandingAmount = None,
+    items = Seq(
+      FinancialItem(
+        dueDate = Some(LocalDate.now.minusDays(5)),
+        amount = Some(-4896.99),
+        paymentAmount = Some(7766),
+        clearingDate = Some(LocalDate.now.minusDays(5)),
+        clearingReason = Some("Allocated to Charge")
+      ),
+      FinancialItem(
+        dueDate = Some(LocalDate.now.minusDays(10)),
+        amount = Some(-4103.01),
+        paymentAmount = Some(7531),
+        clearingDate = Some(LocalDate.now.minusDays(10)),
+        clearingReason = Some("Allocated to Charge")
+      )
+    )
+  )
+
+  val repaymentFinancialTransaction: FinancialTransaction = FinancialTransaction(
+    mainTransaction = Some("0060"),
+    subTransaction = Some("0400"),
+    taxPeriodFrom = None,
+    taxPeriodTo = None,
+    outstandingAmount = Some(456.78),
+    items = Seq(
+      FinancialItem(
+        dueDate = Some(LocalDate.now.minusDays(15)),
+        amount = Some(-456.78),
+        paymentAmount = Some(789.12),
+        clearingDate = Some(LocalDate.now.minusDays(20)),
+        clearingReason = Some("Outgoing payment - Paid")
+      )
+    )
+  )
+
+  val repaymentInterestFinancialTransaction: FinancialTransaction = FinancialTransaction(
+    mainTransaction = Some("6504"),
+    subTransaction = Some("6237"),
+    taxPeriodFrom = None,
+    taxPeriodTo = None,
+    outstandingAmount = None,
+    items = Seq(
+      FinancialItem(
+        dueDate = None,
+        amount = Some(-333.33),
+        paymentAmount = None,
+        clearingDate = Some(LocalDate.now()),
+        clearingReason = Some("Allocated to Charge")
+      )
+    )
+  )
+
+  val financialResponseWithPaymentRepaymentAndInterest: FinancialDataResponse = FinancialDataResponse(
+    idType = "ZPLR",
+    idNumber = "XPLR00000000001",
+    regimeType = "PLR",
+    processingDate = LocalDateTime.now(),
+    financialTransactions = Seq(
+      paymentFinancialTransaction,
+      repaymentFinancialTransaction,
+      repaymentInterestFinancialTransaction
+    )
+  )
+
+  val transactionHistoryWithPaymentAndRepayment: String => TransactionHistory = (plrReference: String) =>
     TransactionHistory(
       plrReference,
       List(
@@ -381,7 +464,19 @@ object FinancialServiceSpec {
       )
     )
 
-  val paymentHistoryResultSameDay: String => TransactionHistory = (plrReference: String) =>
+  val transactionHistoryWithPaymentRepaymentAndInterest: String => TransactionHistory = (plrReference: String) =>
+    TransactionHistory(
+      plrReference,
+      List(
+        FinancialHistory(LocalDate.now, "Repayment interest", 0.0, 333.33),
+        FinancialHistory(LocalDate.now.minusDays(5), "Payment", 7766, 0.00),
+        FinancialHistory(LocalDate.now.minusDays(10), "Payment", 7531, 0.00),
+        FinancialHistory(LocalDate.now.minusDays(15), "Payment", 789.12, 0),
+        FinancialHistory(LocalDate.now.minusDays(20), "Repayment", 0.0, 456.78)
+      )
+    )
+
+  val transactionHistoryWithSameDayTransactions: String => TransactionHistory = (plrReference: String) =>
     TransactionHistory(
       plrReference,
       List(
