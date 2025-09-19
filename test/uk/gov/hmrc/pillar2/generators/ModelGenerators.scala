@@ -1114,7 +1114,7 @@ trait ModelGenerators {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
       obligationMTT        <- arbitrary[Boolean]
-      electionUKGAAP       <- arbitrary[Option[Boolean]]
+      electionUKGAAP       <- arbitrary[Boolean]
       liabilities          <- arbitrary[LiabilityNilReturn]
     } yield UKTRSubmissionNilReturn(
       accountingPeriodFrom = accountingPeriodFrom,
@@ -1129,7 +1129,7 @@ trait ModelGenerators {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
       obligationMTT        <- arbitrary[Boolean]
-      electionUKGAAP       <- arbitrary[Option[Boolean]]
+      electionUKGAAP       <- arbitrary[Boolean]
       liabilities          <- arbitrary[LiabilityData]
     } yield UKTRSubmissionData(
       accountingPeriodFrom = accountingPeriodFrom,

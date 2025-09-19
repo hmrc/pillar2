@@ -96,7 +96,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
       LocalDate.now,
       LocalDate.now(),
       obligationMTT = false,
-      electionUKGAAP = Some(false),
+      electionUKGAAP = false,
       LiabilityNilReturn(returnType = NIL_RETURN)
     )
     server.stubFor(
@@ -129,7 +129,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
       LocalDate.now,
       LocalDate.now(),
       obligationMTT = false,
-      electionUKGAAP = Some(false),
+      electionUKGAAP = false,
       LiabilityNilReturn(returnType = NIL_RETURN)
     )
     val httpClient = app.injector.instanceOf[HttpClientV2]
