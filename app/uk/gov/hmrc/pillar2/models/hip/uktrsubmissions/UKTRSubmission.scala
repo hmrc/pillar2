@@ -24,7 +24,7 @@ trait UKTRSubmission {
   val accountingPeriodFrom: LocalDate
   val accountingPeriodTo:   LocalDate
   val obligationMTT:        Boolean
-  val electionUKGAAP:       Boolean
+  val electionUKGAAP:       Option[Boolean]
   val liabilities:          Liability
 }
 

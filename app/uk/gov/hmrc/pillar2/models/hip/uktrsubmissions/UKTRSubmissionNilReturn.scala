@@ -24,7 +24,7 @@ case class UKTRSubmissionNilReturn(
   accountingPeriodFrom: LocalDate,
   accountingPeriodTo:   LocalDate,
   obligationMTT:        Boolean,
-  electionUKGAAP:       Boolean,
+  electionUKGAAP:       Option[Boolean],
   liabilities:          LiabilityNilReturn
 ) extends UKTRSubmission
 

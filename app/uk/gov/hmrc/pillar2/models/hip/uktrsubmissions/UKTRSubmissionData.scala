@@ -24,7 +24,7 @@ case class UKTRSubmissionData(
   accountingPeriodFrom: LocalDate,
   accountingPeriodTo:   LocalDate,
   obligationMTT:        Boolean,
-  electionUKGAAP:       Boolean,
+  electionUKGAAP:       Option[Boolean],
   liabilities:          LiabilityData
 ) extends UKTRSubmission
 
