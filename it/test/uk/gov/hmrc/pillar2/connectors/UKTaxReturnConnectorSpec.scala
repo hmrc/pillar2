@@ -44,7 +44,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
     accountingPeriodFrom = LocalDate.parse("2024-08-14"),
     accountingPeriodTo = LocalDate.parse("2024-12-14"),
     obligationMTT = true,
-    electionUKGAAP = Some(true),
+    electionUKGAAP = true,
     liabilities = LiabilityNilReturn(
       returnType = ReturnType.NIL_RETURN
     )
