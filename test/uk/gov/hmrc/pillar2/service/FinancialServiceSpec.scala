@@ -391,7 +391,6 @@ object FinancialServiceSpec {
     taxPeriodFrom = None,
     taxPeriodTo = None,
     outstandingAmount = None,
-    clearedAmount = Some(7000),
     items = Seq(
       FinancialItem(
         dueDate = Some(LocalDate.now.minusDays(5)),
@@ -470,9 +469,8 @@ object FinancialServiceSpec {
       plrReference,
       List(
         FinancialHistory(LocalDate.now, "Repayment interest", 0.0, 333.33),
-        FinancialHistory(LocalDate.now.minusDays(5), "Payment", 7766, 0.00),
-        FinancialHistory(LocalDate.now.minusDays(10), "Payment", 7531, 0.00),
-        FinancialHistory(LocalDate.now.minusDays(15), "Payment", 789.12, 0),
+        FinancialHistory(LocalDate.now.minusDays(5), "Payment", 7000.00, 0.00),
+        FinancialHistory(LocalDate.now.minusDays(15), "Payment", 789.12, 0.00),
         FinancialHistory(LocalDate.now.minusDays(20), "Repayment", 0.0, 456.78)
       )
     )
