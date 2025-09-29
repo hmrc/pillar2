@@ -391,18 +391,19 @@ object FinancialServiceSpec {
     taxPeriodFrom = None,
     taxPeriodTo = None,
     outstandingAmount = None,
+    clearedAmount = Some(7000),
     items = Seq(
       FinancialItem(
         dueDate = Some(LocalDate.now.minusDays(5)),
-        amount = Some(-4896.99),
-        paymentAmount = Some(7766),
+        amount = Some(-3499),
+        paymentAmount = Some(7000),
         clearingDate = Some(LocalDate.now.minusDays(5)),
         clearingReason = Some("Allocated to Charge")
       ),
       FinancialItem(
         dueDate = Some(LocalDate.now.minusDays(10)),
-        amount = Some(-4103.01),
-        paymentAmount = Some(7531),
+        amount = Some(-3501),
+        paymentAmount = Some(7000),
         clearingDate = Some(LocalDate.now.minusDays(10)),
         clearingReason = Some("Allocated to Charge")
       )

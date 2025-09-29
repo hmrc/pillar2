@@ -70,10 +70,10 @@ class FinancialService @Inject() (
 
   private def getPaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =
     for {
-      financialData  <- response.financialTransactions.filter(_.mainTransaction.contains(PaymentIdentifier))
-      financialItems <- financialData.items
-      dueDate        <- financialItems.dueDate
-      paymentAmount  <- financialItems.paymentAmount
+      financialData <- response.financialTransactions.filter(_.mainTransaction.contains(PaymentIdentifier))
+      financialItem <- financialData.items.headOption
+      dueDate       <- financialItem.dueDate
+      paymentAmount <- financialItem.paymentAmount
     } yield FinancialHistory(date = dueDate, paymentType = Payment, amountPaid = paymentAmount.abs, amountRepaid = 0.00)
 
   private def getRepaymentData(response: FinancialDataResponse): Seq[FinancialHistory] =

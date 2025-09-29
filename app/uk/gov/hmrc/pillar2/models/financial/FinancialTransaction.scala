@@ -26,6 +26,7 @@ final case class FinancialTransaction(
   taxPeriodFrom:     Option[LocalDate] = None,
   taxPeriodTo:       Option[LocalDate] = None,
   outstandingAmount: Option[BigDecimal] = None,
+  clearedAmount:     Option[BigDecimal] = None,
   items:             Seq[FinancialItem]
 )
 
