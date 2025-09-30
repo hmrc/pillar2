@@ -394,15 +394,15 @@ object FinancialServiceSpec {
     items = Seq(
       FinancialItem(
         dueDate = Some(LocalDate.now.minusDays(5)),
-        amount = Some(-4896.99),
-        paymentAmount = Some(7766),
+        amount = Some(-3499),
+        paymentAmount = Some(7000),
         clearingDate = Some(LocalDate.now.minusDays(5)),
         clearingReason = Some("Allocated to Charge")
       ),
       FinancialItem(
         dueDate = Some(LocalDate.now.minusDays(10)),
-        amount = Some(-4103.01),
-        paymentAmount = Some(7531),
+        amount = Some(-3501),
+        paymentAmount = Some(7000),
         clearingDate = Some(LocalDate.now.minusDays(10)),
         clearingReason = Some("Allocated to Charge")
       )
@@ -469,9 +469,8 @@ object FinancialServiceSpec {
       plrReference,
       List(
         FinancialHistory(LocalDate.now, "Repayment interest", 0.0, 333.33),
-        FinancialHistory(LocalDate.now.minusDays(5), "Payment", 7766, 0.00),
-        FinancialHistory(LocalDate.now.minusDays(10), "Payment", 7531, 0.00),
-        FinancialHistory(LocalDate.now.minusDays(15), "Payment", 789.12, 0),
+        FinancialHistory(LocalDate.now.minusDays(5), "Payment", 7000.00, 0.00),
+        FinancialHistory(LocalDate.now.minusDays(15), "Payment", 789.12, 0.00),
         FinancialHistory(LocalDate.now.minusDays(20), "Repayment", 0.0, 456.78)
       )
     )
