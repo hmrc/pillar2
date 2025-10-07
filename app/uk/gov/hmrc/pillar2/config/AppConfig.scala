@@ -34,10 +34,8 @@ class AppConfig @Inject() (val config: Configuration, servicesConfig: ServicesCo
   val registrationCacheCryptoKey: String  = config.get[String]("registrationCache.key")
   val cryptoToggle:               Boolean = config.get[Boolean]("encryptionToggle")
 
-  val bearerToken: String => String = (serviceName: String) =>
-    config.getOptional[String](s"microservice.services.$serviceName.bearer-token").getOrElse("")
-  lazy val hipKey: String = config.get[String]("hip.key")
-  val environment: String => String = (serviceName: String) =>
-    config.getOptional[String](s"microservice.services.$serviceName.environment").getOrElse("")
-  lazy val locationCanonicalList: String = config.get[String]("location.canonical.list.all")
+  val bearerToken:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.bearer-token")
+  lazy val hipKey:                String           = config.get[String]("hip.key")
+  val environment:                String => String = (serviceName: String) => config.get[String](s"microservice.services.$serviceName.environment")
+  lazy val locationCanonicalList: String           = config.get[String]("location.canonical.list.all")
 }
