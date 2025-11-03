@@ -44,7 +44,7 @@ case object AuthorizationError extends Pillar2Error {
 }
 
 object ApiInternalServerError {
-  val defaultInstance = ApiInternalServerError(
+  val defaultInstance: ApiInternalServerError = ApiInternalServerError(
     message = "Internal server error",
     code = "003"
   )
