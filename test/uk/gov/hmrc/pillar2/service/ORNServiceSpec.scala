@@ -47,7 +47,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     }
 
     "should throw ValidationError for 422 response" in {
-      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val apiFailure   = UnprocessableFailureResponse(UnprocessableFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
       when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
@@ -79,7 +79,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
-      intercept[ApiInternalServerError.type] {
+      intercept[ApiInternalServerError] {
         await(service.submitOrn(ornRequest))
       }
     }
@@ -101,7 +101,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     }
 
     "should throw ValidationError for 422 response" in {
-      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val apiFailure   = UnprocessableFailureResponse(UnprocessableFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
       when(
@@ -151,7 +151,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
           )
       ).thenReturn(Future.successful(httpResponse))
 
-      intercept[ApiInternalServerError.type] {
+      intercept[ApiInternalServerError] {
         await(service.getOrn(fromDate, toDate))
       }
     }
@@ -168,7 +168,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     }
 
     "should throw ValidationError for 422 response" in {
-      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val apiFailure   = UnprocessableFailureResponse(UnprocessableFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
       when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
@@ -200,7 +200,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
-      intercept[ApiInternalServerError.type] {
+      intercept[ApiInternalServerError] {
         await(service.amendOrn(ornRequest))
       }
     }

@@ -99,11 +99,11 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
             ArgumentMatchers.eq(pillar2Id)
           )
       )
-        .thenReturn(Future.failed(ApiInternalServerError))
+        .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
       val error: Throwable = service.getObligationsAndSubmissions(fromDate, toDate).failed.futureValue
 
-      error mustBe ApiInternalServerError
+      error mustBe ApiInternalServerError("errorMessage", "errorCode")
     }
   }
 

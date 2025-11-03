@@ -20,8 +20,8 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.ZonedDateTime
 
-case class ApiFailure(processingDate: ZonedDateTime, code: String, text: String)
+case class UnprocessableFailure(processingDate: ZonedDateTime, code: String, text: String)
 
-object ApiFailure {
-  implicit val format: OFormat[ApiFailure] = Json.format[ApiFailure]
+object UnprocessableFailure {
+  implicit val format: OFormat[UnprocessableFailure] = Json.format[UnprocessableFailure]
 }

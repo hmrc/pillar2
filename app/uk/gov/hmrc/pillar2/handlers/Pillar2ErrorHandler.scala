@@ -31,24 +31,49 @@ class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
 
   override def onClientError(request: RequestHeader, statusCode: Int, message: String): Future[Result] =
     Future.successful(
-      Status(statusCode)(Json.toJson(Pillar2ApiError(statusCode.toString, message)))
+      Status(statusCode)(Json.toJson(Pillar2ApiError(statusCode.toString, message, processingDate = None)))
     )
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
     exception match {
       case e: Pillar2Error =>
         val ret = e match {
-          case error: MissingHeaderError  => BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message)))
-          case error: ETMPValidationError => UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message)))
-          case error: InvalidJsonError    => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
-          case error @ ApiInternalServerError => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
-          case error @ AuthorizationError     => Unauthorized(Json.toJson(Pillar2ApiError(error.code, error.message)))
-
+          case error: MissingHeaderError =>
+            BadRequest(
+              Json.toJson(
+                Pillar2ApiError(error.code, error.message, processingDate = None)
+              )
+            )
+          case error: ETMPValidationError =>
+            UnprocessableEntity(
+              Json.toJson(
+                Pillar2ApiError(error.code, error.message, Some(error.processingDate))
+              )
+            )
+          case error: InvalidJsonError => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message, processingDate = None)))
+          case error: ApiInternalServerError =>
+            InternalServerError(
+              Json.toJson(
+                Pillar2ApiError(error.code, error.message, processingDate = None)
+              )
+            )
+          case error @ AuthorizationError =>
+            Unauthorized(
+              Json.toJson(
+                Pillar2ApiError(error.code, error.message, processingDate = None)
+              )
+            )
         }
         logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} statuscode", exception)
         Future.successful(ret)
       case _ =>
-        logger.warn(s"Caught unhandled exception. Returning InternalServerError", exception)
-        Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(ApiInternalServerError.code, ApiInternalServerError.message))))
+        logger.warn(s"Caught unhandled exception. Returning InternalServerError with default values.", exception)
+        Future.successful(
+          InternalServerError(
+            Json.toJson(
+              Pillar2ApiError(ApiInternalServerError.defaultInstance.code, ApiInternalServerError.defaultInstance.message, processingDate = None)
+            )
+          )
+        )
     }
 }

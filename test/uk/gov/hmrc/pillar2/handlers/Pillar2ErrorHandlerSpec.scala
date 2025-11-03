@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.handlers
 
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -25,7 +26,9 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{contentAsJson, defaultAwaitTimeout, status}
 import uk.gov.hmrc.pillar2.models.errors._
 
-class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks {
+import java.time.{ZoneOffset, ZonedDateTime}
+
+class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyChecks with OptionValues {
 
   val classUnderTest = new Pillar2ErrorHandler
   val dummyRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
@@ -59,11 +62,13 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
   }
 
   test("ETMPValidationError error response") {
-    val response = classUnderTest.onServerError(dummyRequest, ETMPValidationError("test code", "test ETMP validation error"))
+    val now      = ZonedDateTime.now(ZoneOffset.UTC)
+    val response = classUnderTest.onServerError(dummyRequest, ETMPValidationError("test code", "test ETMP validation error", now))
     status(response) mustEqual 422
     val result = contentAsJson(response).as[Pillar2ApiError]
     result.code mustEqual "test code"
     result.message mustEqual "test ETMP validation error"
+    result.processingDate.value mustEqual now
   }
 
   test("InvalidJsonError error response") {
@@ -75,11 +80,11 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
   }
 
   test("ApiInternalServerError error response") {
-    val response = classUnderTest.onServerError(dummyRequest, ApiInternalServerError)
+    val response = classUnderTest.onServerError(dummyRequest, ApiInternalServerError("errorMessage", "errorCode"))
     status(response) mustEqual 500
     val result = contentAsJson(response).as[Pillar2ApiError]
-    result.code mustEqual "003"
-    result.message mustEqual "Internal server error"
+    result.code mustEqual "errorCode"
+    result.message mustEqual "errorMessage"
   }
 
   test("AuthorizationError error response") {

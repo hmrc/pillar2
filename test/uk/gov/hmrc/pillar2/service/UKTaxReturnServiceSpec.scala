@@ -49,7 +49,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       }
 
       "should throw ValidationError for 422 response" in {
-        val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+        val apiFailure   = UnprocessableFailureResponse(UnprocessableFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
         when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
@@ -85,7 +85,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          intercept[ApiInternalServerError.type] {
+          intercept[ApiInternalServerError] {
             await(service.submitUKTaxReturn(submission))
           }
         }
@@ -104,7 +104,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       }
 
       "should throw ValidationError for 422 response" in {
-        val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+        val apiFailure   = UnprocessableFailureResponse(UnprocessableFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
         when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
@@ -140,7 +140,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
-          intercept[ApiInternalServerError.type] {
+          intercept[ApiInternalServerError] {
             await(service.amendUKTaxReturn(submission))
           }
         }

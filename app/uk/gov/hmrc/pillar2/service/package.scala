@@ -21,7 +21,7 @@ import play.api.libs.json.{JsError, JsSuccess, Reads}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
 import uk.gov.hmrc.pillar2.models.errors._
-import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
+import uk.gov.hmrc.pillar2.models.hip.{ApiSuccessResponse, ErrorFailureResponse, UnprocessableFailureResponse}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
 
@@ -40,15 +40,32 @@ package object service extends Logging {
           case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case 422 =>
-        Try(response.json.validate[ApiFailureResponse]) match {
+        Try(response.json.validate[UnprocessableFailureResponse]) match {
           case Success(JsSuccess(apiFailure, _)) =>
-            Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text))
+            Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text, apiFailure.errors.processingDate))
           case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
+      case 400 | 500 =>
+        logger.error(s"Received ${response.status} status from downstream. Attempting to parse code & message.")
+        Try(response.json.validate[ErrorFailureResponse]) match {
+          case Success(JsSuccess(apiFailure, _)) =>
+            Future.failed {
+              logger.info(s"Parsed message & code from ${response.status} response. Surfacing to client.")
+              ApiInternalServerError(
+                message = apiFailure.error.message,
+                code = apiFailure.error.code
+              )
+            }
+          case _ =>
+            Future.failed {
+              logger.error(s"Unable to parse message & code from ${response.status} response. Returning default values to client.")
+              ApiInternalServerError.defaultInstance
+            }
+        }
       case status =>
-        logger.error(s"Received invalid status from downstream: $status")
-        Future.failed(ApiInternalServerError)
+        logger.error(s"Received invalid status from downstream: $status. Returning default values to client.")
+        Future.failed(ApiInternalServerError.defaultInstance)
     }
   }
 

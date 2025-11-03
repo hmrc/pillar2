@@ -133,7 +133,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
           ArgumentMatchers.eq(pillar2Id)
         )
       )
-        .thenReturn(Future.failed(ApiInternalServerError))
+        .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
       val request =
         FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url)
@@ -146,7 +146,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
           )
 
       val result = route(application, request).value.failed.futureValue
-      result mustEqual ApiInternalServerError
+      result mustEqual ApiInternalServerError("errorMessage", "errorCode")
     }
   }
 

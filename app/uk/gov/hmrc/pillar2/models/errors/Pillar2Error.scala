@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.pillar2.models.errors
 
+import java.time.ZonedDateTime
+
 sealed trait Pillar2Error extends Exception {
   val message: String
   val code:    String
@@ -32,17 +34,18 @@ case class InvalidJsonError(decodeError: String) extends Pillar2Error {
 
 }
 
-case object ApiInternalServerError extends Pillar2Error {
-  val message: String = "Internal server error"
-  val code:    String = "003"
-}
+case class ApiInternalServerError(message: String, code: String) extends Pillar2Error
 
-case class ETMPValidationError(validationErrorCode: String, validationError: String) extends Pillar2Error {
-  val code:    String = validationErrorCode
-  val message: String = validationError
-}
+case class ETMPValidationError(code: String, message: String, processingDate: ZonedDateTime) extends Pillar2Error
 
 case object AuthorizationError extends Pillar2Error {
   val message: String = "Not Authorized"
   val code:    String = "401"
+}
+
+object ApiInternalServerError {
+  val defaultInstance = ApiInternalServerError(
+    message = "Internal server error",
+    code = "003"
+  )
 }

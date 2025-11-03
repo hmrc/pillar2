@@ -52,7 +52,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     }
 
     "should throw ValidationError for 422 response" in {
-      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
+      val apiFailure   = UnprocessableFailureResponse(UnprocessableFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
       when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
@@ -84,7 +84,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
-      intercept[ApiInternalServerError.type] {
+      intercept[ApiInternalServerError] {
         await(service.sendBtn(btnPayload))
       }
     }

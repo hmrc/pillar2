@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2025 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.errors
+package uk.gov.hmrc.pillar2.models.hip
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Json, Reads}
 
-import java.time.ZonedDateTime
+case class ErrorFailure(code: String, message: String)
 
-case class Pillar2ApiError(code: String, message: String, processingDate: Option[ZonedDateTime])
-
-object Pillar2ApiError {
-  implicit val format: OFormat[Pillar2ApiError] = Json.format[Pillar2ApiError]
+object ErrorFailure {
+  implicit val reads: Reads[ErrorFailure] = Json.reads
 }

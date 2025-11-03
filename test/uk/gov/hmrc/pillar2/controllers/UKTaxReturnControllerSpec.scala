@@ -35,6 +35,7 @@ import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 
+import java.time.{ZoneOffset, ZonedDateTime}
 import scala.concurrent.Future
 
 class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -47,6 +48,8 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
+
+  private val now = ZonedDateTime.now(ZoneOffset.UTC)
 
   "UKTaxReturnController" - {
     "submitUKTaxReturn" - {
@@ -101,14 +104,14 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
       "should handle ValidationError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
           when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
-            .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+            .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed", now)))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
             .withHeaders("X-Pillar2-Id" -> pillar2Id)
             .withJsonBody(Json.toJson(submission))
 
           val result = intercept[ETMPValidationError](await(route(application, request).value))
-          result mustEqual ETMPValidationError("422", "Validation failed")
+          result mustEqual ETMPValidationError("422", "Validation failed", now)
         }
       }
 
@@ -129,14 +132,14 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
       "should handle ApiInternalServerError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
           when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
-            .thenReturn(Future.failed(ApiInternalServerError))
+            .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
           val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
             .withHeaders("X-Pillar2-Id" -> pillar2Id)
             .withJsonBody(Json.toJson(submission))
 
-          val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
-          result mustEqual ApiInternalServerError
+          val result = intercept[ApiInternalServerError](await(route(application, request).value))
+          result mustEqual ApiInternalServerError("errorMessage", "errorCode")
         }
       }
     }
@@ -188,14 +191,14 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
       "should handle ValidationError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
           when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
-            .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+            .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed", now)))
 
           val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
             .withHeaders("X-Pillar2-Id" -> pillar2Id)
             .withJsonBody(Json.toJson(submission))
 
           val result = intercept[ETMPValidationError](await(route(application, request).value))
-          result mustEqual ETMPValidationError("422", "Validation failed")
+          result mustEqual ETMPValidationError("422", "Validation failed", now)
         }
       }
 
@@ -216,14 +219,14 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
       "should handle ApiInternalServerError from service" in {
         forAll(arbitrary[UKTRSubmission]) { submission =>
           when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
-            .thenReturn(Future.failed(ApiInternalServerError))
+            .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
           val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
             .withHeaders("X-Pillar2-Id" -> pillar2Id)
             .withJsonBody(Json.toJson(submission))
 
-          val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
-          result mustEqual ApiInternalServerError
+          val result = intercept[ApiInternalServerError](await(route(application, request).value))
+          result mustEqual ApiInternalServerError("errorMessage", "errorCode")
         }
       }
 

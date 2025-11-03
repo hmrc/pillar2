@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessRespons
 import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.service.BTNService
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import scala.concurrent.Future
 
 class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with UKTaxReturnDataFixture {
@@ -48,6 +48,8 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
+
+  private val now = ZonedDateTime.now(ZoneOffset.UTC)
 
   private val btnPayload =
     BTNRequest(
@@ -94,10 +96,10 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
     "should handle ValidationError from service" in {
       when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
-        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed", now)))
 
       val result = intercept[ETMPValidationError](await(route(application, request).value))
-      result mustEqual ETMPValidationError("422", "Validation failed")
+      result mustEqual ETMPValidationError("422", "Validation failed", now)
     }
 
     "should handle InvalidJsonError from service" in {
@@ -108,10 +110,11 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle ApiInternalServerError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
+      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
-      val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
-      result mustEqual ApiInternalServerError
+      val result = intercept[ApiInternalServerError](await(route(application, request).value))
+      result mustEqual ApiInternalServerError("errorMessage", "errorCode")
     }
   }
 }

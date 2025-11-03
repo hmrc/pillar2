@@ -36,7 +36,7 @@ import uk.gov.hmrc.pillar2.models.errors._
 import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
 import uk.gov.hmrc.pillar2.service.ORNService
 
-import java.time.ZonedDateTime
+import java.time.{ZoneOffset, ZonedDateTime}
 import scala.concurrent.Future
 
 class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixture {
@@ -49,6 +49,8 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       bind[AuthAction].to[FakeAuthAction]
     )
     .build()
+
+  private val now = ZonedDateTime.now(ZoneOffset.UTC)
 
   private val submitOrnRequest: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.ORNController.submitOrn().url)
     .withHeaders("X-Pillar2-ID" -> pillar2Id)
@@ -97,10 +99,10 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
     "should handle ValidationError from service" in {
       when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
-        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed", now)))
 
       val result = intercept[ETMPValidationError](await(route(application, submitOrnRequest).value))
-      result mustEqual ETMPValidationError("422", "Validation failed")
+      result mustEqual ETMPValidationError("422", "Validation failed", now)
     }
 
     "should handle InvalidJsonError from service" in {
@@ -112,10 +114,11 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle ApiInternalServerError from service" in {
-      when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
+      when(mockOrnService.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
-      val result = intercept[ApiInternalServerError.type](await(route(application, submitOrnRequest).value))
-      result mustEqual ApiInternalServerError
+      val result = intercept[ApiInternalServerError](await(route(application, submitOrnRequest).value))
+      result mustEqual ApiInternalServerError("errorMessage", "errorCode")
     }
   }
 
@@ -144,10 +147,10 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
     "should handle ValidationError from service" in {
       when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
-        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed", now)))
 
       val result = intercept[ETMPValidationError](await(route(application, amendOrnRequest).value))
-      result mustEqual ETMPValidationError("422", "Validation failed")
+      result mustEqual ETMPValidationError("422", "Validation failed", now)
     }
 
     "should handle InvalidJsonError from service" in {
@@ -159,10 +162,11 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle ApiInternalServerError from service" in {
-      when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
+      when(mockOrnService.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
-      val result = intercept[ApiInternalServerError.type](await(route(application, amendOrnRequest).value))
-      result mustEqual ApiInternalServerError
+      val result = intercept[ApiInternalServerError](await(route(application, amendOrnRequest).value))
+      result mustEqual ApiInternalServerError("errorMessage", "errorCode")
     }
   }
 
@@ -206,10 +210,10 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
-      ).thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+      ).thenReturn(Future.failed(ETMPValidationError("422", "Validation failed", now)))
 
       val result = intercept[ETMPValidationError](await(route(application, getOrnRequest).value))
-      result mustEqual ETMPValidationError("422", "Validation failed")
+      result mustEqual ETMPValidationError("422", "Validation failed", now)
     }
 
     "should handle InvalidJsonError from service" in {
@@ -230,10 +234,10 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
-      ).thenReturn(Future.failed(ApiInternalServerError))
+      ).thenReturn(Future.failed(ApiInternalServerError("errorMessage", "errorCode")))
 
-      val result = intercept[ApiInternalServerError.type](await(route(application, getOrnRequest).value))
-      result mustEqual ApiInternalServerError
+      val result = intercept[ApiInternalServerError](await(route(application, getOrnRequest).value))
+      result mustEqual ApiInternalServerError("errorMessage", "errorCode")
     }
   }
 }
