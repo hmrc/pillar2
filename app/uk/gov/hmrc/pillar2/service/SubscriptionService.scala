@@ -454,7 +454,7 @@ class SubscriptionService @Inject() (
       subAddSecondaryContact = secContactTel._2,
       subSecondaryEmail = secDetails._3,
       subSecondaryCapturePhone = secDetails._2,
-      subSecondaryPhonePreference = Some(secContactTel._1),
+      subSecondaryPhonePreference = Option.when(secContactTel._1)(secContactTel._1),
       subRegisteredAddress = nonUKAddress,
       subAccountingPeriod = accountingPeriod,
       accountStatus = sub.accountStatus,
