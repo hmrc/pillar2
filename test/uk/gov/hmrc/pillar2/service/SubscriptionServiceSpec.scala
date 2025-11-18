@@ -17,23 +17,27 @@
 package uk.gov.hmrc.pillar2.service
 
 import org.apache.pekko.Done
-import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
+import org.scalatest.concurrent.ScalaFutures
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
+import uk.gov.hmrc.pillar2.models.hods.subscription.common._
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
-class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+
+class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ScalaFutures {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
   override def beforeEach(): Unit = {
     super.beforeEach()
@@ -205,15 +209,37 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
   }
   "sendAmendedData" - {
-    "call amend API and delete cache in case of a successful response" in {
+    "call amend API and update cache in case of a successful response" in {
+      val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
+      val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
+        override def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
+          Future.successful(dummyReadResponse)
+      }
 
-      when(mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(any[HeaderCarrier](), any[ExecutionContext]()))
-        .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
+      forAll(
+        arbitraryAmendSubscriptionSuccess.arbitrary,
+        arbMockId.arbitrary
+      ) { (validAmendObject, id) =>
+        val etmpAmendResponse = AmendResponse(
+          AmendSubscriptionSuccessResponse(
+            processingDate = LocalDate.now().toString,
+            formBundleNumber = "test-form-bundle-number"
+          )
+        )
+        val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())
 
-      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
-        service.sendAmendedData(id, validAmendObject).map { response =>
-          response mustBe Done
-        }
+        when(
+          mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(any[HeaderCarrier](), any[ExecutionContext]())
+        )
+          .thenReturn(Future.successful(fakeAmendResponse))
+        when(
+          mockAuditService.auditAmendSubscription(
+            any[AmendSubscriptionSuccess],
+            eqTo(AuditResponseReceived(fakeAmendResponse.status, fakeAmendResponse.json))
+          )(any[HeaderCarrier])
+        ).thenReturn(Future.successful(AuditResult.Success))
+
+        subscriptionServiceWithStubbedStoreMethod.sendAmendedData(id, validAmendObject).futureValue mustBe Done
       }
     }
     "return failure in case of an unusual json response" in {
