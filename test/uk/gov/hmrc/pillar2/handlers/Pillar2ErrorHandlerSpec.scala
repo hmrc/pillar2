@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.handlers
 
 import org.scalacheck.Gen
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import play.api.mvc.AnyContentAsEmpty
 import play.api.test.FakeRequest

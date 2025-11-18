@@ -21,5 +21,5 @@ import play.api.libs.json.{Json, OFormat}
 case class LiabilityNilReturn(returnType: ReturnType) extends Liability
 
 object LiabilityNilReturn {
-  implicit val liabilityNilReturnFormat: OFormat[LiabilityNilReturn] = Json.format[LiabilityNilReturn]
+  given liabilityNilReturnFormat: OFormat[LiabilityNilReturn] = Json.format[LiabilityNilReturn]
 }

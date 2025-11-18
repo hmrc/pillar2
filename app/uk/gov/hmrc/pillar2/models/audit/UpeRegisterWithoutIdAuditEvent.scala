@@ -26,7 +26,7 @@ case class UpeRegisterWithoutIdAuditEvent(
 }
 
 object UpeRegisterWithoutIdAuditEvent {
-  implicit val formats: Format[UpeRegisterWithoutIdAuditEvent] = Json.format[UpeRegisterWithoutIdAuditEvent]
+  given formats: Format[UpeRegisterWithoutIdAuditEvent] = Json.format[UpeRegisterWithoutIdAuditEvent]
 }
 
 case class FmRegisterWithoutIdAuditEvent(
@@ -37,7 +37,7 @@ case class FmRegisterWithoutIdAuditEvent(
 }
 
 object FmRegisterWithoutIdAuditEvent {
-  implicit val formats: Format[FmRegisterWithoutIdAuditEvent] = Json.format[FmRegisterWithoutIdAuditEvent]
+  given formats: Format[FmRegisterWithoutIdAuditEvent] = Json.format[FmRegisterWithoutIdAuditEvent]
 }
 
 case class UpeRegistration(
@@ -55,7 +55,7 @@ case class UpeRegistration(
 )
 
 object UpeRegistration {
-  implicit val formats: Format[UpeRegistration] = Json.format[UpeRegistration]
+  given formats: Format[UpeRegistration] = Json.format[UpeRegistration]
 }
 
 case class NominatedFilingMember(
@@ -73,5 +73,5 @@ case class NominatedFilingMember(
 )
 
 object NominatedFilingMember {
-  implicit val formats: Format[NominatedFilingMember] = Json.format[NominatedFilingMember]
+  given formats: Format[NominatedFilingMember] = Json.format[NominatedFilingMember]
 }

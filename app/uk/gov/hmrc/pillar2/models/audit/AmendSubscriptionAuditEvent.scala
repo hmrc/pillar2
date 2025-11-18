@@ -35,5 +35,5 @@ case class AmendSubscriptionSuccessAuditEvent(
 }
 
 object AmendSubscriptionSuccessAuditEvent {
-  implicit val formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
+  given formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
 }

@@ -32,5 +32,5 @@ case class GetORNSuccess(
 )
 
 object GetORNSuccess {
-  implicit val format: OFormat[GetORNSuccess] = Json.format[GetORNSuccess]
+  given format: OFormat[GetORNSuccess] = Json.format[GetORNSuccess]
 }

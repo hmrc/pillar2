@@ -19,13 +19,12 @@ package uk.gov.hmrc.pillar2.controllers
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
@@ -49,7 +48,7 @@ class RegistrationCacheControllerISpec
     .configure("metrics.enabled" -> false)
     .build()
 
-  implicit val headerCarrier: HeaderCarrier =
+  given headerCarrier: HeaderCarrier =
     HeaderCarrier(authorization = Option(Authorization("bearerToken"))).withExtraHeaders("Content-Type" -> "application/json")
 
   private val userAnswersCache =

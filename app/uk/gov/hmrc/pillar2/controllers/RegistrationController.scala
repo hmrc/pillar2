@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.{JsObject, JsSuccess, Json}
 import play.api.mvc._
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
@@ -26,6 +27,7 @@ import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.RegistrationService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,15 +35,16 @@ import scala.util.{Success, Try}
 
 @Singleton
 class RegistrationController @Inject() (
-  repository:                RegistrationCacheRepository,
-  dataSubmissionService:     RegistrationService,
-  authenticate:              AuthAction,
-  cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext)
+  repository:             RegistrationCacheRepository,
+  dataSubmissionService:  RegistrationService,
+  authenticate:           AuthAction,
+  cc:                     ControllerComponents
+)(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdUpeRegistration(userAnswer)
@@ -49,7 +52,8 @@ class RegistrationController @Inject() (
     }
   }
 
-  def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .sendNoIdFmRegistration(userAnswer)
@@ -57,7 +61,8 @@ class RegistrationController @Inject() (
     }
   }
 
-  def registerNewFilingMember(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def registerNewFilingMember(id: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     getUserAnswers(id).flatMap { userAnswer =>
       dataSubmissionService
         .registerNewFilingMember(userAnswer)
@@ -65,7 +70,7 @@ class RegistrationController @Inject() (
     }
   }
 
-  def getUserAnswers(id: String)(implicit executionContext: ExecutionContext): Future[UserAnswers] =
+  def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
     repository.get(id).map { userAnswer =>
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
     }

@@ -27,5 +27,5 @@ case class SubscriptionAddress(
   countryCode:  String
 )
 object SubscriptionAddress {
-  implicit val format: OFormat[SubscriptionAddress] = Json.format[SubscriptionAddress]
+  given format: OFormat[SubscriptionAddress] = Json.format[SubscriptionAddress]
 }

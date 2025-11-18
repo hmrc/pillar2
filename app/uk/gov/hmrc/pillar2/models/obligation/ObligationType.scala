@@ -23,7 +23,7 @@ object ObligationType {
   case object UKTR extends ObligationType
   case object GIR extends ObligationType
 
-  implicit val format: Format[ObligationType] = new Format[ObligationType] {
+  given format: Format[ObligationType] = new Format[ObligationType] {
     override def reads(json: JsValue): JsResult[ObligationType] =
       json.as[String] match {
         case "UKTR" => JsSuccess(UKTR)

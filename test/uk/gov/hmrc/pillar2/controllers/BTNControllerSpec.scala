@@ -65,7 +65,7 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
         BTNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"))
       )
 
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
 
       val result = route(application, request).value
 
@@ -93,7 +93,7 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle ValidationError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
 
       val result = intercept[ETMPValidationError](await(route(application, request).value))
@@ -101,14 +101,14 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should handle InvalidJsonError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
 
       val result = intercept[InvalidJsonError](await(route(application, request).value))
       result mustEqual InvalidJsonError("Invalid JSON")
     }
 
     "should handle ApiInternalServerError from service" in {
-      when(mockBTNService.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
 
       val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
       result mustEqual ApiInternalServerError

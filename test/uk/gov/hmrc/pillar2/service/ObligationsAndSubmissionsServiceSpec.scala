@@ -78,6 +78,7 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
       when(
         mockObligationsAndSubmissionsConnector
           .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -94,6 +95,7 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
       when(
         mockObligationsAndSubmissionsConnector
           .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)

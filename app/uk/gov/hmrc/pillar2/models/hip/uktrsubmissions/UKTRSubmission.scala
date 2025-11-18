@@ -29,14 +29,14 @@ trait UKTRSubmission {
 }
 
 object UKTRSubmission {
-  implicit val uktrSubmissionReads: Reads[UKTRSubmission] = (json: JsValue) =>
-    if ((json \ "liabilities" \ "returnType").isEmpty) {
+  given uktrSubmissionReads: Reads[UKTRSubmission] = (json: JsValue) =>
+    if (json \ "liabilities" \ "returnType").isEmpty then {
       json.validate[UKTRSubmissionData]
     } else {
       json.validate[UKTRSubmissionNilReturn]
     }
 
-  implicit val uktrSubmissionWrites: Writes[UKTRSubmission] = new Writes[UKTRSubmission] {
+  given uktrSubmissionWrites: Writes[UKTRSubmission] = new Writes[UKTRSubmission] {
     def writes(submission: UKTRSubmission): JsValue = submission match {
       case data:      UKTRSubmissionData      => Json.toJson(data)(Json.writes[UKTRSubmissionData])
       case nilReturn: UKTRSubmissionNilReturn => Json.toJson(nilReturn)(Json.writes[UKTRSubmissionNilReturn])

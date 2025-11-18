@@ -29,5 +29,5 @@ final case class ObligationInformation(
 )
 
 object ObligationInformation {
-  implicit val format: OFormat[ObligationInformation] = Json.format[ObligationInformation]
+  given format: OFormat[ObligationInformation] = Json.format[ObligationInformation]
 }

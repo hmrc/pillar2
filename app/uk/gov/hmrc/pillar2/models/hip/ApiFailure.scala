@@ -23,5 +23,5 @@ import java.time.ZonedDateTime
 case class ApiFailure(processingDate: ZonedDateTime, code: String, text: String)
 
 object ApiFailure {
-  implicit val format: OFormat[ApiFailure] = Json.format[ApiFailure]
+  given format: OFormat[ApiFailure] = Json.format[ApiFailure]
 }

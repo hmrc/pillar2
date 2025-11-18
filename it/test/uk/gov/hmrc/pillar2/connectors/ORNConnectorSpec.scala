@@ -38,7 +38,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   val getUrl: String =
     s"/RESTAdapter/plr/overseas-return-notification?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
 
-  private def stubResponseFor(status: Int, method: String)(implicit response: JsObject): StubMapping = {
+  private def stubResponseFor(status: Int, method: String)(using response: JsObject): StubMapping = {
     val requestBuilder = method match {
       case "POST" => post(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
       case "PUT"  => put(urlEqualTo("/RESTAdapter/plr/overseas-return-notification"))
@@ -70,7 +70,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
   "submitOrn" - {
     "successfully submit a ORN request with X-PILLAR2-Id and receive Success response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-14T09:26:17Z",
           "formBundleNumber" -> "123456789012345"
@@ -88,7 +88,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle BAD_REQUEST (400) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "error" -> Json.obj(
           "code"    -> "400",
           "message" -> "Bad Request",
@@ -104,7 +104,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle UNPROCESSABLE_ENTITY (422) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "errors" -> Json.obj(
           "processingDate" -> "2024-03-14T09:26:17Z",
           "code"           -> "003",
@@ -120,7 +120,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle INTERNAL_SERVER_ERROR (500) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "error" -> Json.obj(
           "code"    -> "500",
           "message" -> "Internal Server Error",
@@ -138,7 +138,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
   "amendOrn" - {
     "successfully amend an ORN request with X-PILLAR2-ID and receive a Success response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-15T016:07:22Z",
           "formBundleNumber" -> "123456789012345"
@@ -156,7 +156,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
     }
     "handle BAD_REQUEST (400) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "error" -> Json.obj(
           "code"    -> "400",
           "message" -> "Bad Request",
@@ -172,7 +172,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle UNPROCESSABLE_ENTITY (422) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "errors" -> Json.obj(
           "processingDate" -> "2024-03-14T09:26:17Z",
           "code"           -> "003",
@@ -188,7 +188,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle INTERNAL_SERVER_ERROR (500) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "error" -> Json.obj(
           "code"    -> "500",
           "message" -> "Internal Server Error",

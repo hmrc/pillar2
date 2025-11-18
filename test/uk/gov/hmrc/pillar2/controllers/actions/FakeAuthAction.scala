@@ -18,14 +18,15 @@ package uk.gov.hmrc.pillar2.controllers.actions
 
 import com.google.inject.Inject
 import play.api.mvc.{BodyParsers, Request, Result}
-import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class FakeAuthAction @Inject() (
-  val parser:                    BodyParsers.Default
-)(implicit val executionContext: ExecutionContext)
+  val parser: BodyParsers.Default
+)(using ec:   ExecutionContext)
     extends AuthAction {
+
+  protected def executionContext: ExecutionContext = ec
   override def invokeBlock[A](
     request: Request[A],
     block:   Request[A] => Future[Result]

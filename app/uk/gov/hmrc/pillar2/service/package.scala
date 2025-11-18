@@ -29,7 +29,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 package object service extends Logging {
-  private[service] def convertToResult[A](response: HttpResponse)(implicit reads: Reads[A]): Future[A] = {
+  private[service] def convertToResult[A](response: HttpResponse)(using reads: Reads[A]): Future[A] = {
     logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
       case 200 | 201 =>

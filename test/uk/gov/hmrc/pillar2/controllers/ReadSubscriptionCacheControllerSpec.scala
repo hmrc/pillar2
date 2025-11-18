@@ -21,7 +21,12 @@ import org.mockito.ArgumentMatchers.{any, eq => eqTo}
 import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsObject
 import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.AnyContentAsEmpty
+import play.api.mvc.AnyContentAsJson
+import play.api.mvc.AnyContentAsRaw
+import play.api.mvc.Result
 import play.api.test.FakeRequest
 import play.api.test.Helpers._
 import play.api.{Application, Configuration}
@@ -55,16 +60,18 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
 
   "save" - {
     "return 200 when request is saved successfully" in new Setup {
-      when(mockedCache.upsert(any[String](), any[JsValue]())(any[ExecutionContext]())).thenReturn(Future.successful((): Unit))
-      val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
-      val result  = route(application, request).value
+      when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.successful((): Unit))
+      val request: FakeRequest[AnyContentAsJson] =
+        FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withJsonBody(Json.obj("abc" -> "def"))
+      val result: Future[Result] = route(application, request).value
       status(result) mustBe OK
     }
 
     "throw exception when mongo is down" in new Setup {
 
-      val request = FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withRawBody(ByteString(nextBytes(512001)))
-      val result  = route(application, request).value
+      val request: FakeRequest[AnyContentAsRaw] =
+        FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url).withRawBody(ByteString(nextBytes(512001)))
+      val result: Future[Result] = route(application, request).value
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
 
@@ -72,35 +79,35 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
   }
   "get" - {
     "return 200 when data exists" in new Setup {
-      val jsonObject = Json.obj("hello" -> "goodbye")
-      when(mockedCache.get(any[String]())(any[ExecutionContext]())).thenReturn(Future.successful(Some(jsonObject)))
-      val request = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
-      val result  = route(application, request).value
+      val jsonObject: JsObject = Json.obj("hello" -> "goodbye")
+      when(mockedCache.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsonObject)))
+      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
+      val result:  Future[Result]                      = route(application, request).value
 
       status(result) mustBe OK
       contentAsJson(result) mustBe jsonObject
 
     }
     "return NOT_FOUND when data exists" in new Setup {
-      when(mockedCache.get(any[String]())(any[ExecutionContext]())).thenReturn(Future.successful(None))
-      val request = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
-      val result  = route(application, request).value
+      when(mockedCache.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(None))
+      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
+      val result:  Future[Result]                      = route(application, request).value
 
       status(result) mustBe NOT_FOUND
 
     }
     "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
-        when(mockedCache.remove(eqTo("id"))(any[ExecutionContext]())) thenReturn Future.successful(true)
-        val request = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
-        val result  = route(application, request).value
+        when(mockedCache.remove(eqTo("id"))(using any[ExecutionContext]())) thenReturn Future.successful(true)
+        val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
+        val result:  Future[Result]                      = route(application, request).value
         status(result) mustBe OK
       }
 
       "return InternalServerError if the record is not removed" in new Setup {
-        when(mockedCache.remove(eqTo("id"))(any[ExecutionContext]())) thenReturn Future.successful(false)
-        val request = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
-        val result  = route(application, request).value
+        when(mockedCache.remove(eqTo("id"))(using any[ExecutionContext]())) thenReturn Future.successful(false)
+        val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
+        val result:  Future[Result]                      = route(application, request).value
         status(result) mustBe INTERNAL_SERVER_ERROR
       }
 

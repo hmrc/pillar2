@@ -21,7 +21,8 @@ import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessResponse}
@@ -44,7 +45,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
   "sendBtn" - {
     "should return ApiSuccessResponse for valid btnPayload (201)" in {
       val successResponse = BTNSuccessResponse(BTNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z")))
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
+      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
         .thenReturn(Future.successful(httpCreated))
 
       val result = service.sendBtn(btnPayload).futureValue
@@ -55,7 +56,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
+      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[ETMPValidationError] {
@@ -69,7 +70,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should throw InvalidJsonError for malformed success response" in {
       val httpResponse = HttpResponse(201, "{invalid json}")
 
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
+      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[InvalidJsonError] {
@@ -81,7 +82,7 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should throw ApiInternalServerError for non-201/422 responses" in {
       val httpResponse = HttpResponse(500, "{}")
 
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(any[HeaderCarrier], any[String]))
+      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
         .thenReturn(Future.successful(httpResponse))
 
       intercept[ApiInternalServerError.type] {

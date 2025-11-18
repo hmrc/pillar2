@@ -31,10 +31,12 @@
  */
 
 package uk.gov.hmrc.pillar2.generators
-
-import org.scalacheck.Arbitrary._
-import org.scalacheck.Gen._
-import org.scalacheck.{Arbitrary, Gen, Shrink}
+// scalafix:off
+import org.scalacheck.{Arbitrary, Gen}
+// scalafix:on
+import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.Gen.*
+import org.scalacheck.Shrink
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import wolfendale.scalacheck.regexp.RegexpGen
 
@@ -42,7 +44,7 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 import scala.annotation.nowarn
 trait Generators extends ModelGenerators {
 
-  implicit val dontShrink: Shrink[String] = Shrink.shrinkAny
+  given dontShrink: Shrink[String] = Shrink.shrinkAny
 
   def genIntersperseString(
     gen:        Gen[String],
@@ -120,7 +122,7 @@ trait Generators extends ModelGenerators {
     nonEmptyString suchThat (!excluded.contains(_))
 
   def oneOf[T](xs: Seq[Gen[T]]): Gen[T] =
-    if (xs.isEmpty) {
+    if xs.isEmpty then {
       throw new IllegalArgumentException("oneOf called on empty collection")
     } else {
       val vector = xs.toVector

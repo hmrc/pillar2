@@ -31,7 +31,7 @@ final case class UpeDetails(
 )
 
 object UpeDetails {
-  implicit val format: OFormat[UpeDetails] = Json.format[UpeDetails]
+  given format: OFormat[UpeDetails] = Json.format[UpeDetails]
 }
 
 final case class UpeDetailsAmend(
@@ -45,7 +45,7 @@ final case class UpeDetailsAmend(
 )
 
 object UpeDetailsAmend {
-  implicit val format: OFormat[UpeDetailsAmend] = Json.format[UpeDetailsAmend]
+  given format: OFormat[UpeDetailsAmend] = Json.format[UpeDetailsAmend]
 }
 
 final case class UpeCorrespAddressDetails(
@@ -58,7 +58,7 @@ final case class UpeCorrespAddressDetails(
 )
 
 object UpeCorrespAddressDetails {
-  implicit val format: OFormat[UpeCorrespAddressDetails] = Json.format[UpeCorrespAddressDetails]
+  given format: OFormat[UpeCorrespAddressDetails] = Json.format[UpeCorrespAddressDetails]
 }
 
 final case class ContactDetailsType(
@@ -68,7 +68,7 @@ final case class ContactDetailsType(
 )
 
 object ContactDetailsType {
-  implicit val format: OFormat[ContactDetailsType] = Json.format[ContactDetailsType]
+  given format: OFormat[ContactDetailsType] = Json.format[ContactDetailsType]
 }
 
 final case class FilingMemberDetails(
@@ -79,7 +79,7 @@ final case class FilingMemberDetails(
 )
 
 object FilingMemberDetails {
-  implicit val format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
+  given format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
 }
 
 final case class FilingMemberAmendDetails(
@@ -91,5 +91,5 @@ final case class FilingMemberAmendDetails(
 )
 
 object FilingMemberAmendDetails {
-  implicit val format: OFormat[FilingMemberAmendDetails] = Json.format[FilingMemberAmendDetails]
+  given format: OFormat[FilingMemberAmendDetails] = Json.format[FilingMemberAmendDetails]
 }

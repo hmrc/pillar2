@@ -39,5 +39,5 @@ case class ReadSubscriptionCachedData(
 )
 
 object ReadSubscriptionCachedData {
-  implicit val format: OFormat[ReadSubscriptionCachedData] = Json.format[ReadSubscriptionCachedData]
+  given format: OFormat[ReadSubscriptionCachedData] = Json.format[ReadSubscriptionCachedData]
 }

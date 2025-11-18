@@ -30,7 +30,7 @@ case class Registration(
 )
 
 object Registration {
-  implicit val format: OFormat[Registration] = Json.format[Registration]
+  given format: OFormat[Registration] = Json.format[Registration]
 }
 
 case class RegistrationInfo(
@@ -41,5 +41,5 @@ case class RegistrationInfo(
 )
 
 object RegistrationInfo {
-  implicit val format: OFormat[RegistrationInfo] = Json.format[RegistrationInfo]
+  given format: OFormat[RegistrationInfo] = Json.format[RegistrationInfo]
 }

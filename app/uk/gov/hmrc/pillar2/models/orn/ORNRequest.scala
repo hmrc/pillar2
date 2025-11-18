@@ -31,5 +31,5 @@ case class ORNRequest(
 )
 
 object ORNRequest {
-  implicit val format: OFormat[ORNRequest] = Json.format[ORNRequest]
+  given format: OFormat[ORNRequest] = Json.format[ORNRequest]
 }

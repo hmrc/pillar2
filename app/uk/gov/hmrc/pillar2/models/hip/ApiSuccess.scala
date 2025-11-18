@@ -23,5 +23,5 @@ import java.time.ZonedDateTime
 case class ApiSuccess(processingDate: ZonedDateTime, formBundleNumber: String, chargeReference: Option[String])
 
 object ApiSuccess {
-  implicit val format: OFormat[ApiSuccess] = Json.format[ApiSuccess]
+  given format: OFormat[ApiSuccess] = Json.format[ApiSuccess]
 }

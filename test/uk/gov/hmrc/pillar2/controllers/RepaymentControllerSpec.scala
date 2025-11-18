@@ -88,7 +88,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
             routes.RepaymentController.repaymentsSendRequest.url
           )
             .withJsonBody(Json.toJson(repaymentPayload))
-        when(mockRepaymentService.sendRepaymentsData(any[RepaymentRequestDetail])(any[HeaderCarrier]())).thenReturn(Future.successful(Done))
+        when(mockRepaymentService.sendRepaymentsData(any[RepaymentRequestDetail])(using any[HeaderCarrier]())).thenReturn(Future.successful(Done))
         val result: Future[Result] = route(application, request).value
         status(result) mustEqual CREATED
       }

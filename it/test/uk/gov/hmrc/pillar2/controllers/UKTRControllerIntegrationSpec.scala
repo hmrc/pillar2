@@ -65,7 +65,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
 
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
 
     forAll(arbitrary[UKTRSubmissionData]) {payload =>
@@ -112,7 +112,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
     )
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
 
       val request = httpClient
@@ -133,7 +133,7 @@ class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
       LiabilityNilReturn(returnType = NIL_RETURN)
     )
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("Content-Type" -> "application/json")
     val request = httpClient
       .post(url)

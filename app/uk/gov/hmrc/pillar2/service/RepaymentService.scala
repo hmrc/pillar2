@@ -28,13 +28,13 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class RepaymentService @Inject() (
   repaymentConnector: RepaymentConnector
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends Logging {
 
-  def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(implicit hc: HeaderCarrier): Future[Done] =
+  def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(using hc: HeaderCarrier): Future[Done] =
     repaymentConnector.sendRepaymentDetails(rePaymentData).flatMap { response =>
-      if (response.status == 201) {
+      if response.status == 201 then {
         Future.successful(Done)
       } else {
         Future.failed(UnexpectedResponse)

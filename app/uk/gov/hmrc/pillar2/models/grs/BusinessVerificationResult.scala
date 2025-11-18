@@ -27,7 +27,7 @@ object VerificationStatus {
   case object CtEnrolled extends VerificationStatus
   case object SaEnrolled extends VerificationStatus
 
-  implicit val format: Format[VerificationStatus] = new Format[VerificationStatus] {
+  given format: Format[VerificationStatus] = new Format[VerificationStatus] {
     override def reads(json: JsValue): JsResult[VerificationStatus] = json.validate[String] match {
       case JsSuccess(value, _) =>
         value match {
@@ -56,6 +56,6 @@ final case class BusinessVerificationResult(
 )
 
 object BusinessVerificationResult {
-  implicit val format: OFormat[BusinessVerificationResult] =
+  given format: OFormat[BusinessVerificationResult] =
     Json.format[BusinessVerificationResult]
 }

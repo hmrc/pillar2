@@ -41,7 +41,7 @@ class HealthEndpointIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
   test("service health endpoint returns 200") {
     val url         = URI.create(s"http://localhost:$port/ping/ping").toURL
     val httpClient  = app.injector.instanceOf[HttpClientV2]
-    implicit val hc = HeaderCarrier()
+    given hc = HeaderCarrier()
     val request     = httpClient.get(url)
     val result      = await(request.execute[HttpResponse])
     result.status shouldEqual 200

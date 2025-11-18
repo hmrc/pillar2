@@ -22,7 +22,7 @@ import play.api.libs.json.OFormat
 case class SourceFaultDetail(detail: Seq[String])
 
 object SourceFaultDetail {
-  implicit val format: OFormat[SourceFaultDetail] = Json.format[SourceFaultDetail]
+  given format: OFormat[SourceFaultDetail] = Json.format[SourceFaultDetail]
 }
 
 case class ErrorDetail(
@@ -35,11 +35,11 @@ case class ErrorDetail(
 )
 
 object ErrorDetail {
-  implicit val format: OFormat[ErrorDetail] = Json.format[ErrorDetail]
+  given format: OFormat[ErrorDetail] = Json.format[ErrorDetail]
 }
 
 case class ErrorDetails(errorDetail: ErrorDetail)
 
 object ErrorDetails {
-  implicit val format: OFormat[ErrorDetails] = Json.format[ErrorDetails]
+  given format: OFormat[ErrorDetails] = Json.format[ErrorDetails]
 }

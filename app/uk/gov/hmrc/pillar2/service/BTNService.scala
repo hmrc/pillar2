@@ -26,9 +26,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class BTNService @Inject() (
   btnConnector: BTNConnector
-)(implicit ec:  ExecutionContext) {
+)(using ec:     ExecutionContext) {
 
-  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[BTNSuccessResponse] =
+  def sendBtn(btnRequest: BTNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[BTNSuccessResponse] =
     btnConnector
       .sendBtn(btnRequest)
       .flatMap(convertToBTNApiResult)

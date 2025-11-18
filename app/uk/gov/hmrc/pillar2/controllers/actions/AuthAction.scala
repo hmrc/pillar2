@@ -26,9 +26,9 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 import scala.concurrent.{ExecutionContext, Future}
 
 class AuthActionImpl @Inject() (
-  override val authConnector:    AuthConnector,
-  val parser:                    BodyParsers.Default
-)(implicit val executionContext: ExecutionContext)
+  override val authConnector:          AuthConnector,
+  val parser:                          BodyParsers.Default
+)(using override val executionContext: ExecutionContext)
     extends AuthAction
     with AuthorisedFunctions {
 
@@ -36,7 +36,7 @@ class AuthActionImpl @Inject() (
     request: Request[A],
     block:   Request[A] => Future[Result]
   ): Future[Result] = {
-    implicit val hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given hc: HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
 
     authorised() {
       block(request)

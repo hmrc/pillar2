@@ -23,6 +23,6 @@ final case class GrsCreateRegistrationResponse(
 )
 
 object GrsCreateRegistrationResponse {
-  implicit val format: OFormat[GrsCreateRegistrationResponse] =
+  given format: OFormat[GrsCreateRegistrationResponse] =
     Json.format[GrsCreateRegistrationResponse]
 }

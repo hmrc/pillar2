@@ -19,24 +19,27 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.service.FinancialService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class FinancialDataController @Inject() (
-  financialService:          FinancialService,
-  authenticate:              AuthAction,
-  cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext)
+  financialService:       FinancialService,
+  authenticate:           AuthAction,
+  cc:                     ControllerComponents
+)(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     financialService.getTransactionHistory(plrReference, LocalDate.parse(dateFrom), LocalDate.parse(dateTo)).map {
       case Right(value)                                                                       => Ok(Json.toJson(value))
       case Left(error) if error.code == "NOT_FOUND"                                           => NotFound(Json.toJson(error))
@@ -45,7 +48,8 @@ class FinancialDataController @Inject() (
     }
   }
 
-  def getFinancialData(plrReference: String, dateFrom: String, dateTo: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def getFinancialData(plrReference: String, dateFrom: String, dateTo: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     financialService
       .retrieveCompleteFinancialDataResponse(plrReference, LocalDate.parse(dateFrom), LocalDate.parse(dateTo))
       .map(response => Ok(Json.toJson(response)))

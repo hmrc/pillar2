@@ -31,5 +31,5 @@ case class LiabilityData(
 ) extends Liability
 
 object LiabilityData {
-  implicit val liabilityDataFormat: OFormat[LiabilityData] = Json.format[LiabilityData]
+  given liabilityDataFormat: OFormat[LiabilityData] = Json.format[LiabilityData]
 }

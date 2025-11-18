@@ -54,11 +54,11 @@ trait BaseSpec
     with WireMockServerHandler
     with UKTaxReturnDataFixture {
 
-  implicit lazy val ec:           ExecutionContext = scala.concurrent.ExecutionContext.Implicits.global
-  implicit lazy val hc:           HeaderCarrier    = HeaderCarrier()
-  implicit lazy val system:       ActorSystem      = ActorSystem()
-  implicit lazy val materializer: Materializer     = Materializer(system)
-  val contentType:                (String, String) = "Content-Type" -> "application/json"
+  given ec:           ExecutionContext = scala.concurrent.ExecutionContext.global
+  given hc:           HeaderCarrier    = HeaderCarrier()
+  given system:       ActorSystem      = ActorSystem()
+  given materializer: Materializer     = Materializer(system)
+  val contentType:    (String, String) = "Content-Type" -> "application/json"
 
   def injector: Injector = app.injector
 
@@ -66,7 +66,7 @@ trait BaseSpec
 
   def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-  implicit val fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
+  given fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
     .withHeaders(contentType)
 
   val PLATFORM_LOG_LIMIT = 12288

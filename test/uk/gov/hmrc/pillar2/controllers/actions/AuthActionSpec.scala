@@ -48,7 +48,7 @@ class AuthActionSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar
 
   val mockAuthConnector: AuthConnector = mock[AuthConnector]
 
-  implicit val timeout: Timeout = 5 seconds
+  given timeout: Timeout = 5 seconds
 
   val application: Application = new GuiceApplicationBuilder()
     .configure(
@@ -63,7 +63,7 @@ class AuthActionSpec extends PlaySpec with GuiceOneAppPerSuite with MockitoSugar
     "the user is not logged in" must {
       "must return AuthorizationError" in {
         when(
-          mockAuthConnector.authorise(any[Predicate](), any[Retrieval[_]]())(
+          mockAuthConnector.authorise(any[Predicate](), any[Retrieval[?]]())(
             any[HeaderCarrier](),
             any[ExecutionContext]()
           )

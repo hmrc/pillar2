@@ -27,9 +27,9 @@ case class Pillar2Request[A](pillar2Id: String, request: Request[A]) extends Wra
 
 class Pillar2HeaderAction @Inject() (implicit val executionContext: ExecutionContext) extends ActionTransformer[Request, Pillar2Request] {
 
-  private val logger = Logger(this.getClass)
+  val logger: Logger = Logger(this.getClass)
 
-  override protected[actions] def transform[A](request: Request[A]): Future[Pillar2Request[A]] =
+  def transform[A](request: Request[A]): Future[Pillar2Request[A]] =
     request.headers.get("X-Pillar2-Id") match {
       case Some(pillar2Id) =>
         Future.successful(Pillar2Request(pillar2Id, request))

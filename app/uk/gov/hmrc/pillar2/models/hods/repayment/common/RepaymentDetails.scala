@@ -27,7 +27,7 @@ final case class RepaymentDetails(
 )
 
 object RepaymentDetails {
-  implicit val format: OFormat[RepaymentDetails] = Json.format[RepaymentDetails]
+  given format: OFormat[RepaymentDetails] = Json.format[RepaymentDetails]
 }
 
 final case class BankDetails(
@@ -41,7 +41,7 @@ final case class BankDetails(
 )
 
 object BankDetails {
-  implicit val format: OFormat[BankDetails] = Json.format[BankDetails]
+  given format: OFormat[BankDetails] = Json.format[BankDetails]
 }
 
 final case class RepaymentContactDetails(
@@ -49,5 +49,5 @@ final case class RepaymentContactDetails(
 )
 
 object RepaymentContactDetails {
-  implicit val format: OFormat[RepaymentContactDetails] = Json.format[RepaymentContactDetails]
+  given format: OFormat[RepaymentContactDetails] = Json.format[RepaymentContactDetails]
 }

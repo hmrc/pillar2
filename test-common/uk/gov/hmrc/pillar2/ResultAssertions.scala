@@ -28,14 +28,14 @@ import scala.concurrent.Future
 
 trait ResultAssertions { me: Matchers with Inside with DefaultAwaitTimeout =>
 
-  def assertJsonBodyOf[T](result: Future[Result])(block: T => Assertion)(implicit reads: Reads[T], mat: Materializer): Assertion =
+  def assertJsonBodyOf[T](result: Future[Result])(block: T => Assertion)(using reads: Reads[T], mat: Materializer): Assertion =
     inside(contentAsJson(result).validate[T]) {
       case JsSuccess(model, _) => block(model)
       case JsError(errs) =>
         fail(s"${contentAsString(result)} \n\nFailed JSON validation. Missing fields: \n ${JsError.toJson(errs)}\n")
     }
 
-  def assertErrorResponse(result: Future[Result], code: String, message: String)(implicit mat: Materializer): Assertion = {
+  def assertErrorResponse(result: Future[Result], code: String, message: String)(using mat: Materializer): Assertion = {
     val errorResponse = contentAsJson(result)
     (errorResponse \ "code").as[String]    shouldBe code
     (errorResponse \ "message").as[String] shouldBe message

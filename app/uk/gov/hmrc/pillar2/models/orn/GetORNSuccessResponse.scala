@@ -21,5 +21,5 @@ import play.api.libs.json.{Json, OFormat}
 case class GetORNSuccessResponse(success: GetORNSuccess)
 
 object GetORNSuccessResponse {
-  implicit val format: OFormat[GetORNSuccessResponse] = Json.format[GetORNSuccessResponse]
+  given format: OFormat[GetORNSuccessResponse] = Json.format[GetORNSuccessResponse]
 }

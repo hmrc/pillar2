@@ -39,7 +39,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
   "submitOrn" - {
     "should return SuccessResponse for valid ornRequest (201)" in {
       val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
-      when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpCreated))
 
       val result = service.submitOrn(ornRequest).futureValue
@@ -50,7 +50,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-      when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[ETMPValidationError] {
@@ -64,7 +64,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should throw InvalidJsonError for malformed success response" in {
       val httpResponse = HttpResponse(201, "{invalid json}")
 
-      when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[InvalidJsonError] {
@@ -76,7 +76,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should throw ApiInternalServerError for non-201/422 responses" in {
       val httpResponse = HttpResponse(500, "{}")
 
-      when(mockOrnConnector.submitOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
       intercept[ApiInternalServerError.type] {
@@ -90,6 +90,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(
         mockOrnConnector
           .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -107,6 +108,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(
         mockOrnConnector
           .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -127,6 +129,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(
         mockOrnConnector
           .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -145,6 +148,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       when(
         mockOrnConnector
           .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+            using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -160,7 +164,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
   "amendOrn" - {
     "should return SuccessResponse for valid ORN request (200)" in {
       val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
-      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpOk))
 
       val result = service.amendOrn(ornRequest).futureValue
@@ -171,7 +175,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
       val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
       val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[ETMPValidationError] {
@@ -185,7 +189,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should throw InvalidJsonError for malformed success response" in {
       val httpResponse = HttpResponse(200, "{invalid json}")
 
-      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
       val error = intercept[InvalidJsonError] {
@@ -197,7 +201,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should throw ApiInternalServerError for non-200/422 responses" in {
       val httpResponse = HttpResponse(500, "{}")
 
-      when(mockOrnConnector.amendOrn(any[ORNRequest])(any[HeaderCarrier], any[String]))
+      when(mockOrnConnector.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpResponse))
 
       intercept[ApiInternalServerError.type] {

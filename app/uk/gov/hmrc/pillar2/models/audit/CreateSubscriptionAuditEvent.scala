@@ -37,17 +37,17 @@ case class CreateSubscriptionAuditEvent(
 }
 
 object CreateSubscriptionAuditEvent {
-  implicit val formats: Format[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
+  given formats: Format[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
 }
 
 case class SubscriptionSuccessResponse(plrReference: String, formBundleNumber: String, processingDate: LocalDateTime)
 
 object SubscriptionSuccessResponse {
-  implicit val format: OFormat[SubscriptionSuccessResponse] = Json.format[SubscriptionSuccessResponse]
+  given format: OFormat[SubscriptionSuccessResponse] = Json.format[SubscriptionSuccessResponse]
 }
 
 case class SuccessResponse(success: SubscriptionSuccessResponse)
 
 object SuccessResponse {
-  implicit val format: OFormat[SuccessResponse] = Json.format[SuccessResponse]
+  given format: OFormat[SuccessResponse] = Json.format[SuccessResponse]
 }

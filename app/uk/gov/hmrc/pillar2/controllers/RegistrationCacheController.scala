@@ -29,14 +29,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RegistrationCacheController @Inject() (
-  repository:                RegistrationCacheRepository,
-  authenticate:              AuthAction,
-  cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext)
+  repository:             RegistrationCacheRepository,
+  authenticate:           AuthAction,
+  cc:                     ControllerComponents
+)(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def save(id: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def save(id: String): Action[AnyContent] = authenticate.async { request =>
     request.body.asJson.map { jsValue =>
       repository.upsert(id, jsValue).map(_ => Ok)
     } getOrElse Future.successful(EntityTooLarge)
@@ -50,7 +50,7 @@ class RegistrationCacheController @Inject() (
 
   def remove(id: String): Action[AnyContent] = authenticate.async { _ =>
     repository.remove(id).map { response =>
-      if (response) Ok else InternalServerError
+      if response then Ok else InternalServerError
     }
   }
 

@@ -27,13 +27,13 @@ import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import scala.util.{Success, Try}
 
 package object controllers {
-  implicit class JsErrorLogger(val error: JsError) extends AnyVal {
+  extension (error: JsError) {
     def toLogFormat: String = Json.prettyPrint(JsError.toJson(error))
   }
 
   def convertToResult(
-    httpResponse:    HttpResponse
-  )(implicit logger: Logger): Result =
+    httpResponse: HttpResponse
+  )(using logger: Logger): Result =
     httpResponse.status match {
       case CREATED   => Ok(httpResponse.body)
       case NOT_FOUND => NotFound(httpResponse.body)
@@ -79,8 +79,8 @@ package object controllers {
     }
 
   private def logDownStreamError(
-    body:            String
-  )(implicit logger: Logger): Unit = {
+    body:         String
+  )(using logger: Logger): Unit = {
     val error = Try(Json.parse(body).validate[ErrorDetails])
     error match {
       case Success(JsSuccess(value, _)) =>

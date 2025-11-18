@@ -42,11 +42,11 @@ class SubscriptionService @Inject() (
   repository:            ReadSubscriptionCacheRepository,
   subscriptionConnector: SubscriptionConnector,
   auditService:          AuditService
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends Logging {
 
-  def sendCreateSubscription(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
+  def sendCreateSubscription(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                 HeaderCarrier
   ): Future[HttpResponse] =
     userAnswers.get(NominateFilingMemberId) match {
@@ -79,7 +79,7 @@ class SubscriptionService @Inject() (
       case None => subscriptionError
     }
 
-  private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(implicit
+  private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using
     hc:                                         HeaderCarrier
   ) =
     for {
@@ -102,7 +102,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeRegisteredInUK(upeSafeId: String, userAnswers: UserAnswers)(implicit
+  private def upeRegisteredInUK(upeSafeId: String, userAnswers: UserAnswers)(using
     hc:                                    HeaderCarrier
   ) =
     for {
@@ -127,7 +127,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeOutsideUKFMInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
+  private def upeOutsideUKFMInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                     HeaderCarrier
   ) =
     for {
@@ -153,7 +153,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeInUKFMOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
+  private def upeInUKFMOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                     HeaderCarrier
   ) =
     for {
@@ -179,7 +179,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def bothOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
+  private def bothOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                HeaderCarrier
   ) =
     for {
@@ -204,7 +204,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def bothRegisteredInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(implicit
+  private def bothRegisteredInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                     HeaderCarrier
   ) =
     for {
@@ -231,11 +231,11 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(implicit
+  private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(using
     hc:                                                  HeaderCarrier
   ): Future[HttpResponse] =
     subscriptionConnector
-      .sendCreateSubscriptionInformation(subscriptionRequest)(hc, ec)
+      .sendCreateSubscriptionInformation(subscriptionRequest)
       .flatTap { res =>
         val resReceived = AuditResponseReceived(res.status, res.json)
         auditService.auditCreateSubscription(subscriptionRequest, resReceived)
@@ -250,7 +250,7 @@ class SubscriptionService @Inject() (
     nominateFm:       Boolean,
     upeGrsResponse:   GrsResponse
   ): UpeDetails = {
-    val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
+    val domesticOnly = if subMneOrDomestic == MneOrDomestic.uk then true else false
     upeOrgType match {
       case EntityType.UKLimitedCompany =>
         logger.info("UK Limited Company selected as Entity")
@@ -272,8 +272,6 @@ class SubscriptionService @Inject() (
         val utr            = partnershipEntityRegistrationData.sautr
 
         UpeDetails(Some(upeSafeId), Some(crn), utr, name, LocalDate.now(), domesticOnly, nominateFm)
-
-      case _ => throw new Exception("Invalid Org Type")
     }
   }
 
@@ -283,7 +281,7 @@ class SubscriptionService @Inject() (
     nominateFm:          Boolean,
     upeNameRegistration: String
   ): UpeDetails = {
-    val domesticOnly = if (subMneOrDomestic == MneOrDomestic.uk) true else false
+    val domesticOnly = if subMneOrDomestic == MneOrDomestic.uk then true else false
     UpeDetails(Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
 
   }
@@ -325,8 +323,6 @@ class SubscriptionService @Inject() (
                 val name           = companyProfile.companyName
                 val utr            = partnershipEntityRegistrationData.sautr
                 Some(FilingMemberDetails(fmSafeId, Some(crn), utr, name))
-
-              case _ => throw new Exception("Filing Member: Invalid Org Type")
             }
 
           case false =>
@@ -391,7 +387,7 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
+  def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
       response <- subscriptionConnector.getSubscriptionInformation(plrReference)
       subscriptionResponse = response.json.as[SubscriptionResponse]
@@ -400,13 +396,13 @@ class SubscriptionService @Inject() (
       _ <- repository.upsert(id, Json.toJson(dataToStore))
     } yield subscriptionResponse
 
-  def readSubscriptionData(plrReference: String)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def readSubscriptionData(plrReference: String)(using hc: HeaderCarrier): Future[HttpResponse] =
     for {
       response <- subscriptionConnector.getSubscriptionInformation(plrReference)
       _        <- createAuditForReadSubscription(plrReference, response)
     } yield response
 
-  private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(implicit hc: HeaderCarrier): Future[AuditResult] =
+  private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
     response.status match {
       case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionResponse])
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
@@ -445,7 +441,7 @@ class SubscriptionService @Inject() (
 
     ReadSubscriptionCachedData(
       plrReference = Some(plrReference),
-      subMneOrDomestic = if (sub.upeDetails.domesticOnly) MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
+      subMneOrDomestic = if sub.upeDetails.domesticOnly then MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
       subPrimaryContactName = sub.primaryContactDetails.name,
       subPrimaryEmail = sub.primaryContactDetails.emailAddress,
       subPrimaryCapturePhone = sub.primaryContactDetails.telephone,
@@ -462,10 +458,10 @@ class SubscriptionService @Inject() (
     )
   }
 
-  def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(implicit hc: HeaderCarrier): Future[Done] = {
+  def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(using hc: HeaderCarrier): Future[Done] = {
     val etmpAmendSubscriptionSuccess = ETMPAmendSubscriptionSuccess(amendData)
     subscriptionConnector.amendSubscriptionInformation(etmpAmendSubscriptionSuccess).flatMap { response =>
-      if (response.status == 200) {
+      if response.status == 200 then {
         auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json)) >> {
           response.json.validate[AmendResponse] match {
             case JsSuccess(result, _) =>

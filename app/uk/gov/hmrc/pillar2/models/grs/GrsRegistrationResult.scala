@@ -25,7 +25,7 @@ object RegistrationStatus {
   case object RegistrationFailed extends RegistrationStatus
   case object RegistrationNotCalled extends RegistrationStatus
 
-  implicit val format: Format[RegistrationStatus] = new Format[RegistrationStatus] {
+  given format: Format[RegistrationStatus] = new Format[RegistrationStatus] {
     override def reads(json: JsValue): JsResult[RegistrationStatus] = json.validate[String] match {
       case JsSuccess(value, _) =>
         value match {
@@ -52,7 +52,7 @@ final case class GrsRegistrationResult(
 )
 
 object GrsRegistrationResult {
-  implicit val format: OFormat[GrsRegistrationResult] =
+  given format: OFormat[GrsRegistrationResult] =
     Json.format[GrsRegistrationResult]
 }
 
@@ -62,6 +62,6 @@ final case class GrsRegistrationResultFailure(
 )
 
 object GrsRegistrationResultFailure {
-  implicit val format: OFormat[GrsRegistrationResultFailure] =
+  given format: OFormat[GrsRegistrationResultFailure] =
     Json.format[GrsRegistrationResultFailure]
 }

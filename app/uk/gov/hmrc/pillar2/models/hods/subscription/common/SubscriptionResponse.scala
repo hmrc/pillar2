@@ -24,7 +24,7 @@ import java.time.LocalDate
 case class SubscriptionResponse(success: SubscriptionSuccess)
 
 object SubscriptionResponse {
-  implicit val format: OFormat[SubscriptionResponse] = Json.format[SubscriptionResponse]
+  given format: OFormat[SubscriptionResponse] = Json.format[SubscriptionResponse]
 }
 
 case class SubscriptionSuccess(
@@ -39,7 +39,7 @@ case class SubscriptionSuccess(
 )
 
 object SubscriptionSuccess {
-  implicit val format: OFormat[SubscriptionSuccess] = Json.format[SubscriptionSuccess]
+  given format: OFormat[SubscriptionSuccess] = Json.format[SubscriptionSuccess]
 }
 
 final case class AmendSubscriptionSuccess(
@@ -53,37 +53,37 @@ final case class AmendSubscriptionSuccess(
 )
 
 object AmendSubscriptionSuccess {
-  implicit val format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
+  given format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
 }
 
 final case class AmendSubscriptionInput(value: AmendSubscriptionSuccess)
 
 object AmendSubscriptionInput {
-  implicit val format: OFormat[AmendSubscriptionInput] = Json.format[AmendSubscriptionInput]
+  given format: OFormat[AmendSubscriptionInput] = Json.format[AmendSubscriptionInput]
 }
 
 final case class AmendResponse(success: AmendSubscriptionSuccessResponse)
 
 object AmendResponse {
-  implicit val format: OFormat[AmendResponse] = Json.format[AmendResponse]
+  given format: OFormat[AmendResponse] = Json.format[AmendResponse]
 }
 
 final case class AmendSubscriptionSuccessResponse(processingDate: String, formBundleNumber: String)
 
 object AmendSubscriptionSuccessResponse {
-  implicit val format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
+  given format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }
 
 final case class AmendSubscriptionFailureResponse(failures: Array[Failure])
 
 object AmendSubscriptionFailureResponse {
-  implicit val format: OFormat[AmendSubscriptionFailureResponse] = Json.format[AmendSubscriptionFailureResponse]
+  given format: OFormat[AmendSubscriptionFailureResponse] = Json.format[AmendSubscriptionFailureResponse]
 }
 
 final case class Failure(reason: String, code: String)
 
 object Failure {
-  implicit val format: OFormat[Failure] = Json.format[Failure]
+  given format: OFormat[Failure] = Json.format[Failure]
 }
 
 case class DashboardInfo(
@@ -92,5 +92,5 @@ case class DashboardInfo(
 )
 
 object DashboardInfo {
-  implicit val format: OFormat[DashboardInfo] = Json.format[DashboardInfo]
+  given format: OFormat[DashboardInfo] = Json.format[DashboardInfo]
 }

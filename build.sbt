@@ -4,7 +4,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "pillar2"
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "3.3.5"
 ThisBuild / majorVersion := 0
 
 lazy val microservice = Project(appName, file("."))
@@ -23,17 +23,23 @@ lazy val microservice = Project(appName, file("."))
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
     // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
     // suppress warnings in generated routes files
-    scalacOptions += "-Wconf:src=routes/.*:s"
+    scalacOptions ++= Seq(
+      "-Wconf:src=routes/.*:s",
+      "-Wconf:msg=Flag.*set repeatedly:s",
+      "-Wconf:msg=Setting -Wunused set to all redundantly:s",
+      "-Wconf:msg=Unreachable case except for null.*:s"
+    )
   )
   .settings(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
     Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
     tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement
+      ScalacOptions.warnNonUnitStatement,
+      ScalacOptions.fatalWarnings
     )
   )
-  .settings(CodeCoverageSettings.settings *)
+  .settings(CodeCoverageSettings.settings*)
 
 lazy val it = project
   .enablePlugins(play.sbt.PlayScala)
@@ -41,7 +47,8 @@ lazy val it = project
   .settings(DefaultBuildSettings.itSettings())
   .settings(
     tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement
+      ScalacOptions.warnNonUnitStatement,
+      ScalacOptions.fatalWarnings
     )
   )
   .settings(libraryDependencies ++= AppDependencies.it)
@@ -56,3 +63,4 @@ inThisBuild(
 addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
 addCommandAlias("checkCodeCoverage", "; clean; coverage; test; it/test; coverageReport")
 addCommandAlias("lint", "; scalafmtAll; scalafmtSbt; scalafixAll")
+addCommandAlias("prePush", "; reload; clean; compile; test; lint")

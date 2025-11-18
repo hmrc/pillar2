@@ -31,8 +31,6 @@ import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
 
-import scala.annotation.nowarn
-
 trait AllMocks extends MockitoSugar {
   me: BeforeAndAfterEach =>
 
@@ -63,7 +61,6 @@ trait AllMocks extends MockitoSugar {
   val mockOrnService:                         ORNService                         = mock[ORNService]
   val mockOrnConnector:                       ORNConnector                       = mock[ORNConnector]
 
-  @nowarn
   override protected def beforeEach(): Unit =
     Seq(
       mockActorSystem,

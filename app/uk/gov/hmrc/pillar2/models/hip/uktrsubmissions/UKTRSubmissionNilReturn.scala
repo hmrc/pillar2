@@ -29,5 +29,5 @@ case class UKTRSubmissionNilReturn(
 ) extends UKTRSubmission
 
 object UKTRSubmissionNilReturn {
-  implicit val uktrSubmissionNilReturnFormat: OFormat[UKTRSubmissionNilReturn] = Json.format[UKTRSubmissionNilReturn]
+  given uktrSubmissionNilReturnFormat: OFormat[UKTRSubmissionNilReturn] = Json.format[UKTRSubmissionNilReturn]
 }

@@ -24,8 +24,8 @@ import java.time.Instant
 case class RegistrationDataEntry(id: String, data: String, lastUpdated: Instant)
 
 object RegistrationDataEntryFormats {
-  implicit val dateFormat: Format[Instant]               = MongoJavatimeFormats.instantFormat
-  implicit val format:     Format[RegistrationDataEntry] = Json.format[RegistrationDataEntry]
+  given dateFormat: Format[Instant]               = MongoJavatimeFormats.instantFormat
+  given format:     Format[RegistrationDataEntry] = Json.format[RegistrationDataEntry]
 }
 
 object RegistrationDataKeys {

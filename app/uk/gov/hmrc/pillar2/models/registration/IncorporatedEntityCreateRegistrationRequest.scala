@@ -31,6 +31,6 @@ final case class IncorporatedEntityCreateRegistrationRequest(
 )
 
 object IncorporatedEntityCreateRegistrationRequest {
-  implicit val format: OFormat[IncorporatedEntityCreateRegistrationRequest] =
+  given format: OFormat[IncorporatedEntityCreateRegistrationRequest] =
     Json.format[IncorporatedEntityCreateRegistrationRequest]
 }

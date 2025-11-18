@@ -29,5 +29,5 @@ case class WithoutIdRegData(
 )
 
 object WithoutIdRegData {
-  implicit val format: OFormat[WithoutIdRegData] = Json.format[WithoutIdRegData]
+  given format: OFormat[WithoutIdRegData] = Json.format[WithoutIdRegData]
 }

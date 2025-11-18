@@ -61,9 +61,8 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
     super.afterEach()
   }
 
-  val fromDate:           LocalDate = LocalDate.now()
-  val toDate:             LocalDate = LocalDate.now().plusYears(1)
-  override val pillar2Id: String    = "XMPLR0123456789"
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now().plusYears(1)
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
     ObligationsAndSubmissionsSuccessResponse(
       ZonedDateTime.now(),
@@ -104,6 +103,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
 
       when(
         mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+          using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
@@ -129,6 +129,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
     "should handle ApiInternalServerError from service" in {
       when(
         mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+          using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )

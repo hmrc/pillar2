@@ -29,10 +29,10 @@ final case class UserAnswers(
   lastUpdated: Instant = Instant.now
 ) {
 
-  def get[A](page: Gettable[A])(implicit rds: Reads[A]): Option[A] =
+  def get[A](page: Gettable[A])(using rds: Reads[A]): Option[A] =
     Reads.optionNoError(Reads.at(page.path)).reads(data).getOrElse(None)
 
-  def set[A](page: Settable[A], value: A)(implicit writes: Writes[A]): Try[UserAnswers] = {
+  def set[A](page: Settable[A], value: A)(using writes: Writes[A]): Try[UserAnswers] = {
 
     val updatedData = data.setObject(page.path, Json.toJson(value)) match {
       case JsSuccess(jsValue, _) =>
@@ -67,7 +67,7 @@ object UserAnswers {
 
   val reads: Reads[UserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "_id").read[String] and
@@ -78,14 +78,14 @@ object UserAnswers {
 
   val writes: OWrites[UserAnswers] = {
 
-    import play.api.libs.functional.syntax._
+    import play.api.libs.functional.syntax.*
 
     (
       (__ \ "_id").write[String] and
         (__ \ "data").write[JsObject] and
         (__ \ "lastUpdated").write(MongoJavatimeFormats.instantFormat)
-    )(unlift(UserAnswers.unapply))
+    )(userAnswers => (userAnswers.id, userAnswers.data, userAnswers.lastUpdated))
   }
 
-  implicit val format: OFormat[UserAnswers] = OFormat(reads, writes)
+  given format: OFormat[UserAnswers] = OFormat(reads, writes)
 }

@@ -26,7 +26,7 @@ import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
+import uk.gov.hmrc.pillar2.repositories.{RegistrationDataKeys => LastUpdatedKey}
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -37,7 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ReadSubscriptionCacheRepository @Inject() (
   mongoComponent: MongoComponent,
   config:         AppConfig
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends PlayMongoRepository[RegistrationDataEntry](
       collectionName = "read-subscription-records",
@@ -48,7 +48,7 @@ class ReadSubscriptionCacheRepository @Inject() (
       ),
       indexes = Seq(
         IndexModel(
-          Indexes.ascending(lastUpdatedKey),
+          Indexes.ascending(LastUpdatedKey.lastUpdatedKey),
           IndexOptions()
             .name("lastUpdatedIndex")
             .expireAfter(900, TimeUnit.SECONDS)
@@ -67,15 +67,14 @@ class ReadSubscriptionCacheRepository @Inject() (
   private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle
 
-  import RegistrationDataEntryFormats._
-  import RegistrationDataKeys._
+  import RegistrationDataKeys.*
 
-  def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
+  def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] = {
 
     val encryptedRecord    = RegistrationDataEntry(id, data.toString(), updatedAt)
     val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
     val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-    if (cryptoToggle) {
+    if cryptoToggle then {
       val encryptedSetOperation = Updates.combine(
         Updates.set(idField, encryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
@@ -101,8 +100,8 @@ class ReadSubscriptionCacheRepository @Inject() (
 
   }
 
-  def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
-    if (cryptoToggle) {
+  def get(id: String)(using ec: ExecutionContext): Future[Option[JsValue]] =
+    if cryptoToggle then {
       collection.find[RegistrationDataEntry](Filters.equal(idField, id)).headOption().map {
         _.map { dataEntry =>
           Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
@@ -116,7 +115,7 @@ class ReadSubscriptionCacheRepository @Inject() (
       }
     }
 
-  def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] =
+  def remove(id: String)(using ec: ExecutionContext): Future[Boolean] =
     collection.deleteOne(Filters.equal(idField, id)).toFuture().map { result =>
       logger.info(s"Removing row from collection $collectionName externalId:$id")
       result.wasAcknowledged

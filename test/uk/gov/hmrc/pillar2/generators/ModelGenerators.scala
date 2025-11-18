@@ -36,11 +36,11 @@ import java.time.{Instant, LocalDate}
 trait ModelGenerators {
   self: Generators =>
 
-  implicit lazy val arbitraryLocalDate: Arbitrary[LocalDate] = Arbitrary {
+  given arbitraryLocalDate: Arbitrary[LocalDate] = Arbitrary {
     datesBetween(LocalDate.of(1900, 1, 1), LocalDate.of(2100, 1, 1))
   }
 
-  implicit val arbitraryRegistration: Arbitrary[RegisterWithoutIDRequest] = Arbitrary {
+  given arbitraryRegistration: Arbitrary[RegisterWithoutIDRequest] = Arbitrary {
     for {
       ack            <- arbitrary[String]
       name           <- arbitrary[String]
@@ -60,7 +60,7 @@ trait ModelGenerators {
 
   }
 
-  implicit val arbitraryAddress: Arbitrary[Address] = Arbitrary {
+  given arbitraryAddress: Arbitrary[Address] = Arbitrary {
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
@@ -78,7 +78,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryContactDetails: Arbitrary[ContactDetails] = Arbitrary {
+  given arbitraryContactDetails: Arbitrary[ContactDetails] = Arbitrary {
     for {
       phoneNumber  <- Gen.option(arbitrary[String])
       mobileNumber <- Gen.option(arbitrary[String])
@@ -92,7 +92,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryIdentification: Arbitrary[Identification] = Arbitrary {
+  given arbitraryIdentification: Arbitrary[Identification] = Arbitrary {
     for {
       idNumber           <- arbitrary[String]
       issuingInstitution <- arbitrary[String]
@@ -104,7 +104,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUpeRegisteredAddress: Arbitrary[UpeRegisteredAddress] = Arbitrary {
+  given arbitraryUpeRegisteredAddress: Arbitrary[UpeRegisteredAddress] = Arbitrary {
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
@@ -524,7 +524,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUKAddressDetails: Arbitrary[UKAddress] = Arbitrary {
+  given arbitraryUKAddressDetails: Arbitrary[UKAddress] = Arbitrary {
 
     for {
       addressLine1 <- arbitrary[String]
@@ -543,7 +543,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryNonUKAddressDetails: Arbitrary[NonUKAddress] = Arbitrary {
+  given arbitraryNonUKAddressDetails: Arbitrary[NonUKAddress] = Arbitrary {
 
     for {
       addressLine1 <- arbitrary[String]
@@ -577,7 +577,7 @@ trait ModelGenerators {
     } yield GrsResponse(partnershipEntityRegistrationData = Some(partnershipEntityRegistrationData))
   }
 
-  implicit val arbitraryIncorporatedEntityRegistrationData: Arbitrary[IncorporatedEntityRegistrationData] = Arbitrary {
+  given arbitraryIncorporatedEntityRegistrationData: Arbitrary[IncorporatedEntityRegistrationData] = Arbitrary {
 
     for {
       companyProfile <- arbitrary[CompanyProfile]
@@ -592,7 +592,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryPartnershipEntityRegistrationData: Arbitrary[PartnershipEntityRegistrationData] = Arbitrary {
+  given arbitraryPartnershipEntityRegistrationData: Arbitrary[PartnershipEntityRegistrationData] = Arbitrary {
 
     for {
       companyProfile <- arbitrary[CompanyProfile]
@@ -609,7 +609,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryCompanyProfile: Arbitrary[CompanyProfile] = Arbitrary {
+  given arbitraryCompanyProfile: Arbitrary[CompanyProfile] = Arbitrary {
 
     for {
       companyName            <- arbitrary[String]
@@ -625,7 +625,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryIncorporatedEntityAddress: Arbitrary[IncorporatedEntityAddress] = Arbitrary {
+  given arbitraryIncorporatedEntityAddress: Arbitrary[IncorporatedEntityAddress] = Arbitrary {
     for {
       address_line_1 <- arbitrary[String]
       address_line_2 <- Gen.option(arbitrary[String])
@@ -648,7 +648,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitrarySubscriptionAddress: Arbitrary[SubscriptionAddress] = Arbitrary {
+  given arbitrarySubscriptionAddress: Arbitrary[SubscriptionAddress] = Arbitrary {
     for {
       addressLine1 <- arbitrary[String]
       addressLine2 <- Gen.option(arbitrary[String])
@@ -666,7 +666,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryRequestDetail: Arbitrary[RequestDetail] = Arbitrary {
+  given arbitraryRequestDetail: Arbitrary[RequestDetail] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetails]
       accountingPeriod         <- arbitrary[AccountingPeriod]
@@ -684,7 +684,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUpeDetails: Arbitrary[UpeDetails] = Arbitrary {
+  given arbitraryUpeDetails: Arbitrary[UpeDetails] = Arbitrary {
     for {
       safeId                  <- arbitrary[String]
       customerIdentification1 <- Gen.option(arbitrary[String])
@@ -704,7 +704,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAccountingPeriod: Arbitrary[AccountingPeriod] = Arbitrary {
+  given arbitraryAccountingPeriod: Arbitrary[AccountingPeriod] = Arbitrary {
     for {
       startDate <- arbitrary[LocalDate]
       endDate   <- arbitrary[LocalDate]
@@ -714,7 +714,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAccountingPeriodAmend: Arbitrary[AccountingPeriodAmend] = Arbitrary {
+  given arbitraryAccountingPeriodAmend: Arbitrary[AccountingPeriodAmend] = Arbitrary {
     for {
       startDate <- arbitrary[LocalDate]
       endDate   <- arbitrary[LocalDate]
@@ -724,7 +724,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUpeCorrespAddressDetails: Arbitrary[UpeCorrespAddressDetails] = Arbitrary {
+  given arbitraryUpeCorrespAddressDetails: Arbitrary[UpeCorrespAddressDetails] = Arbitrary {
 
     for {
       addressLine1 <- arbitrary[String]
@@ -743,7 +743,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryContactDetailsType: Arbitrary[ContactDetailsType] = Arbitrary {
+  given arbitraryContactDetailsType: Arbitrary[ContactDetailsType] = Arbitrary {
     for {
       name         <- arbitrary[String]
       telephone    <- Gen.option(arbitrary[String])
@@ -755,7 +755,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryFilingMemberDetails: Arbitrary[FilingMemberDetails] = Arbitrary {
+  given arbitraryFilingMemberDetails: Arbitrary[FilingMemberDetails] = Arbitrary {
     for {
       safeId                  <- arbitrary[String]
       customerIdentification1 <- Gen.option(arbitrary[String])
@@ -769,7 +769,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryFilingMemberAmendDetails: Arbitrary[FilingMemberAmendDetails] = Arbitrary {
+  given arbitraryFilingMemberAmendDetails: Arbitrary[FilingMemberAmendDetails] = Arbitrary {
     for {
       addNewFm                <- arbitrary[Boolean]
       safeId                  <- arbitrary[String]
@@ -785,7 +785,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitrarySubscriptionRequestParameters: Arbitrary[SubscriptionRequestParameters] = Arbitrary {
+  given arbitrarySubscriptionRequestParameters: Arbitrary[SubscriptionRequestParameters] = Arbitrary {
     for {
       id        <- arbitrary[String]
       regSafeId <- arbitrary[String]
@@ -798,17 +798,17 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAccountStatus: Arbitrary[AccountStatus] = Arbitrary {
+  given arbitraryAccountStatus: Arbitrary[AccountStatus] = Arbitrary {
     arbitrary[Boolean].map(AccountStatus(_))
   }
 
-  implicit val arbitrarySubscriptionResponse: Arbitrary[SubscriptionResponse] = Arbitrary {
+  given arbitrarySubscriptionResponse: Arbitrary[SubscriptionResponse] = Arbitrary {
     for {
       success <- arbitrary[SubscriptionSuccess]
     } yield SubscriptionResponse(success)
   }
 
-  implicit val arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {
+  given arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {
     for {
       formBundleNumber         <- stringsWithMaxLength(20)
       upeDetails               <- arbitrary[UpeDetails]
@@ -830,14 +830,14 @@ trait ModelGenerators {
     )
   }
 
-  implicit val readSubscriptionRequestParametersArbitrary: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary {
+  given readSubscriptionRequestParametersArbitrary: Arbitrary[ReadSubscriptionRequestParameters] = Arbitrary {
     for {
       id           <- Gen.alphaStr
       plrReference <- Gen.alphaStr
     } yield ReadSubscriptionRequestParameters(id, plrReference)
   }
 
-  implicit val arbitraryUpeDetailsAmend: Arbitrary[UpeDetailsAmend] = Arbitrary {
+  given arbitraryUpeDetailsAmend: Arbitrary[UpeDetailsAmend] = Arbitrary {
     for {
       plrReference            <- arbitrary[String]
       customerIdentification1 <- Gen.option(arbitrary[String])
@@ -857,7 +857,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryETMPAmendSubscriptionSuccess: Arbitrary[ETMPAmendSubscriptionSuccess] = Arbitrary {
+  given arbitraryETMPAmendSubscriptionSuccess: Arbitrary[ETMPAmendSubscriptionSuccess] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetailsAmend]
       accountingPeriod         <- arbitrary[AccountingPeriodAmend]
@@ -875,7 +875,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
+  given arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
     for {
       replaceFilingMember      <- arbitrary[Boolean]
       upeDetails               <- arbitrary[UpeDetailsAmend]
@@ -895,7 +895,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAmendSubscriptionInput: Arbitrary[AmendSubscriptionInput] = Arbitrary {
+  given arbitraryAmendSubscriptionInput: Arbitrary[AmendSubscriptionInput] = Arbitrary {
     arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput(_))
   }
 
@@ -965,7 +965,7 @@ trait ModelGenerators {
     } yield UserAnswers(id, data, Instant.now)
   }
 
-  implicit val arbitraryAmendAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
+  given arbitraryAmendAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
     for {
       status          <- responseStatusGen
       successResponse <- arbitrary[AmendResponse]
@@ -975,13 +975,13 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryAmendResponse: Arbitrary[AmendResponse] = Arbitrary {
+  given arbitraryAmendResponse: Arbitrary[AmendResponse] = Arbitrary {
     for {
       success <- arbitrary[AmendSubscriptionSuccessResponse]
     } yield AmendResponse(success)
   }
 
-  implicit val arbitraryAmendSubscriptionSuccessResponse: Arbitrary[AmendSubscriptionSuccessResponse] = Arbitrary {
+  given arbitraryAmendSubscriptionSuccessResponse: Arbitrary[AmendSubscriptionSuccessResponse] = Arbitrary {
     for {
       formBundleNumber <- arbitrary[String]
       processingDate   <- arbitrary[LocalDate]
@@ -989,7 +989,7 @@ trait ModelGenerators {
     } yield AmendSubscriptionSuccessResponse(processingDate.toString, formBundleNumber)
   }
 
-  implicit val arbitraryCreateAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
+  given arbitraryCreateAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
     for {
       status          <- responseStatusGen
       successResponse <- arbitrary[SuccessResponse]
@@ -999,13 +999,13 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitrarySuccessResponse: Arbitrary[SuccessResponse] = Arbitrary {
+  given arbitrarySuccessResponse: Arbitrary[SuccessResponse] = Arbitrary {
     for {
       success <- arbitrary[SubscriptionSuccessResponse]
     } yield SuccessResponse(success)
   }
 
-  implicit val arbitrarySubscriptionSuccessResponse: Arbitrary[SubscriptionSuccessResponse] = Arbitrary {
+  given arbitrarySubscriptionSuccessResponse: Arbitrary[SubscriptionSuccessResponse] = Arbitrary {
     for {
       plrRef           <- stringsWithMaxLength(20)
       formBundleNumber <- arbitrary[String]
@@ -1014,7 +1014,7 @@ trait ModelGenerators {
     } yield SubscriptionSuccessResponse(plrRef, formBundleNumber, processingDate.atStartOfDay())
   }
 
-  implicit val arbitraryUpeRegistration: Arbitrary[UpeRegistration] = Arbitrary {
+  given arbitraryUpeRegistration: Arbitrary[UpeRegistration] = Arbitrary {
     for {
       entityType               <- stringsWithMaxLength(50)
       ultimateParentEntityName <- stringsWithMaxLength(200)
@@ -1042,7 +1042,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryNominatedFilingMember: Arbitrary[NominatedFilingMember] = Arbitrary {
+  given arbitraryNominatedFilingMember: Arbitrary[NominatedFilingMember] = Arbitrary {
     for {
       registerNomFilingMember   <- arbitrary[Boolean]
       nominatedFilingMemberName <- arbitrary[String]
@@ -1070,7 +1070,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryRepaymentPayload: Arbitrary[RepaymentRequestDetail] = Arbitrary {
+  given arbitraryRepaymentPayload: Arbitrary[RepaymentRequestDetail] = Arbitrary {
 
     for {
       plrReference       <- arbitrary[String]
@@ -1106,11 +1106,11 @@ trait ModelGenerators {
 
   }
 
-  implicit val arbitraryUktrSubmission: Arbitrary[UKTRSubmission] = Arbitrary {
+  given arbitraryUktrSubmission: Arbitrary[UKTRSubmission] = Arbitrary {
     Gen.oneOf(arbitraryUktrSubmissionNilReturn.arbitrary, arbitraryUktrSubmissionData.arbitrary)
   }
 
-  implicit val arbitraryUktrSubmissionNilReturn: Arbitrary[UKTRSubmissionNilReturn] = Arbitrary {
+  given arbitraryUktrSubmissionNilReturn: Arbitrary[UKTRSubmissionNilReturn] = Arbitrary {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
       obligationMTT        <- arbitrary[Boolean]
@@ -1125,7 +1125,7 @@ trait ModelGenerators {
     )
   }
 
-  implicit val arbitraryUktrSubmissionData: Arbitrary[UKTRSubmissionData] = Arbitrary {
+  given arbitraryUktrSubmissionData: Arbitrary[UKTRSubmissionData] = Arbitrary {
     for {
       accountingPeriodFrom <- arbitrary[LocalDate]
       obligationMTT        <- arbitrary[Boolean]
@@ -1148,11 +1148,11 @@ trait ModelGenerators {
   }
 
   // Helper generators for the liability types
-  implicit val arbitraryLiabilityNilReturn: Arbitrary[LiabilityNilReturn] = Arbitrary {
+  given arbitraryLiabilityNilReturn: Arbitrary[LiabilityNilReturn] = Arbitrary {
     Gen.const(LiabilityNilReturn(returnType = ReturnType.NIL_RETURN))
   }
 
-  implicit val arbitraryLiabilityData: Arbitrary[LiabilityData] = Arbitrary {
+  given arbitraryLiabilityData: Arbitrary[LiabilityData] = Arbitrary {
     for {
       amount <- arbitrary[BigDecimal].map(_.abs.max(BigDecimal(0.00)))
     } yield LiabilityData(

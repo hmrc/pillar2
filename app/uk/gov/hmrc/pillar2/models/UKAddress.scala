@@ -27,5 +27,5 @@ case class UKAddress(
   countryCode:  String
 )
 object UKAddress {
-  implicit val format: OFormat[UKAddress] = Json.format[UKAddress]
+  given format: OFormat[UKAddress] = Json.format[UKAddress]
 }

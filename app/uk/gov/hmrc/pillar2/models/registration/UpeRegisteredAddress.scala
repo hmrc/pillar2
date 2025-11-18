@@ -27,5 +27,5 @@ case class UpeRegisteredAddress(
   countryCode:  String
 )
 object UpeRegisteredAddress {
-  implicit val format: OFormat[UpeRegisteredAddress] = Json.format[UpeRegisteredAddress]
+  given format: OFormat[UpeRegisteredAddress] = Json.format[UpeRegisteredAddress]
 }

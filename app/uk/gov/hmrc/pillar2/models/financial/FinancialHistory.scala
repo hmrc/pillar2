@@ -28,5 +28,5 @@ final case class FinancialHistory(
 )
 
 object FinancialHistory {
-  implicit val format: OFormat[FinancialHistory] = Json.format[FinancialHistory]
+  given format: OFormat[FinancialHistory] = Json.format[FinancialHistory]
 }

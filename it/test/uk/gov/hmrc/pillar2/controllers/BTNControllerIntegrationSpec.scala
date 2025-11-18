@@ -70,7 +70,7 @@ class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     )
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
     val request = httpClient.post(url)
       .withBody(btnPayload)
@@ -83,7 +83,7 @@ class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     val btnPayload = Json.toJson(BTNRequest(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31)))
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders( "Content-Type" -> "application/json")
     val request = httpClient.post(url)
       .withBody(btnPayload)

@@ -28,7 +28,7 @@ object ObligationStatus {
     Fulfilled
   )
 
-  implicit val format: Format[ObligationStatus] = new Format[ObligationStatus] {
+  given format: Format[ObligationStatus] = new Format[ObligationStatus] {
     override def reads(json: JsValue): JsResult[ObligationStatus] =
       json.as[String] match {
         case "open"      => JsSuccess(Open)

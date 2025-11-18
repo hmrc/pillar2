@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.connectors
 import com.google.inject.Inject
 import play.api.Logger
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
@@ -30,12 +31,12 @@ class RegistrationConnector @Inject() (
   val config: AppConfig,
   val http:   HttpClientV2
 ) {
-  implicit val logger: Logger = Logger(this.getClass.getName)
-  def sendWithoutIDInformation(registration: RegisterWithoutIDRequest)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  given logger: Logger = Logger(this.getClass.getName)
+  def sendWithoutIDInformation(registration: RegisterWithoutIDRequest)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "register-without-id"
     http
       .post(url"${config.baseUrl(serviceName)}")
-      .setHeader(extraHeaders(config, serviceName): _*)
+      .setHeader(extraHeaders(config, serviceName)*)
       .withBody(Json.toJson(registration))
       .execute[HttpResponse]
   }

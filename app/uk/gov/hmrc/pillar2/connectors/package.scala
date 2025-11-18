@@ -26,9 +26,9 @@ import java.util.UUID
 
 package object connectors {
 
-  implicit val httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
+  given httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
 
-  private[connectors] def hipHeaders(config: AppConfig)(implicit
+  private[connectors] def hipHeaders(config: AppConfig)(using
     headerCarrier:                           HeaderCarrier,
     pillar2Id:                               String
   ): Seq[(String, String)] = {
@@ -48,9 +48,9 @@ package object connectors {
   }
 
   private[connectors] def extraHeaders(
-    config:                 AppConfig,
-    serviceName:            String
-  )(implicit headerCarrier: HeaderCarrier): Seq[(String, String)] = {
+    config:              AppConfig,
+    serviceName:         String
+  )(using headerCarrier: HeaderCarrier): Seq[(String, String)] = {
     val newHeaders = headerCarrier
       .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
 
@@ -60,8 +60,8 @@ package object connectors {
   private val stripSession: String => String = (input: String) => input.replace("session-", "")
 
   private def addHeaders(
-    eisEnvironment:         String
-  )(implicit headerCarrier: HeaderCarrier): Seq[(String, String)] = {
+    eisEnvironment:      String
+  )(using headerCarrier: HeaderCarrier): Seq[(String, String)] = {
 
     //HTTP-date format defined by RFC 7231 e.g. Fri, 01 Aug 2020 15:51:38 GMT+1
     val formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O")

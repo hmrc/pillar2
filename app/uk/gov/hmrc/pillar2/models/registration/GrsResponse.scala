@@ -24,5 +24,5 @@ case class GrsResponse(
 )
 
 object GrsResponse {
-  implicit val format: OFormat[GrsResponse] = Json.format[GrsResponse]
+  given format: OFormat[GrsResponse] = Json.format[GrsResponse]
 }

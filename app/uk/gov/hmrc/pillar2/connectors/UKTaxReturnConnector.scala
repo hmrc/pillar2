@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
@@ -24,34 +25,35 @@ import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+
 @Singleton
 class UKTaxReturnConnector @Inject() (
-  val http:    HttpClientV2,
-  val config:  AppConfig
-)(implicit ec: ExecutionContext) {
+  val http:   HttpClientV2,
+  val config: AppConfig
+)(using ec:   ExecutionContext) {
 
   def submitUKTaxReturn(
-    payload:     UKTRSubmission
-  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+    payload:  UKTRSubmission
+  )(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
 
     http
       .post(url"$url")
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
   }
 
   def amendUKTaxReturn(
-    payload:     UKTRSubmission
-  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+    payload:  UKTRSubmission
+  )(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "amend-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
 
     http
       .put(url"$url")
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
   }

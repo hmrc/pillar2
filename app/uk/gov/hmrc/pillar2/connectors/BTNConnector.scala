@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.connectors
 import com.google.inject.Inject
 import play.api.Logging
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
@@ -27,16 +28,16 @@ import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BTNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(implicit ec: ExecutionContext) extends Logging {
+class BTNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(using ec: ExecutionContext) extends Logging {
 
-  def sendBtn(btnRequest: BTNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+  def sendBtn(btnRequest: BTNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "below-threshold-notification"
     val url         = config.baseUrl(serviceName)
     logger.info(s"Calling $url to submit a BTN")
     http
       .post(url"$url")
       .withBody(Json.toJson(btnRequest))
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }

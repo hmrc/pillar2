@@ -66,7 +66,7 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     )
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
     val request = httpClient
       .post(submitUrl)
@@ -79,7 +79,7 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     stubAuthenticate()
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("Content-Type" -> "application/json")
     val request = httpClient
       .post(submitUrl)
@@ -108,7 +108,7 @@ class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     )
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
-    implicit val headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
+    given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
     val request = httpClient.get(getUrl)
     val result  = Await.result(request.execute[HttpResponse], 5.seconds)
