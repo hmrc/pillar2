@@ -19,9 +19,9 @@ package uk.gov.hmrc.pillar2.handlers
 import play.api.Logging
 import play.api.http.HttpErrorHandler
 import play.api.libs.json.Json
-import play.api.mvc.Results._
+import play.api.mvc.Results.*
 import play.api.mvc.{RequestHeader, Result}
-import uk.gov.hmrc.pillar2.models.errors._
+import uk.gov.hmrc.pillar2.models.errors.*
 
 import javax.inject.Singleton
 import scala.concurrent.Future

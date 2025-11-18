@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2
 
-import uk.gov.hmrc.http._
+import uk.gov.hmrc.http.*
 import uk.gov.hmrc.pillar2.config.AppConfig
 
 import java.time.format.DateTimeFormatter

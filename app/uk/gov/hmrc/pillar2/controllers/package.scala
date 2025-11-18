@@ -17,10 +17,10 @@
 package uk.gov.hmrc.pillar2
 
 import play.api.Logger
-import play.api.http.Status._
+import play.api.http.Status.*
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.mvc.Result
-import play.api.mvc.Results._
+import play.api.mvc.Results.*
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 

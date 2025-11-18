@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.subscription
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait MneOrDomestic extends Product with Serializable
 

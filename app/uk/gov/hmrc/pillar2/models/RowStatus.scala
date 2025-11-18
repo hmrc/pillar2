@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models
 
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.JavascriptLiteral
 
 sealed trait RowStatus extends Product with Serializable

@@ -18,15 +18,15 @@ package uk.gov.hmrc.pillar2.repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.Logging
-import play.api.libs.json._
-import uk.gov.hmrc.crypto._
+import play.api.libs.json.*
+import uk.gov.hmrc.crypto.*
 import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.{RegistrationDataKeys => LastUpdatedKey}
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys as LastUpdatedKey
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit

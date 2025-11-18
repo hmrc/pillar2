@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.request
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.AccountingPeriod
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
 case class RequestDetail(
   upeDetails:               UpeDetails,

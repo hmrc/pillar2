@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.obligation
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait ObligationType
 object ObligationType {

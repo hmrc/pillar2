@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 package object models {
 

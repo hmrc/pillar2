@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.controllers.actions
 
 import com.google.inject.{ImplementedBy, Inject}
-import play.api.mvc._
+import play.api.mvc.*
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisationException, AuthorisedFunctions}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.models.errors.AuthorizationError

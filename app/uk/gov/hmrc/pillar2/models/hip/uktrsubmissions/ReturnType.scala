@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.models.hip.uktrsubmissions
 
 import enumeratum.EnumEntry.UpperSnakecase
-import enumeratum._
+import enumeratum.*
 
 sealed trait ReturnType extends EnumEntry with UpperSnakecase
 

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import cats.syntax.flatMap._
+import cats.syntax.flatMap.*
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -24,7 +24,7 @@ import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
-import uk.gov.hmrc.pillar2.models.identifiers._
+import uk.gov.hmrc.pillar2.models.identifiers.*
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 
 import javax.inject.Inject

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.hods
 
-import play.api.libs.json._
+import play.api.libs.json.*
 import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
 
 import java.util.UUID
