@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.controllers
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -36,6 +36,7 @@ import java.time.LocalDate
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.DurationInt
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler with AuthStubs {
 

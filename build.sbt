@@ -21,14 +21,7 @@ lazy val microservice = Project(appName, file("."))
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile := true,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
-    // suppress warnings in generated routes files
-    scalacOptions ++= Seq(
-      "-Wconf:src=routes/.*:s",
-      "-Wconf:msg=Flag.*set repeatedly:s",
-      "-Wconf:msg=Setting -Wunused set to all redundantly:s",
-      "-Wconf:msg=Unreachable case except for null.*:s"
-    )
+    compilerSettings
   )
   .settings(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
@@ -51,13 +44,22 @@ lazy val it = project
       ScalacOptions.fatalWarnings
     )
   )
-  .settings(libraryDependencies ++= AppDependencies.it)
+  .settings(
+    libraryDependencies ++= AppDependencies.it,
+    compilerSettings
+  )
 
 inThisBuild(
   List(
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision
   )
+)
+
+lazy val compilerSettings = Seq(
+  scalacOptions ~= (_.distinct),
+  tpolecatCiModeOptions += ScalacOptions.warnOption("conf:src=routes/.*:s"),
+  Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
 )
 
 addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")

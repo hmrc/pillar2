@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.controllers
 import com.github.tomakehurst.wiremock.client.WireMock._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.must.Matchers.convertToAnyMustWrapper
+import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
@@ -40,6 +40,7 @@ import java.time.LocalDate
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.DurationInt
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler
   with Generators with ScalaCheckPropertyChecks with AuthStubs {

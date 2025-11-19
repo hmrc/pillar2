@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.shouldEqual
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -41,7 +41,7 @@ class HealthEndpointIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
   test("service health endpoint returns 200") {
     val url         = URI.create(s"http://localhost:$port/ping/ping").toURL
     val httpClient  = app.injector.instanceOf[HttpClientV2]
-    given hc = HeaderCarrier()
+    given hc: HeaderCarrier = HeaderCarrier()
     val request     = httpClient.get(url)
     val result      = await(request.execute[HttpResponse])
     result.status shouldEqual 200

@@ -20,7 +20,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqual
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.shouldBe
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.{JsResultException, Json}
@@ -146,7 +146,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
 
       "should handle 400 Bad Request" in {
-        forAll { amendRequest: ETMPAmendSubscriptionSuccess =>
+        forAll { (amendRequest: ETMPAmendSubscriptionSuccess) =>
           stubPutResponse("/pillar2/subscription", BAD_REQUEST)
 
           val result = await(connector.amendSubscriptionInformation(amendRequest))
@@ -156,7 +156,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
 
       "should handle exceptions" in {
-        forAll { amendRequest: ETMPAmendSubscriptionSuccess =>
+        forAll { (amendRequest: ETMPAmendSubscriptionSuccess) =>
           server.stop()
 
           val exception = intercept[Throwable] {

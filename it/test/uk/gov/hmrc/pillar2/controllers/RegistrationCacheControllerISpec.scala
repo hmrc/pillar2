@@ -18,6 +18,7 @@ package uk.gov.hmrc.pillar2.controllers
 
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
+import org.scalatest.matchers.should.Matchers.{shouldBe,shouldEqual}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
@@ -34,6 +35,7 @@ import uk.gov.hmrc.pillar2.repositories.{RegistrationCacheRepository, Registrati
 import java.net.URI
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 class RegistrationCacheControllerISpec
     extends AnyFunSuite
