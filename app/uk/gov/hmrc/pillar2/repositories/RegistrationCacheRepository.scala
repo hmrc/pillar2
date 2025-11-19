@@ -70,36 +70,35 @@ class RegistrationCacheRepository @Inject() (
 
   import RegistrationDataKeys.*
 
-  def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] = {
-
+  def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] =
     val encryptedRecord    = RegistrationDataEntry(id, data.toString(), updatedAt)
     val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
     val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-    if cryptoToggle then {
-      val encryptedSetOperation = Updates.combine(
+
+    if cryptoToggle then
+      val update = Updates.combine(
         Updates.set(idField, encryptedRecord.id),
-        Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated))
+        Updates.set(dataKey, encrypter.writes(data.toString()).as[String]),
+        Updates.set(lastUpdatedKey, java.util.Date.from(encryptedRecord.lastUpdated))
       )
+
       collection
         .withDocumentClass[RegistrationDataEntry]()
-        .findOneAndUpdate(filter = Filters.eq(idField, id), update = encryptedSetOperation, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
-    } else {
-      val setOperation = Updates.combine(
+    else
+      val update = Updates.combine(
         Updates.set(idField, nonEncryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated))
+        Updates.set(lastUpdatedKey, java.util.Date.from(nonEncryptedRecord.lastUpdated))
       )
+
       collection
         .withDocumentClass[JsonDataEntry]()
-        .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
-    }
-
-  }
 
   def get(id: String)(using ec: ExecutionContext): Future[Option[JsValue]] =
     if cryptoToggle then {

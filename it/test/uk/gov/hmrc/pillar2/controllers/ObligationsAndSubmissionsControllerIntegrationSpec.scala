@@ -42,7 +42,7 @@ import scala.concurrent.duration.DurationInt
 
 class ObligationsAndSubmissionsControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler with AuthStubs {
 
-  override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("microservice.services.auth.port" -> wiremockPort)
     .configure("microservice.services.obligations-and-submissions.port" -> wiremockPort)
     .configure("metrics.enabled" -> false)

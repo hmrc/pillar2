@@ -45,7 +45,7 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 class UKTRControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler
   with Generators with ScalaCheckPropertyChecks with AuthStubs {
 
-  override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("microservice.services.auth.port" -> wiremockPort)
     .configure("microservice.services.submit-uk-tax-return.port" -> wiremockPort)
     .configure("metrics.enabled" -> false)

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.service
 
 import org.apache.pekko.Done
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
@@ -29,7 +29,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
@@ -212,7 +212,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "call amend API and update cache in case of a successful response" in {
       val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
-        override def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
+        override def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
           Future.successful(dummyReadResponse)
       }
 
@@ -229,14 +229,17 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())
 
         when(
-          mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(any[HeaderCarrier](), any[ExecutionContext]())
+          mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(using
+            any[HeaderCarrier](),
+            any[ExecutionContext]()
+          )
         )
           .thenReturn(Future.successful(fakeAmendResponse))
         when(
           mockAuditService.auditAmendSubscription(
             any[AmendSubscriptionSuccess],
             eqTo(AuditResponseReceived(fakeAmendResponse.status, fakeAmendResponse.json))
-          )(any[HeaderCarrier])
+          )(using any[HeaderCarrier])
         ).thenReturn(Future.successful(AuditResult.Success))
 
         subscriptionServiceWithStubbedStoreMethod.sendAmendedData(id, validAmendObject).futureValue mustBe Done

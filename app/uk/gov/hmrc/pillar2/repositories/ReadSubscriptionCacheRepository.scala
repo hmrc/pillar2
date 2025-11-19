@@ -27,6 +27,7 @@ import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys as LastUpdatedKey
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.*
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -67,38 +68,32 @@ class ReadSubscriptionCacheRepository @Inject() (
   private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle
 
-  import RegistrationDataKeys.*
+  def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] =
+    if cryptoToggle then
+      val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
+      val encrypted: String         = encrypter.writes(data.toString()).as[String]
 
-  def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] = {
-
-    val encryptedRecord    = RegistrationDataEntry(id, data.toString(), updatedAt)
-    val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
-    val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-    if cryptoToggle then {
-      val encryptedSetOperation = Updates.combine(
-        Updates.set(idField, encryptedRecord.id),
-        Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated))
+      val update = Updates.combine(
+        Updates.set(idField, id),
+        Updates.set(dataKey, Codecs.toBson(encrypted)),
+        Updates.set(lastUpdatedKey, java.util.Date.from(updatedAt))
       )
+
       collection
-        .withDocumentClass[RegistrationDataEntry]()
-        .findOneAndUpdate(filter = Filters.eq(idField, id), update = encryptedSetOperation, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
-    } else {
-      val setOperation = Updates.combine(
-        Updates.set(idField, nonEncryptedRecord.id),
-        Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated))
+    else
+      val update = Updates.combine(
+        Updates.set(idField, id),
+        Updates.set(dataKey, Codecs.toBson(data)),
+        Updates.set(lastUpdatedKey, java.util.Date.from(updatedAt))
       )
+
       collection
-        .withDocumentClass[JsonDataEntry]()
-        .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
-    }
-
-  }
 
   def get(id: String)(using ec: ExecutionContext): Future[Option[JsValue]] =
     if cryptoToggle then {

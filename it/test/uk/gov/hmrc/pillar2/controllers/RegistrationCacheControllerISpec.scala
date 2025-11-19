@@ -45,7 +45,7 @@ class RegistrationCacheControllerISpec
     with OptionValues
     with CleanMongo {
 
-  override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("microservice.services.auth.port" -> wiremockPort)
     .configure("metrics.enabled" -> false)
     .build()
