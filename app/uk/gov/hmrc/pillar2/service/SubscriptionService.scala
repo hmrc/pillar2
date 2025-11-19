@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.service
 
 import cats.syntax.flatMap.*
+import cats.syntax.functor.*
 import org.apache.pekko.Done
 import play.api.Logging
 import play.api.http.Status.*
@@ -468,8 +469,10 @@ class SubscriptionService @Inject() (
               logger.info(
                 s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
               )
-              repository.remove(id) >>
-                Future.successful(Done)
+              storeSubscriptionResponse(
+                id = id,
+                plrReference = etmpAmendSubscriptionSuccess.upeDetails.plrReference
+              ).as(Done)
             case _ => Future.failed(JsResultError)
           }
         }
