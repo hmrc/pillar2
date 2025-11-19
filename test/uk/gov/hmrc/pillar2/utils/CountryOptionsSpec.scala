@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.utils
 
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.utils.countryOptions.{CountryOptions, InputOption}
 

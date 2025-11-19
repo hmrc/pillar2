@@ -24,7 +24,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN_CREATE
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.*
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 
 import java.time.format.DateTimeFormatter

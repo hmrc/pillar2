@@ -27,7 +27,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessResponse}
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
-import uk.gov.hmrc.pillar2.models.hip._
+import uk.gov.hmrc.pillar2.models.hip.*
 
 import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.Future

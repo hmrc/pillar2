@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import org.apache.pekko.util.ByteString
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.when
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -28,7 +28,7 @@ import play.api.mvc.AnyContentAsJson
 import play.api.mvc.AnyContentAsRaw
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}

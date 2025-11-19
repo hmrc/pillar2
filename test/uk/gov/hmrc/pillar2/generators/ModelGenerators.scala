@@ -19,16 +19,16 @@ package uk.gov.hmrc.pillar2.generators
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
 import play.api.libs.json.{JsObject, JsValue, Json}
-import uk.gov.hmrc.pillar2.models._
-import uk.gov.hmrc.pillar2.models.audit._
-import uk.gov.hmrc.pillar2.models.grs._
-import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions._
-import uk.gov.hmrc.pillar2.models.hods._
+import uk.gov.hmrc.pillar2.models.*
+import uk.gov.hmrc.pillar2.models.audit.*
+import uk.gov.hmrc.pillar2.models.grs.*
+import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.*
+import uk.gov.hmrc.pillar2.models.hods.*
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
-import uk.gov.hmrc.pillar2.models.registration._
+import uk.gov.hmrc.pillar2.models.registration.*
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
 
 import java.time.{Instant, LocalDate}

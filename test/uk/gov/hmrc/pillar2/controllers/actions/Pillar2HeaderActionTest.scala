@@ -23,7 +23,7 @@ import play.api.test.FakeRequest
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
 
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.*
 
 class Pillar2HeaderActionTest extends AnyFunSuite with EitherValues {
 

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.helpers
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
@@ -25,7 +25,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
 import org.scalatest.{BeforeAndAfterEach, OptionValues}
 import org.scalatestplus.mockito.MockitoSugar
-import org.scalatestplus.play.guice._
+import org.scalatestplus.play.guice.*
 import play.api.Configuration
 import play.api.http.Status
 import play.api.i18n.MessagesApi

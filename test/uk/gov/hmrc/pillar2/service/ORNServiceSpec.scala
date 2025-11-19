@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
-import uk.gov.hmrc.pillar2.models.hip._
+import uk.gov.hmrc.pillar2.models.hip.*
 import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
 
 import java.time.ZonedDateTime
