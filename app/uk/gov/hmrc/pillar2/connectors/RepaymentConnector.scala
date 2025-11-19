@@ -25,7 +25,6 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ExecutionContext, Future}
 
 class RepaymentConnector @Inject() (
@@ -39,7 +38,8 @@ class RepaymentConnector @Inject() (
   )(using hc:         HeaderCarrier): Future[HttpResponse] = {
     val serviceName = "create-repayment"
     val url         = s"${config.baseUrl(serviceName)}"
-    given writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
+    given writes:           Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
+    given executionContext: ExecutionContext               = ec
     http
       .post(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
