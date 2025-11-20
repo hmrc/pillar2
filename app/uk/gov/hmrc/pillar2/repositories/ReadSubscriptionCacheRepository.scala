@@ -29,7 +29,6 @@ import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.*
 
 import java.time.Instant
-import java.util.Date.from
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -73,25 +72,27 @@ class ReadSubscriptionCacheRepository @Inject() (
       val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
       val encrypted: String         = encrypter.writes(data.toString()).as[String]
 
-      val update = Updates.combine(
+      val encryptedUpdate = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(encrypted)),
-        Updates.set(lastUpdatedKey, from(updatedAt))
+        Updates.set(lastUpdatedKey, Codecs.toBson(updatedAt)(using JsonDataEntry.dateFormat))
       )
 
       collection
-        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
+        .withDocumentClass[RegistrationDataEntry]()
+        .findOneAndUpdate(Filters.eq(idField, id), update = encryptedUpdate, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
     else
       val update = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(data)),
-        Updates.set(lastUpdatedKey, from(updatedAt))
+        Updates.set(lastUpdatedKey, Codecs.toBson(updatedAt)(using JsonDataEntry.dateFormat))
       )
 
       collection
-        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
+        .withDocumentClass[JsonDataEntry]()
+        .findOneAndUpdate(filter = Filters.eq(idField, id), update = update, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
 
@@ -104,9 +105,7 @@ class ReadSubscriptionCacheRepository @Inject() (
       }
     } else {
       collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
-        _.map { dataEntry =>
-          dataEntry.data
-        }
+        _.map(_.data)
       }
     }
 

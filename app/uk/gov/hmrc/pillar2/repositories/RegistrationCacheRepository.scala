@@ -76,7 +76,7 @@ class RegistrationCacheRepository @Inject() (
     val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
 
     if cryptoToggle then
-      val update = Updates.combine(
+      val encryptedUpdate = Updates.combine(
         Updates.set(idField, encryptedRecord.id),
         Updates.set(dataKey, encrypter.writes(data.toString()).as[String]),
         Updates.set(lastUpdatedKey, java.util.Date.from(encryptedRecord.lastUpdated))
@@ -84,14 +84,14 @@ class RegistrationCacheRepository @Inject() (
 
       collection
         .withDocumentClass[RegistrationDataEntry]()
-        .findOneAndUpdate(Filters.eq(idField, id), update, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(Filters.eq(idField, id), encryptedUpdate, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
     else
       val update = Updates.combine(
         Updates.set(idField, nonEncryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
-        Updates.set(lastUpdatedKey, java.util.Date.from(nonEncryptedRecord.lastUpdated))
+        Updates.set(lastUpdatedKey, Codecs.toBson(updatedAt)(using JsonDataEntry.dateFormat))
       )
 
       collection
@@ -109,9 +109,7 @@ class RegistrationCacheRepository @Inject() (
       }
     } else {
       collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
-        _.map { dataEntry =>
-          dataEntry.data
-        }
+        _.map(_.data)
       }
     }
 
