@@ -22,11 +22,10 @@ import org.scalatest.matchers.should.Matchers.shouldEqual
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class Pillar2HeaderActionTest extends AnyFunSuite with EitherValues {
 
-  val classUnderTest = new Pillar2HeaderAction(global)
+  val classUnderTest = new Pillar2HeaderAction()
 
   test("X-Pillar2-ID header exists") {
     val request = FakeRequest().withHeaders("X-Pillar2-ID" -> "XXXXXXXXXXXXXXXXX")

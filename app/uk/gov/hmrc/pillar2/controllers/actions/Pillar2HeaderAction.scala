@@ -25,10 +25,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 case class Pillar2Request[A](pillar2Id: String, request: Request[A]) extends WrappedRequest[A](request)
 
-class Pillar2HeaderAction @Inject() (val executionContext: ExecutionContext) extends ActionTransformer[Request, Pillar2Request] {
-
+class Pillar2HeaderAction @Inject() ()(using val executionContext: ExecutionContext) extends ActionTransformer[Request, Pillar2Request] {
   val logger: Logger = Logger(this.getClass)
-
+  
   def transform[A](request: Request[A]): Future[Pillar2Request[A]] =
     request.headers.get("X-Pillar2-Id") match {
       case Some(pillar2Id) =>
