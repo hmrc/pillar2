@@ -52,10 +52,7 @@ inThisBuild(
 lazy val compilerSettings = Seq(
   scalacOptions ~= (_.distinct),
   tpolecatCiModeOptions += ScalacOptions.warnOption("conf:src=routes/.*:s"),
-  tpolecatExcludeOptions ++= Set(
-    ScalacOptions.warnNonUnitStatement,
-    ScalacOptions.fatalWarnings
-  )
+  Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
 )
 
 addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
