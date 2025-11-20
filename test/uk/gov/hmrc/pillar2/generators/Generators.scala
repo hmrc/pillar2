@@ -31,12 +31,10 @@
  */
 
 package uk.gov.hmrc.pillar2.generators
-// scalafix:off
-import org.scalacheck.{Arbitrary, Gen}
-// scalafix:on
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.*
 import org.scalacheck.Shrink
+import org.scalacheck.{Arbitrary, Gen}
 import uk.gov.hmrc.pillar2.models.subscription.ReadSubscriptionRequestParameters
 import wolfendale.scalacheck.regexp.RegexpGen
 

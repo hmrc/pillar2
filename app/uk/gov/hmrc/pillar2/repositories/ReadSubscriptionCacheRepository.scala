@@ -26,10 +26,10 @@ import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys as LastUpdatedKey
 import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.*
 
 import java.time.Instant
+import java.util.Date.from
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
@@ -49,7 +49,7 @@ class ReadSubscriptionCacheRepository @Inject() (
       ),
       indexes = Seq(
         IndexModel(
-          Indexes.ascending(LastUpdatedKey.lastUpdatedKey),
+          Indexes.ascending(lastUpdatedKey),
           IndexOptions()
             .name("lastUpdatedIndex")
             .expireAfter(900, TimeUnit.SECONDS)
@@ -76,7 +76,7 @@ class ReadSubscriptionCacheRepository @Inject() (
       val update = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(encrypted)),
-        Updates.set(lastUpdatedKey, java.util.Date.from(updatedAt))
+        Updates.set(lastUpdatedKey, from(updatedAt))
       )
 
       collection
@@ -87,7 +87,7 @@ class ReadSubscriptionCacheRepository @Inject() (
       val update = Updates.combine(
         Updates.set(idField, id),
         Updates.set(dataKey, Codecs.toBson(data)),
-        Updates.set(lastUpdatedKey, java.util.Date.from(updatedAt))
+        Updates.set(lastUpdatedKey, from(updatedAt))
       )
 
       collection

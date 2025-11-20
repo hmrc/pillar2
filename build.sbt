@@ -4,7 +4,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "pillar2"
 
-ThisBuild / scalaVersion := "3.3.5"
+ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / majorVersion := 0
 
 lazy val microservice = Project(appName, file("."))
@@ -26,23 +26,16 @@ lazy val microservice = Project(appName, file("."))
   .settings(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
-    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
-    tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement,
-      ScalacOptions.fatalWarnings
-    )
+    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources")
   )
   .settings(CodeCoverageSettings.settings*)
 
 lazy val it = project
   .enablePlugins(play.sbt.PlayScala)
   .dependsOn(microservice % "test->test")
-  .settings(DefaultBuildSettings.itSettings())
   .settings(
-    tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement,
-      ScalacOptions.fatalWarnings
-    )
+    DefaultBuildSettings.itSettings(),
+    compilerSettings
   )
   .settings(
     libraryDependencies ++= AppDependencies.it,
@@ -59,7 +52,10 @@ inThisBuild(
 lazy val compilerSettings = Seq(
   scalacOptions ~= (_.distinct),
   tpolecatCiModeOptions += ScalacOptions.warnOption("conf:src=routes/.*:s"),
-  Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
+  tpolecatExcludeOptions ++= Set(
+    ScalacOptions.warnNonUnitStatement,
+    ScalacOptions.fatalWarnings
+  )
 )
 
 addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
