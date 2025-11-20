@@ -34,6 +34,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import scala.concurrent.{ExecutionContext, Future}
 
+import RegistrationDataKeys.*
+
 @Singleton
 class RegistrationCacheRepository @Inject() (
   mongoComponent: MongoComponent,
@@ -68,18 +70,15 @@ class RegistrationCacheRepository @Inject() (
   private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle
 
-  import RegistrationDataKeys.*
-
   def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] =
-    val encryptedRecord    = RegistrationDataEntry(id, data.toString(), updatedAt)
-    val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
-    val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-
     if cryptoToggle then
+      val encryptedRecord = RegistrationDataEntry(id, data.toString(), updatedAt)
+      val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
+      val encryptedData = encrypter.writes(data.toString()).as[String]
       val encryptedUpdate = Updates.combine(
         Updates.set(idField, encryptedRecord.id),
-        Updates.set(dataKey, encrypter.writes(data.toString()).as[String]),
-        Updates.set(lastUpdatedKey, java.util.Date.from(encryptedRecord.lastUpdated))
+        Updates.set(dataKey, encryptedData),
+        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated)(using RegistrationDataEntryFormats.dateFormat))
       )
 
       collection
@@ -88,10 +87,11 @@ class RegistrationCacheRepository @Inject() (
         .toFuture()
         .map(_ => ())
     else
+      val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
       val update = Updates.combine(
         Updates.set(idField, nonEncryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(updatedAt)(using JsonDataEntry.dateFormat))
+        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated)(using JsonDataEntry.dateFormat))
       )
 
       collection

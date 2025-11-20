@@ -69,13 +69,13 @@ class ReadSubscriptionCacheRepository @Inject() (
 
   def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] =
     if cryptoToggle then
-      val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-      val encrypted: String         = encrypter.writes(data.toString()).as[String]
-
+      val encryptedRecord = RegistrationDataEntry(id, data.toString(), updatedAt)
+      val encrypter:     Writes[String] = JsonEncryption.stringEncrypter(crypto)
+      val encryptedData: String         = encrypter.writes(data.toString()).as[String]
       val encryptedUpdate = Updates.combine(
-        Updates.set(idField, id),
-        Updates.set(dataKey, Codecs.toBson(encrypted)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(updatedAt)(using JsonDataEntry.dateFormat))
+        Updates.set(idField, encryptedRecord.id),
+        Updates.set(dataKey, Codecs.toBson(encryptedData)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated)(using RegistrationDataEntryFormats.dateFormat))
       )
 
       collection
@@ -84,10 +84,11 @@ class ReadSubscriptionCacheRepository @Inject() (
         .toFuture()
         .map(_ => ())
     else
+      val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
       val update = Updates.combine(
-        Updates.set(idField, id),
-        Updates.set(dataKey, Codecs.toBson(data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(updatedAt)(using JsonDataEntry.dateFormat))
+        Updates.set(idField, nonEncryptedRecord.id),
+        Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated)(using JsonDataEntry.dateFormat))
       )
 
       collection

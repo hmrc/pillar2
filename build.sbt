@@ -58,4 +58,4 @@ lazy val compilerSettings = Seq(
 addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
 addCommandAlias("checkCodeCoverage", "; clean; coverage; test; it/test; coverageReport")
 addCommandAlias("lint", "; scalafmtAll; scalafmtSbt; scalafixAll")
-addCommandAlias("prePush", "; reload; clean; compile; test; lint")
+addCommandAlias("prePush", "; reload; clean; compile; test; it/test; lint;")
