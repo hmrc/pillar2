@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
-import uk.gov.hmrc.pillar2.models.hip._
+import uk.gov.hmrc.pillar2.models.hip.*
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 
 import java.time.ZonedDateTime
@@ -39,7 +39,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
   "UKTaxReturnService" - {
     "submitUKTaxReturn" - {
       "should return ApiSuccessResponse for successful submission (201)" in {
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpCreated))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -52,7 +52,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
         val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -67,7 +67,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw InvalidJsonError for malformed success response" in {
         val httpResponse = HttpResponse(201, "{invalid json}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -81,7 +81,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw ApiInternalServerError for non-201/422 responses" in {
         val httpResponse = HttpResponse(500, "{}")
 
-        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.submitUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -94,7 +94,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
 
     "amendUKTaxReturn" - {
       "should return ApiSuccessResponse for successful submission (201)" in {
-        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpOk))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -107,7 +107,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
         val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
         val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
 
-        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -122,7 +122,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw InvalidJsonError for malformed success response" in {
         val httpResponse = HttpResponse(200, "{invalid json}")
 
-        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -136,7 +136,7 @@ class UKTaxReturnServiceSpec extends BaseSpec with Generators with ScalaCheckPro
       "should throw ApiInternalServerError for non-200/422 responses" in {
         val httpResponse = HttpResponse(500, "{}")
 
-        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(any[HeaderCarrier], any[String]))
+        when(mockUKTaxReturnConnector.amendUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
           .thenReturn(Future.successful(httpResponse))
 
         forAll(arbitrary[UKTRSubmission]) { submission =>

@@ -16,10 +16,10 @@
 
 package uk.gov.hmrc.pillar2.models.identifiers.repayment
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 case class NonUKBank(bankName: String, nameOnBankAccount: String, bic: String, iban: String)
 
 object NonUKBank {
-  implicit val format: OFormat[NonUKBank] = Json.format[NonUKBank]
+  given format: OFormat[NonUKBank] = Json.format[NonUKBank]
 }

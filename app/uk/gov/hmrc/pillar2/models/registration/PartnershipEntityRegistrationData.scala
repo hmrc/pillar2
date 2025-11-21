@@ -29,6 +29,6 @@ final case class PartnershipEntityRegistrationData(
 )
 
 object PartnershipEntityRegistrationData {
-  implicit val format: OFormat[PartnershipEntityRegistrationData] =
+  given format: OFormat[PartnershipEntityRegistrationData] =
     Json.format[PartnershipEntityRegistrationData]
 }

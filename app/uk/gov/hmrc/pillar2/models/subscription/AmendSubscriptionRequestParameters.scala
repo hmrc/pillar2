@@ -24,5 +24,5 @@ case class AmendSubscriptionRequestParameters(
   amendData: AmendSubscriptionSuccess
 )
 object AmendSubscriptionRequestParameters {
-  implicit val format: OFormat[AmendSubscriptionRequestParameters] = Json.format[AmendSubscriptionRequestParameters]
+  given format: OFormat[AmendSubscriptionRequestParameters] = Json.format[AmendSubscriptionRequestParameters]
 }

@@ -23,5 +23,5 @@ import java.time.LocalDate
 case class BTNRequest(accountingPeriodFrom: LocalDate, accountingPeriodTo: LocalDate)
 
 object BTNRequest {
-  implicit val format: OFormat[BTNRequest] = Json.format[BTNRequest]
+  given format: OFormat[BTNRequest] = Json.format[BTNRequest]
 }

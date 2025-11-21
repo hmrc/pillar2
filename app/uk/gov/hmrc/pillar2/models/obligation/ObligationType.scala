@@ -16,14 +16,14 @@
 
 package uk.gov.hmrc.pillar2.models.obligation
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait ObligationType
 object ObligationType {
   case object UKTR extends ObligationType
   case object GIR extends ObligationType
 
-  implicit val format: Format[ObligationType] = new Format[ObligationType] {
+  given format: Format[ObligationType] = new Format[ObligationType] {
     override def reads(json: JsValue): JsResult[ObligationType] =
       json.as[String] match {
         case "UKTR" => JsSuccess(UKTR)

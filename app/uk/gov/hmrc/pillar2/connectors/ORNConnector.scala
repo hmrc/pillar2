@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2.connectors
 import com.google.inject.Inject
 import play.api.Logging
 import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
@@ -28,31 +29,31 @@ import uk.gov.hmrc.pillar2.models.orn.ORNRequest
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
-class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(implicit ec: ExecutionContext) extends Logging {
+class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(using ec: ExecutionContext) extends Logging {
   val serviceName = "overseas-return-notification"
   val url: String = config.baseUrl(serviceName)
 
-  def submitOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+  def submitOrn(ornRequest: ORNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     logger.info(s"Calling $url to submit a ORN")
     http
       .post(url"$url")
       .withBody(Json.toJson(ornRequest))
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
-  def amendOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
+  def amendOrn(ornRequest: ORNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     logger.info(s"Calling $url to amend a ORN")
     http
       .put(url"$url")
       .withBody(Json.toJson(ornRequest))
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
-  def getOrn(fromDate: LocalDate, toDate: LocalDate)(implicit
+  def getOrn(fromDate: LocalDate, toDate: LocalDate)(using
     hc:                HeaderCarrier,
     ec:                ExecutionContext,
     pillar2Id:         String
@@ -62,7 +63,7 @@ class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(imp
       s"${config.baseUrl(serviceName)}?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
     http
       .get(url"$url")
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }

@@ -28,5 +28,5 @@ case class NonUKAddress(
 )
 
 object NonUKAddress {
-  implicit val format: OFormat[NonUKAddress] = Json.format[NonUKAddress]
+  given format: OFormat[NonUKAddress] = Json.format[NonUKAddress]
 }

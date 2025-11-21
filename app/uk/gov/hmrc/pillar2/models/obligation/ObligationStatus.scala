@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.obligation
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait ObligationStatus
 object ObligationStatus {
@@ -28,7 +28,7 @@ object ObligationStatus {
     Fulfilled
   )
 
-  implicit val format: Format[ObligationStatus] = new Format[ObligationStatus] {
+  given format: Format[ObligationStatus] = new Format[ObligationStatus] {
     override def reads(json: JsValue): JsResult[ObligationStatus] =
       json.as[String] match {
         case "open"      => JsSuccess(Open)

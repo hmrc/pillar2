@@ -21,5 +21,5 @@ import play.api.libs.json.{Format, JsValue, Json}
 final case class AuditResponseReceived(status: Int, responseData: JsValue)
 
 object AuditResponseReceived {
-  implicit val formats: Format[AuditResponseReceived] = Json.format[AuditResponseReceived]
+  given formats: Format[AuditResponseReceived] = Json.format[AuditResponseReceived]
 }

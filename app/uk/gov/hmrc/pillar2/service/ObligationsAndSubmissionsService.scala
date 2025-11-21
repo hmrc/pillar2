@@ -27,14 +27,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsService @Inject() (
   obligationsAndSubmissionsConnector: ObligationsAndSubmissionsConnector
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends Logging {
 
   def getObligationsAndSubmissions(
-    fromDate:    LocalDate,
-    toDate:      LocalDate
-  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[ObligationsAndSubmissionsResponse] =
+    fromDate: LocalDate,
+    toDate:   LocalDate
+  )(using hc: HeaderCarrier, pillar2Id: String): Future[ObligationsAndSubmissionsResponse] =
     obligationsAndSubmissionsConnector
       .getObligationsAndSubmissions(fromDate, toDate)
       .flatMap(convertToObligationsAndSubmissionsApiResult)

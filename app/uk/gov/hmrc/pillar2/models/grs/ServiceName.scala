@@ -22,19 +22,19 @@ import play.api.libs.json.{Json, OFormat}
 final case class ServiceName(en: OptServiceName, cy: OptServiceName)
 
 object ServiceName {
-  def apply()(implicit messagesApi: MessagesApi): ServiceName =
+  def apply()(using messagesApi: MessagesApi): ServiceName =
     ServiceName(
       OptServiceName(optServiceName = messagesApi("service.name")(Lang("en"))),
       OptServiceName(optServiceName = messagesApi("service.name")(Lang("cy")))
     )
 
-  implicit val format: OFormat[ServiceName] =
+  given format: OFormat[ServiceName] =
     Json.format[ServiceName]
 }
 
 final case class OptServiceName(optServiceName: String)
 
 object OptServiceName {
-  implicit val format: OFormat[OptServiceName] =
+  given format: OFormat[OptServiceName] =
     Json.format[OptServiceName]
 }

@@ -18,15 +18,15 @@ package uk.gov.hmrc.pillar2.repositories
 
 import com.google.inject.Inject
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import org.mongodb.scala.model._
+import org.mongodb.scala.model.*
 import play.api.Logging
-import play.api.libs.json._
-import uk.gov.hmrc.crypto._
+import play.api.libs.json.*
+import uk.gov.hmrc.crypto.*
 import uk.gov.hmrc.crypto.json.JsonEncryption
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.play.json.{Codecs, PlayMongoRepository}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.lastUpdatedKey
+import uk.gov.hmrc.pillar2.repositories.RegistrationDataKeys.*
 
 import java.time.Instant
 import java.util.concurrent.TimeUnit
@@ -37,7 +37,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ReadSubscriptionCacheRepository @Inject() (
   mongoComponent: MongoComponent,
   config:         AppConfig
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends PlayMongoRepository[RegistrationDataEntry](
       collectionName = "read-subscription-records",
@@ -67,42 +67,38 @@ class ReadSubscriptionCacheRepository @Inject() (
   private lazy val crypto:  Encrypter with Decrypter = SymmetricCryptoFactory.aesGcmCrypto(config.registrationCacheCryptoKey)
   private val cryptoToggle: Boolean                  = config.cryptoToggle
 
-  import RegistrationDataEntryFormats._
-  import RegistrationDataKeys._
-
-  def upsert(id: String, data: JsValue)(implicit ec: ExecutionContext): Future[Unit] = {
-
-    val encryptedRecord    = RegistrationDataEntry(id, data.toString(), updatedAt)
-    val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
-    val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-    if (cryptoToggle) {
-      val encryptedSetOperation = Updates.combine(
+  def upsert(id: String, data: JsValue)(using ec: ExecutionContext): Future[Unit] =
+    if cryptoToggle then
+      val encryptedRecord = RegistrationDataEntry(id, data.toString(), updatedAt)
+      val encrypter:     Writes[String] = JsonEncryption.stringEncrypter(crypto)
+      val encryptedData: String         = encrypter.writes(data.toString()).as[String]
+      val encryptedUpdate = Updates.combine(
         Updates.set(idField, encryptedRecord.id),
-        Updates.set(dataKey, Codecs.toBson(data.toString())(encrypter)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated))
+        Updates.set(dataKey, Codecs.toBson(encryptedData)),
+        Updates.set(lastUpdatedKey, Codecs.toBson(encryptedRecord.lastUpdated)(using RegistrationDataEntryFormats.dateFormat))
       )
+
       collection
         .withDocumentClass[RegistrationDataEntry]()
-        .findOneAndUpdate(filter = Filters.eq(idField, id), update = encryptedSetOperation, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(Filters.eq(idField, id), update = encryptedUpdate, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
-    } else {
-      val setOperation = Updates.combine(
+    else
+      val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
+      val update = Updates.combine(
         Updates.set(idField, nonEncryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
-        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated))
+        Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated)(using JsonDataEntry.dateFormat))
       )
+
       collection
         .withDocumentClass[JsonDataEntry]()
-        .findOneAndUpdate(filter = Filters.eq(idField, id), update = setOperation, new FindOneAndUpdateOptions().upsert(true))
+        .findOneAndUpdate(filter = Filters.eq(idField, id), update = update, new FindOneAndUpdateOptions().upsert(true))
         .toFuture()
         .map(_ => ())
-    }
 
-  }
-
-  def get(id: String)(implicit ec: ExecutionContext): Future[Option[JsValue]] =
-    if (cryptoToggle) {
+  def get(id: String)(using ec: ExecutionContext): Future[Option[JsValue]] =
+    if cryptoToggle then {
       collection.find[RegistrationDataEntry](Filters.equal(idField, id)).headOption().map {
         _.map { dataEntry =>
           Json.parse(crypto.decrypt(Crypted(dataEntry.data)).value)
@@ -110,13 +106,11 @@ class ReadSubscriptionCacheRepository @Inject() (
       }
     } else {
       collection.find[JsonDataEntry](Filters.equal(idField, id)).headOption().map {
-        _.map { dataEntry =>
-          dataEntry.data
-        }
+        _.map(_.data)
       }
     }
 
-  def remove(id: String)(implicit ec: ExecutionContext): Future[Boolean] =
+  def remove(id: String)(using ec: ExecutionContext): Future[Boolean] =
     collection.deleteOne(Filters.equal(idField, id)).toFuture().map { result =>
       logger.info(s"Removing row from collection $collectionName externalId:$id")
       result.wasAcknowledged

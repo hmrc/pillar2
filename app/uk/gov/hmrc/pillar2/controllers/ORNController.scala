@@ -19,40 +19,45 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.orn.ORNRequest
 import uk.gov.hmrc.pillar2.service.ORNService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.time.LocalDate
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class ORNController @Inject() (
-  ornService:                ORNService,
-  authenticate:              AuthAction,
-  pillar2HeaderExists:       Pillar2HeaderAction,
-  cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext)
+  ornService:             ORNService,
+  authenticate:           AuthAction,
+  pillar2HeaderExists:    Pillar2HeaderAction,
+  cc:                     ControllerComponents
+)(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def submitOrn: Action[ORNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[ORNRequest]) { implicit request =>
-    implicit val pillar2Id: String = request.pillar2Id
+  def submitOrn: Action[ORNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[ORNRequest]) { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given pillar2Id: String = request.pillar2Id
     ornService
       .submitOrn(request.body)
       .map(response => Created(Json.toJson(response.success)))
   }
 
-  def amendOrn: Action[ORNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[ORNRequest]) { implicit request =>
-    implicit val pillar2Id: String = request.pillar2Id
+  def amendOrn: Action[ORNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[ORNRequest]) { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given pillar2Id: String = request.pillar2Id
     ornService
       .amendOrn(request.body)
       .map(response => Ok(Json.toJson(response.success)))
   }
 
-  def getOrn(fromDate: String, toDate: String): Action[AnyContent] = (authenticate andThen pillar2HeaderExists).async { implicit request =>
-    implicit val pillar2Id: String = request.pillar2Id
+  def getOrn(fromDate: String, toDate: String): Action[AnyContent] = (authenticate andThen pillar2HeaderExists).async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given pillar2Id: String = request.pillar2Id
     ornService
       .getOrn(LocalDate.parse(fromDate), LocalDate.parse(toDate))
       .map(data => Ok(Json.toJson(data.success)))

@@ -23,5 +23,5 @@ import java.time.ZonedDateTime
 case class BTNSuccess(processingDate: ZonedDateTime)
 
 object BTNSuccess {
-  implicit val format: OFormat[BTNSuccess] = Json.format[BTNSuccess]
+  given format: OFormat[BTNSuccess] = Json.format[BTNSuccess]
 }

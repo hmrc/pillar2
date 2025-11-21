@@ -26,9 +26,9 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class TestController @Inject() (
-  repository:                RegistrationCacheRepository,
-  cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext)
+  repository:             RegistrationCacheRepository,
+  cc:                     ControllerComponents
+)(using executionContext: ExecutionContext)
     extends BackendController(cc) {
 
   def getAllRecords: Action[AnyContent] = Action.async {

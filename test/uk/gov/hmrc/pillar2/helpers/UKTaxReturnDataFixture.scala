@@ -25,7 +25,7 @@ import java.time.ZonedDateTime
 
 trait UKTaxReturnDataFixture {
 
-  implicit val pillar2Id: String = "XMPLR0000000012"
+  given pillar2Id: String = "XMPLR0000000012"
   val successResponse: ApiSuccessResponse = ApiSuccessResponse(
     ApiSuccess(
       processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),

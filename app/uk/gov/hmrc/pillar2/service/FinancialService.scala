@@ -21,7 +21,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.FinancialDataConnector
 import uk.gov.hmrc.pillar2.models.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialHistory, TransactionHistory}
-import uk.gov.hmrc.pillar2.service.FinancialService._
+import uk.gov.hmrc.pillar2.service.FinancialService.*
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -29,11 +29,11 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialService @Inject() (
   financialDataConnector: FinancialDataConnector
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends Logging {
 
-  def getTransactionHistory(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+  def getTransactionHistory(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(using
     hc:                                   HeaderCarrier
   ): Future[Either[FinancialDataError, TransactionHistory]] =
     retrieveCompleteFinancialDataResponse(plrReference, dateFrom, dateTo)
@@ -42,7 +42,7 @@ class FinancialService @Inject() (
         val repaymentData: Seq[FinancialHistory] = getRepaymentData(financialData)
         val interestData:  Seq[FinancialHistory] = getInterestData(financialData)
 
-        if (repaymentData.isEmpty && paymentData.isEmpty && interestData.isEmpty) {
+        if repaymentData.isEmpty && paymentData.isEmpty && interestData.isEmpty then {
           Left(FinancialDataError("NOT_FOUND", "No relevant financial data found"))
         } else {
           val sortedFinancialHistory: Seq[FinancialHistory] = (paymentData ++ repaymentData ++ interestData)
@@ -56,13 +56,13 @@ class FinancialService @Inject() (
         Left(e)
       }
 
-  def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+  def retrieveCompleteFinancialDataResponse(plrReference: String, dateFrom: LocalDate, dateTo: LocalDate)(using
     headerCarrier:                                        HeaderCarrier
   ): Future[FinancialDataResponse] = {
 
     val adjustedStartDate = {
       val sevenYearsAgo = dateTo.minusYears(7)
-      if (dateFrom.isBefore(sevenYearsAgo)) sevenYearsAgo else dateFrom
+      if dateFrom.isBefore(sevenYearsAgo) then sevenYearsAgo else dateFrom
     }
 
     financialDataConnector.retrieveFinancialData(plrReference, dateFrom = adjustedStartDate, dateTo = dateTo)

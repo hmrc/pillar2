@@ -30,7 +30,7 @@ final case class IncorporatedEntityRegistrationData(
 )
 
 object IncorporatedEntityRegistrationData {
-  implicit val format: OFormat[IncorporatedEntityRegistrationData] =
+  given format: OFormat[IncorporatedEntityRegistrationData] =
     Json.format[IncorporatedEntityRegistrationData]
 }
 
@@ -42,7 +42,7 @@ final case class CompanyProfile(
 )
 
 object CompanyProfile {
-  implicit val format: OFormat[CompanyProfile] =
+  given format: OFormat[CompanyProfile] =
     Json.format[CompanyProfile]
 }
 
@@ -58,6 +58,6 @@ final case class IncorporatedEntityAddress(
 )
 
 object IncorporatedEntityAddress {
-  implicit val format: OFormat[IncorporatedEntityAddress] =
+  given format: OFormat[IncorporatedEntityAddress] =
     Json.format[IncorporatedEntityAddress]
 }

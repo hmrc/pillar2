@@ -25,7 +25,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -33,7 +33,7 @@ import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.FinancialDataError
-import uk.gov.hmrc.pillar2.models.financial._
+import uk.gov.hmrc.pillar2.models.financial.*
 import uk.gov.hmrc.pillar2.service.FinancialService
 
 import java.time.{LocalDate, LocalDateTime}
@@ -94,7 +94,7 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
     ".getTransactionHistory" - {
       "should return OK with payment history when payment history is found for plrReference" in {
         forAll(plrReferenceGen) { plrReference =>
-          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]()))
             .thenReturn(Future successful Right(paymentHistoryResult(plrReference)))
 
           val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
@@ -107,7 +107,7 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
       "should return Not found when api returns not found" in {
         val dataError = FinancialDataError("NOT_FOUND", "Some reason")
-        when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+        when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]()))
           .thenReturn(Future successful Left(dataError))
 
         val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory("XMPLR0123456789", startDate, endDate).url)
@@ -121,7 +121,7 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
         forAll(plrReferenceGen, Gen.oneOf(Seq("SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
           val dataError = FinancialDataError(errorCode, "Some reason")
 
-          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]()))
             .thenReturn(Future successful Left(dataError))
 
           val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
@@ -137,7 +137,7 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
         forAll(plrReferenceGen, stringsExceptSpecificValues(Seq("NOT_FOUND", "SERVER_ERROR", "SERVICE_UNAVAILABLE"))) { (plrReference, errorCode) =>
           val dataError = FinancialDataError(errorCode, "Some reason")
 
-          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+          when(mockFinancialService.getTransactionHistory(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]()))
             .thenReturn(Future successful Left(dataError))
 
           val request = FakeRequest(GET, routes.FinancialDataController.getTransactionHistory(plrReference, startDate, endDate).url)
@@ -151,7 +151,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
     ".getFinancialData" - {
       "should return OK with a financial data response when successful" in {
-        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+        when(
+          mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]())
+        )
           .thenReturn(Future.successful(sampleFinancialDataResponse))
 
         val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
@@ -163,7 +165,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
       "should return NOT_FOUND when api returns not found" in {
         val dataError = FinancialDataError("NOT_FOUND", "Some reason")
-        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+        when(
+          mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]())
+        )
           .thenReturn(Future failed dataError)
 
         val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
@@ -176,7 +180,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
       "should return FAILED_DEPENDENCY when api returns server error" in {
         val dataError = FinancialDataError("SERVER_ERROR", "Some reason")
 
-        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+        when(
+          mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]())
+        )
           .thenReturn(Future failed dataError)
 
         val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)
@@ -190,7 +196,9 @@ class FinancialDataControllerSpec extends BaseSpec with Generators with ScalaChe
 
         val dataError = FinancialDataError("NEW_ERROR", "Some reason")
 
-        when(mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(any[HeaderCarrier]()))
+        when(
+          mockFinancialService.retrieveCompleteFinancialDataResponse(any[String](), any[LocalDate](), any[LocalDate]())(using any[HeaderCarrier]())
+        )
           .thenReturn(Future failed dataError)
 
         val request = FakeRequest(GET, routes.FinancialDataController.getFinancialData(pillar2Id, startDate, endDate).url)

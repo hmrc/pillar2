@@ -29,5 +29,5 @@ case class UKTRSubmissionData(
 ) extends UKTRSubmission
 
 object UKTRSubmissionData {
-  implicit val uktrSubmissionDataFormat: OFormat[UKTRSubmissionData] = Json.format[UKTRSubmissionData]
+  given uktrSubmissionDataFormat: OFormat[UKTRSubmissionData] = Json.format[UKTRSubmissionData]
 }

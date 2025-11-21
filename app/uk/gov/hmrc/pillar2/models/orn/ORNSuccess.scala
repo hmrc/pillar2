@@ -23,5 +23,5 @@ import java.time.ZonedDateTime
 case class ORNSuccess(processingDate: ZonedDateTime, formBundleNumber: String)
 
 object ORNSuccess {
-  implicit val format: OFormat[ORNSuccess] = Json.format[ORNSuccess]
+  given format: OFormat[ORNSuccess] = Json.format[ORNSuccess]
 }

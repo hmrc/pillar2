@@ -19,9 +19,11 @@ package uk.gov.hmrc.pillar2.controllers
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.time.LocalDate
 import javax.inject.Inject
@@ -32,13 +34,14 @@ class ObligationsAndSubmissionsController @Inject() (
   authenticate:                     AuthAction,
   pillar2HeaderExists:              Pillar2HeaderAction,
   cc:                               ControllerComponents
-)(implicit executionContext:        ExecutionContext)
+)(using executionContext:           ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
   def getObligationsAndSubmissions(fromDate: String, toDate: String): Action[AnyContent] = (authenticate andThen pillar2HeaderExists).async {
-    implicit request =>
-      implicit val pillar2Id: String = request.pillar2Id
+    request =>
+      given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+      given pillar2Id: String = request.pillar2Id
       submissionsAndObligationsService
         .getObligationsAndSubmissions(fromDate = LocalDate.parse(fromDate), LocalDate.parse(toDate))
         .map(data => Ok(Json.toJson(data.success)))

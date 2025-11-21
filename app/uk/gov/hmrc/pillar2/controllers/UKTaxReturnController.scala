@@ -16,12 +16,14 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import play.api.libs.json._
-import play.api.mvc._
+import play.api.libs.json.*
+import play.api.mvc.*
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 import uk.gov.hmrc.pillar2.service.UKTaxReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.ExecutionContext
@@ -32,18 +34,20 @@ class UKTaxReturnController @Inject() (
   ukTaxReturnService:  UKTaxReturnService,
   pillar2HeaderExists: Pillar2HeaderAction,
   authenticate:        AuthAction
-)(implicit ec:         ExecutionContext)
+)(using ec:            ExecutionContext)
     extends BackendController(cc) {
 
-  def submitUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { implicit request =>
-    implicit val pillar2Id: String = request.pillar2Id
+  def submitUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given pillar2Id: String = request.pillar2Id
     ukTaxReturnService
       .submitUKTaxReturn(request.body)
       .map(response => Created(Json.toJson(response.success)))
   }
 
-  def amendUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { implicit request =>
-    implicit val pillar2Id: String = request.pillar2Id
+  def amendUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    given pillar2Id: String = request.pillar2Id
     ukTaxReturnService
       .amendUKTaxReturn(request.body)
       .map(response => Ok(Json.toJson(response.success)))

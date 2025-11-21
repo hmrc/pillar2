@@ -27,6 +27,7 @@ import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration.Inf
 import scala.concurrent.{Await, Future}
+import org.mongodb.scala.SingleObservableFuture
 
 trait CleanMongo extends BeforeAndAfterAll { this: TestSuite with GuiceOneServerPerSuite =>
 

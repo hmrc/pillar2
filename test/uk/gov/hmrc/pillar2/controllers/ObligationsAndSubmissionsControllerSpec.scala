@@ -24,7 +24,7 @@ import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -32,10 +32,10 @@ import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.*
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN_CREATE
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions._
 import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
 
 import java.time.format.DateTimeFormatter
@@ -61,9 +61,8 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
     super.afterEach()
   }
 
-  val fromDate:           LocalDate = LocalDate.now()
-  val toDate:             LocalDate = LocalDate.now().plusYears(1)
-  override val pillar2Id: String    = "XMPLR0123456789"
+  val fromDate: LocalDate = LocalDate.now()
+  val toDate:   LocalDate = LocalDate.now().plusYears(1)
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
     ObligationsAndSubmissionsSuccessResponse(
       ZonedDateTime.now(),
@@ -104,6 +103,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
 
       when(
         mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+          using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
@@ -129,6 +129,7 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
     "should handle ApiInternalServerError from service" in {
       when(
         mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
+          using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )

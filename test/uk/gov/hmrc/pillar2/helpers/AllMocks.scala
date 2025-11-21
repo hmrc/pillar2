@@ -23,15 +23,13 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors._
+import uk.gov.hmrc.pillar2.connectors.*
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.pillar2.service._
+import uk.gov.hmrc.pillar2.service.*
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 import uk.gov.hmrc.pillar2.utils.countryOptions.CountryOptions
 import uk.gov.hmrc.play.audit.http.connector.AuditConnector
-
-import scala.annotation.nowarn
 
 trait AllMocks extends MockitoSugar {
   me: BeforeAndAfterEach =>
@@ -63,7 +61,6 @@ trait AllMocks extends MockitoSugar {
   val mockOrnService:                         ORNService                         = mock[ORNService]
   val mockOrnConnector:                       ORNConnector                       = mock[ORNConnector]
 
-  @nowarn
   override protected def beforeEach(): Unit =
     Seq(
       mockActorSystem,

@@ -34,7 +34,7 @@ trait Configs extends BeforeAndAfterAll {
 
   def servicesConfig = new ServicesConfig(configuration)
 
-  implicit def applicationConfig: AppConfig = new AppConfig(configuration, servicesConfig)
+  given applicationConfig: AppConfig = new AppConfig(configuration, servicesConfig)
 
   override def afterAll(): Unit = {
     actorSystem.terminate().futureValue

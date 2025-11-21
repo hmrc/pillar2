@@ -23,5 +23,5 @@ final case class AccountStatus(
 )
 
 object AccountStatus {
-  implicit val format: OFormat[AccountStatus] = Json.format[AccountStatus]
+  given format: OFormat[AccountStatus] = Json.format[AccountStatus]
 }

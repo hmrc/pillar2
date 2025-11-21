@@ -24,5 +24,5 @@ final case class TransactionHistory(
 )
 
 object TransactionHistory {
-  implicit val format: OFormat[TransactionHistory] = Json.format[TransactionHistory]
+  given format: OFormat[TransactionHistory] = Json.format[TransactionHistory]
 }

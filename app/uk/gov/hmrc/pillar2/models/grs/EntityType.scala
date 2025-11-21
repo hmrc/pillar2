@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.grs
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait EntityType extends Product with Serializable
 
@@ -25,7 +25,7 @@ object EntityType {
   case object UKLimitedCompany extends EntityType
   case object LimitedLiabilityPartnership extends EntityType
 
-  implicit val format: Format[EntityType] = new Format[EntityType] {
+  given format: Format[EntityType] = new Format[EntityType] {
     override def reads(json: JsValue): JsResult[EntityType] =
       json.as[String] match {
         case "ukLimitedCompany"            => JsSuccess(UKLimitedCompany)

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.service
 
 import org.apache.pekko.Done
-import org.mockito.ArgumentMatchers.{any, eq => eqTo}
+import org.mockito.ArgumentMatchers.{any, eq as eqTo}
 import org.mockito.Mockito.{reset, when}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.{Arbitrary, Gen}
@@ -29,7 +29,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
@@ -50,7 +50,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "Return successful Http Response" in {
       when(
         mockSubscriptionConnector
-          .sendCreateSubscriptionInformation(any[RequestDetail]())(any[HeaderCarrier](), any[ExecutionContext]())
+          .sendCreateSubscriptionInformation(any[RequestDetail]())(using any[HeaderCarrier](), any[ExecutionContext]())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(OK, "Success")
@@ -78,7 +78,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "Return internal server error with response" in {
       when(
         mockSubscriptionConnector
-          .sendCreateSubscriptionInformation(any[RequestDetail]())(any[HeaderCarrier](), any[ExecutionContext]())
+          .sendCreateSubscriptionInformation(any[RequestDetail]())(using any[HeaderCarrier](), any[ExecutionContext]())
       ).thenReturn(
         Future.successful(
           HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")
@@ -99,7 +99,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         when(
           mockSubscriptionConnector
-            .sendCreateSubscriptionInformation(any[RequestDetail]())(any[HeaderCarrier](), any[ExecutionContext]())
+            .sendCreateSubscriptionInformation(any[RequestDetail]())(using any[HeaderCarrier](), any[ExecutionContext]())
         ).thenReturn(
           Future.successful(
             HttpResponse.apply(OK, "Success")
@@ -143,11 +143,11 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "return done if a valid response is received from ETMP" in {
 
       forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (mockId, plrReference, response) =>
-        when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+        when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response).toString)))
-        when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(any[HeaderCarrier]()))
+        when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(AuditResult.Success))
-        when(mockedCache.upsert(any[String](), any[JsValue]())(any[ExecutionContext]())).thenReturn(Future.unit)
+        when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
         val resultFuture = service.storeSubscriptionResponse(mockId, plrReference)
 
         resultFuture.futureValue mustEqual response
@@ -156,7 +156,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "throw exception if no valid json is received from ETMP" in {
       forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
-        when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+        when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.failed(UnexpectedResponse))
 
         val resultFuture = service.storeSubscriptionResponse(mockId, plrReference)
@@ -172,9 +172,9 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
         val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
-        when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+        when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(mockResponse))
-        when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(any[HeaderCarrier]()))
+        when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(AuditResult.Success))
         val resultFuture = service.readSubscriptionData(plrReference).futureValue
         resultFuture mustEqual mockResponse
@@ -182,9 +182,9 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
 
     "throw exception if no valid json is received from ETMP" in {
-      when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.failed(UnexpectedResponse))
-      when(mockAuditService.auditReadSubscriptionFailure(any[String](), any[Int](), any[JsValue]())(any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionFailure(any[String](), any[Int](), any[JsValue]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
       val resultFuture = service.readSubscriptionData("plrReference")
       resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
@@ -195,10 +195,10 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         forAll(plrReferenceGen, arbitrary[SubscriptionResponse], arbitraryWithIdUpeFmUserDataLLP.arbitrary) { (plrReference, response, _) =>
           val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
 
-          when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(any[HeaderCarrier](), any[ExecutionContext]()))
+          when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
             .thenReturn(Future.successful(mockResponse))
 
-          when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(any[HeaderCarrier]()))
+          when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(AuditResult.Success))
 
           val resultFuture = service.readSubscriptionData(plrReference).futureValue
@@ -212,7 +212,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "call amend API and update cache in case of a successful response" in {
       val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
-        override def storeSubscriptionResponse(id: String, plrReference: String)(implicit hc: HeaderCarrier): Future[SubscriptionResponse] =
+        override def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
           Future.successful(dummyReadResponse)
       }
 
@@ -229,14 +229,17 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())
 
         when(
-          mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(any[HeaderCarrier](), any[ExecutionContext]())
+          mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(using
+            any[HeaderCarrier](),
+            any[ExecutionContext]()
+          )
         )
           .thenReturn(Future.successful(fakeAmendResponse))
         when(
           mockAuditService.auditAmendSubscription(
             any[AmendSubscriptionSuccess],
             eqTo(AuditResponseReceived(fakeAmendResponse.status, fakeAmendResponse.json))
-          )(any[HeaderCarrier])
+          )(using any[HeaderCarrier])
         ).thenReturn(Future.successful(AuditResult.Success))
 
         subscriptionServiceWithStubbedStoreMethod.sendAmendedData(id, validAmendObject).futureValue mustBe Done
@@ -244,7 +247,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
     "return failure in case of an unusual json response" in {
 
-      when(mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(
+        mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
         .thenReturn(Future.successful(HttpResponse.apply(status = OK, json = JsObject.empty, Map.empty)))
 
       forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
@@ -256,7 +264,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "return failure in case of a non-200 response" in {
 
-      when(mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(
+        mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
         .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
 
       forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>

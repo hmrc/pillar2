@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod}
 
 case class ReadSubscriptionSuccessAuditEvent(
@@ -36,7 +36,7 @@ case class ReadSubscriptionSuccessAuditEvent(
 }
 
 object ReadSubscriptionSuccessAuditEvent {
-  implicit val formats: Format[ReadSubscriptionSuccessAuditEvent] = Json.format[ReadSubscriptionSuccessAuditEvent]
+  given formats: Format[ReadSubscriptionSuccessAuditEvent] = Json.format[ReadSubscriptionSuccessAuditEvent]
 }
 
 case class ReadSubscriptionFailedAuditEvent(
@@ -49,5 +49,5 @@ case class ReadSubscriptionFailedAuditEvent(
 
 /**/
 object ReadSubscriptionFailedAuditEvent {
-  implicit val formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
+  given formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
 }

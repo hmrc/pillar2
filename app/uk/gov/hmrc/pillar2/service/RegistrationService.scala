@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.service
 
-import cats.syntax.flatMap._
+import cats.syntax.flatMap.*
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -24,7 +24,7 @@ import uk.gov.hmrc.pillar2.connectors.RegistrationConnector
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
-import uk.gov.hmrc.pillar2.models.identifiers._
+import uk.gov.hmrc.pillar2.models.identifiers.*
 import uk.gov.hmrc.pillar2.service.audit.AuditService
 
 import javax.inject.Inject
@@ -33,11 +33,11 @@ import scala.concurrent.{ExecutionContext, Future}
 class RegistrationService @Inject() (
   dataSubmissionConnectors: RegistrationConnector,
   auditService:             AuditService
-)(implicit
+)(using
   ec: ExecutionContext
 ) extends Logging {
 
-  def sendNoIdUpeRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendNoIdUpeRegistration(userAnswers: UserAnswers)(using hc: HeaderCarrier): Future[HttpResponse] = {
     for {
       upeName      <- userAnswers.get(upeNameRegistrationId)
       emailAddress <- userAnswers.get(upeContactEmailId)
@@ -53,7 +53,7 @@ class RegistrationService @Inject() (
     registerWithoutIdError
   }
 
-  def sendNoIdFmRegistration(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] = {
+  def sendNoIdFmRegistration(userAnswers: UserAnswers)(using hc: HeaderCarrier): Future[HttpResponse] = {
     for {
       fmName       <- userAnswers.get(fmNameRegistrationId)
       emailAddress <- userAnswers.get(fmContactEmailId)
@@ -70,7 +70,7 @@ class RegistrationService @Inject() (
     registerWithoutIdError
   }
 
-  def registerNewFilingMember(userAnswers: UserAnswers)(implicit hc: HeaderCarrier): Future[HttpResponse] =
+  def registerNewFilingMember(userAnswers: UserAnswers)(using hc: HeaderCarrier): Future[HttpResponse] =
     (for {
       name    <- userAnswers.get(RfmNameRegistrationId)
       email   <- userAnswers.get(RfmPrimaryContactEmailId)
@@ -85,14 +85,14 @@ class RegistrationService @Inject() (
       registerWithoutIdError
     }
 
-  private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails, isFm: Boolean)(implicit
+  private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails, isFm: Boolean)(using
     hc:                                       HeaderCarrier
   ): Future[HttpResponse] = {
     val registerWithoutIDRequest = RegisterWithoutIDRequest(businessName, address, contactDetails)
     dataSubmissionConnectors
-      .sendWithoutIDInformation(registerWithoutIDRequest)(hc, ec)
+      .sendWithoutIDInformation(registerWithoutIDRequest)
       .flatTap { _ =>
-        if (isFm) {
+        if isFm then {
           val auditData = convertNfmAuditDetails(registerWithoutIDRequest)
           auditService.auditFmRegisterWithoutId(auditData)
         } else {

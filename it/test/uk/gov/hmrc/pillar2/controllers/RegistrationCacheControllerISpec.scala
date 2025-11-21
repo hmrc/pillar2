@@ -18,14 +18,14 @@ package uk.gov.hmrc.pillar2.controllers
 
 import org.scalatest.OptionValues
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
+import org.scalatest.matchers.should.Matchers.{shouldBe,shouldEqual}
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
@@ -35,6 +35,7 @@ import uk.gov.hmrc.pillar2.repositories.{RegistrationCacheRepository, Registrati
 import java.net.URI
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 class RegistrationCacheControllerISpec
     extends AnyFunSuite
@@ -44,12 +45,12 @@ class RegistrationCacheControllerISpec
     with OptionValues
     with CleanMongo {
 
-  override lazy val fakeApplication: Application = new GuiceApplicationBuilder()
+  override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("microservice.services.auth.port" -> wiremockPort)
     .configure("metrics.enabled" -> false)
     .build()
 
-  implicit val headerCarrier: HeaderCarrier =
+  given headerCarrier: HeaderCarrier =
     HeaderCarrier(authorization = Option(Authorization("bearerToken"))).withExtraHeaders("Content-Type" -> "application/json")
 
   private val userAnswersCache =

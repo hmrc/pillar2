@@ -28,9 +28,9 @@ final case class FinancialDataError(code: String, reason: String) extends ApiErr
 final case class FinancialDataErrorResponses(failures: Seq[FinancialDataError]) extends ApiErrors
 
 object FinancialDataError {
-  implicit val formatException: OFormat[FinancialDataError] = Json.format[FinancialDataError]
+  given formatException: OFormat[FinancialDataError] = Json.format[FinancialDataError]
 }
 
 object FinancialDataErrorResponses {
-  implicit val format: OFormat[FinancialDataErrorResponses] = Json.format[FinancialDataErrorResponses]
+  given format: OFormat[FinancialDataErrorResponses] = Json.format[FinancialDataErrorResponses]
 }

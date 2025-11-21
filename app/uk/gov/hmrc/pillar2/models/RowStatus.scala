@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models
 
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.JavascriptLiteral
 
 sealed trait RowStatus extends Product with Serializable
@@ -32,7 +32,7 @@ object RowStatus {
     val value: String = this.toString
   }
 
-  implicit val format: Format[RowStatus] = new Format[RowStatus] {
+  given format: Format[RowStatus] = new Format[RowStatus] {
     override def reads(json: JsValue): JsResult[RowStatus] =
       json.as[String] match {
         case "Completed"  => JsSuccess[RowStatus](Completed)
@@ -49,7 +49,7 @@ object RowStatus {
       }
   }
 
-  implicit val jsLiteral: JavascriptLiteral[RowStatus] = new JavascriptLiteral[RowStatus] {
+  given jsLiteral: JavascriptLiteral[RowStatus] = new JavascriptLiteral[RowStatus] {
     override def to(value: RowStatus): String =
       value match {
         case Completed  => "Completed"

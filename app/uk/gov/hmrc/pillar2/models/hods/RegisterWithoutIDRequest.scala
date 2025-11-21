@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.hods
 
-import play.api.libs.json._
+import play.api.libs.json.*
 import uk.gov.hmrc.pillar2.models.{NonUKAddress, UKAddress}
 
 import java.util.UUID
@@ -25,7 +25,7 @@ case class NoIdOrganisation(organisationName: String)
 
 object NoIdOrganisation {
 
-  implicit val format: OFormat[NoIdOrganisation] = Json.format[NoIdOrganisation]
+  given format: OFormat[NoIdOrganisation] = Json.format[NoIdOrganisation]
 
 }
 
@@ -39,7 +39,7 @@ case class Address(
 )
 
 object Address {
-  implicit val addressFormat: OFormat[Address] = Json.format[Address]
+  given addressFormat: OFormat[Address] = Json.format[Address]
 
   def fromAddress(address: UKAddress): Address =
     Address(address.addressLine1, address.addressLine2, address.addressLine3, address.addressLine4, Some(address.postalCode), address.countryCode)
@@ -57,7 +57,7 @@ case class ContactDetails(
 )
 
 object ContactDetails {
-  implicit val contactFormats: OFormat[ContactDetails] = Json.format[ContactDetails]
+  given contactFormats: OFormat[ContactDetails] = Json.format[ContactDetails]
 }
 
 case class Identification(
@@ -67,7 +67,7 @@ case class Identification(
 )
 
 object Identification {
-  implicit val indentifierFormats: OFormat[Identification] = Json.format[Identification]
+  given indentifierFormats: OFormat[Identification] = Json.format[Identification]
 }
 
 case class RegisterWithoutIDRequest(
@@ -82,7 +82,7 @@ case class RegisterWithoutIDRequest(
 )
 
 object RegisterWithoutIDRequest {
-  implicit val format: OFormat[RegisterWithoutIDRequest] = Json.format[RegisterWithoutIDRequest]
+  given format: OFormat[RegisterWithoutIDRequest] = Json.format[RegisterWithoutIDRequest]
   def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutIDRequest =
     RegisterWithoutIDRequest(
       regime = "PLR",

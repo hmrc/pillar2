@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
-import uk.gov.hmrc.pillar2.models.hods.subscription.common._
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
 case class AmendSubscriptionSuccessAuditEvent(
   replaceFilingMember:      Boolean,
@@ -35,5 +35,5 @@ case class AmendSubscriptionSuccessAuditEvent(
 }
 
 object AmendSubscriptionSuccessAuditEvent {
-  implicit val formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
+  given formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
 }

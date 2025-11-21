@@ -25,7 +25,7 @@ import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContentAsJson, Result}
 import play.api.test.FakeRequest
-import play.api.test.Helpers._
+import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
@@ -88,7 +88,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
             routes.RepaymentController.repaymentsSendRequest.url
           )
             .withJsonBody(Json.toJson(repaymentPayload))
-        when(mockRepaymentService.sendRepaymentsData(any[RepaymentRequestDetail])(any[HeaderCarrier]())).thenReturn(Future.successful(Done))
+        when(mockRepaymentService.sendRepaymentsData(any[RepaymentRequestDetail])(using any[HeaderCarrier]())).thenReturn(Future.successful(Done))
         val result: Future[Result] = route(application, request).value
         status(result) mustEqual CREATED
       }

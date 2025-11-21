@@ -21,5 +21,5 @@ import play.api.libs.json.{Json, OFormat}
 case class Pillar2ApiError(code: String, message: String)
 
 object Pillar2ApiError {
-  implicit val format: OFormat[Pillar2ApiError] = Json.format[Pillar2ApiError]
+  given format: OFormat[Pillar2ApiError] = Json.format[Pillar2ApiError]
 }

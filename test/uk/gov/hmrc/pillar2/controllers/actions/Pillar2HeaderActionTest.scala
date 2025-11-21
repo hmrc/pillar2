@@ -18,12 +18,12 @@ package uk.gov.hmrc.pillar2.controllers.actions
 
 import org.scalatest.EitherValues
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import org.scalatest.matchers.should.Matchers.shouldEqual
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
 import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
 
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.*
 
 class Pillar2HeaderActionTest extends AnyFunSuite with EitherValues {
 

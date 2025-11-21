@@ -24,5 +24,5 @@ case class SubscriptionRequestParameters(
   fmSafeId:  Option[String]
 )
 object SubscriptionRequestParameters {
-  implicit val format: OFormat[SubscriptionRequestParameters] = Json.format[SubscriptionRequestParameters]
+  given format: OFormat[SubscriptionRequestParameters] = Json.format[SubscriptionRequestParameters]
 }

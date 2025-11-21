@@ -20,7 +20,7 @@ import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess, Reads}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
-import uk.gov.hmrc.pillar2.models.errors._
+import uk.gov.hmrc.pillar2.models.errors.*
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
@@ -29,7 +29,7 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 package object service extends Logging {
-  private[service] def convertToResult[A](response: HttpResponse)(implicit reads: Reads[A]): Future[A] = {
+  private[service] def convertToResult[A](response: HttpResponse)(using reads: Reads[A]): Future[A] = {
     logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
       case 200 | 201 =>

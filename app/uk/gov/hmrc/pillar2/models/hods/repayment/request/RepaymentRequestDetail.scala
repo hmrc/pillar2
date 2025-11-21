@@ -26,6 +26,6 @@ case class RepaymentRequestDetail(
 )
 
 object RepaymentRequestDetail {
-  implicit val format: OFormat[RepaymentRequestDetail] =
+  given format: OFormat[RepaymentRequestDetail] =
     Json.format[RepaymentRequestDetail]
 }

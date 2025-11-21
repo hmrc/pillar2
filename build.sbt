@@ -4,7 +4,7 @@ import uk.gov.hmrc.DefaultBuildSettings
 
 val appName = "pillar2"
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / majorVersion := 0
 
 lazy val microservice = Project(appName, file("."))
@@ -21,30 +21,26 @@ lazy val microservice = Project(appName, file("."))
     Compile / scalafmtOnCompile := true,
     Test / scalafmtOnCompile := true,
     libraryDependencies ++= AppDependencies.compile ++ AppDependencies.test,
-    // https://www.scala-lang.org/2021/01/12/configuring-and-suppressing-warnings.html
-    // suppress warnings in generated routes files
-    scalacOptions += "-Wconf:src=routes/.*:s"
+    compilerSettings
   )
   .settings(
     Compile / unmanagedResourceDirectories += baseDirectory.value / "resources",
     Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
-    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources"),
-    tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement
-    )
+    Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources")
   )
-  .settings(CodeCoverageSettings.settings *)
+  .settings(CodeCoverageSettings.settings*)
 
 lazy val it = project
   .enablePlugins(play.sbt.PlayScala)
   .dependsOn(microservice % "test->test")
-  .settings(DefaultBuildSettings.itSettings())
   .settings(
-    tpolecatExcludeOptions ++= Set(
-      ScalacOptions.warnNonUnitStatement
-    )
+    DefaultBuildSettings.itSettings(),
+    compilerSettings
   )
-  .settings(libraryDependencies ++= AppDependencies.it)
+  .settings(
+    libraryDependencies ++= AppDependencies.it,
+    compilerSettings
+  )
 
 inThisBuild(
   List(
@@ -53,6 +49,13 @@ inThisBuild(
   )
 )
 
+lazy val compilerSettings = Seq(
+  scalacOptions ~= (_.distinct),
+  tpolecatCiModeOptions += ScalacOptions.warnOption("conf:src=routes/.*:s"),
+  Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
+)
+
 addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
 addCommandAlias("checkCodeCoverage", "; clean; coverage; test; it/test; coverageReport")
 addCommandAlias("lint", "; scalafmtAll; scalafmtSbt; scalafixAll")
+addCommandAlias("prePush", "; reload; clean; compile; test; it/test; lint;")

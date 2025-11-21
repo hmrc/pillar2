@@ -27,22 +27,22 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class ORNService @Inject() (
   ornConnector: ORNConnector
-)(implicit ec:  ExecutionContext) {
+)(using ec:     ExecutionContext) {
 
-  def submitOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
+  def submitOrn(ornRequest: ORNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
     ornConnector
       .submitOrn(ornRequest)
       .flatMap(convertToORNApiResult)
 
-  def amendOrn(ornRequest: ORNRequest)(implicit hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
+  def amendOrn(ornRequest: ORNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
     ornConnector
       .amendOrn(ornRequest)
       .flatMap(convertToORNApiResult)
 
   def getOrn(
-    fromDate:    LocalDate,
-    toDate:      LocalDate
-  )(implicit hc: HeaderCarrier, pillar2Id: String): Future[GetORNSuccessResponse] =
+    fromDate: LocalDate,
+    toDate:   LocalDate
+  )(using hc: HeaderCarrier, pillar2Id: String): Future[GetORNSuccessResponse] =
     ornConnector
       .getOrn(fromDate, toDate)
       .flatMap(convertToGetORNApiResult)

@@ -25,5 +25,5 @@ final case class RegistrationWithoutId(
 )
 
 object RegistrationWithoutId {
-  implicit val format: OFormat[RegistrationWithoutId] = Json.format[RegistrationWithoutId]
+  given format: OFormat[RegistrationWithoutId] = Json.format[RegistrationWithoutId]
 }

@@ -21,5 +21,5 @@ import play.api.libs.json.{Json, OFormat}
 final case class ObligationsAndSubmissionsResponse(success: ObligationsAndSubmissionsSuccessResponse)
 
 object ObligationsAndSubmissionsResponse {
-  implicit val format: OFormat[ObligationsAndSubmissionsResponse] = Json.format[ObligationsAndSubmissionsResponse]
+  given format: OFormat[ObligationsAndSubmissionsResponse] = Json.format[ObligationsAndSubmissionsResponse]
 }

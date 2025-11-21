@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
 
-  def getObligationsAndSubmissions(fromDate: LocalDate, toDate: LocalDate)(implicit
+  def getObligationsAndSubmissions(fromDate: LocalDate, toDate: LocalDate)(using
     hc:                                      HeaderCarrier,
     ec:                                      ExecutionContext,
     pillar2Id:                               String
@@ -37,7 +37,7 @@ class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val h
       s"${config.baseUrl(serviceName)}?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
     httpClient
       .get(url"$url")
-      .setHeader(hipHeaders(config = config): _*)
+      .setHeader(hipHeaders(config = config)*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }

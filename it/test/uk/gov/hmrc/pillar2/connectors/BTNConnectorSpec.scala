@@ -43,7 +43,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
   private val etmpBTNUrl: String = "/RESTAdapter/plr/below-threshold-notification"
 
-  private def stubResponseFor(status: Int)(implicit response: JsObject): StubMapping =
+  private def stubResponseFor(status: Int)(using response: JsObject): StubMapping =
     server.stubFor(
       post(urlEqualTo("/RESTAdapter/plr/below-threshold-notification"))
         .withHeader("X-Pillar2-Id", equalTo(pillar2Id))
@@ -58,7 +58,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
   "sendBtn" - {
     "successfully submit a BTN request with all required HIP headers" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "success" -> Json.obj(
           "processingDate" -> "2024-03-14T09:26:17Z"
         )
@@ -79,7 +79,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle BAD_REQUEST (400) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "error" -> Json.obj(
           "code"    -> "400",
           "message" -> "Bad Request",
@@ -95,7 +95,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle UNPROCESSABLE_ENTITY (422) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "errors" -> Json.obj(
           "processingDate" -> "2024-03-14T09:26:17Z",
           "code"           -> "003",
@@ -111,7 +111,7 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
 
     "handle INTERNAL_SERVER_ERROR (500) response" in {
-      implicit val response: JsObject = Json.obj(
+      given response: JsObject = Json.obj(
         "error" -> Json.obj(
           "code"    -> "500",
           "message" -> "Internal Server Error",

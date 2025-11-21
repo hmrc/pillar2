@@ -16,9 +16,10 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import play.api.libs.json._
+import play.api.libs.json.*
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import play.api.{Logger, Logging}
+import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
@@ -26,20 +27,22 @@ import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
+import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionController @Inject() (
-  userAnswerCache:           RegistrationCacheRepository,
-  subscriptionService:       SubscriptionService,
-  authenticate:              AuthAction,
-  cc:                        ControllerComponents
-)(implicit executionContext: ExecutionContext)
+  userAnswerCache:        RegistrationCacheRepository,
+  subscriptionService:    SubscriptionService,
+  authenticate:           AuthAction,
+  cc:                     ControllerComponents
+)(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 
-  def createSubscription: Action[JsValue] = authenticate(parse.json).async { implicit request =>
+  def createSubscription: Action[JsValue] = authenticate(parse.json).async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     val subscriptionParameters: JsResult[SubscriptionRequestParameters] =
       request.body.validate[SubscriptionRequestParameters]
     subscriptionParameters.fold(
@@ -54,28 +57,31 @@ class SubscriptionController @Inject() (
         for {
           userAnswer <- getUserAnswers(subs.id)
           response   <- subscriptionService.sendCreateSubscription(subs.regSafeId, subs.fmSafeId, userAnswer)
-        } yield convertToResult(response)(implicitly[Logger](logger))
+        } yield convertToResult(response)(using logger: Logger)
     )
   }
 
-  def getUserAnswers(id: String)(implicit executionContext: ExecutionContext): Future[UserAnswers] =
+  def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
     userAnswerCache.get(id).map { userAnswer =>
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
     }
 
-  def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     for {
       response <- subscriptionService.storeSubscriptionResponse(id, plrReference)
     } yield Ok(Json.toJson(response.success))
   }
 
-  def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { implicit request =>
+  def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     for {
       response <- subscriptionService.readSubscriptionData(plrReference)
-    } yield convertToResult(response)(implicitly[Logger](logger))
+    } yield convertToResult(response)(using logger: Logger)
   }
 
-  def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { implicit request =>
+  def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
   }
 

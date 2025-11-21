@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.obligationsAndSubmissions
 
-import enumeratum._
+import enumeratum.*
 
 sealed trait SubmissionType extends EnumEntry
 

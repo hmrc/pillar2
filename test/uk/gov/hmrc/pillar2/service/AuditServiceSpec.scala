@@ -39,7 +39,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   "RegistrationwithoutId for UPE" - {
     "Send successful RegisterwithoutID for UPE" in new Setup {
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitraryUpeRegistration.arbitrary) { upeReg =>
@@ -53,7 +53,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   "RegistrationwithoutId for FilingMember" - {
     "Send successful RegisterwithoutID for FM" in new Setup {
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitraryNominatedFilingMember.arbitrary) { nominatedFilingMember =>
@@ -68,7 +68,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   "CreateSubscription" - {
     "Send successful createSubscription" in new Setup {
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitraryRequestDetail.arbitrary, arbitraryCreateAuditResponseReceived.arbitrary) { (requestDetails, auditResponseReceived) =>
@@ -81,7 +81,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   "ReadSubscription" - {
     "Send successful readSubscription" in new Setup {
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponse.arbitrary) { (plrRef, response) =>
@@ -92,7 +92,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
     "Send failed readSubscription" in new Setup {
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
       forAll(arbPlrReference.arbitrary) { plrRef =>
         val result = await(service.auditReadSubscriptionFailure(plrRef, 404, Json.obj()))
@@ -105,7 +105,7 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
   "AmendSubscription" - {
     "Send successful amendSubscription" in new Setup {
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbitraryAmendAuditResponseReceived.arbitrary) { (requestDetail, responseDetail) =>

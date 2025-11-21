@@ -16,11 +16,11 @@
 
 package uk.gov.hmrc.pillar2
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 package object models {
 
-  implicit class RichJsObject(jsObject: JsObject) {
+  extension (jsObject: JsObject) {
 
     def setObject(path: JsPath, value: JsValue): JsResult[JsObject] =
       jsObject.set(path, value).flatMap(_.validate[JsObject])
@@ -29,7 +29,7 @@ package object models {
       jsObject.remove(path).flatMap(_.validate[JsObject])
   }
 
-  implicit class RichJsValue(jsValue: JsValue) {
+  extension (jsValue: JsValue) {
 
     def set(path: JsPath, value: JsValue): JsResult[JsValue] =
       (path.path, jsValue) match {
@@ -77,7 +77,7 @@ package object models {
 
       oldValue match {
         case oldValue: JsArray if index >= 0 && index <= oldValue.value.length =>
-          if (index == oldValue.value.length) {
+          if index == oldValue.value.length then {
             JsSuccess(oldValue.append(newValue))
           } else {
             JsSuccess(JsArray(oldValue.value.updated(index, newValue)))
@@ -97,7 +97,6 @@ package object models {
           val updatedJsArray = valueToRemoveFrom.value.slice(0, index) ++ valueToRemoveFrom.value.slice(index + 1, valueToRemoveFrom.value.size)
           JsSuccess(JsArray(updatedJsArray))
         case valueToRemoveFrom: JsArray => JsError(s"array index out of bounds: $index, $valueToRemoveFrom")
-        case _ => JsError(s"cannot set an index on $valueToRemoveFrom")
       }
     }
 
@@ -124,7 +123,7 @@ package object models {
           Reads
             .optionNoError(Reads.at[JsValue](JsPath(first :: Nil)))
             .reads(oldValue)
-            .flatMap { opt: Option[JsValue] =>
+            .flatMap { (opt: Option[JsValue]) =>
               opt
                 .map(JsSuccess(_))
                 .getOrElse {

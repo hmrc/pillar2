@@ -40,5 +40,5 @@ object ETMPAmendSubscriptionSuccess {
       amendSubscriptionSuccess.filingMemberDetails
     )
 
-  implicit val format: OFormat[ETMPAmendSubscriptionSuccess] = Json.format[ETMPAmendSubscriptionSuccess]
+  given format: OFormat[ETMPAmendSubscriptionSuccess] = Json.format[ETMPAmendSubscriptionSuccess]
 }

@@ -29,9 +29,9 @@ import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
 class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
-  implicit val logger: Logger = Logger(this.getClass.getName)
+  given logger: Logger = Logger(this.getClass.getName)
 
-  def retrieveFinancialData(idNumber: String, dateFrom: LocalDate, dateTo: LocalDate)(implicit
+  def retrieveFinancialData(idNumber: String, dateFrom: LocalDate, dateTo: LocalDate)(using
     hc:                               HeaderCarrier,
     ec:                               ExecutionContext
   ): Future[FinancialDataResponse] = {
@@ -47,7 +47,7 @@ class FinancialDataConnector @Inject() (val config: AppConfig, val httpClient: H
     val url: String = s"${config.baseUrl(serviceName)}/ZPLR/$idNumber/PLR?$queryParams"
     httpClient
       .get(url"$url")
-      .setHeader(extraHeaders(config, serviceName): _*)
+      .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
       .flatMap { response =>
         response.status match {

@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.subscription
 
-import play.api.libs.json._
+import play.api.libs.json.*
 
 sealed trait MneOrDomestic extends Product with Serializable
 
@@ -30,7 +30,7 @@ object MneOrDomestic {
   val ukAndOther: MneOrDomestic = UkAndOther
   val uk:         MneOrDomestic = Uk
 
-  implicit val format: Format[MneOrDomestic] = new Format[MneOrDomestic] {
+  given format: Format[MneOrDomestic] = new Format[MneOrDomestic] {
     override def reads(json: JsValue): JsResult[MneOrDomestic] =
       json.as[String] match {
         case "ukAndOther" => JsSuccess(UkAndOther)

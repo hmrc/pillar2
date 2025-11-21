@@ -23,5 +23,5 @@ case class ReadSubscriptionRequestParameters(
   plrReference: String
 )
 object ReadSubscriptionRequestParameters {
-  implicit val format: OFormat[ReadSubscriptionRequestParameters] = Json.format[ReadSubscriptionRequestParameters]
+  given format: OFormat[ReadSubscriptionRequestParameters] = Json.format[ReadSubscriptionRequestParameters]
 }
