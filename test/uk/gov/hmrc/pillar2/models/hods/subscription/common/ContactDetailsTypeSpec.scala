@@ -25,8 +25,8 @@ class ContactDetailsTypeSpec extends AnyFreeSpec with Matchers {
   "ContactDetailsType" - {
     "must deserialize from JSON with 'telephone'" in {
       val json = Json.obj(
-        "name" -> "test name",
-        "telephone" -> "123456",
+        "name"         -> "test name",
+        "telephone"    -> "123456",
         "emailAddress" -> "test@test.com"
       )
       val expected = ContactDetailsType("test name", Some("123456"), "test@test.com")
@@ -35,8 +35,8 @@ class ContactDetailsTypeSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON with 'phone' when 'telephone' is missing" in {
       val json = Json.obj(
-        "name" -> "test name",
-        "phone" -> "123456",
+        "name"         -> "test name",
+        "phone"        -> "123456",
         "emailAddress" -> "test@test.com"
       )
       val expected = ContactDetailsType("test name", Some("123456"), "test@test.com")
@@ -45,7 +45,7 @@ class ContactDetailsTypeSpec extends AnyFreeSpec with Matchers {
 
     "must deserialize from JSON with neither 'telephone' nor 'phone'" in {
       val json = Json.obj(
-        "name" -> "test name",
+        "name"         -> "test name",
         "emailAddress" -> "test@test.com"
       )
       val expected = ContactDetailsType("test name", None, "test@test.com")
@@ -54,9 +54,9 @@ class ContactDetailsTypeSpec extends AnyFreeSpec with Matchers {
 
     "must prioritize 'telephone' over 'phone' if both are present" in {
       val json = Json.obj(
-        "name" -> "test name",
-        "telephone" -> "111111",
-        "phone" -> "222222",
+        "name"         -> "test name",
+        "telephone"    -> "111111",
+        "phone"        -> "222222",
         "emailAddress" -> "test@test.com"
       )
       val expected = ContactDetailsType("test name", Some("111111"), "test@test.com")
@@ -66,12 +66,11 @@ class ContactDetailsTypeSpec extends AnyFreeSpec with Matchers {
     "must serialize to JSON with 'telephone'" in {
       val model = ContactDetailsType("test name", Some("123456"), "test@test.com")
       val expected = Json.obj(
-        "name" -> "test name",
-        "telephone" -> "123456",
+        "name"         -> "test name",
+        "telephone"    -> "123456",
         "emailAddress" -> "test@test.com"
       )
       Json.toJson(model) mustEqual expected
     }
   }
 }
-
