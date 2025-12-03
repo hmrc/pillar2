@@ -16,7 +16,8 @@
 
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.*
 
 import java.time.LocalDate
 
@@ -68,7 +69,19 @@ final case class ContactDetailsType(
 )
 
 object ContactDetailsType {
-  given format: OFormat[ContactDetailsType] = Json.format[ContactDetailsType]
+  val reads: Reads[ContactDetailsType] = (
+    (__ \ "name").read[String] and
+      (__ \ "telephone")
+        .read[String]
+        .map(Some(_))
+        .orElse((__ \ "phone").read[String].map(Some(_)))
+        .orElse(Reads.pure(None)) and
+      (__ \ "emailAddress").read[String]
+  )(ContactDetailsType.apply _)
+
+  val writes: OWrites[ContactDetailsType] = Json.writes[ContactDetailsType]
+
+  given format: OFormat[ContactDetailsType] = OFormat(reads, writes)
 }
 
 final case class FilingMemberDetails(
