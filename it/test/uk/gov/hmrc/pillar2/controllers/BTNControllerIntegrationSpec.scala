@@ -54,6 +54,8 @@ class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
 
   lazy val url = URI.create( s"http://localhost:$port${routes.BTNController.submitBtn().url}").toURL
 
+  //chima
+  //Remove comment
   test("Successful BTN submission") {
     stubAuthenticate()
     val pillar2Id = "pillar2Id"
