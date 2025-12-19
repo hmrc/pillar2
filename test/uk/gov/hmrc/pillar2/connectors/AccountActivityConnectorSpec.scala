@@ -18,6 +18,7 @@ package uk.gov.hmrc.pillar2.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import org.scalatest.concurrent.IntegrationPatience
 import play.api.Application
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -25,7 +26,7 @@ import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
 
 import java.time.LocalDate
 
-class AccountActivityConnectorSpec extends BaseSpec {
+class AccountActivityConnectorSpec extends BaseSpec with IntegrationPatience {
 
   override lazy val app: Application = applicationBuilder()
     .configure("microservice.services.account-activity.port" -> server.port())
