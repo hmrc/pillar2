@@ -1,0 +1,189 @@
+{
+  "success": {
+    "processingDate": "2001-12-17T09:30:47",
+    "transactionDetails": [
+      {
+        "transactionType": "Payment",
+        "transactionDesc": "On Account Pillar 2 (Payment on Account)",
+        "transactionDate": "2025-10-15",
+        "originalAmount": 10000,
+        "outstandingAmount": 1000,
+        "clearedAmount": 9000,
+        "clearingDetails": [
+          {
+            "transactionDesc": "Pillar 2 UK Tax Return Pillar 2 DTT",
+            "chargeRefNo": "X123456789012",
+            "dueDate": "2025-12-31",
+            "amount": 2000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Allocated to Charge"
+          },
+          {
+            "transactionDesc": "Pillar 2 UK Tax Return Pillar 2 MTT IIR",
+            "chargeRefNo": "X123456789012",
+            "dueDate": "2025-12-31",
+            "amount": 2000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Allocated to Charge"
+          },
+          {
+            "transactionDesc": "Pillar 2 UK Tax Return Pillar 2 MTT UTPR",
+            "chargeRefNo": "X123456789012",
+            "dueDate": "2025-12-31",
+            "amount": 2000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Allocated to Charge"
+          },
+          {
+            "transactionDesc": "Pillar 2 Discovery Assessment Pillar 2 DTT",
+            "chargeRefNo": "X123456789012",
+            "dueDate": "2025-12-31",
+            "amount": 3000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Allocated to Charge"
+          }
+        ]
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 UK Tax Return Pillar 2 DTT",
+        "startDate": "2025-01-01",
+        "endDate": "2025-12-31",
+        "chargeRefNo": "X123456789012",
+        "transactionDate": "2025-02-15",
+        "dueDate": "2025-12-31",
+        "originalAmount": 2000,
+        "clearedAmount": 2000,
+        "clearingDetails": [
+          {
+            "transactionDesc": "On Account Pillar 2 (Payment on Account)",
+            "amount": 2000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Cleared by Payment"
+          }
+        ]
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 UK Tax Return Pillar 2 MTT IIR",
+        "startDate": "2025-01-01",
+        "endDate": "2025-12-31",
+        "chargeRefNo": "X123456789012",
+        "transactionDate": "2025-02-15",
+        "dueDate": "2025-12-31",
+        "originalAmount": 2000,
+        "clearedAmount": 2000,
+        "clearingDetails": [
+          {
+            "transactionDesc": "On Account Pillar 2 (Payment on Account)",
+            "amount": 2000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Cleared by Payment"
+          }
+        ]
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 UK Tax Return Pillar 2 MTT UTPR",
+        "startDate": "2025-01-01",
+        "endDate": "2025-12-31",
+        "chargeRefNo": "X123456789012",
+        "transactionDate": "2025-02-15",
+        "dueDate": "2025-12-31",
+        "originalAmount": 2000,
+        "clearedAmount": 2000,
+        "clearingDetails": [
+          {
+            "transactionDesc": "On Account Pillar 2 (Payment on Account)",
+            "amount": 2000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Cleared by Payment"
+          }
+        ]
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 Discovery Assessment Pillar 2 DTT",
+        "startDate": "2025-01-01",
+        "endDate": "2025-12-31",
+        "chargeRefNo": "XD23456789012",
+        "transactionDate": "2025-02-15",
+        "dueDate": "2025-12-31",
+        "originalAmount": 3000,
+        "clearedAmount": 3000,
+        "clearingDetails": [
+          {
+            "transactionDesc": "On Account Pillar 2 (Payment on Account)",
+            "amount": 3000,
+            "clearingDate": "2025-10-15",
+            "clearingReason": "Cleared by Payment"
+          }
+        ]
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 Determination Pillar 2 MTT IIR",
+        "startDate": "2026-01-01",
+        "endDate": "2026-12-31",
+        "accruedInterest": 35,
+        "chargeRefNo": "XDT3456789012",
+        "transactionDate": "2027-02-15",
+        "dueDate": "2028-03-31",
+        "originalAmount": 3100,
+        "outstandingAmount": 3100
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 Overpaid Claim Assmt Pillar 2 MTT UTPR",
+        "startDate": "2026-01-01",
+        "endDate": "2026-12-31",
+        "chargeRefNo": "XOC3456789012",
+        "transactionDate": "2027-02-15",
+        "dueDate": "2028-03-31",
+        "originalAmount": 4100,
+        "outstandingAmount": 4100,
+        "standOverAmount": 4100,
+        "appealFlag": true
+      },
+      {
+        "transactionType": "Credit",
+        "transactionDesc": "Pillar 2 UKTR RPI Pillar 2 OECD RPI",
+        "chargeRefNo": "XR23456789012",
+        "transactionDate": "2025-03-15",
+        "originalAmount": -100,
+        "outstandingAmount": -100
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 UKTR DTT LFP AUTO PEN",
+        "startDate": "2024-01-01",
+        "endDate": "2024-12-31",
+        "chargeRefNo": "XPN3456789012",
+        "transactionDate": "2026-07-01",
+        "dueDate": "2026-07-31",
+        "originalAmount": 100,
+        "outstandingAmount": 100
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 UKTR Interest Pillar 2 DTT Int",
+        "startDate": "2024-01-01",
+        "endDate": "2024-12-31",
+        "chargeRefNo": "XIN3456789012",
+        "transactionDate": "2025-10-15",
+        "dueDate": "2025-10-15",
+        "originalAmount": 35,
+        "outstandingAmount": 35
+      },
+      {
+        "transactionType": "Debit",
+        "transactionDesc": "Pillar 2 Record Keeping Pen TG PEN",
+        "chargeRefNo": "XIN3456789012",
+        "transactionDate": "2026-06-30",
+        "dueDate": "2026-07-30",
+        "originalAmount": 3500,
+        "outstandingAmount": 3500
+      }
+    ]
+  }
+}

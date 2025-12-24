@@ -27,6 +27,8 @@ POST          /repayment                                                   uk.go
 GET           /transaction-history/:plrReference/:dateFrom/:dateTo         uk.gov.hmrc.pillar2.controllers.FinancialDataController.getTransactionHistory(plrReference: String, dateFrom: String, dateTo: String)
 GET           /financial-data/:plrReference/:dateFrom/:dateTo              uk.gov.hmrc.pillar2.controllers.FinancialDataController.getFinancialData(plrReference: String, dateFrom: String, dateTo: String)
 
+GET           /account-activity                                            uk.gov.hmrc.pillar2.controllers.AccountActivityController.getAccountActivity(dateFrom: String, dateTo: String)
+
 POST          /below-threshold-notification/submit                         uk.gov.hmrc.pillar2.controllers.BTNController.submitBtn()
 
 POST          /submit-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.submitUKTaxReturn()

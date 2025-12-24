@@ -19,6 +19,7 @@ package uk.gov.hmrc.pillar2
 import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess, Reads}
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
 import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
 import uk.gov.hmrc.pillar2.models.errors.*
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
@@ -51,6 +52,9 @@ package object service extends Logging {
         Future.failed(ApiInternalServerError)
     }
   }
+
+  private[service] def convertToAccountActivityResult(response: HttpResponse): Future[AccountActivitySuccess] =
+    convertToResult[AccountActivitySuccess](response)
 
   private[service] def convertToUKTRApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
     convertToResult[ApiSuccessResponse](response)
