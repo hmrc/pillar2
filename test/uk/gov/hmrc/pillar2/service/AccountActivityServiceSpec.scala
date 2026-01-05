@@ -26,7 +26,7 @@ import uk.gov.hmrc.pillar2.models.accountactivity.*
 import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailure, ApiFailureResponse}
 
-import java.time.{LocalDate, LocalDateTime, ZonedDateTime}
+import java.time.{LocalDate, ZoneOffset, ZonedDateTime}
 import scala.concurrent.Future
 
 class AccountActivityServiceSpec extends BaseSpec {
@@ -90,7 +90,7 @@ class AccountActivityServiceSpec extends BaseSpec {
   }
 
   def accountActivityJsonParsed: AccountActivitySuccess = AccountActivitySuccess(
-    processingDate = LocalDateTime.of(2001, 12, 17, 9, 30, 47, 0),
+    processingDate = ZonedDateTime.of(2001, 12, 17, 9, 30, 47, 0, ZoneOffset.UTC),
     Seq(
       AccountActivityTransaction(
         transactionType = "Payment",

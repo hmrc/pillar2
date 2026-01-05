@@ -19,9 +19,9 @@ package uk.gov.hmrc.pillar2.models.accountactivity
 import play.api.libs.functional.syntax.given
 import play.api.libs.json.*
 
-import java.time.{LocalDate, LocalDateTime}
+import java.time.{LocalDate, ZonedDateTime}
 
-case class AccountActivitySuccess(processingDate: LocalDateTime, transactions: Seq[AccountActivityTransaction])
+case class AccountActivitySuccess(processingDate: ZonedDateTime, transactions: Seq[AccountActivityTransaction])
 
 case class AccountActivityTransaction(
   transactionType:   String,
@@ -52,11 +52,11 @@ case class AccountActivityClearance(
 object AccountActivitySuccess {
   given Format[AccountActivitySuccess] = Format(
     (
-      (__ \ "success" \ "processingDate").read[LocalDateTime] and
+      (__ \ "success" \ "processingDate").read[ZonedDateTime] and
         (__ \ "success" \ "transactionDetails").read[Seq[AccountActivityTransaction]]
     )(AccountActivitySuccess.apply),
     (
-      (__ \ "processingDate").write[LocalDateTime] and
+      (__ \ "processingDate").write[ZonedDateTime] and
         (__ \ "transactionDetails").write[Seq[AccountActivityTransaction]]
     )(s => (s.processingDate, s.transactions))
   )
