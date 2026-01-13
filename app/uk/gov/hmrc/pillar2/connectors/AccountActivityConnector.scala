@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.google.inject.Inject
+import play.api.Logging
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.given
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
@@ -26,7 +27,7 @@ import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class AccountActivityConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
+class AccountActivityConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) extends Logging {
   private val accountActivityBaseUrl = url"${config.baseUrl("account-activity")}"
 
   def retrieveAccountActivity(request: AccountActivityRequest, pillarId: String)(using HeaderCarrier, ExecutionContext): Future[HttpResponse] =
@@ -40,5 +41,8 @@ class AccountActivityConnector @Inject() (val config: AppConfig, val httpClient:
       )
       .setHeader(("X-Message-Type", "ACCOUNT_ACTIVITY") +: hipHeaders(config)(using summon[HeaderCarrier], pillarId)*)
       .execute[HttpResponse]
-      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
+      .recoverWith { case ex =>
+        logger.error(s"Account activity request failed for pillarId=$pillarId, fromDate=${request.fromDate}, toDate=${request.toDate}", ex)
+        Future.failed(UnexpectedResponse)
+      }
 }
