@@ -35,14 +35,17 @@ class AccountActivityConnector @Inject() (val config: AppConfig, val httpClient:
       .get(accountActivityBaseUrl)
       .transform(
         _.withQueryStringParameters(
-          "fromDate" -> request.fromDate.toString,
-          "toDate"   -> request.toDate.toString
+          "activityFromDate" -> request.activityFromDate.toString,
+          "activityToDate"   -> request.activityToDate.toString
         )
       )
       .setHeader(("X-Message-Type", "ACCOUNT_ACTIVITY") +: hipHeaders(config)(using summon[HeaderCarrier], pillarId)*)
       .execute[HttpResponse]
       .recoverWith { case ex =>
-        logger.error(s"Account activity request failed for pillarId=$pillarId, fromDate=${request.fromDate}, toDate=${request.toDate}", ex)
+        logger.error(
+          s"Account activity request failed for pillarId=$pillarId, activityFromDate=${request.activityFromDate}, activityToDate=${request.activityToDate}",
+          ex
+        )
         Future.failed(UnexpectedResponse)
       }
 }

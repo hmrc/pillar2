@@ -39,7 +39,7 @@ class AccountActivityConnectorSpec extends BaseSpec with IntegrationPatience {
   val fromDate: LocalDate = LocalDate.now().minusYears(1)
   val toDate:   LocalDate = LocalDate.now()
 
-  val accountActivityUrl: String = s"/RESTAdapter/plr/account-activity?fromDate=$fromDate&toDate=$toDate"
+  val accountActivityUrl: String = s"/RESTAdapter/plr/account-activity?activityFromDate=$fromDate&activityToDate=$toDate"
 
   def stubFor(status: Int, responseBody: JsValue): StubMapping = server.stubFor(
     get(urlEqualTo(accountActivityUrl))

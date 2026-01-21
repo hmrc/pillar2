@@ -66,7 +66,8 @@ class AccountActivityControllerSpec extends BaseSpec {
     "returns a success response matching ETMP's, with the 'success' field removed" in new AccountActivityControllerTestCase(
       serviceResponse = Future.successful(sampleAccountActivityResponse.as[AccountActivitySuccess])
     ) {
-      val result: Future[Result] = controller.getAccountActivity(dateFrom = aYearAgo.toString, dateTo = today.toString)(requestWithPillarId)
+      val result: Future[Result] =
+        controller.getAccountActivity(activityFromDate = aYearAgo.toString, activityToDate = today.toString)(requestWithPillarId)
 
       status(result) mustBe OK
       contentAsJson(result) mustBe (sampleAccountActivityResponse \ "success").get
@@ -75,8 +76,10 @@ class AccountActivityControllerSpec extends BaseSpec {
     "returns a 400 when passed malformatted dates" in new AccountActivityControllerTestCase(
       serviceResponse = Future.successful(sampleAccountActivityResponse.as[AccountActivitySuccess])
     ) {
-      val badFrom: Future[Result] = controller.getAccountActivity(dateFrom = "not-a-date", dateTo = today.toString)(requestWithPillarId)
-      val badTo:   Future[Result] = controller.getAccountActivity(dateFrom = aYearAgo.toString, dateTo = "not-a-date")(requestWithPillarId)
+      val badFrom: Future[Result] =
+        controller.getAccountActivity(activityFromDate = "not-a-date", activityToDate = today.toString)(requestWithPillarId)
+      val badTo: Future[Result] =
+        controller.getAccountActivity(activityFromDate = aYearAgo.toString, activityToDate = "not-a-date")(requestWithPillarId)
 
       status(badFrom) mustBe BAD_REQUEST
       status(badTo) mustBe BAD_REQUEST

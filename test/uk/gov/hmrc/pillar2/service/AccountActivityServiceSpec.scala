@@ -42,8 +42,8 @@ class AccountActivityServiceSpec extends BaseSpec {
     lazy val service: AccountActivityService = AccountActivityService(mockConnector)
 
     val request: AccountActivityRequest = AccountActivityRequest(
-      fromDate = LocalDate.now().minusYears(1),
-      toDate = LocalDate.now()
+      activityFromDate = LocalDate.now().minusYears(1),
+      activityToDate = LocalDate.now()
     )
   }
 
