@@ -37,10 +37,10 @@ class AccountActivityController @Inject() (
 )(using ExecutionContext)
     extends BackendController(cc) {
 
-  def getAccountActivity(activityFromDate: String, activityToDate: String): Action[AnyContent] =
+  def getAccountActivity(fromDate: String, toDate: String): Action[AnyContent] =
     (authenticate andThen checkPillar2HeaderExists).async { request =>
-      Try(LocalDate.parse(activityFromDate))
-        .flatMap(from => Try(LocalDate.parse(activityToDate)).map(to => (from, to)))
+      Try(LocalDate.parse(fromDate))
+        .flatMap(from => Try(LocalDate.parse(toDate)).map(to => (from, to)))
         .map(AccountActivityRequest.apply)
         .fold(
           _ => Future.successful(BadRequest(Json.toJson(Pillar2ApiError(code = "400", message = "Invalid date format.")))),
