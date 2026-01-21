@@ -76,7 +76,7 @@ class AccountActivityControllerSpec extends BaseSpec {
       serviceResponse = Future.successful(sampleAccountActivityResponse.as[AccountActivitySuccess])
     ) {
       val badFrom: Future[Result] = controller.getAccountActivity(fromDate = "not-a-date", toDate = today.toString)(requestWithPillarId)
-      val badTo: Future[Result] = controller.getAccountActivity(fromDate = aYearAgo.toString, toDate = "not-a-date")(requestWithPillarId)
+      val badTo:   Future[Result] = controller.getAccountActivity(fromDate = aYearAgo.toString, toDate = "not-a-date")(requestWithPillarId)
 
       status(badFrom) mustBe BAD_REQUEST
       status(badTo) mustBe BAD_REQUEST
