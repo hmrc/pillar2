@@ -20,7 +20,6 @@ import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess, Reads}
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
-import uk.gov.hmrc.pillar2.models.btn.BTNSuccessResponse
 import uk.gov.hmrc.pillar2.models.errors.*
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
@@ -58,9 +57,6 @@ package object service extends Logging {
 
   private[service] def convertToUKTRApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
     convertToResult[ApiSuccessResponse](response)
-
-  private[service] def convertToBTNApiResult(response: HttpResponse): Future[BTNSuccessResponse] =
-    convertToResult[BTNSuccessResponse](response)
 
   private[service] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
     convertToResult[ObligationsAndSubmissionsResponse](response)
