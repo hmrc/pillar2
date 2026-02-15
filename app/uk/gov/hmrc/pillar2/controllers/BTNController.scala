@@ -43,6 +43,6 @@ class BTNController @Inject() (
     given pillar2Id: String = request.pillar2Id
     btnService
       .sendBtn(request.body)
-      .map(response => Created(Json.toJson(response.success)))
+      .map(response => Status(response.status)(response.body))
   }
 }

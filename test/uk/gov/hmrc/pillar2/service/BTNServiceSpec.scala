@@ -25,9 +25,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessResponse}
-import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
-import uk.gov.hmrc.pillar2.models.hip.*
+import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 
 import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.Future
@@ -43,51 +41,13 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     )
 
   "sendBtn" - {
-    "should return ApiSuccessResponse for valid btnPayload (201)" in {
-      val successResponse = BTNSuccessResponse(BTNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z")))
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
-        .thenReturn(Future.successful(httpCreated))
+    "should return the connector response as is" in {
+        val httpResponse = HttpResponse(200, "{}")
+        when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
+          .thenReturn(Future.successful(httpResponse))
 
-      val result = service.sendBtn(btnPayload).futureValue
-      result mustBe successResponse
-    }
-
-    "should throw ValidationError for 422 response" in {
-      val apiFailure   = ApiFailureResponse(ApiFailure(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "422", "Validation failed"))
-      val httpResponse = HttpResponse(422, Json.toJson(apiFailure).toString())
-
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
-        .thenReturn(Future.successful(httpResponse))
-
-      val error = intercept[ETMPValidationError] {
-        await(service.sendBtn(btnPayload))
-      }
-
-      error.code mustBe "422"
-      error.message mustBe "Validation failed"
-    }
-
-    "should throw InvalidJsonError for malformed success response" in {
-      val httpResponse = HttpResponse(201, "{invalid json}")
-
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
-        .thenReturn(Future.successful(httpResponse))
-
-      val error = intercept[InvalidJsonError] {
-        await(service.sendBtn(btnPayload))
-      }
-      error.code mustBe "002"
-    }
-
-    "should throw ApiInternalServerError for non-201/422 responses" in {
-      val httpResponse = HttpResponse(500, "{}")
-
-      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
-        .thenReturn(Future.successful(httpResponse))
-
-      intercept[ApiInternalServerError.type] {
-        await(service.sendBtn(btnPayload))
-      }
+        val result = service.sendBtn(btnPayload).futureValue
+        result mustBe httpResponse
     }
   }
 }
