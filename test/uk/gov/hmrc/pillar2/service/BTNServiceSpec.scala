@@ -19,15 +19,13 @@ package uk.gov.hmrc.pillar2.service
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import play.api.libs.json.Json
-import play.api.test.Helpers.await
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -42,12 +40,12 @@ class BTNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
   "sendBtn" - {
     "should return the connector response as is" in {
-        val httpResponse = HttpResponse(200, "{}")
-        when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
-          .thenReturn(Future.successful(httpResponse))
+      val httpResponse = HttpResponse(200, "{}")
+      when(mockBTNConnector.sendBtn(any[BTNRequest])(using any[HeaderCarrier](), any[String]()))
+        .thenReturn(Future.successful(httpResponse))
 
-        val result = service.sendBtn(btnPayload).futureValue
-        result mustBe httpResponse
+      val result = service.sendBtn(btnPayload).futureValue
+      result mustBe httpResponse
     }
   }
 }

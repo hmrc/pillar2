@@ -28,15 +28,15 @@ import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, UKTaxReturnDataFixture}
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors.*
 import uk.gov.hmrc.pillar2.service.BTNService
-import uk.gov.hmrc.http.HttpResponse
 
-import java.time.{LocalDate, ZonedDateTime}
+import java.time.LocalDate
 import scala.concurrent.Future
 
 class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with UKTaxReturnDataFixture {
@@ -86,15 +86,15 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should return 500 when service returns 500" in {
-       val responseBody = """{"code": "500", "message": "Internal Server Error"}"""
-       val httpResponse = HttpResponse(500, responseBody)
+      val responseBody = """{"code": "500", "message": "Internal Server Error"}"""
+      val httpResponse = HttpResponse(500, responseBody)
 
-       when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
-         .thenReturn(Future.successful(httpResponse))
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
+        .thenReturn(Future.successful(httpResponse))
 
-       val result = route(application, request).value
-       status(result) mustEqual 500
-       contentAsString(result) mustEqual responseBody
+      val result = route(application, request).value
+      status(result) mustEqual 500
+      contentAsString(result) mustEqual responseBody
     }
 
     "should return MissingHeaderError when X-Pillar2-Id header is missing" in {

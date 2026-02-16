@@ -17,7 +17,6 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logging
-import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
