@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.controllers
 
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.{Action, ControllerComponents}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
@@ -42,6 +43,6 @@ class BTNController @Inject() (
     given pillar2Id: String = request.pillar2Id
     btnService
       .sendBtn(request.body)
-      .map(response => Status(response.status)(response.body))
+      .map(response => Created(Json.toJson(response.success)))
   }
 }

@@ -28,15 +28,14 @@ import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, UKTaxReturnDataFixture}
-import uk.gov.hmrc.pillar2.models.btn.BTNRequest
+import uk.gov.hmrc.pillar2.models.btn.{BTNRequest, BTNSuccess, BTNSuccessResponse}
 import uk.gov.hmrc.pillar2.models.errors.*
 import uk.gov.hmrc.pillar2.service.BTNService
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.Future
 
 class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with UKTaxReturnDataFixture {
@@ -61,40 +60,17 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     .withJsonBody(Json.toJson(btnPayload))
 
   "submitBtn" - {
-    "should return the service response status and body" in {
-      val responseBody = """{"success": true}"""
-      val httpResponse = HttpResponse(200, responseBody)
+    "should return Created with ApiSuccessResponse when submission is successful" in {
+      val successResponse: BTNSuccessResponse = BTNSuccessResponse(
+        BTNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"))
+      )
 
-      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.successful(httpResponse))
-
-      val result = route(application, request).value
-
-      status(result) mustEqual 200
-      contentAsString(result) mustEqual responseBody
-    }
-
-    "should return 422 when service returns 422" in {
-      val responseBody = """{"code": "422", "message": "Validation failed"}"""
-      val httpResponse = HttpResponse(422, responseBody)
-
-      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
-        .thenReturn(Future.successful(httpResponse))
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
 
       val result = route(application, request).value
-      status(result) mustEqual 422
-      contentAsString(result) mustEqual responseBody
-    }
 
-    "should return 500 when service returns 500" in {
-      val responseBody = """{"code": "500", "message": "Internal Server Error"}"""
-      val httpResponse = HttpResponse(500, responseBody)
-
-      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
-        .thenReturn(Future.successful(httpResponse))
-
-      val result = route(application, request).value
-      status(result) mustEqual 500
-      contentAsString(result) mustEqual responseBody
+      status(result) mustEqual CREATED
+      contentAsJson(result) mustEqual Json.toJson(successResponse.success)
     }
 
     "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
@@ -114,6 +90,28 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
       val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, request).value))
       result mustEqual AuthorizationError
+    }
+
+    "should handle ValidationError from service" in {
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(ETMPValidationError("422", "Validation failed")))
+
+      val result = intercept[ETMPValidationError](await(route(application, request).value))
+      result mustEqual ETMPValidationError("422", "Validation failed")
+    }
+
+    "should handle InvalidJsonError from service" in {
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.failed(InvalidJsonError("Invalid JSON")))
+
+      val result = intercept[InvalidJsonError](await(route(application, request).value))
+      result mustEqual InvalidJsonError("Invalid JSON")
+    }
+
+    "should handle ApiInternalServerError from service" in {
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.failed(ApiInternalServerError))
+
+      val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
+      result mustEqual ApiInternalServerError
     }
   }
 }
