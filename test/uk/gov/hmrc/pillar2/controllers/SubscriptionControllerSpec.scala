@@ -34,7 +34,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse, SubscriptionResponseV2}
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
@@ -295,6 +295,27 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
+    "readAndCacheSubscriptionV2" - {
+      "return ok with the response if the connector returns successful" in {
+        forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (id, plrReference, response) =>
+          when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(response))
+          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2(id, plrReference).url)
+          val result  = route(application, request).value
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response.success)
+        }
+      }
+
+      "return UnexpectedResponse if connector returns non-OK response" in {
+        when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.failed(UnexpectedResponse))
+        val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2("id", "pillar2Id").url)
+        val result  = route(application, request).value
+        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      }
+    }
+
     "readSubscription" - {
       "return Ok response with json object if the connector returns successful" in {
         forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
@@ -310,6 +331,26 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       "return UnexpectedResponse if connector fails" in {
         when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
         val request = FakeRequest(GET, routes.SubscriptionController.readSubscription("pillar2Id").url)
+        val result  = route(application, request).value
+        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      }
+    }
+
+    "readSubscriptionV2" - {
+      "return Ok response with json object if the connector returns successful" in {
+        forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (plrReference, response) =>
+          when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2(plrReference).url)
+          val result  = route(application, request).value
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response.success)
+        }
+      }
+
+      "return UnexpectedResponse if connector fails" in {
+        when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
+        val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2("pillar2Id").url)
         val result  = route(application, request).value
         result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
       }

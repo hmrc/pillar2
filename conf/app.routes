@@ -17,6 +17,10 @@ GET           /subscription/read-subscription/:id/:plrReference            uk.go
 GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
 PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
 
+# V2 subscription routes:
+GET           /subscription/v2/read-subscription/:id/:plrReference         uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscriptionV2(id: String, plrReference: String)
+GET           /subscription/v2/read-subscription/:plrReference             uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscriptionV2(plrReference: String)
+
 
 GET           /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.get(id: String)
 POST          /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)

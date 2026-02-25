@@ -56,6 +56,15 @@ class SubscriptionConnector @Inject() (
       .execute[HttpResponse]
   }
 
+  def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val serviceName = "create-subscription"
+    val url         = s"${config.baseUrl(serviceName)}/v2/$plrReference"
+    http
+      .get(url"$url")
+      .setHeader(extraHeaders(config, serviceName)*)
+      .execute[HttpResponse]
+  }
+
   def amendSubscriptionInformation(
     amendRequest: ETMPAmendSubscriptionSuccess
   )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {

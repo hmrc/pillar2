@@ -102,6 +102,19 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
 
   }
 
+  "ReadSubscriptionV2" - {
+    "Send successful readSubscription" in new Setup {
+
+      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+        .thenReturn(Future.successful(AuditResult.Success))
+
+      forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponseV2.arbitrary) { (plrRef, response) =>
+        val result = await(service.auditReadSubscriptionSuccessV2(plrRef, response))
+        result mustBe AuditResult.Success
+      }
+    }
+  }
+
   "AmendSubscription" - {
     "Send successful amendSubscription" in new Setup {
 

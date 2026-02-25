@@ -21,7 +21,7 @@ import play.api.http.Status.*
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.models.audit.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendResponse, AmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
@@ -91,6 +91,24 @@ class AuditService @Inject() (
         secondaryContactDetails = responseData.success.secondaryContactDetails,
         filingMemberDetails = responseData.success.filingMemberDetails,
         accountingPeriod = responseData.success.accountingPeriod,
+        accountStatus = responseData.success.accountStatus
+      ).extendedDataEvent
+    )
+
+  def auditReadSubscriptionSuccessV2(
+    plrReference: String,
+    responseData: SubscriptionResponseV2
+  )(using hc:     HeaderCarrier): Future[AuditResult] =
+    auditConnector.sendExtendedEvent(
+      ReadSubscriptionSuccessAuditEventV2(
+        plrReference = plrReference,
+        formBundleNumber = responseData.success.formBundleNumber,
+        upeDetails = responseData.success.upeDetails,
+        upeCorrespAddressDetails = responseData.success.upeCorrespAddressDetails,
+        primaryContactDetails = responseData.success.primaryContactDetails,
+        secondaryContactDetails = responseData.success.secondaryContactDetails,
+        filingMemberDetails = responseData.success.filingMemberDetails,
+        accountingPeriods = responseData.success.accountingPeriods,
         accountStatus = responseData.success.accountStatus
       ).extendedDataEvent
     )
