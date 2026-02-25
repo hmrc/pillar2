@@ -223,6 +223,22 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
     }
 
+    "return subscription response if a valid response is received from ETMP but with no accounting periods" in {
+      forAll(plrReferenceGen) { plrReference =>
+        val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+        val response            = SubscriptionResponseV2(subscriptionSuccess)
+
+        val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.successful(mockResponse))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(AuditResult.Success))
+
+        val resultFuture = service.readSubscriptionDataV2(plrReference).futureValue
+        resultFuture mustEqual mockResponse
+      }
+    }
+
     "throw exception if no valid json is received from ETMP" in {
       when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.failed(UnexpectedResponse))

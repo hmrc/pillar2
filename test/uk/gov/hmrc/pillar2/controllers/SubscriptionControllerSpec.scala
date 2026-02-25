@@ -34,7 +34,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse, SubscriptionResponseV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
@@ -307,6 +307,20 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         }
       }
 
+      "return ok with the response if the connector returns successful but with no accounting periods" in {
+        forAll(arbMockId.arbitrary, plrReferenceGen) { (id, plrReference) =>
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+          val response            = SubscriptionResponseV2(subscriptionSuccess)
+
+          when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(response))
+          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2(id, plrReference).url)
+          val result  = route(application, request).value
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response.success)
+        }
+      }
+
       "return UnexpectedResponse if connector returns non-OK response" in {
         when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
           .thenReturn(Future.failed(UnexpectedResponse))
@@ -322,6 +336,20 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
           val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(plrReference).url)
+          val result  = route(application, request).value
+          status(result) mustEqual OK
+          contentAsJson(result) mustEqual Json.toJson(response.success)
+        }
+      }
+
+      "return Ok response with json object if the connector returns successful but with no accounting periods" in {
+        forAll(plrReferenceGen) { plrReference =>
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+          val response            = SubscriptionResponseV2(subscriptionSuccess)
+
+          when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2(plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)

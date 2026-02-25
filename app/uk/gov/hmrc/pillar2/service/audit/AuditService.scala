@@ -108,7 +108,7 @@ class AuditService @Inject() (
         primaryContactDetails = responseData.success.primaryContactDetails,
         secondaryContactDetails = responseData.success.secondaryContactDetails,
         filingMemberDetails = responseData.success.filingMemberDetails,
-        accountingPeriods = responseData.success.accountingPeriods,
+        accountingPeriods = responseData.success.accountingPeriods.getOrElse(Seq.empty),
         accountStatus = responseData.success.accountStatus
       ).extendedDataEvent
     )

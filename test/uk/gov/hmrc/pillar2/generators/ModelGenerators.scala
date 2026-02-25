@@ -896,7 +896,7 @@ trait ModelGenerators {
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
       filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
-      accountingPeriods        <- Gen.nonEmptyListOf(arbitrary[AccountingPeriodV2])
+      accountingPeriods        <- Gen.option(Gen.nonEmptyListOf(arbitrary[AccountingPeriodV2]))
       accountStatus            <- Gen.option(arbitrary[AccountStatus])
     } yield SubscriptionSuccessV2(
       formBundleNumber,

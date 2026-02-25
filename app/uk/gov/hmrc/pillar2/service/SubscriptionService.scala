@@ -520,7 +520,7 @@ class SubscriptionService @Inject() (
       subSecondaryCapturePhone = secDetails._2,
       subSecondaryPhonePreference = Option.when(secContactTel._1)(secContactTel._1),
       subRegisteredAddress = nonUKAddress,
-      subAccountingPeriods = sub.accountingPeriods,
+      subAccountingPeriods = sub.accountingPeriods.getOrElse(Seq.empty),
       accountStatus = sub.accountStatus,
       organisationName = organisationName
     )

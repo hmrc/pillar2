@@ -27,7 +27,7 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, SubscriptionResponse, SubscriptionResponseV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, SubscriptionResponse, SubscriptionResponseV2, SubscriptionSuccessV2}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
@@ -152,6 +152,26 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
 
+      "must return object when the response was OK but with no accounting periods" in {
+        forAll(arbPlrReference.arbitrary) { plrReference =>
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+          val response = SubscriptionResponseV2(subscriptionSuccess)
+
+          server.stubFor(
+            get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
+              .willReturn(
+                aResponse()
+                  .withStatus(200)
+                  .withBody(Json.stringify(Json.toJson(response)))
+              )
+          )
+
+          val result = connector.getSubscriptionInformationV2(plrReference).futureValue
+          result.status mustEqual OK
+          result.json mustEqual Json.toJson(SubscriptionResponseV2(response.success))
+        }
+      }
+
       "must throw exception when unexpected body is received" in {
         forAll(arbPlrReference.arbitrary) { plrReference =>
           server.stubFor(
@@ -181,7 +201,6 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           result.futureValue.status mustBe errorResponse
         }
       }
-
 
     }
 
