@@ -309,7 +309,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
       "return ok with the response if the connector returns successful but with no accounting periods" in {
         forAll(arbMockId.arbitrary, plrReferenceGen) { (id, plrReference) =>
-          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
           val response            = SubscriptionResponseV2(subscriptionSuccess)
 
           when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
@@ -344,7 +344,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
       "return Ok response with json object if the connector returns successful but with no accounting periods" in {
         forAll(plrReferenceGen) { plrReference =>
-          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
           val response            = SubscriptionResponseV2(subscriptionSuccess)
 
           when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]()))

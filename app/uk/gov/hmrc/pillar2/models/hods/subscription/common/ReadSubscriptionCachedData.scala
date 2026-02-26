@@ -45,7 +45,7 @@ object ReadSubscriptionCachedData {
 case class ReadSubscriptionCachedDataV2(
   plrReference:                Option[String],
   subMneOrDomestic:            MneOrDomestic,
-  subAccountingPeriods:        Seq[AccountingPeriodV2],
+  subAccountingPeriod:         Seq[AccountingPeriodV2],
   subPrimaryContactName:       String,
   subPrimaryEmail:             String,
   subPrimaryPhonePreference:   Boolean,

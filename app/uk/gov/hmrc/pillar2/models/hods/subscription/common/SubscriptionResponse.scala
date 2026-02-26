@@ -69,7 +69,7 @@ case class SubscriptionSuccessV2(
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
   filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriods:        Option[Seq[AccountingPeriodV2]],
+  accountingPeriod:         Option[Seq[AccountingPeriodV2]],
   accountStatus:            Option[AccountStatus]
 )
 

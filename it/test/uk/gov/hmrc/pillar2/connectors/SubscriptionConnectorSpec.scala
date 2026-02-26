@@ -154,7 +154,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
       "must return object when the response was OK but with no accounting periods" in {
         forAll(arbPlrReference.arbitrary) { plrReference =>
-          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriods = None)
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
           val response = SubscriptionResponseV2(subscriptionSuccess)
 
           server.stubFor(
