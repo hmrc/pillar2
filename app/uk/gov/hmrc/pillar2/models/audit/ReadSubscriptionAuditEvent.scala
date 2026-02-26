@@ -60,7 +60,7 @@ case class ReadSubscriptionSuccessAuditEventV2(
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
   filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriods:        Seq[AccountingPeriodV2],
+  accountingPeriod:         Seq[AccountingPeriodV2],
   accountStatus:            Option[AccountStatus]
 ) extends AuditEvent {
   override val auditType:  String  = "readPillar2Subscription"
