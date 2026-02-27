@@ -23,7 +23,7 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.ETMPAmendSubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -62,6 +62,19 @@ class SubscriptionConnector @Inject() (
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}"
     given writes: Writes[ETMPAmendSubscriptionSuccess] = ETMPAmendSubscriptionSuccess.format
+    http
+      .put(url"$url")
+      .withBody(Json.toJson(amendRequest))
+      .setHeader(extraHeaders(config, serviceName)*)
+      .execute[HttpResponse]
+  }
+
+  def amendSubscriptionInformationV2(
+    amendRequest: ETMPAmendSubscriptionSuccessV2
+  )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    val serviceName = "create-subscription"
+    val url         = s"${config.baseUrl(serviceName)}"
+    given writes: Writes[ETMPAmendSubscriptionSuccessV2] = ETMPAmendSubscriptionSuccessV2.format
     http
       .put(url"$url")
       .withBody(Json.toJson(amendRequest))

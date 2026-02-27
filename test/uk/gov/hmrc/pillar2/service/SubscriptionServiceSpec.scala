@@ -281,4 +281,71 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
   }
 
+  "sendAmendedDataV2" - {
+    "call amend API v2 and update cache in case of a successful response" in {
+      val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
+      val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
+        override def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
+          Future.successful(dummyReadResponse)
+      }
+
+      forAll(
+        arbitraryAmendSubscriptionSuccessV2.arbitrary,
+        arbMockId.arbitrary
+      ) { (validAmendObject, id) =>
+        val etmpAmendResponse = AmendResponse(
+          AmendSubscriptionSuccessResponse(
+            processingDate = LocalDate.now().toString,
+            formBundleNumber = "test-form-bundle-number"
+          )
+        )
+        val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())
+
+        when(
+          mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+            any[HeaderCarrier](),
+            any[ExecutionContext]()
+          )
+        )
+          .thenReturn(Future.successful(fakeAmendResponse))
+
+        subscriptionServiceWithStubbedStoreMethod.sendAmendedDataV2(id, validAmendObject).futureValue mustBe Done
+      }
+    }
+    "return failure in case of an unusual json response" in {
+
+      when(
+        mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
+        .thenReturn(Future.successful(HttpResponse.apply(status = OK, json = JsObject.empty, Map.empty)))
+
+      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        service.sendAmendedDataV2(id, validAmendObject).map { response =>
+          response mustBe uk.gov.hmrc.pillar2.models.JsResultError
+        }
+      }
+    }
+
+    "return failure in case of a non-200 response" in {
+
+      when(
+        mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
+        .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
+
+      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        service.sendAmendedDataV2(id, validAmendObject).map { response =>
+          response mustBe uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        }
+      }
+    }
+
+  }
+
 }
