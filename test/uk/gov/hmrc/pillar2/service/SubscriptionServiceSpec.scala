@@ -166,6 +166,33 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
   }
 
+  "storeSubscriptionResponseV2 " - {
+
+    "return done if a valid response is received from ETMP" in {
+      forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (mockId, plrReference, response) =>
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response).toString)))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(AuditResult.Success))
+        when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
+        val resultFuture = service.storeSubscriptionResponseV2(mockId, plrReference)
+
+        resultFuture.futureValue mustEqual response
+      }
+    }
+
+    "throw exception if no valid json is received from ETMP" in {
+      forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.failed(UnexpectedResponse))
+
+        val resultFuture = service.storeSubscriptionResponseV2(mockId, plrReference)
+
+        resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      }
+    }
+  }
+
   "readSubscriptionData " - {
 
     "return subscription response if a valid response is received from ETMP" in {
