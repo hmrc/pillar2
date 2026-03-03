@@ -57,8 +57,8 @@ class SubscriptionConnector @Inject() (
   }
 
   def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
-    val url         = s"${config.baseUrl(serviceName)}/v2/$plrReference"
+    val serviceName = "create-subscription-v2"
+    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
     http
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)

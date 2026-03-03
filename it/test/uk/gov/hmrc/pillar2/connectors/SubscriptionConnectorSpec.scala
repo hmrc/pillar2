@@ -33,7 +33,9 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.create-subscription.port" -> server.port()
+      "microservice.services.create-subscription.port" -> server.port(),
+      "microservice.services.create-subscription-v2.port" -> server.port(),
+      "microservice.services.create-subscription-v2.context" -> "/pillar2/subscription/v2"
     )
     .build()
   private val errorCodes: Gen[Int] = Gen.oneOf(Seq(203, 204, 400, 403, 500, 501, 502, 503, 504))
