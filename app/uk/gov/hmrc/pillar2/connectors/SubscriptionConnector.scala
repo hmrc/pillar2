@@ -72,7 +72,7 @@ class SubscriptionConnector @Inject() (
   def amendSubscriptionInformationV2(
     amendRequest: ETMPAmendSubscriptionSuccessV2
   )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
+    val serviceName = "amend-subscription-v2"
     val url         = s"${config.baseUrl(serviceName)}"
     given writes: Writes[ETMPAmendSubscriptionSuccessV2] = ETMPAmendSubscriptionSuccessV2.format
     http
