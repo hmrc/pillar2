@@ -35,7 +35,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
     .configure(
       "microservice.services.create-subscription.port" -> server.port(),
       "microservice.services.create-subscription-v2.port" -> server.port(),
-      "microservice.services.create-subscription-v2.context" -> "/pillar2/subscription/v2"
+      "microservice.services.create-subscription-v2.context" -> "/pillar2/subscription/v2",
       "microservice.services.amend-subscription-v2.port"      -> server.port(),
       "microservice.services.amend-subscription-v2.context"   -> "/pillar2/subscription/v2"
     )
