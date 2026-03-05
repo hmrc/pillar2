@@ -34,7 +34,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, AmendSubscriptionSuccessV2, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
@@ -336,6 +336,35 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
           val requestJson = Json.obj("invalid" -> "payload")
           val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
+            .withJsonBody(requestJson)
+          val resultFuture = route(application, fakeRequest).value
+          status(resultFuture) shouldBe BAD_REQUEST
+        }
+      }
+
+    }
+
+    "amendSubscriptionV2" - {
+
+      "return OK when valid data is provided" in {
+        forAll(arbMockId.arbitrary, arbitraryAmendSubscriptionSuccessV2.arbitrary) { (id, amendData) =>
+          when(mockSubscriptionService.sendAmendedDataV2(any[String](), any[AmendSubscriptionSuccessV2]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(Done))
+
+          val requestJson = Json.toJson(amendData)
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscriptionV2(id).url)
+            .withJsonBody(requestJson)
+          val resultFuture = route(application, fakeRequest).value
+          status(resultFuture) shouldBe OK
+        }
+      }
+      "return bad request if the validation fails on the json payload" in {
+        forAll(arbMockId.arbitrary) { id =>
+          when(mockSubscriptionService.sendAmendedDataV2(any[String](), any[AmendSubscriptionSuccessV2]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(Done))
+
+          val requestJson = Json.obj("invalid" -> "payload")
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscriptionV2(id).url)
             .withJsonBody(requestJson)
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe BAD_REQUEST

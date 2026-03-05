@@ -22,7 +22,7 @@ import play.api.{Logger, Logging}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, AmendSubscriptionSuccessV2}
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.service.SubscriptionService
@@ -83,6 +83,11 @@ class SubscriptionController @Inject() (
   def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
+  }
+
+  def amendSubscriptionV2(id: String): Action[AmendSubscriptionSuccessV2] = authenticate(parse.json[AmendSubscriptionSuccessV2]).async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    subscriptionService.sendAmendedDataV2(id, request.body).map(_ => Ok)
   }
 
 }

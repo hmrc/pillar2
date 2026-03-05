@@ -27,13 +27,15 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2, SubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.create-subscription.port" -> server.port()
+      "microservice.services.create-subscription.port"        -> server.port(),
+      "microservice.services.amend-subscription-v2.port"      -> server.port(),
+      "microservice.services.amend-subscription-v2.context"   -> "/pillar2/subscription/v2"
     )
     .build()
   private val errorCodes: Gen[Int] = Gen.oneOf(Seq(203, 204, 400, 403, 500, 501, 502, 503, 504))
@@ -129,6 +131,41 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
 
+    }
+
+    "amendSubscriptionInformationV2" - {
+
+      "must return status as OK for a successful amendment" in {
+        forAll(arbitrary[ETMPAmendSubscriptionSuccessV2]) { amendRequest =>
+          stubPutResponse(
+            s"/pillar2/subscription/v2",
+            OK
+          )
+
+          val result = await(connector.amendSubscriptionInformationV2(amendRequest))
+          result.status mustBe OK
+        }
+      }
+
+      "should handle 400 Bad Request" in {
+        forAll { (amendRequest: ETMPAmendSubscriptionSuccessV2) =>
+          stubPutResponse("/pillar2/subscription/v2", BAD_REQUEST)
+
+          val result = await(connector.amendSubscriptionInformationV2(amendRequest))
+
+          result.status mustBe BAD_REQUEST
+        }
+      }
+
+      "should handle INTERNAL_SERVER_ERROR" in {
+        forAll { (amendRequest: ETMPAmendSubscriptionSuccessV2) =>
+          stubPutResponse("/pillar2/subscription/v2", INTERNAL_SERVER_ERROR)
+
+          val result = await(connector.amendSubscriptionInformationV2(amendRequest))
+
+          result.status mustBe INTERNAL_SERVER_ERROR
+        }
+      }
     }
 
     "amendSubscriptionInformation" - {
