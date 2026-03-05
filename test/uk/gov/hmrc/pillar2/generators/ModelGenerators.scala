@@ -338,6 +338,44 @@ trait ModelGenerators {
     )
   }
 
+  val arbitraryWithIdUpeFmUserDataLLPV2: Arbitrary[JsValue] = Arbitrary {
+    for {
+      upeGRSResponse           <- arbitraryWithIdRegDataFoLLP.arbitrary
+      fmGRSResponse            <- arbitraryWithIdRegDataFoLLP.arbitrary
+      subAccountingPeriods     <- Gen.nonEmptyListOf(arbitrary[AccountingPeriodV2])
+      subPrimaryEmail          <- arbitrary[String]
+      subPrimaryContactName    <- stringsWithMaxLength(200)
+      subSecondaryContactName  <- stringsWithMaxLength(200)
+      subSecondaryEmail        <- arbitrary[String]
+      subSecondaryCapturePhone <- arbitrary[Int]
+      subRegisteredAddress     <- arbitraryNonUKAddressDetails.arbitrary
+      subPrimaryCapturePhone   <- arbitrary[Int]
+    } yield Json.obj(
+      "upeRegisteredInUK"           -> true,
+      "GrsUpStatus"                 -> RowStatus.Completed.value,
+      "upeEntityType"               -> "limitedLiabilityPartnership",
+      "upeGRSResponse"              -> upeGRSResponse,
+      "fmGRSResponse"               -> fmGRSResponse,
+      "NominateFilingMember"        -> true,
+      "fmRegisteredInUK"            -> true,
+      "GrsFilingMemberStatus"       -> RowStatus.Completed.value,
+      "fmEntityType"                -> "limitedLiabilityPartnership",
+      "subMneOrDomestic"            -> "ukAndOther",
+      "subAccountingPeriod"         -> subAccountingPeriods,
+      "subUsePrimaryContact"        -> true,
+      "subPrimaryEmail"             -> subPrimaryEmail,
+      "subPrimaryPhonePreference"   -> true,
+      "subPrimaryContactName"       -> subPrimaryContactName,
+      "subAddSecondaryContact"      -> true,
+      "subSecondaryContactName"     -> subSecondaryContactName,
+      "subSecondaryEmail"           -> subSecondaryEmail,
+      "subSecondaryPhonePreference" -> true,
+      "subSecondaryCapturePhone"    -> subSecondaryCapturePhone,
+      "subRegisteredAddress"        -> subRegisteredAddress,
+      "subPrimaryCapturePhone"      -> subPrimaryCapturePhone
+    )
+  }
+
   val arbitraryWithIdUpeAndNoIdFmUserData: Arbitrary[JsValue] = Arbitrary {
     for {
 
@@ -714,6 +752,20 @@ trait ModelGenerators {
     )
   }
 
+  given arbitraryAccountingPeriodV2: Arbitrary[AccountingPeriodV2] = Arbitrary {
+    for {
+      startDate         <- arbitrary[LocalDate]
+      endDate           <- arbitrary[LocalDate]
+      canAmendStartDate <- arbitrary[Boolean]
+      canAmendEndDate   <- arbitrary[Boolean]
+    } yield AccountingPeriodV2(
+      startDate = startDate,
+      endDate = endDate,
+      canAmendStartDate = canAmendStartDate,
+      canAmendEndDate = canAmendEndDate
+    )
+  }
+
   given arbitraryAccountingPeriodAmend: Arbitrary[AccountingPeriodAmend] = Arbitrary {
     for {
       startDate <- arbitrary[LocalDate]
@@ -826,6 +878,34 @@ trait ModelGenerators {
       secondaryContactDetails,
       filingMemberDetails,
       accountingPeriod,
+      accountStatus
+    )
+  }
+
+  given arbitrarySubscriptionResponseV2: Arbitrary[SubscriptionResponseV2] = Arbitrary {
+    for {
+      success <- arbitrary[SubscriptionSuccessV2]
+    } yield SubscriptionResponseV2(success)
+  }
+
+  given arbitrarySubscriptionSuccessV2: Arbitrary[SubscriptionSuccessV2] = Arbitrary {
+    for {
+      formBundleNumber         <- stringsWithMaxLength(20)
+      upeDetails               <- arbitrary[UpeDetails]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
+      accountingPeriods        <- Gen.option(Gen.nonEmptyListOf(arbitrary[AccountingPeriodV2]))
+      accountStatus            <- Gen.option(arbitrary[AccountStatus])
+    } yield SubscriptionSuccessV2(
+      formBundleNumber,
+      upeDetails,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails,
+      accountingPeriods,
       accountStatus
     )
   }

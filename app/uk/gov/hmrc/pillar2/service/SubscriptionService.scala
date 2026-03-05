@@ -403,9 +403,30 @@ class SubscriptionService @Inject() (
       _        <- createAuditForReadSubscription(plrReference, response)
     } yield response
 
+  def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
+    for {
+      response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
+      subscriptionResponse = response.json.as[SubscriptionResponseV2]
+      _ <- auditService.auditReadSubscriptionSuccessV2(plrReference, subscriptionResponse)
+      dataToStore = createCachedObjectV2(subscriptionResponse.success, plrReference)
+      _ <- repository.upsert(id, Json.toJson(dataToStore))
+    } yield subscriptionResponse
+
+  def readSubscriptionDataV2(plrReference: String)(using hc: HeaderCarrier): Future[HttpResponse] =
+    for {
+      response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
+      _        <- createAuditForReadSubscriptionV2(plrReference, response)
+    } yield response
+
   private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
     response.status match {
       case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionResponse])
+      case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
+    }
+
+  private def createAuditForReadSubscriptionV2(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
+    response.status match {
+      case 200 => auditService.auditReadSubscriptionSuccessV2(plrReference, response.json.as[SubscriptionResponseV2])
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
     }
 
@@ -454,6 +475,52 @@ class SubscriptionService @Inject() (
       subSecondaryPhonePreference = Option.when(secContactTel._1)(secContactTel._1),
       subRegisteredAddress = nonUKAddress,
       subAccountingPeriod = accountingPeriod,
+      accountStatus = sub.accountStatus,
+      organisationName = organisationName
+    )
+  }
+
+  private def createCachedObjectV2(sub: SubscriptionSuccessV2, plrReference: String): ReadSubscriptionCachedDataV2 = {
+
+    val nonUKAddress = NonUKAddress(
+      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
+      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty),
+      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
+      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty),
+      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty),
+      countryCode = sub.upeCorrespAddressDetails.countryCode
+    )
+
+    val primaryHasTelephone: Boolean = sub.primaryContactDetails.telephone.isDefined
+
+    val secContactTel: (Boolean, Boolean) = sub.secondaryContactDetails
+      .map { sContact =>
+        (sContact.telephone.isDefined, sContact.telephone.exists(_.nonEmpty) || sContact.emailAddress.nonEmpty || sContact.name.nonEmpty)
+      }
+      .getOrElse(false -> false)
+
+    val secDetails: (Option[String], Option[String], Option[String]) = sub.secondaryContactDetails
+      .map { sec =>
+        (Some(sec.name), sec.telephone, Some(sec.emailAddress))
+      }
+      .getOrElse((None, None, None))
+
+    val organisationName: Option[String] = Some(sub.upeDetails.organisationName)
+
+    ReadSubscriptionCachedDataV2(
+      plrReference = Some(plrReference),
+      subMneOrDomestic = if sub.upeDetails.domesticOnly then MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
+      subPrimaryContactName = sub.primaryContactDetails.name,
+      subPrimaryEmail = sub.primaryContactDetails.emailAddress,
+      subPrimaryCapturePhone = sub.primaryContactDetails.telephone,
+      subPrimaryPhonePreference = primaryHasTelephone,
+      subSecondaryContactName = secDetails._1,
+      subAddSecondaryContact = secContactTel._2,
+      subSecondaryEmail = secDetails._3,
+      subSecondaryCapturePhone = secDetails._2,
+      subSecondaryPhonePreference = Option.when(secContactTel._1)(secContactTel._1),
+      subRegisteredAddress = nonUKAddress,
+      subAccountingPeriod = sub.accountingPeriod.getOrElse(Seq.empty),
       accountStatus = sub.accountStatus,
       organisationName = organisationName
     )

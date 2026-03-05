@@ -80,6 +80,22 @@ class SubscriptionController @Inject() (
     } yield convertToResult(response)(using logger: Logger)
   }
 
+  def readAndCacheSubscriptionV2(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+    for {
+      response <- subscriptionService.storeSubscriptionResponseV2(id, plrReference)
+    } yield Ok(Json.toJson(response.success))
+  }
+
+  def readSubscriptionV2(plrReference: String): Action[AnyContent] = authenticate.async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+    for {
+      response <- subscriptionService.readSubscriptionDataV2(plrReference)
+    } yield convertToResult(response)(using logger: Logger)
+  }
+
   def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)

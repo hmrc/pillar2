@@ -27,13 +27,15 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2, SubscriptionResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2, SubscriptionResponse, SubscriptionResponseV2, SubscriptionSuccessV2}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.create-subscription.port"        -> server.port(),
+      "microservice.services.create-subscription.port" -> server.port(),
+      "microservice.services.create-subscription-v2.port" -> server.port(),
+      "microservice.services.create-subscription-v2.context" -> "/pillar2/subscription/v2",
       "microservice.services.amend-subscription-v2.port"      -> server.port(),
       "microservice.services.amend-subscription-v2.context"   -> "/pillar2/subscription/v2"
     )
@@ -101,6 +103,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           result.json mustEqual Json.toJson(SubscriptionResponse(response.success))
         }
       }
+
       "must throw exception when unexpected body is received" in {
         forAll(arbPlrReference.arbitrary) { plrReference =>
           server.stubFor(
@@ -127,6 +130,78 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           )
 
           val result = connector.getSubscriptionInformation(plrReference)
+          result.futureValue.status mustBe errorResponse
+        }
+      }
+
+
+
+    }
+
+    "for retrieving Subscription Information from updated api" - {
+
+      "must return object when the response was OK" in {
+        forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponseV2.arbitrary) { (plrReference, response) =>
+          server.stubFor(
+            get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
+              .willReturn(
+                aResponse()
+                  .withStatus(200)
+                  .withBody(Json.stringify(Json.toJson(SubscriptionResponseV2(response.success))))
+              )
+          )
+          val result = connector.getSubscriptionInformationV2(plrReference).futureValue
+          result.status mustEqual OK
+          result.json mustEqual Json.toJson(SubscriptionResponseV2(response.success))
+        }
+      }
+
+      "must return object when the response was OK but with no accounting periods" in {
+        forAll(arbPlrReference.arbitrary) { plrReference =>
+          val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
+          val response = SubscriptionResponseV2(subscriptionSuccess)
+
+          server.stubFor(
+            get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
+              .willReturn(
+                aResponse()
+                  .withStatus(200)
+                  .withBody(Json.stringify(Json.toJson(response)))
+              )
+          )
+
+          val result = connector.getSubscriptionInformationV2(plrReference).futureValue
+          result.status mustEqual OK
+          result.json mustEqual Json.toJson(SubscriptionResponseV2(response.success))
+        }
+      }
+
+      "must throw exception when unexpected body is received" in {
+        forAll(arbPlrReference.arbitrary) { plrReference =>
+          server.stubFor(
+            get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
+              .willReturn(
+                aResponse()
+                  .withStatus(200)
+                  .withBody(Json.stringify(Json.obj()))
+              )
+          )
+          val result = connector.getSubscriptionInformationV2(plrReference)
+          result.failed.map { ex =>
+            ex shouldBe a[JsResultException]
+          }
+        }
+      }
+
+      "must return future failed for non-200 responses" in {
+        val errorResponse = errorCodes.sample.value
+        forAll(plrReferenceGen) { (plrReference: String) =>
+          stubGetResponse(
+            s"/pillar2/subscription/v2/$plrReference",
+            errorResponse
+          )
+
+          val result = connector.getSubscriptionInformationV2(plrReference)
           result.futureValue.status mustBe errorResponse
         }
       }

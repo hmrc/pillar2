@@ -166,6 +166,33 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
   }
 
+  "storeSubscriptionResponseV2 " - {
+
+    "return done if a valid response is received from ETMP" in {
+      forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (mockId, plrReference, response) =>
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response).toString)))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(AuditResult.Success))
+        when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
+        val resultFuture = service.storeSubscriptionResponseV2(mockId, plrReference)
+
+        resultFuture.futureValue mustEqual response
+      }
+    }
+
+    "throw exception if no valid json is received from ETMP" in {
+      forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.failed(UnexpectedResponse))
+
+        val resultFuture = service.storeSubscriptionResponseV2(mockId, plrReference)
+
+        resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      }
+    }
+  }
+
   "readSubscriptionData " - {
 
     "return subscription response if a valid response is received from ETMP" in {
@@ -208,6 +235,65 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
     }
   }
+
+  "readSubscriptionDataV2 " - {
+
+    "return subscription response if a valid response is received from ETMP" in {
+      forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (plrReference, response) =>
+        val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.successful(mockResponse))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(AuditResult.Success))
+        val resultFuture = service.readSubscriptionDataV2(plrReference).futureValue
+        resultFuture mustEqual mockResponse
+      }
+    }
+
+    "return subscription response if a valid response is received from ETMP but with no accounting periods" in {
+      forAll(plrReferenceGen) { plrReference =>
+        val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
+        val response            = SubscriptionResponseV2(subscriptionSuccess)
+
+        val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
+        when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.successful(mockResponse))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(AuditResult.Success))
+
+        val resultFuture = service.readSubscriptionDataV2(plrReference).futureValue
+        resultFuture mustEqual mockResponse
+      }
+    }
+
+    "throw exception if no valid json is received from ETMP" in {
+      when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+        .thenReturn(Future.failed(UnexpectedResponse))
+      when(mockAuditService.auditReadSubscriptionFailure(any[String](), any[Int](), any[JsValue]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.successful(AuditResult.Success))
+      val resultFuture = service.readSubscriptionDataV2("plrReference")
+      resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+    }
+
+    "handle LimitedLiabilityPartnership entity type correctly" - {
+      "when all required data is present" in {
+        forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2], arbitraryWithIdUpeFmUserDataLLPV2.arbitrary) { (plrReference, response, _) =>
+          val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
+
+          when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+            .thenReturn(Future.successful(mockResponse))
+
+          when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.successful(AuditResult.Success))
+
+          val resultFuture = service.readSubscriptionDataV2(plrReference).futureValue
+
+          resultFuture mustEqual mockResponse
+        }
+      }
+    }
+  }
+
   "sendAmendedData" - {
     "call amend API and update cache in case of a successful response" in {
       val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
