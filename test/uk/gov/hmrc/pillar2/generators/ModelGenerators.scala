@@ -979,6 +979,76 @@ trait ModelGenerators {
     arbitraryAmendSubscriptionSuccess.arbitrary.map(AmendSubscriptionInput(_))
   }
 
+  given arbitraryOriginalAccountingPeriod: Arbitrary[OriginalAccountingPeriod] = Arbitrary {
+    for {
+      taxObligationStartDate <- arbitrary[LocalDate]
+      taxObligationEndDate   <- arbitrary[LocalDate]
+    } yield OriginalAccountingPeriod(
+      taxObligationStartDate = taxObligationStartDate,
+      taxObligationEndDate = taxObligationEndDate
+    )
+  }
+
+  given arbitraryNewAccountingPeriodDetails: Arbitrary[NewAccountingPeriodDetails] = Arbitrary {
+    for {
+      updateObligationStartDate <- arbitrary[LocalDate]
+      updateObligationEndDate   <- arbitrary[LocalDate]
+    } yield NewAccountingPeriodDetails(
+      updateObligationStartDate = updateObligationStartDate,
+      updateObligationEndDate = updateObligationEndDate
+    )
+  }
+
+  given arbitraryAccountingPeriodAmendV2: Arbitrary[AccountingPeriodAmendV2] = Arbitrary {
+    for {
+      amendAccountingPeriod     <- arbitrary[Boolean]
+      originalAccountingPeriods <- Gen.option(Gen.listOfN(2, arbitrary[OriginalAccountingPeriod]).map(_.toSeq))
+      newAccountingPeriod       <- Gen.option(arbitrary[NewAccountingPeriodDetails])
+    } yield AccountingPeriodAmendV2(
+      amendAccountingPeriod = amendAccountingPeriod,
+      originalAccountingPeriods = originalAccountingPeriods,
+      newAccountingPeriod = newAccountingPeriod
+    )
+  }
+
+  given arbitraryAmendSubscriptionSuccessV2: Arbitrary[AmendSubscriptionSuccessV2] = Arbitrary {
+    for {
+      replaceFilingMember      <- arbitrary[Boolean]
+      upeDetails               <- arbitrary[UpeDetailsAmend]
+      accountingPeriod         <- arbitrary[AccountingPeriodAmendV2]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
+    } yield AmendSubscriptionSuccessV2(
+      replaceFilingMember,
+      upeDetails,
+      accountingPeriod,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails
+    )
+  }
+
+  given arbitraryETMPAmendSubscriptionSuccessV2: Arbitrary[ETMPAmendSubscriptionSuccessV2] = Arbitrary {
+    for {
+      upeDetails               <- arbitrary[UpeDetailsAmend]
+      accountingPeriod         <- arbitrary[AccountingPeriodAmendV2]
+      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
+      primaryContactDetails    <- arbitrary[ContactDetailsType]
+      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
+    } yield ETMPAmendSubscriptionSuccessV2(
+      upeDetails,
+      accountingPeriod,
+      upeCorrespAddressDetails,
+      primaryContactDetails,
+      secondaryContactDetails,
+      filingMemberDetails
+    )
+  }
+
   val arbitraryAmendSubscriptionUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
       plrRef               <- stringsWithMaxLength(20)
