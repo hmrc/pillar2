@@ -41,9 +41,9 @@ class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
           case error: MissingHeaderError  => BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message)))
           case error: ETMPValidationError => UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message)))
           case error: InvalidJsonError    => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
-          case error @ ApiInternalServerError => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
-          case error @ AuthorizationError     => Unauthorized(Json.toJson(Pillar2ApiError(error.code, error.message)))
-
+          case error @ SubscriptionProcessingError => UnprocessableEntity(Json.toJson(Pillar2ApiError(error.code, error.message)))
+          case error @ ApiInternalServerError      => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
+          case error @ AuthorizationError          => Unauthorized(Json.toJson(Pillar2ApiError(error.code, error.message)))
         }
         logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} statuscode", exception)
         Future.successful(ret)

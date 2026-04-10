@@ -26,7 +26,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.*
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
-import uk.gov.hmrc.pillar2.models.errors.ETMPValidationError
+import uk.gov.hmrc.pillar2.models.errors.SubscriptionProcessingError
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
@@ -408,7 +408,7 @@ class SubscriptionService @Inject() (
     for {
       response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
       _ <- response.status match {
-             case UNPROCESSABLE_ENTITY => Future.failed(ETMPValidationError("422", response.body))
+             case UNPROCESSABLE_ENTITY => Future.failed(SubscriptionProcessingError)
              case _                    => Future.unit
            }
       subscriptionResponse = response.json.as[SubscriptionResponseV2]

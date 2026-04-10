@@ -32,6 +32,11 @@ case class InvalidJsonError(decodeError: String) extends Pillar2Error {
 
 }
 
+case object SubscriptionProcessingError extends Pillar2Error {
+  val message: String = "Subscription is being processed"
+  val code:    String = "422"
+}
+
 case object ApiInternalServerError extends Pillar2Error {
   val message: String = "Internal server error"
   val code:    String = "003"
