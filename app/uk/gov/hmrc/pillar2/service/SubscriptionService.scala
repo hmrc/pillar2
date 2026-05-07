@@ -567,7 +567,7 @@ class SubscriptionService @Inject() (
             logger.info(
               s"Successful response received for amend subscription v2 for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
             )
-            storeSubscriptionResponse(
+            storeSubscriptionResponseV2(
               id = id,
               plrReference = etmpAmendRequest.upeDetails.plrReference
             ).as(Done)
