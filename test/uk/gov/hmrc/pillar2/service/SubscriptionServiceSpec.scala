@@ -368,11 +368,11 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   }
 
   "sendAmendedDataV2" - {
-    "call amend API v2 and update cache in case of a successful response" in {
-      val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
+    "call amend API v2 and update cache via v2 store in case of a successful response" in {
+      val dummyReadResponseV2 = arbitrarySubscriptionResponseV2.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
-        override def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
-          Future.successful(dummyReadResponse)
+        override def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
+          Future.successful(dummyReadResponseV2)
       }
 
       forAll(
