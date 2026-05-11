@@ -10,7 +10,7 @@
 
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>%date{ISO8601} level=[%level] logger=[%logger] thread=[%thread] rid=[%X{X-Request-ID}] user=[%X{Authorization}] message=[%message] %replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
+            <pattern>%highlight([%-5level]) %cyan(%date{HH:mm:ss.SSS}) %magenta(%logger{25}) [rid=%X{X-Request-ID:-none}] - %message%replace(exception=[%xException]){'^exception=\[\]$',''}%n</pattern>
         </encoder>
     </appender>
 
@@ -20,7 +20,6 @@
             <pattern>%message%n</pattern>
         </encoder>
     </appender>
-
 
     <logger name="com.google.inject" level="INFO"/>
 

@@ -36,7 +36,7 @@ object Pillar2Error {
   }
 
   case object ApiInternalServerError extends Pillar2Error {
-    val message: String = "Internal server error"
+    val message: String = "An unexpected error occurred"
     val code:    String = "003"
   }
 
