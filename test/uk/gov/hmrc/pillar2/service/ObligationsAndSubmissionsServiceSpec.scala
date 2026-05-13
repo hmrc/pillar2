@@ -28,7 +28,7 @@ import uk.gov.hmrc.pillar2.models.errors.ApiInternalServerError
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.*
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
-import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.UKTR_CREATE
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.{GIR_AMEND, GIR_CREATE, GIR_DELETE, UKTR_CREATE}
 
 import java.time.{LocalDate, ZonedDateTime}
 import scala.concurrent.{ExecutionContext, Future}
@@ -65,7 +65,11 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
               GIR,
               Open,
               canAmend = true,
-              Seq.empty
+              Seq(
+                Submission(GIR_CREATE, ZonedDateTime.now, None),
+                Submission(GIR_AMEND, ZonedDateTime.now, None),
+                Submission(GIR_DELETE, ZonedDateTime.now, None)
+              )
             )
           )
         )
