@@ -96,6 +96,7 @@ class SubscriptionController @Inject() (
 
   def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    logger.info(s"SubscriptionController - readSubscription for Pillar 2 ID: $plrReference")
     for {
       response <- subscriptionService.readSubscriptionData(plrReference)
     } yield convertToResult(response)(using logger: Logger)
@@ -111,7 +112,7 @@ class SubscriptionController @Inject() (
 
   def readSubscriptionV2(plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
+    logger.info(s"SubscriptionController - readSubscriptionV2 for Pillar 2 ID: $plrReference")
     for {
       response <- subscriptionService.readSubscriptionDataV2(plrReference)
     } yield convertToResult(response)(using logger: Logger)
@@ -119,11 +120,13 @@ class SubscriptionController @Inject() (
 
   def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    logger.info(s"SubscriptionController - amendSubscription for Pillar 2 ID: $id")
     subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
   }
 
   def amendSubscriptionV2(id: String): Action[AmendSubscriptionSuccessV2] = authenticate(parse.json[AmendSubscriptionSuccessV2]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+    logger.info(s"SubscriptionController - amendSubscriptionV2 for Pillar 2 ID: $id")
     subscriptionService.sendAmendedDataV2(id, request.body).map(_ => Ok)
   }
 

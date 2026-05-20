@@ -64,6 +64,7 @@ class SubscriptionConnector @Inject() (
   def getSubscriptionInformation(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference"
+    logger.info(s"SubscriptionConnector - getSubscriptionInformation from ETMP for Pillar 2 Id: $plrReference")
     http
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
@@ -73,6 +74,7 @@ class SubscriptionConnector @Inject() (
   def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription-v2"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference"
+    logger.info(s"SubscriptionConnector - getSubscriptionInformationV2 from ETMP for Pillar 2 Id: $plrReference")
     http
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
