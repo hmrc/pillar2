@@ -61,6 +61,27 @@ class SubscriptionController @Inject() (
     )
   }
 
+  def createSubscriptionV2: Action[JsValue] = authenticate(parse.json).async { request =>
+    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+
+    val subscriptionParameters: JsResult[SubscriptionRequestParameters] =
+      request.body.validate[SubscriptionRequestParameters]
+    subscriptionParameters.fold(
+      invalid = error => {
+        logger.info(s"SubscriptionController - createSubscriptionV2 called $error")
+
+        Future.successful(
+          BadRequest("Subscription parameter is invalid")
+        )
+      },
+      valid = subs =>
+        for {
+          userAnswer <- getUserAnswers(subs.id)
+          response <- subscriptionService.sendCreateSubscriptionV2(subs.regSafeId, subs.fmSafeId, userAnswer)
+        } yield convertToResult(response)(using logger: Logger)
+    )
+  }
+
   def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
     userAnswerCache.get(id).map { userAnswer =>
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
