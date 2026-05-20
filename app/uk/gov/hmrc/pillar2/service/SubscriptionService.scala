@@ -87,32 +87,51 @@ class SubscriptionService @Inject() (
     userAnswers.get(NominateFilingMemberId) match {
       case Some(true) =>
         (userAnswers.get(upeRegisteredInUKId), userAnswers.get(fmRegisteredInUKId)) match {
-
           case (Some(true), Some(true)) =>
+            logger.info("sendCreateSubscriptionV2 - bothRegisteredInUKV2")
             bothRegisteredInUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
           case (Some(false), Some(false)) =>
+            logger.info("sendCreateSubscriptionV2 - bothOutsideUKV2")
             bothOutsideUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
           case (Some(true), Some(false)) =>
+            logger.info("sendCreateSubscriptionV2 - upeInUKFMOutsideUKV2")
             upeInUKFMOutsideUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
           case (Some(false), Some(true)) =>
+            logger.info("sendCreateSubscriptionV2 - upeOutsideUKFMInUKV2")
             upeOutsideUKFMInUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
-          case _ => subscriptionError
+          case other =>
+            logger.error(s"sendCreateSubscriptionV2 - unmatched UK registration combination: $other")
+            subscriptionError
         }
 
       case Some(false) =>
         userAnswers.get(upeRegisteredInUKId) match {
           case Some(true) =>
-            upeRegisteredInUKV2(upeSafeId, userAnswers).getOrElse {
-              subscriptionError
-            }
+            logger.info("sendCreateSubscriptionV2 - upeRegisteredInUKV2")
+            upeRegisteredInUKV2(upeSafeId, userAnswers).getOrElse(subscriptionError)
           case Some(false) =>
-            upeRegisteredOutsideUKV2(upeSafeId, userAnswers).getOrElse {
-              subscriptionError
-            }
-          case None => subscriptionError
+            logger.info("sendCreateSubscriptionV2 - upeRegisteredOutsideUKV2")
+            upeRegisteredOutsideUKV2(upeSafeId, userAnswers).getOrElse(subscriptionError)
+          case None =>
+            logger.error("sendCreateSubscriptionV2 - upeRegisteredInUKId not found")
+            subscriptionError
         }
-      case None => subscriptionError
+
+      case None =>
+        logger.error("sendCreateSubscriptionV2 - NominateFilingMemberId not found")
+        subscriptionError
     }
+
+  private def getAccountingPeriodV2FromV1(ap: AccountingPeriod): Seq[AccountingPeriodV2] =
+    Seq(
+      AccountingPeriodV2(
+        startDate = ap.startDate,
+        endDate = ap.endDate,
+        dueDate = ap.dueDate,
+        canAmendStartDate = true,
+        canAmendEndDate = true
+      )
+    )
 
   private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using
     hc:                                         HeaderCarrier
@@ -143,13 +162,13 @@ class SubscriptionService @Inject() (
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
       nominateFm            <- userAnswers.get(NominateFilingMemberId)
       subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriods     <- userAnswers.get(subAccountingPeriodsId)
+      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
       val subscriptionRequest = RequestDetailV2(
         getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
-        getAccountingPeriodV2(accountingPeriods),
+        getAccountingPeriodV2FromV1(accountingPeriod),
         getUpeAddressDetails(subAddressId),
         primaryContactDetails,
         getSecondaryContactInformation(userAnswers),
@@ -192,13 +211,13 @@ class SubscriptionService @Inject() (
       nominateFm            <- userAnswers.get(NominateFilingMemberId)
       upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
       subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriods     <- userAnswers.get(subAccountingPeriodsId)
+      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
       val subscriptionRequest = RequestDetailV2(
         getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
-        getAccountingPeriodV2(accountingPeriods),
+        getAccountingPeriodV2FromV1(accountingPeriod),
         getUpeAddressDetails(subAddressId),
         primaryContactDetails,
         getSecondaryContactInformation(userAnswers),
@@ -244,13 +263,13 @@ class SubscriptionService @Inject() (
       fmEntityTypeId        <- userAnswers.get(fmEntityTypeId)
       fmGrsResponseId       <- userAnswers.get(fmGRSResponseId)
       subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriods     <- userAnswers.get(subAccountingPeriodsId)
+      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
       val subscriptionRequest = RequestDetailV2(
         getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
-        getAccountingPeriodV2(accountingPeriods),
+        getAccountingPeriodV2FromV1(accountingPeriod),
         getUpeAddressDetails(subAddressId),
         primaryContactDetails,
         getSecondaryContactInformation(userAnswers),
@@ -296,13 +315,13 @@ class SubscriptionService @Inject() (
       upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
       fmNameRegistration    <- userAnswers.get(fmNameRegistrationId)
       subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriods     <- userAnswers.get(subAccountingPeriodsId)
+      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
       val subscriptionRequest = RequestDetailV2(
         getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
-        getAccountingPeriodV2(accountingPeriods),
+        getAccountingPeriodV2FromV1(accountingPeriod),
         getUpeAddressDetails(subAddressId),
         primaryContactDetails,
         getSecondaryContactInformation(userAnswers),
@@ -346,13 +365,13 @@ class SubscriptionService @Inject() (
       nominateFm            <- userAnswers.get(NominateFilingMemberId)
       fmNameRegistration    <- userAnswers.get(fmNameRegistrationId)
       subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriods     <- userAnswers.get(subAccountingPeriodsId)
+      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
       val subscriptionRequest = RequestDetailV2(
         getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
-        getAccountingPeriodV2(accountingPeriods),
+        getAccountingPeriodV2FromV1(accountingPeriod),
         getUpeAddressDetails(subAddressId),
         primaryContactDetails,
         getSecondaryContactInformation(userAnswers),
@@ -400,13 +419,13 @@ class SubscriptionService @Inject() (
       fmEntityTypeId        <- userAnswers.get(fmEntityTypeId)
       fmGrsResponseId       <- userAnswers.get(fmGRSResponseId)
       subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriods     <- userAnswers.get(subAccountingPeriodsId)
+      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
       val subscriptionRequest = RequestDetailV2(
         getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
-        getAccountingPeriodV2(accountingPeriods),
+        getAccountingPeriodV2FromV1(accountingPeriod),
         getUpeAddressDetails(subAddressId),
         primaryContactDetails,
         getSecondaryContactInformation(userAnswers),
@@ -581,17 +600,6 @@ class SubscriptionService @Inject() (
 
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
-
-  private def getAccountingPeriodV2(accountingPeriods: Seq[AccountingPeriodV2]): Seq[AccountingPeriodV2] =
-    Seq(
-      AccountingPeriodV2(
-        accountingPeriods.head.startDate,
-        accountingPeriods.head.endDate,
-        accountingPeriods.head.dueDate,
-        accountingPeriods.head.canAmendStartDate,
-        accountingPeriods.head.canAmendEndDate
-      )
-    )
 
   def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
