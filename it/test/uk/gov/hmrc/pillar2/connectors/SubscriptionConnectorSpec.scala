@@ -86,6 +86,10 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
     }
 
+//    "for a Create Subscription V2" - {
+//
+//    }
+
     "for retrieving Subscription Information" - {
 
       "must return object when the response was OK" in {

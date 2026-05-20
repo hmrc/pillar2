@@ -77,7 +77,7 @@ class SubscriptionController @Inject() (
       valid = subs =>
         for {
           userAnswer <- getUserAnswers(subs.id)
-          response <- subscriptionService.sendCreateSubscriptionV2(subs.regSafeId, subs.fmSafeId, userAnswer)
+          response   <- subscriptionService.sendCreateSubscriptionV2(subs.regSafeId, subs.fmSafeId, userAnswer)
         } yield convertToResult(response)(using logger: Logger)
     )
   }
