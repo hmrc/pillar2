@@ -28,7 +28,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2, SubscriptionResponse, SubscriptionResponseV2, SubscriptionSuccessV2}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, RequestDetailV2}
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
   override lazy val app: Application = applicationBuilder()
@@ -86,9 +86,40 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       }
     }
 
-//    "for a Create Subscription V2" - {
-//
-//    }
+    "for a Create Subscription V2" - {
+      "must return status as OK" in {
+        forAll(arbitrary[RequestDetailV2]) { sub =>
+          stubResponse(
+            "/pillar2/subscription/v2",
+            OK
+          )
+          val result = await(connector.sendCreateSubscriptionInformationV2(sub))
+          result.status mustBe OK
+        }
+      }
+
+      "must return status as BAD_REQUEST" in {
+        forAll(arbitrary[RequestDetailV2]) { sub =>
+          stubResponse(
+            "/pillar2/subscription/v2",
+            BAD_REQUEST
+          )
+          val result = connector.sendCreateSubscriptionInformationV2(sub).futureValue
+          result.status mustBe BAD_REQUEST
+        }
+      }
+
+      "must return status as INTERNAL_SERVER_ERROR" in {
+        forAll(arbitrary[RequestDetailV2]) { sub =>
+          stubResponse(
+            "/pillar2/subscription/v2",
+            INTERNAL_SERVER_ERROR
+          )
+          val result = connector.sendCreateSubscriptionInformationV2(sub).futureValue
+          result.status mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+    }
 
     "for retrieving Subscription Information" - {
 
