@@ -17,8 +17,8 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.*
-import uk.gov.hmrc.pillar2.models.AccountingPeriod
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
+import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodV2}
 
 import java.time.LocalDateTime
 
@@ -36,8 +36,26 @@ case class CreateSubscriptionAuditEvent(
   override val detailJson: JsValue = Json.toJson(this)
 }
 
+case class CreateSubscriptionAuditEventV2(
+  upeDetails:               UpeDetails,
+  accountingPeriods:        Seq[AccountingPeriodV2],
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberDetails],
+  plrReference:             String,
+  processingDate:           String
+) extends AuditEvent {
+  override val auditType:  String  = "createPillar2SubscriptionV2"
+  override val detailJson: JsValue = Json.toJson(this)
+}
+
 object CreateSubscriptionAuditEvent {
   given formats: Format[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
+}
+
+object CreateSubscriptionAuditEventV2 {
+  given formats: Format[CreateSubscriptionAuditEventV2] = Json.format[CreateSubscriptionAuditEventV2]
 }
 
 case class SubscriptionSuccessResponse(plrReference: String, formBundleNumber: String, processingDate: LocalDateTime)
