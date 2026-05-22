@@ -24,7 +24,7 @@ import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, RequestDetailV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -47,24 +47,9 @@ class SubscriptionConnector @Inject() (
       .execute[HttpResponse]
   }
 
-  def sendCreateSubscriptionInformationV2(
-    subscription: RequestDetailV2
-  )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription-v2"
-    logger.info(
-      s"SubscriptionConnector - CreateSubscriptionRequestV2 going to Etmp - ${Json.toJson(subscription)}"
-    )
-    http
-      .post(url"${config.baseUrl(serviceName)}")
-      .setHeader(extraHeaders(config, serviceName)*)
-      .withBody(Json.toJson(subscription))
-      .execute[HttpResponse]
-  }
-
   def getSubscriptionInformation(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference"
-    logger.info(s"SubscriptionConnector - getSubscriptionInformation from ETMP for Pillar 2 Id: $plrReference")
     http
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
@@ -74,7 +59,6 @@ class SubscriptionConnector @Inject() (
   def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription-v2"
     val url         = s"${config.baseUrl(serviceName)}/$plrReference"
-    logger.info(s"SubscriptionConnector - getSubscriptionInformationV2 from ETMP for Pillar 2 Id: $plrReference")
     http
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)

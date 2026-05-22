@@ -17,8 +17,8 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.request
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.AccountingPeriod
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.{AccountingPeriod, AccountingPeriodV2}
 
 case class RequestDetail(
   upeDetails:               UpeDetails,
@@ -29,21 +29,7 @@ case class RequestDetail(
   filingMemberDetails:      Option[FilingMemberDetails]
 )
 
-case class RequestDetailV2(
-  upeDetails:               UpeDetails,
-  accountingPeriods:        Seq[AccountingPeriodV2],
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    ContactDetailsType,
-  secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberDetails]
-)
-
 object RequestDetail {
   given format: OFormat[RequestDetail] =
     Json.format[RequestDetail]
-}
-
-object RequestDetailV2 {
-  given format: OFormat[RequestDetailV2] =
-    Json.format[RequestDetailV2]
 }

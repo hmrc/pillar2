@@ -13,7 +13,6 @@ POST          /rfm/registration/:id                                        uk.go
 
 
 POST          /subscription/create-subscription                            uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
-POST          /subscription/v2/create-subscription                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscriptionV2
 GET           /subscription/read-subscription/:id/:plrReference            uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
 GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
 PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
@@ -44,5 +43,5 @@ PUT           /amend-uk-tax-return                                         uk.go
 GET           /obligations-and-submissions/:fromDate/:toDate               uk.gov.hmrc.pillar2.controllers.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate: String, toDate: String)
 
 POST          /overseas-return-notification/submit                         uk.gov.hmrc.pillar2.controllers.ORNController.submitOrn()
-PUT           /overseas-return-notification/amend                          uk.gov.hmrc.pillar2.controllers.ORNController.amendOrn()
+PUT           /overseas-return-notification/amend                         uk.gov.hmrc.pillar2.controllers.ORNController.amendOrn()
 GET           /overseas-return-notification/:fromDate/:toDate              uk.gov.hmrc.pillar2.controllers.ORNController.getOrn(fromDate: String, toDate: String)

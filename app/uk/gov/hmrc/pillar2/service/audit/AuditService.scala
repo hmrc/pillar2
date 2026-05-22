@@ -22,7 +22,7 @@ import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.models.audit.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, RequestDetailV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
@@ -67,31 +67,6 @@ class AuditService @Inject() (
       CreateSubscriptionAuditEvent(
         subscriptionRequest.upeDetails,
         subscriptionRequest.accountingPeriod,
-        subscriptionRequest.upeCorrespAddressDetails,
-        subscriptionRequest.primaryContactDetails,
-        subscriptionRequest.secondaryContactDetails,
-        subscriptionRequest.filingMemberDetails,
-        plrReference = resData._1,
-        processingDate = resData._2
-      ).extendedDataEvent
-    )
-  }
-
-  def auditCreateSubscriptionV2(
-    subscriptionRequest: RequestDetailV2,
-    responseReceived:    AuditResponseReceived
-  )(using hc:            HeaderCarrier): Future[AuditResult] = {
-    val resData = responseReceived.status match {
-      case CREATED =>
-        val response = responseReceived.responseData.as[SuccessResponse]
-        (response.success.plrReference, response.success.processingDate.toString)
-      case _ => ("", "")
-    }
-
-    auditConnector.sendExtendedEvent(
-      CreateSubscriptionAuditEventV2(
-        subscriptionRequest.upeDetails,
-        subscriptionRequest.accountingPeriods,
         subscriptionRequest.upeCorrespAddressDetails,
         subscriptionRequest.primaryContactDetails,
         subscriptionRequest.secondaryContactDetails,

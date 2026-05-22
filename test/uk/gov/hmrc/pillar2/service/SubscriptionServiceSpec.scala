@@ -30,7 +30,7 @@ import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, RequestDetailV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
@@ -131,91 +131,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
           intercept[Exception] {
             val result = service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswersWithoutCompanyProfile).failed.futureValue
-            result.getMessage mustEqual "Malformed company Profile"
-          }
-        }
-      }
-    }
-  }
-
-  "sendCreateSubscriptionV2" - {
-    "Return successful Http Response" in {
-      when(
-        mockSubscriptionConnector
-          .sendCreateSubscriptionInformationV2(any[RequestDetailV2]())(using any[HeaderCarrier](), any[ExecutionContext]())
-      ).thenReturn(
-        Future.successful(
-          HttpResponse.apply(OK, "Success")
-        )
-      )
-
-      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryAnyIdUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-        service.sendCreateSubscriptionV2(upeSafeId, fmSafeId, userAnswers).map { response =>
-          response.status mustBe OK
-        }
-      }
-    }
-
-    "Return internal server error when user answers are incomplete" in {
-      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryUncompleteUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-        service.sendCreateSubscriptionV2(upeSafeId, fmSafeId, userAnswers).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-        }
-      }
-    }
-
-    "Return internal server error when connector returns one" in {
-      when(
-        mockSubscriptionConnector
-          .sendCreateSubscriptionInformationV2(any[RequestDetailV2]())(using any[HeaderCarrier](), any[ExecutionContext]())
-      ).thenReturn(
-        Future.successful(
-          HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")
-        )
-      )
-
-      forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryAnyIdUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-        service.sendCreateSubscriptionV2(upeSafeId, fmSafeId, userAnswers).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-        }
-      }
-    }
-
-    "handle LimitedLiabilityPartnership entity type correctly" - {
-      "when all required data is present" in {
-        val userAnswersGen = userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP)
-
-        when(
-          mockSubscriptionConnector
-            .sendCreateSubscriptionInformationV2(any[RequestDetailV2]())(using any[HeaderCarrier](), any[ExecutionContext]())
-        ).thenReturn(
-          Future.successful(
-            HttpResponse.apply(OK, "Success")
-          )
-        )
-
-        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-          service.sendCreateSubscriptionV2(upeSafeId, fmSafeId, userAnswers).map { response =>
-            response.status mustBe OK
-          }
-        }
-      }
-
-      "throw exception when company profile is missing" in {
-        val userAnswersGen = userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP)
-
-        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-          val modifiedData = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
-          val updatedGrsResponse = userAnswers.data.as[JsObject] ++ Json.obj(
-            "upeGRSResponse" -> Json.obj(
-              "partnershipEntityRegistrationData" -> modifiedData
-            )
-          )
-
-          val userAnswersWithoutCompanyProfile = userAnswers.copy(data = updatedGrsResponse)
-
-          intercept[Exception] {
-            val result = service.sendCreateSubscriptionV2(upeSafeId, fmSafeId, userAnswersWithoutCompanyProfile).failed.futureValue
             result.getMessage mustEqual "Malformed company Profile"
           }
         }

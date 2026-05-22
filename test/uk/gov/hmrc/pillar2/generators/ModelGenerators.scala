@@ -27,7 +27,7 @@ import uk.gov.hmrc.pillar2.models.hods.*
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, RequestDetailV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.registration.*
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
 
@@ -715,24 +715,6 @@ trait ModelGenerators {
     } yield RequestDetail(
       upeDetails = upeDetails,
       accountingPeriod = accountingPeriod,
-      upeCorrespAddressDetails = upeCorrespAddressDetails,
-      primaryContactDetails = primaryContactDetails,
-      secondaryContactDetails = secondaryContactDetails,
-      filingMemberDetails = filingMemberDetails
-    )
-  }
-
-  given arbitraryRequestDetailV2: Arbitrary[RequestDetailV2] = Arbitrary {
-    for {
-      upeDetails               <- arbitrary[UpeDetails]
-      accountingPeriods        <- Gen.nonEmptyListOf(arbitrary[AccountingPeriodV2])
-      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
-      primaryContactDetails    <- arbitrary[ContactDetailsType]
-      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
-      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
-    } yield RequestDetailV2(
-      upeDetails = upeDetails,
-      accountingPeriods = accountingPeriods,
       upeCorrespAddressDetails = upeCorrespAddressDetails,
       primaryContactDetails = primaryContactDetails,
       secondaryContactDetails = secondaryContactDetails,

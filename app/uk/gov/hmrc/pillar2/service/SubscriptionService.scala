@@ -29,7 +29,7 @@ import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.errors.SubscriptionProcessingError
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.{RequestDetail, RequestDetailV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.models.identifiers.*
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
@@ -81,58 +81,6 @@ class SubscriptionService @Inject() (
       case None => subscriptionError
     }
 
-  def sendCreateSubscriptionV2(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                   HeaderCarrier
-  ): Future[HttpResponse] =
-    userAnswers.get(NominateFilingMemberId) match {
-      case Some(true) =>
-        (userAnswers.get(upeRegisteredInUKId), userAnswers.get(fmRegisteredInUKId)) match {
-          case (Some(true), Some(true)) =>
-            logger.info("sendCreateSubscriptionV2 - bothRegisteredInUKV2")
-            bothRegisteredInUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
-          case (Some(false), Some(false)) =>
-            logger.info("sendCreateSubscriptionV2 - bothOutsideUKV2")
-            bothOutsideUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
-          case (Some(true), Some(false)) =>
-            logger.info("sendCreateSubscriptionV2 - upeInUKFMOutsideUKV2")
-            upeInUKFMOutsideUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
-          case (Some(false), Some(true)) =>
-            logger.info("sendCreateSubscriptionV2 - upeOutsideUKFMInUKV2")
-            upeOutsideUKFMInUKV2(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
-          case other =>
-            logger.error(s"sendCreateSubscriptionV2 - unmatched UK registration combination: $other")
-            subscriptionError
-        }
-
-      case Some(false) =>
-        userAnswers.get(upeRegisteredInUKId) match {
-          case Some(true) =>
-            logger.info("sendCreateSubscriptionV2 - upeRegisteredInUKV2")
-            upeRegisteredInUKV2(upeSafeId, userAnswers).getOrElse(subscriptionError)
-          case Some(false) =>
-            logger.info("sendCreateSubscriptionV2 - upeRegisteredOutsideUKV2")
-            upeRegisteredOutsideUKV2(upeSafeId, userAnswers).getOrElse(subscriptionError)
-          case None =>
-            logger.error("sendCreateSubscriptionV2 - upeRegisteredInUKId not found")
-            subscriptionError
-        }
-
-      case None =>
-        logger.error("sendCreateSubscriptionV2 - NominateFilingMemberId not found")
-        subscriptionError
-    }
-
-  private def getAccountingPeriodV2FromV1(ap: AccountingPeriod): Seq[AccountingPeriodV2] =
-    Seq(
-      AccountingPeriodV2(
-        startDate = ap.startDate,
-        endDate = ap.endDate,
-        dueDate = ap.dueDate,
-        canAmendStartDate = true,
-        canAmendEndDate = true
-      )
-    )
-
   private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using
     hc:                                         HeaderCarrier
   ) =
@@ -154,27 +102,6 @@ class SubscriptionService @Inject() (
         None
       )
       sendSubmissionRequest(subscriptionRequest)
-    }
-
-  private def upeRegisteredOutsideUKV2(upeSafeId: String, userAnswers: UserAnswers)(using hc: HeaderCarrier) =
-    for {
-      upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
-      subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
-      nominateFm            <- userAnswers.get(NominateFilingMemberId)
-      subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-      primaryContactDetails <- getPrimaryContactInformation(userAnswers)
-
-    } yield {
-      val subscriptionRequest = RequestDetailV2(
-        getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
-        getAccountingPeriodV2FromV1(accountingPeriod),
-        getUpeAddressDetails(subAddressId),
-        primaryContactDetails,
-        getSecondaryContactInformation(userAnswers),
-        None
-      )
-      sendSubmissionRequestV2(subscriptionRequest)
     }
 
   private def upeRegisteredInUK(upeSafeId: String, userAnswers: UserAnswers)(using
@@ -200,31 +127,6 @@ class SubscriptionService @Inject() (
       )
 
       sendSubmissionRequest(subscriptionRequest)
-    }
-
-  private def upeRegisteredInUKV2(upeSafeId: String, userAnswers: UserAnswers)(using
-    hc:                                      HeaderCarrier
-  ) =
-    for {
-      upeOrgType            <- userAnswers.get(upeEntityTypeId)
-      subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
-      nominateFm            <- userAnswers.get(NominateFilingMemberId)
-      upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
-      subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-      primaryContactDetails <- getPrimaryContactInformation(userAnswers)
-
-    } yield {
-      val subscriptionRequest = RequestDetailV2(
-        getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
-        getAccountingPeriodV2FromV1(accountingPeriod),
-        getUpeAddressDetails(subAddressId),
-        primaryContactDetails,
-        getSecondaryContactInformation(userAnswers),
-        None
-      )
-
-      sendSubmissionRequestV2(subscriptionRequest)
     }
 
   private def upeOutsideUKFMInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
@@ -253,32 +155,6 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeOutsideUKFMInUKV2(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                       HeaderCarrier
-  ) =
-    for {
-      upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
-      subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
-      nominateFm            <- userAnswers.get(NominateFilingMemberId)
-      fmEntityTypeId        <- userAnswers.get(fmEntityTypeId)
-      fmGrsResponseId       <- userAnswers.get(fmGRSResponseId)
-      subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-      primaryContactDetails <- getPrimaryContactInformation(userAnswers)
-
-    } yield {
-      val subscriptionRequest = RequestDetailV2(
-        getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
-        getAccountingPeriodV2FromV1(accountingPeriod),
-        getUpeAddressDetails(subAddressId),
-        primaryContactDetails,
-        getSecondaryContactInformation(userAnswers),
-        getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
-      )
-
-      sendSubmissionRequestV2(subscriptionRequest)
-    }
-
   private def upeInUKFMOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                     HeaderCarrier
   ) =
@@ -305,32 +181,6 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeInUKFMOutsideUKV2(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                       HeaderCarrier
-  ) =
-    for {
-      upeOrgType            <- userAnswers.get(upeEntityTypeId)
-      subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
-      nominateFm            <- userAnswers.get(NominateFilingMemberId)
-      upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
-      fmNameRegistration    <- userAnswers.get(fmNameRegistrationId)
-      subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-      primaryContactDetails <- getPrimaryContactInformation(userAnswers)
-
-    } yield {
-      val subscriptionRequest = RequestDetailV2(
-        getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
-        getAccountingPeriodV2FromV1(accountingPeriod),
-        getUpeAddressDetails(subAddressId),
-        primaryContactDetails,
-        getSecondaryContactInformation(userAnswers),
-        getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
-      )
-
-      sendSubmissionRequestV2(subscriptionRequest)
-    }
-
   private def bothOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
     hc:                                HeaderCarrier
   ) =
@@ -354,31 +204,6 @@ class SubscriptionService @Inject() (
       )
 
       sendSubmissionRequest(subscriptionRequest)
-    }
-
-  private def bothOutsideUKV2(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                  HeaderCarrier
-  ) =
-    for {
-      upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
-      subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
-      nominateFm            <- userAnswers.get(NominateFilingMemberId)
-      fmNameRegistration    <- userAnswers.get(fmNameRegistrationId)
-      subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-      primaryContactDetails <- getPrimaryContactInformation(userAnswers)
-
-    } yield {
-      val subscriptionRequest = RequestDetailV2(
-        getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
-        getAccountingPeriodV2FromV1(accountingPeriod),
-        getUpeAddressDetails(subAddressId),
-        primaryContactDetails,
-        getSecondaryContactInformation(userAnswers),
-        getWithoutIdFilingMemberDetails(fmSafeId, nominateFm, fmNameRegistration)
-      )
-
-      sendSubmissionRequestV2(subscriptionRequest)
     }
 
   private def bothRegisteredInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
@@ -408,33 +233,6 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def bothRegisteredInUKV2(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                       HeaderCarrier
-  ) =
-    for {
-      upeOrgType            <- userAnswers.get(upeEntityTypeId)
-      subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
-      nominateFm            <- userAnswers.get(NominateFilingMemberId)
-      upeGrsResponse        <- userAnswers.get(upeGRSResponseId)
-      fmEntityTypeId        <- userAnswers.get(fmEntityTypeId)
-      fmGrsResponseId       <- userAnswers.get(fmGRSResponseId)
-      subAddressId          <- userAnswers.get(subRegisteredAddressId)
-      accountingPeriod      <- userAnswers.get(subAccountingPeriodId)
-      primaryContactDetails <- getPrimaryContactInformation(userAnswers)
-
-    } yield {
-      val subscriptionRequest = RequestDetailV2(
-        getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
-        getAccountingPeriodV2FromV1(accountingPeriod),
-        getUpeAddressDetails(subAddressId),
-        primaryContactDetails,
-        getSecondaryContactInformation(userAnswers),
-        getWithIdFilingMemberDetails(fmSafeId, nominateFm, fmEntityTypeId, fmGrsResponseId)
-      )
-
-      sendSubmissionRequestV2(subscriptionRequest)
-    }
-
   private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(using
     hc:                                                  HeaderCarrier
   ): Future[HttpResponse] =
@@ -443,16 +241,6 @@ class SubscriptionService @Inject() (
       .flatTap { res =>
         val resReceived = AuditResponseReceived(res.status, res.json)
         auditService.auditCreateSubscription(subscriptionRequest, resReceived)
-      }
-
-  private def sendSubmissionRequestV2(subscriptionRequest: RequestDetailV2)(using
-    hc:                                                    HeaderCarrier
-  ): Future[HttpResponse] =
-    subscriptionConnector
-      .sendCreateSubscriptionInformationV2(subscriptionRequest)
-      .flatTap { res =>
-        val resReceived = AuditResponseReceived(res.status, res.json)
-        auditService.auditCreateSubscriptionV2(subscriptionRequest, resReceived)
       }
 
   private val subscriptionError = Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Response not received in Subscription"))
