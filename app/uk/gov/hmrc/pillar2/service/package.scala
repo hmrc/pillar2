@@ -29,11 +29,11 @@ import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 package object service extends Logging {
+
   private[service] def convertToResult[A](response: HttpResponse)(using reads: Reads[A]): Future[A] = {
     logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
       case 200 | 201 =>
-        // we're using try because HttpResponse.json is not a pure function and can throw an exception
         Try(response.json.validate[A]) match {
           case Success(JsSuccess(success, _)) => Future.successful(success)
           case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
@@ -42,12 +42,13 @@ package object service extends Logging {
       case 422 =>
         Try(response.json.validate[ApiFailureResponse]) match {
           case Success(JsSuccess(apiFailure, _)) =>
+            logger.info(s"ETMPValidationError - Code: '${apiFailure.errors.code}' Text: '${apiFailure.errors.text}'")
             Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text))
           case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case status =>
-        logger.error(s"Received invalid status from downstream: $status")
+        logger.error(s"Received invalid status $status from downstream. Body: ${response.body}")
         Future.failed(ApiInternalServerError)
     }
   }

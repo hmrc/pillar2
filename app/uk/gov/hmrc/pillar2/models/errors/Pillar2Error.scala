@@ -19,6 +19,8 @@ package uk.gov.hmrc.pillar2.models.errors
 sealed trait Pillar2Error extends Exception {
   val message: String
   val code:    String
+
+  override def getMessage: String = s"Code: '$code' Message: '$message'"
 }
 
 case class MissingHeaderError(headerName: String) extends Pillar2Error {
@@ -27,14 +29,8 @@ case class MissingHeaderError(headerName: String) extends Pillar2Error {
 }
 
 case class InvalidJsonError(decodeError: String) extends Pillar2Error {
-  val code:    String = "002"
   val message: String = s"Invalid JSON payload: $decodeError"
-
-}
-
-case object SubscriptionProcessingError extends Pillar2Error {
-  val message: String = "Subscription is being processed"
-  val code:    String = "422"
+  val code:    String = "002"
 }
 
 case object ApiInternalServerError extends Pillar2Error {
@@ -42,12 +38,17 @@ case object ApiInternalServerError extends Pillar2Error {
   val code:    String = "003"
 }
 
-case class ETMPValidationError(validationErrorCode: String, validationError: String) extends Pillar2Error {
-  val code:    String = validationErrorCode
-  val message: String = validationError
-}
-
 case object AuthorizationError extends Pillar2Error {
   val message: String = "Not Authorized"
   val code:    String = "401"
+}
+
+case object SubscriptionProcessingError extends Pillar2Error {
+  val message: String = "Subscription is being processed"
+  val code:    String = "422"
+}
+
+case class ETMPValidationError(validationErrorCode: String, validationError: String) extends Pillar2Error {
+  val message: String = validationError
+  val code:    String = validationErrorCode
 }
