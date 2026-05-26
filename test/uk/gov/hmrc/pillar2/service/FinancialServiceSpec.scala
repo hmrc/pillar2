@@ -26,7 +26,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.FinancialDataError
+import uk.gov.hmrc.pillar2.models.errors.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial.*
 import uk.gov.hmrc.pillar2.service.FinancialServiceSpec.*
 

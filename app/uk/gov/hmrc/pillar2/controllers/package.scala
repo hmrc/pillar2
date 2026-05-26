@@ -22,7 +22,7 @@ import play.api.libs.json.{JsError, Json}
 import play.api.mvc.Result
 import play.api.mvc.Results.*
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.pillar2.models.FinancialDataErrorResponses
+import uk.gov.hmrc.pillar2.models.errors.FinancialDataErrorResponses
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 
 import scala.util.Try

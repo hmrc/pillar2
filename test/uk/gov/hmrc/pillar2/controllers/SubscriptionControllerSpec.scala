@@ -34,9 +34,10 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.UserAnswers
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
-import uk.gov.hmrc.pillar2.models.{UnexpectedResponse, UserAnswers}
 import uk.gov.hmrc.pillar2.repositories.{ReadSubscriptionCacheRepository, RegistrationCacheRepository}
 import uk.gov.hmrc.pillar2.service.SubscriptionService
 
@@ -291,7 +292,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           .thenReturn(Future.failed(UnexpectedResponse))
         val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription("id", "pillar2Id").url)
         val result  = route(application, request).value
-        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        result.failed.futureValue mustEqual UnexpectedResponse
       }
     }
 
@@ -326,7 +327,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           .thenReturn(Future.failed(UnexpectedResponse))
         val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2("id", "pillar2Id").url)
         val result  = route(application, request).value
-        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        result.failed.futureValue mustEqual UnexpectedResponse
       }
     }
 
@@ -360,7 +361,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
         val request = FakeRequest(GET, routes.SubscriptionController.readSubscription("pillar2Id").url)
         val result  = route(application, request).value
-        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        result.failed.futureValue mustEqual UnexpectedResponse
       }
     }
 
@@ -380,7 +381,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
         val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2("pillar2Id").url)
         val result  = route(application, request).value
-        result.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        result.failed.futureValue mustEqual UnexpectedResponse
       }
     }
 

@@ -21,11 +21,11 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
-import uk.gov.hmrc.pillar2.connectors.FinancialDataConnectorSpec._
+import uk.gov.hmrc.pillar2.connectors.FinancialDataConnectorSpec.*
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.{FinancialDataError, FinancialDataErrorResponses}
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialItem, FinancialTransaction}
-import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
 
 import java.time.{LocalDate, LocalDateTime}
 

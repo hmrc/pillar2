@@ -25,12 +25,12 @@ sealed trait Pillar2Error extends Exception {
 
 object Pillar2Error {
 
-  case class MissingHeaderError(headerName: String) extends Pillar2Error {
+  final case class MissingHeaderError(headerName: String) extends Pillar2Error {
     val message: String = s"Missing $headerName header"
     val code:    String = "001"
   }
 
-  case class InvalidJsonError(decodeError: String) extends Pillar2Error {
+  final case class InvalidJsonError(decodeError: String) extends Pillar2Error {
     val message: String = s"Invalid JSON payload: $decodeError"
     val code:    String = "002"
   }
