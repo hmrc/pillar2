@@ -32,7 +32,7 @@ import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
-import uk.gov.hmrc.pillar2.models.errors.*
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
 import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
 import uk.gov.hmrc.pillar2.service.ORNService
 

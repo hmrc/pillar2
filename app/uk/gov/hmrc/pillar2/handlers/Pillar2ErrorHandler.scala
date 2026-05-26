@@ -22,6 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Results.*
 import play.api.mvc.{RequestHeader, Result}
 import uk.gov.hmrc.pillar2.models.errors.*
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
 
 import javax.inject.Singleton
 import scala.concurrent.Future

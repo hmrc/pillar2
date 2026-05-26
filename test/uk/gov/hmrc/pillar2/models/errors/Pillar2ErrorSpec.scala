@@ -18,6 +18,7 @@ package uk.gov.hmrc.pillar2.models.errors
 
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.must.Matchers
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
 
 class Pillar2ErrorSpec extends AnyFreeSpec with Matchers {
 

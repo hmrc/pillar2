@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.connectors.AccountActivityConnector
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.accountactivity.*
-import uk.gov.hmrc.pillar2.models.errors.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailure, ApiFailureResponse}
 
 import java.time.{LocalDate, ZoneOffset, ZonedDateTime}

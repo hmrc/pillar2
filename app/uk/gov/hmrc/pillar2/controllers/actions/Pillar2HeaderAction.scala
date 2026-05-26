@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.controllers.actions
 import com.google.inject.Inject
 import play.api.Logger
 import play.api.mvc.{ActionTransformer, Request, WrappedRequest}
-import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.MissingHeaderError
 
 import scala.concurrent.{ExecutionContext, Future}
 
