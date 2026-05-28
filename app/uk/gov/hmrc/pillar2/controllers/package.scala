@@ -18,77 +18,70 @@ package uk.gov.hmrc.pillar2
 
 import play.api.Logger
 import play.api.http.Status.*
-import play.api.libs.json.{JsError, JsSuccess, Json}
+import play.api.libs.json.{JsError, Json}
 import play.api.mvc.Result
 import play.api.mvc.Results.*
 import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.models.errors.FinancialDataErrorResponses
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 
-import scala.util.{Success, Try}
+import scala.util.Try
 
 package object controllers {
+
   extension (error: JsError) {
     def toLogFormat: String = Json.prettyPrint(JsError.toJson(error))
   }
 
-  def convertToResult(
-    httpResponse: HttpResponse
-  )(using logger: Logger): Result =
+  def convertToResult(httpResponse: HttpResponse)(using logger: Logger): Result =
     httpResponse.status match {
+      case OK        => Ok(httpResponse.body)
       case CREATED   => Ok(httpResponse.body)
       case NOT_FOUND => NotFound(httpResponse.body)
       case BAD_REQUEST =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         BadRequest(httpResponse.body)
-
       case FORBIDDEN =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         Forbidden(httpResponse.body)
-
       case SERVICE_UNAVAILABLE =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         ServiceUnavailable(httpResponse.body)
-
       case UNPROCESSABLE_ENTITY =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         UnprocessableEntity(httpResponse.body)
-
       case INTERNAL_SERVER_ERROR =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         InternalServerError(httpResponse.body)
-
       case CONFLICT =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         Conflict(httpResponse.body)
-
-      case OK =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        Ok(httpResponse.body)
-
       case _ =>
-        logger.info(s"convertToResult - Received Response body - ${httpResponse.body}")
-        logDownStreamError(httpResponse.body)
+        logDownstreamError(httpResponse.body)
         InternalServerError(httpResponse.body)
-
     }
 
-  private def logDownStreamError(
-    body:         String
-  )(using logger: Logger): Unit = {
-    val error = Try(Json.parse(body).validate[ErrorDetails])
-    error match {
-      case Success(JsSuccess(value, _)) =>
-        logger.warn(
-          s"Error with submission: ${value.errorDetail.sourceFaultDetail.map(_.detail.mkString)}"
-        )
-      case _ =>
-        logger.warn("Error with submission but return is not a valid json")
+  private def logDownstreamError(body: String)(using logger: Logger): Unit = {
+    val errorMessage: Option[String] =
+      Try(Json.parse(body)).toOption.flatMap { json =>
+        json
+          .asOpt[ErrorDetails]
+          .map { errorDetails =>
+            errorDetails.errorDetail.sourceFaultDetail
+              .map(_.detail.mkString("; "))
+              .getOrElse(s"${errorDetails.errorDetail.errorCode} - ${errorDetails.errorDetail.errorMessage}")
+          }
+          .orElse {
+            json.asOpt[FinancialDataErrorResponses].map { financialDataErrorResponses =>
+              financialDataErrorResponses.failures.map(f => s"${f.code} - ${f.reason}").mkString("; ")
+            }
+          }
+      }
+
+    errorMessage match {
+      case Some(msg) => logger.warn(s"Error with submission: $msg | body: $body")
+      case None      => logger.warn(s"Error with submission - unrecognised json body: $body")
     }
   }
+
 }

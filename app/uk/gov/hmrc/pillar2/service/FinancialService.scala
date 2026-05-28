@@ -19,7 +19,7 @@ package uk.gov.hmrc.pillar2.service
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.FinancialDataConnector
-import uk.gov.hmrc.pillar2.models.FinancialDataError
+import uk.gov.hmrc.pillar2.models.errors.FinancialDataError
 import uk.gov.hmrc.pillar2.models.financial.{FinancialDataResponse, FinancialHistory, TransactionHistory}
 import uk.gov.hmrc.pillar2.service.FinancialService.*
 

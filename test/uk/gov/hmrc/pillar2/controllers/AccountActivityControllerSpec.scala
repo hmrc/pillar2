@@ -28,7 +28,8 @@ import play.api.test.Helpers.{contentAsJson, status}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
-import uk.gov.hmrc.pillar2.models.errors.*
+import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
 import uk.gov.hmrc.pillar2.service.AccountActivityService
 
 import java.time.LocalDate

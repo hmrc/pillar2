@@ -23,8 +23,8 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 

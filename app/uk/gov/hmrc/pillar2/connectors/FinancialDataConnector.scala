@@ -22,8 +22,8 @@ import play.api.http.Status.OK
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.errors.{FinancialDataError, FinancialDataErrorResponses}
 import uk.gov.hmrc.pillar2.models.financial.FinancialDataResponse
-import uk.gov.hmrc.pillar2.models.{FinancialDataError, FinancialDataErrorResponses}
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}

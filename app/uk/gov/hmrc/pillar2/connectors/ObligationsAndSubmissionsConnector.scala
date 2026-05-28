@@ -20,7 +20,7 @@ import com.google.inject.Inject
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.UnexpectedResponse
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
 import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}

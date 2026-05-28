@@ -21,7 +21,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers.shouldEqual
 import play.api.test.FakeRequest
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
-import uk.gov.hmrc.pillar2.models.errors.MissingHeaderError
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.MissingHeaderError
 
 import scala.concurrent.ExecutionContext.Implicits.*
 

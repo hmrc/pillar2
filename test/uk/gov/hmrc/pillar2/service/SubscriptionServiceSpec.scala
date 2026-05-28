@@ -27,8 +27,8 @@ import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
+import uk.gov.hmrc.pillar2.models.errors.{JsResultError, UnexpectedResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
@@ -161,7 +161,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         val resultFuture = service.storeSubscriptionResponse(mockId, plrReference)
 
-        resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        resultFuture.failed.futureValue mustEqual UnexpectedResponse
       }
     }
   }
@@ -188,7 +188,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         val resultFuture = service.storeSubscriptionResponseV2(mockId, plrReference)
 
-        resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+        resultFuture.failed.futureValue mustEqual UnexpectedResponse
       }
     }
   }
@@ -214,7 +214,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       when(mockAuditService.auditReadSubscriptionFailure(any[String](), any[Int](), any[JsValue]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
       val resultFuture = service.readSubscriptionData("plrReference")
-      resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      resultFuture.failed.futureValue mustEqual UnexpectedResponse
     }
 
     "handle LimitedLiabilityPartnership entity type correctly" - {
@@ -272,7 +272,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       when(mockAuditService.auditReadSubscriptionFailure(any[String](), any[Int](), any[JsValue]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
       val resultFuture = service.readSubscriptionDataV2("plrReference")
-      resultFuture.failed.futureValue mustEqual uk.gov.hmrc.pillar2.models.UnexpectedResponse
+      resultFuture.failed.futureValue mustEqual UnexpectedResponse
     }
 
     "handle LimitedLiabilityPartnership entity type correctly" - {
@@ -343,7 +343,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         service.sendAmendedData(id, validAmendObject).map { response =>
-          response mustBe uk.gov.hmrc.pillar2.models.JsResultError
+          response mustBe JsResultError
         }
       }
     }
@@ -360,7 +360,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         service.sendAmendedData(id, validAmendObject).map { response =>
-          response mustBe uk.gov.hmrc.pillar2.models.UnexpectedResponse
+          response mustBe UnexpectedResponse
         }
       }
     }
@@ -410,7 +410,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         service.sendAmendedDataV2(id, validAmendObject).map { response =>
-          response mustBe uk.gov.hmrc.pillar2.models.JsResultError
+          response mustBe JsResultError
         }
       }
     }
@@ -427,7 +427,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         service.sendAmendedDataV2(id, validAmendObject).map { response =>
-          response mustBe uk.gov.hmrc.pillar2.models.UnexpectedResponse
+          response mustBe UnexpectedResponse
         }
       }
     }
