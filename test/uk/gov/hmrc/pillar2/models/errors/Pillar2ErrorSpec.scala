@@ -36,7 +36,7 @@ class Pillar2ErrorSpec extends AnyFreeSpec with Matchers {
 
     "return the custom detail message for ApiInternalServerError" in {
       val error = ApiInternalServerError
-      error.getMessage mustBe "Code: '003' Message: 'Internal server error'"
+      error.getMessage mustBe "Code: '003' Message: 'An unexpected error occurred'"
     }
 
     "return the custom detail message for AuthorizationError" in {
