@@ -579,7 +579,8 @@ class SubscriptionService @Inject() (
         logger.info(
           s"Unsuccessful response received for amend subscription v2 with ${response.status} status and body: ${response.body} "
         )
-        Future.failed(UnexpectedResponse)
+        auditService.auditAmendSubscriptionV2(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json)) >>
+          Future.failed(UnexpectedResponse)
       }
     }
   }

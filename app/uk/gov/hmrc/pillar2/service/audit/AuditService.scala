@@ -149,4 +149,28 @@ class AuditService @Inject() (
       ).extendedDataEvent
     )
   }
+
+  def auditAmendSubscriptionV2(
+    requestData:  AmendSubscriptionSuccessV2,
+    responseData: AuditResponseReceived
+  )(using hc:     HeaderCarrier): Future[AuditResult] = {
+    val resData = responseData.status match {
+      case OK =>
+        val response = responseData.responseData.as[AmendResponse]
+        response.success.processingDate
+      case _ => ""
+    }
+    auditConnector.sendExtendedEvent(
+      AmendSubscriptionSuccessAuditEventV2(
+        requestData.replaceFilingMember,
+        requestData.upeDetails,
+        requestData.accountingPeriod,
+        requestData.upeCorrespAddressDetails,
+        requestData.primaryContactDetails,
+        requestData.secondaryContactDetails,
+        requestData.filingMemberDetails,
+        processingDate = resData
+      ).extendedDataEvent
+    )
+  }
 }
