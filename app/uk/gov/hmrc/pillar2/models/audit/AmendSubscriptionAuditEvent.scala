@@ -37,3 +37,21 @@ case class AmendSubscriptionSuccessAuditEvent(
 object AmendSubscriptionSuccessAuditEvent {
   given formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
 }
+
+case class AmendSubscriptionSuccessAuditEventV2(
+  replaceFilingMember:      Boolean,
+  upeDetails:               UpeDetailsAmend,
+  accountingPeriod:         AccountingPeriodAmendV2,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberAmendDetails],
+  processingDate:           String
+) extends AuditEvent {
+  override val auditType:  String  = "updatePillar2SubscriptionV2"
+  override val detailJson: JsValue = Json.toJson(this)
+}
+
+object AmendSubscriptionSuccessAuditEventV2 {
+  given formats: Format[AmendSubscriptionSuccessAuditEventV2] = Json.format[AmendSubscriptionSuccessAuditEventV2]
+}
