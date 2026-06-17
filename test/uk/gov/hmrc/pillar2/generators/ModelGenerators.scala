@@ -754,10 +754,10 @@ trait ModelGenerators {
 
   given arbitraryAccountingPeriodV2: Arbitrary[AccountingPeriodV2] = Arbitrary {
     for {
-      startDate         <- arbitrary[LocalDate]
-      endDate           <- arbitrary[LocalDate]
-      canAmendStartDate <- arbitrary[Boolean]
-      canAmendEndDate   <- arbitrary[Boolean]
+      startDate         <- Gen.option(arbitrary[LocalDate])
+      endDate           <- Gen.option(arbitrary[LocalDate])
+      canAmendStartDate <- arbitrary[Boolean].map(b => Some(b))
+      canAmendEndDate   <- arbitrary[Boolean].map(b => Some(b))
     } yield AccountingPeriodV2(
       startDate = startDate,
       endDate = endDate,
