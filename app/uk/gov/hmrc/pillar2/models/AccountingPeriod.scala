@@ -40,11 +40,11 @@ object AccountingPeriodAmend {
 }
 
 case class AccountingPeriodV2(
-  startDate:         LocalDate,
-  endDate:           LocalDate,
+  startDate:         Option[LocalDate] = None,
+  endDate:           Option[LocalDate] = None,
   dueDate:           Option[LocalDate] = None,
-  canAmendStartDate: Boolean,
-  canAmendEndDate:   Boolean
+  canAmendStartDate: Option[Boolean] = Some(false),
+  canAmendEndDate:   Option[Boolean] = Some(false)
 )
 
 object AccountingPeriodV2 {
