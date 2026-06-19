@@ -53,6 +53,13 @@ class Pillar2ErrorSpec extends AnyFreeSpec with Matchers {
       val error = ETMPValidationError("089", "ID number missing or invalid")
       error.getMessage mustBe "Code: '089' Message: 'ID number missing or invalid'"
     }
-
   }
+
+  "Pillar2Error.ETMPValidationError must" - {
+    "not fill in the stack trace" in {
+      val error = ETMPValidationError("014", "No data found")
+      error.getStackTrace mustBe empty
+    }
+  }
+
 }

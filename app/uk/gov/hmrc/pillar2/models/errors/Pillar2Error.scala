@@ -16,6 +16,8 @@
 
 package uk.gov.hmrc.pillar2.models.errors
 
+import scala.util.control.NoStackTrace
+
 sealed trait Pillar2Error extends Exception {
   def message: String
   def code:    String
@@ -50,7 +52,7 @@ object Pillar2Error {
     val code:    String = "422"
   }
 
-  final case class ETMPValidationError(validationErrorCode: String, validationError: String) extends Pillar2Error {
+  final case class ETMPValidationError(validationErrorCode: String, validationError: String) extends Pillar2Error with NoStackTrace {
     val message: String = validationError
     val code:    String = validationErrorCode
   }
