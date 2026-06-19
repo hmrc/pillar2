@@ -21,7 +21,7 @@ import play.api.libs.json.*
 
 import java.time.{LocalDate, ZonedDateTime}
 
-case class AccountActivitySuccess(processingDate: ZonedDateTime, transactions: Seq[AccountActivityTransaction])
+case class AccountActivitySuccess(processingDate: ZonedDateTime, transactionDetails: Option[Seq[AccountActivityTransaction]])
 
 case class AccountActivityTransaction(
   transactionType:   String,
@@ -53,12 +53,12 @@ object AccountActivitySuccess {
   given Format[AccountActivitySuccess] = Format(
     (
       (__ \ "success" \ "processingDate").read[ZonedDateTime] and
-        (__ \ "success" \ "transactionDetails").read[Seq[AccountActivityTransaction]]
+        (__ \ "success" \ "transactionDetails").readNullable[Seq[AccountActivityTransaction]]
     )(AccountActivitySuccess.apply),
     (
       (__ \ "processingDate").write[ZonedDateTime] and
-        (__ \ "transactionDetails").write[Seq[AccountActivityTransaction]]
-    )(s => (s.processingDate, s.transactions))
+        (__ \ "transactionDetails").writeNullable[Seq[AccountActivityTransaction]]
+    )(s => (s.processingDate, s.transactionDetails))
   )
 }
 
