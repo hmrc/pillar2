@@ -27,17 +27,17 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2, SubscriptionResponse, SubscriptionResponseV2, SubscriptionSuccessV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.create-subscription.port" -> server.port(),
-      "microservice.services.create-subscription-v2.port" -> server.port(),
+      "microservice.services.create-subscription.port"       -> server.port(),
+      "microservice.services.create-subscription-v2.port"    -> server.port(),
       "microservice.services.create-subscription-v2.context" -> "/pillar2/subscription/v2",
-      "microservice.services.amend-subscription-v2.port"      -> server.port(),
-      "microservice.services.amend-subscription-v2.context"   -> "/pillar2/subscription/v2"
+      "microservice.services.amend-subscription-v2.port"     -> server.port(),
+      "microservice.services.amend-subscription-v2.context"  -> "/pillar2/subscription/v2"
     )
     .build()
   private val errorCodes: Gen[Int] = Gen.oneOf(Seq(203, 204, 400, 403, 500, 501, 502, 503, 504))
@@ -134,8 +134,6 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
 
-
-
     }
 
     "for retrieving Subscription Information from updated api" - {
@@ -159,7 +157,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
       "must return object when the response was OK but with no accounting periods" in {
         forAll(arbPlrReference.arbitrary) { plrReference =>
           val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
-          val response = SubscriptionResponseV2(subscriptionSuccess)
+          val response            = SubscriptionResponseV2(subscriptionSuccess)
 
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))

@@ -36,3 +36,4 @@ tmp
 bin
 .vscode/
 project/metals.sbt
+*.zip
