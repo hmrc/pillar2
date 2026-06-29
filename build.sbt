@@ -6,6 +6,7 @@ val appName = "pillar2"
 
 ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / majorVersion := 0
+ThisBuild / semanticdbEnabled := true
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
@@ -41,13 +42,6 @@ lazy val it = project
     libraryDependencies ++= AppDependencies.it,
     compilerSettings
   )
-
-inThisBuild(
-  List(
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
-  )
-)
 
 lazy val compilerSettings = Seq(
   scalacOptions ~= (_.distinct),
