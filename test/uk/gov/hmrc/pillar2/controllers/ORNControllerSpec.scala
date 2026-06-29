@@ -169,8 +169,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
   "getOrn" - {
     "should return 200 with getOrnSuccessResponse when getOrn is successful" in {
       when(
-        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-          using
+        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
@@ -203,8 +202,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
     "should handle ValidationError from service" in {
       when(
-        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-          using
+        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
@@ -216,8 +214,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
     "should handle InvalidJsonError from service" in {
       when(
-        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-          using
+        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )
@@ -229,8 +226,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
     "should handle ApiInternalServerError from service" in {
       when(
-        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-          using
+        mockOrnService.getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
           any[HeaderCarrier],
           ArgumentMatchers.eq(pillar2Id)
         )

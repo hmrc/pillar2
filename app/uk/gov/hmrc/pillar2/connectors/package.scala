@@ -29,8 +29,8 @@ package object connectors {
   given httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
 
   private[connectors] def hipHeaders(config: AppConfig)(using
-    headerCarrier:                           HeaderCarrier,
-    pillar2Id:                               String
+    headerCarrier: HeaderCarrier,
+    pillar2Id:     String
   ): Seq[(String, String)] = {
     val authHeader = headerCarrier
       .copy(authorization = Some(Authorization(s"Basic ${config.hipKey}")))
@@ -39,7 +39,7 @@ package object connectors {
       "correlationid"        -> UUID.randomUUID().toString,
       "X-Originating-System" -> "MDTP",
       "X-Pillar2-Id"         -> pillar2Id,
-      "X-Receipt-Date" -> ZonedDateTime
+      "X-Receipt-Date"       -> ZonedDateTime
         .now(ZoneOffset.UTC)
         .truncatedTo(ChronoUnit.SECONDS)
         .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")),
@@ -48,8 +48,8 @@ package object connectors {
   }
 
   private[connectors] def extraHeaders(
-    config:              AppConfig,
-    serviceName:         String
+    config:      AppConfig,
+    serviceName: String
   )(using headerCarrier: HeaderCarrier): Seq[(String, String)] = {
     val newHeaders = headerCarrier
       .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
@@ -60,21 +60,20 @@ package object connectors {
   private val stripSession: String => String = (input: String) => input.replace("session-", "")
 
   private def addHeaders(
-    eisEnvironment:      String
+    eisEnvironment: String
   )(using headerCarrier: HeaderCarrier): Seq[(String, String)] = {
 
-    //HTTP-date format defined by RFC 7231 e.g. Fri, 01 Aug 2020 15:51:38 GMT+1
+    // HTTP-date format defined by RFC 7231 e.g. Fri, 01 Aug 2020 15:51:38 GMT+1
     val formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O")
 
     Seq(
-      "x-forwarded-host" -> "mdtp",
-      "date"             -> ZonedDateTime.now().format(formatter),
-      "x-correlation-id" -> UUID.randomUUID().toString,
-      "x-conversation-id" -> {
+      "x-forwarded-host"  -> "mdtp",
+      "date"              -> ZonedDateTime.now().format(formatter),
+      "x-correlation-id"  -> UUID.randomUUID().toString,
+      "x-conversation-id" ->
         headerCarrier.sessionId
           .map(s => stripSession(s.value))
-          .getOrElse(UUID.randomUUID().toString)
-      },
+          .getOrElse(UUID.randomUUID().toString),
       "content-type" -> "application/json",
       "accept"       -> "application/json",
       "Environment"  -> eisEnvironment

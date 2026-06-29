@@ -86,7 +86,7 @@ object RegisterWithoutIDRequest {
   def apply(organisationName: String, address: Address, contactDetails: ContactDetails): RegisterWithoutIDRequest =
     RegisterWithoutIDRequest(
       regime = "PLR",
-      acknowledgementReference = UUID.randomUUID().toString.replaceAll("-", ""), //uuids are 36 and spec demands 32
+      acknowledgementReference = UUID.randomUUID().toString.replaceAll("-", ""), // uuids are 36 and spec demands 32
       isAnAgent = false,
       isAGroup = true,
       identification = None,

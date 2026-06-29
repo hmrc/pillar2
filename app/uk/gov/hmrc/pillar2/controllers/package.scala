@@ -34,9 +34,9 @@ package object controllers {
 
   def convertToResult(httpResponse: HttpResponse)(using logger: Logger): Result =
     httpResponse.status match {
-      case OK        => Ok(httpResponse.body)
-      case CREATED   => Ok(httpResponse.body)
-      case NOT_FOUND => NotFound(httpResponse.body)
+      case OK          => Ok(httpResponse.body)
+      case CREATED     => Ok(httpResponse.body)
+      case NOT_FOUND   => NotFound(httpResponse.body)
       case BAD_REQUEST =>
         logDownstreamError(httpResponse.body)
         BadRequest(httpResponse.body)

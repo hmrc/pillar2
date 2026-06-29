@@ -35,10 +35,10 @@ import scala.util.{Success, Try}
 
 @Singleton
 class RegistrationController @Inject() (
-  repository:             RegistrationCacheRepository,
-  dataSubmissionService:  RegistrationService,
-  authenticate:           AuthAction,
-  cc:                     ControllerComponents
+  repository:            RegistrationCacheRepository,
+  dataSubmissionService: RegistrationService,
+  authenticate:          AuthAction,
+  cc:                    ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
@@ -79,7 +79,7 @@ class RegistrationController @Inject() (
     httpResponse.status match {
       case OK =>
         Ok(httpResponse.body)
-      case NOT_FOUND => NotFound(httpResponse.body)
+      case NOT_FOUND   => NotFound(httpResponse.body)
       case BAD_REQUEST =>
         logServerError(httpResponse.body)
         BadRequest(httpResponse.body)

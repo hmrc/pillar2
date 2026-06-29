@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class ORNService @Inject() (
   ornConnector: ORNConnector
-)(using ec:     ExecutionContext) {
+)(using ec: ExecutionContext) {
 
   def submitOrn(ornRequest: ORNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
     ornConnector

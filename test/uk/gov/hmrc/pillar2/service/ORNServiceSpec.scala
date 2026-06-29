@@ -89,8 +89,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
     "should return SuccessResponse when orn exists (200)" in {
       when(
         mockOrnConnector
-          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-            using
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -107,8 +106,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
       when(
         mockOrnConnector
-          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-            using
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -128,8 +126,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
       when(
         mockOrnConnector
-          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-            using
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -147,8 +144,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
       when(
         mockOrnConnector
-          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-            using
+          .getOrn(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)

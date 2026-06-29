@@ -27,17 +27,17 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class UKTaxReturnService @Inject() (
   ukTaxReturnConnector: UKTaxReturnConnector
-)(using ec:             ExecutionContext) {
+)(using ec: ExecutionContext) {
 
   def submitUKTaxReturn(
-    payload:  UKTRSubmission
+    payload: UKTRSubmission
   )(using hc: HeaderCarrier, pillar2Id: String): Future[ApiSuccessResponse] =
     ukTaxReturnConnector
       .submitUKTaxReturn(payload)
       .flatMap(convertToUKTRApiResult)
 
   def amendUKTaxReturn(
-    payload:  UKTRSubmission
+    payload: UKTRSubmission
   )(using hc: HeaderCarrier, pillar2Id: String): Future[ApiSuccessResponse] =
     ukTaxReturnConnector
       .amendUKTaxReturn(payload)

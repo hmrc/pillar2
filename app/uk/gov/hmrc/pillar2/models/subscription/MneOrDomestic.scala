@@ -26,7 +26,7 @@ object MneOrDomestic {
 
   case object Uk extends MneOrDomestic
 
-  //to handle contravariant to invariant in 2.8 play-json
+  // to handle contravariant to invariant in 2.8 play-json
   val ukAndOther: MneOrDomestic = UkAndOther
   val uk:         MneOrDomestic = Uk
 

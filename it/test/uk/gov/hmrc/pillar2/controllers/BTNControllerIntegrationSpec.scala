@@ -22,6 +22,7 @@ import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits.*
@@ -33,12 +34,11 @@ import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 
 import java.net.URI
+import java.net.URL
 import java.time.LocalDate
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.*
 import scala.concurrent.duration.DurationInt
-import play.api.libs.json.JsObject
-import java.net.URL
 
 class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler with AuthStubs {
 

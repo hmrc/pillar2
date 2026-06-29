@@ -26,7 +26,7 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
 
   "ObligationsAndSubmissionsSuccessResponse" - {
     "must deserialize from valid JSON" in {
-      val processingDate = ZonedDateTime.now()
+      val processingDate          = ZonedDateTime.now()
       val accountingPeriodDetails = Seq(
         AccountingPeriodDetails(
           startDate = LocalDate.now(),
@@ -52,19 +52,19 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
       )
 
       val json = Json.obj(
-        "processingDate" -> processingDate,
+        "processingDate"          -> processingDate,
         "accountingPeriodDetails" -> Json.arr(
           Json.obj(
             "startDate"    -> accountingPeriodDetails.head.startDate,
             "endDate"      -> accountingPeriodDetails.head.endDate,
             "dueDate"      -> accountingPeriodDetails.head.dueDate,
             "underEnquiry" -> accountingPeriodDetails.head.underEnquiry,
-            "obligations" -> Json.arr(
+            "obligations"  -> Json.arr(
               Json.obj(
                 "obligationType" -> "UKTR",
                 "status"         -> "Fulfilled",
                 "canAmend"       -> false,
-                "submissions" -> Json.arr(
+                "submissions"    -> Json.arr(
                   Json.obj(
                     "submissionType" -> "UKTR_CREATE",
                     "receivedDate"   -> accountingPeriodDetails.head.obligations.head.submissions.head.receivedDate
@@ -81,7 +81,7 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
     }
 
     "must deserialize from JSON with empty submissions array" in {
-      val processingDate = ZonedDateTime.now()
+      val processingDate          = ZonedDateTime.now()
       val accountingPeriodDetails = Seq(
         AccountingPeriodDetails(
           startDate = LocalDate.now(),
@@ -105,14 +105,14 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
       )
 
       val json = Json.obj(
-        "processingDate" -> processingDate,
+        "processingDate"          -> processingDate,
         "accountingPeriodDetails" -> Json.arr(
           Json.obj(
             "startDate"    -> accountingPeriodDetails.head.startDate,
             "endDate"      -> accountingPeriodDetails.head.endDate,
             "dueDate"      -> accountingPeriodDetails.head.dueDate,
             "underEnquiry" -> accountingPeriodDetails.head.underEnquiry,
-            "obligations" -> Json.arr(
+            "obligations"  -> Json.arr(
               Json.obj(
                 "obligationType" -> "UKTR",
                 "status"         -> "Open",
@@ -154,14 +154,14 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
       )
 
       val json = Json.obj(
-        "processingDate" -> processingDate,
+        "processingDate"          -> processingDate,
         "accountingPeriodDetails" -> Json.arr(
           Json.obj(
             "startDate"    -> accountingPeriodDetails.head.startDate,
             "endDate"      -> accountingPeriodDetails.head.endDate,
             "dueDate"      -> accountingPeriodDetails.head.dueDate,
             "underEnquiry" -> false,
-            "obligations" -> Json.arr(
+            "obligations"  -> Json.arr(
               Json.obj(
                 "obligationType" -> "UKTR",
                 "status"         -> "Open",
@@ -189,7 +189,7 @@ class ObligationsAndSubmissionsSuccessResponseSpec extends AnyFreeSpec with Matc
 
     "must serialize to JSON" in {
       val processingDate = ZonedDateTime.now()
-      val response = ObligationsAndSubmissionsSuccessResponse(
+      val response       = ObligationsAndSubmissionsSuccessResponse(
         processingDate = processingDate,
         accountingPeriodDetails = Seq.empty
       )

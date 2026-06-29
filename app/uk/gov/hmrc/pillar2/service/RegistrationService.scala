@@ -86,7 +86,7 @@ class RegistrationService @Inject() (
     }
 
   private def registerWithoutId(businessName: String, address: Address, contactDetails: ContactDetails, isFm: Boolean)(using
-    hc:                                       HeaderCarrier
+    hc: HeaderCarrier
   ): Future[HttpResponse] = {
     val registerWithoutIDRequest = RegisterWithoutIDRequest(businessName, address, contactDetails)
     dataSubmissionConnectors

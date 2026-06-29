@@ -34,7 +34,7 @@ class ObligationsAndSubmissionsController @Inject() (
   authenticate:                     AuthAction,
   pillar2HeaderExists:              Pillar2HeaderAction,
   cc:                               ControllerComponents
-)(using executionContext:           ExecutionContext)
+)(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
 

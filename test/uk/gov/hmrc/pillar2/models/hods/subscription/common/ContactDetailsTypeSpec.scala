@@ -64,7 +64,7 @@ class ContactDetailsTypeSpec extends AnyFreeSpec with Matchers {
     }
 
     "must serialize to JSON with 'telephone'" in {
-      val model = ContactDetailsType("test name", Some("123456"), "test@test.com")
+      val model    = ContactDetailsType("test name", Some("123456"), "test@test.com")
       val expected = Json.obj(
         "name"         -> "test name",
         "telephone"    -> "123456",

@@ -24,6 +24,7 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.HttpReads.Implicits.*
@@ -37,12 +38,11 @@ import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.ReturnType.NIL_RETURN
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, UKTRSubmissionData, UKTRSubmissionNilReturn}
 
 import java.net.URI
+import java.net.URL
 import java.time.LocalDate
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.*
 import scala.concurrent.duration.DurationInt
-import play.api.libs.json.JsObject
-import java.net.URL
 
 class UKTRControllerIntegrationSpec
     extends AnyFunSuite
@@ -99,7 +99,7 @@ class UKTRControllerIntegrationSpec
 
   test("Successful UKTR nil submission") {
     stubAuthenticate()
-    val pillar2Id = "pillar2Id"
+    val pillar2Id   = "pillar2Id"
     val uktrPayload = UKTRSubmissionNilReturn(
       LocalDate.now,
       LocalDate.now(),

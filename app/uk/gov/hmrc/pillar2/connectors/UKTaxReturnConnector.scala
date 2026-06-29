@@ -30,10 +30,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class UKTaxReturnConnector @Inject() (
   val http:   HttpClientV2,
   val config: AppConfig
-)(using ec:   ExecutionContext) {
+)(using ec: ExecutionContext) {
 
   def submitUKTaxReturn(
-    payload:  UKTRSubmission
+    payload: UKTRSubmission
   )(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "submit-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"
@@ -46,7 +46,7 @@ class UKTaxReturnConnector @Inject() (
   }
 
   def amendUKTaxReturn(
-    payload:  UKTRSubmission
+    payload: UKTRSubmission
   )(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
     val serviceName = "amend-uk-tax-return"
     val url         = s"${config.baseUrl(serviceName)}"

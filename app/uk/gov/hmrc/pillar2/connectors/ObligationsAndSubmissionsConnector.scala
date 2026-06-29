@@ -28,12 +28,12 @@ import scala.concurrent.{ExecutionContext, Future}
 class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
 
   def getObligationsAndSubmissions(fromDate: LocalDate, toDate: LocalDate)(using
-    hc:                                      HeaderCarrier,
-    ec:                                      ExecutionContext,
-    pillar2Id:                               String
+    hc:        HeaderCarrier,
+    ec:        ExecutionContext,
+    pillar2Id: String
   ): Future[HttpResponse] = {
     val serviceName = "obligations-and-submissions"
-    val url =
+    val url         =
       s"${config.baseUrl(serviceName)}?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
     httpClient
       .get(url"$url")

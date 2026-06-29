@@ -26,8 +26,8 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class TestController @Inject() (
-  repository:             RegistrationCacheRepository,
-  cc:                     ControllerComponents
+  repository: RegistrationCacheRepository,
+  cc:         ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc) {
 

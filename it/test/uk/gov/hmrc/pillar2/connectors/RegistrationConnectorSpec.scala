@@ -37,8 +37,7 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
   "DataSubmissionConnector" - {
     "for a registration without id submission" - {
-      "must return status as OK" in {
-
+      "must return status as OK" in
         forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
           stubResponse(
             "/registration/02.00.00/organisation",
@@ -47,10 +46,8 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = await(connector.sendWithoutIDInformation(sub))
           result.status mustBe OK
         }
-      }
 
-      "must return status as BAD_REQUEST" in {
-
+      "must return status as BAD_REQUEST" in
         forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
           stubResponse(
             "/registration/02.00.00/organisation",
@@ -60,10 +57,8 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = connector.sendWithoutIDInformation(sub).futureValue
           result.status mustBe BAD_REQUEST
         }
-      }
 
-      "must return status as INTERNAL_SERVER_ERROR" in {
-
+      "must return status as INTERNAL_SERVER_ERROR" in
         forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
           stubResponse(
             "/registration/02.00.00/organisation",
@@ -73,7 +68,6 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = connector.sendWithoutIDInformation(sub).futureValue
           result.status mustBe INTERNAL_SERVER_ERROR
         }
-      }
     }
 
   }

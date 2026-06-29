@@ -85,7 +85,7 @@ class ReadSubscriptionCacheRepository @Inject() (
         .map(_ => ())
     else
       val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
-      val update = Updates.combine(
+      val update             = Updates.combine(
         Updates.set(idField, nonEncryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
         Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated)(using JsonDataEntry.dateFormat))

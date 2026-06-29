@@ -37,8 +37,8 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
 
   val service = new ObligationsAndSubmissionsService(mockObligationsAndSubmissionsConnector)
 
-  val fromDate: LocalDate = LocalDate.now()
-  val toDate:   LocalDate = LocalDate.now().plusYears(1)
+  val fromDate: LocalDate                         = LocalDate.now()
+  val toDate:   LocalDate                         = LocalDate.now().plusYears(1)
   val response: ObligationsAndSubmissionsResponse = ObligationsAndSubmissionsResponse(
     ObligationsAndSubmissionsSuccessResponse(
       ZonedDateTime.now(),
@@ -81,8 +81,7 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
     "should return successful response pillar2Id" in {
       when(
         mockObligationsAndSubmissionsConnector
-          .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-            using
+          .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
@@ -98,8 +97,7 @@ class ObligationsAndSubmissionsServiceSpec extends BaseSpec with Generators with
 
       when(
         mockObligationsAndSubmissionsConnector
-          .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(
-            using
+          .getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
             any[HeaderCarrier],
             any[ExecutionContext],
             ArgumentMatchers.eq(pillar2Id)
