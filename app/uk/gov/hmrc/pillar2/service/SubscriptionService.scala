@@ -563,24 +563,17 @@ class SubscriptionService @Inject() (
   def sendAmendedDataV2(id: String, amendData: AmendSubscriptionSuccessV2)(using hc: HeaderCarrier): Future[Done] = {
     val etmpAmendRequest = ETMPAmendSubscriptionSuccessV2(amendData)
     subscriptionConnector.amendSubscriptionInformationV2(etmpAmendRequest).flatMap { response =>
-      if response.status == 200 then {
-        response.json.validate[AmendResponse] match {
-          case JsSuccess(result, _) =>
-            logger.info(
-              s"Successful response received for amend subscription v2 for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
-            )
-            storeSubscriptionResponseV2(
-              id = id,
-              plrReference = etmpAmendRequest.upeDetails.plrReference
-            ).as(Done)
-          case _ => Future.failed(JsResultError)
-        }
-      } else {
+      auditService.auditAmendSubscriptionV2(
+        requestData = amendData,
+        responseData = AuditResponseReceived(response.status, response.json)
+      ) >> convertToAmendSubscriptionResult(response).flatMap { amendResponse =>
         logger.info(
-          s"Unsuccessful response received for amend subscription v2 with ${response.status} status and body: ${response.body} "
+          s"Successful response received for amend subscription v2 for form ${amendResponse.success.formBundleNumber} at ${amendResponse.success.processingDate}"
         )
-        auditService.auditAmendSubscriptionV2(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json)) >>
-          Future.failed(UnexpectedResponse)
+        storeSubscriptionResponseV2(
+          id = id,
+          plrReference = etmpAmendRequest.upeDetails.plrReference
+        ).as(Done)
       }
     }
   }

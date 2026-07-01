@@ -22,6 +22,7 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendResponse
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
 
@@ -67,4 +68,7 @@ package object service extends Logging {
 
   private[service] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
     convertToResult[GetORNSuccessResponse](response)
+
+  private[service] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] =
+    convertToResult[AmendResponse](response)
 }
