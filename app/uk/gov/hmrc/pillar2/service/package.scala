@@ -48,7 +48,7 @@ package object service extends Logging {
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case status =>
-        logger.error(s"Received invalid status $status from downstream. Body: ${response.body}")
+        logger.error(s"Received invalid status $status from downstream.")
         Future.failed(ApiInternalServerError)
     }
   }
