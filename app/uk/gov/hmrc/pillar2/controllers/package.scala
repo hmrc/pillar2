@@ -22,7 +22,6 @@ import play.api.libs.json.{JsError, Json}
 import play.api.mvc.Result
 import play.api.mvc.Results.*
 import uk.gov.hmrc.http.HttpResponse
-import uk.gov.hmrc.pillar2.models.errors.FinancialDataErrorResponses
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 
 import scala.util.Try
@@ -70,11 +69,6 @@ package object controllers {
             errorDetails.errorDetail.sourceFaultDetail
               .map(_.detail.mkString("; "))
               .getOrElse(s"${errorDetails.errorDetail.errorCode} - ${errorDetails.errorDetail.errorMessage}")
-          }
-          .orElse {
-            json.asOpt[FinancialDataErrorResponses].map { financialDataErrorResponses =>
-              financialDataErrorResponses.failures.map(f => s"${f.code} - ${f.reason}").mkString("; ")
-            }
           }
       }
 

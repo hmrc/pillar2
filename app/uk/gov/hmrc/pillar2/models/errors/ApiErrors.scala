@@ -16,21 +16,7 @@
 
 package uk.gov.hmrc.pillar2.models.errors
 
-import play.api.libs.json.{Json, OFormat}
-
 trait ApiErrors extends Throwable
 
 case object JsResultError extends ApiErrors
 case object UnexpectedResponse extends ApiErrors
-
-final case class FinancialDataError(code: String, reason: String) extends ApiErrors
-
-final case class FinancialDataErrorResponses(failures: Seq[FinancialDataError]) extends ApiErrors
-
-object FinancialDataError {
-  given formatException: OFormat[FinancialDataError] = Json.format[FinancialDataError]
-}
-
-object FinancialDataErrorResponses {
-  given format: OFormat[FinancialDataErrorResponses] = Json.format[FinancialDataErrorResponses]
-}
