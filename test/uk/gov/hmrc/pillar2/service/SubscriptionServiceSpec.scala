@@ -401,10 +401,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       ).thenReturn(Future.successful(AuditResult.Success))
 
       val failureBody = Json.obj(
-        "errors" -> Json.obj(
-          "processingDate" -> "2026-06-30T12:13:30Z",
-          "code"           -> "014",
-          "text"           -> "No subscription data found"
+        "errorDetail" -> Json.obj(
+          "timestamp"         -> "2023-02-14T12:58:44Z",
+          "errorCode"         -> "422",
+          "errorMessage"      -> "Request Not Processed",
+          "source"            -> "Back End",
+          "sourceFaultDetail" -> Json.obj("detail" -> Json.arr("001 - Request Not Processed"))
         )
       )
 
@@ -417,7 +419,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         service.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustEqual
-          ETMPValidationError("014", "No subscription data found")
+          ETMPValidationError("422", "Request Not Processed")
       }
     }
 

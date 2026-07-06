@@ -68,7 +68,14 @@ class SubscriptionControllerIntegrationSpec
             .withHeader("Content-Type", "application/json")
             .withBody(
               Json
-                .obj("errors" -> Json.obj("processingDate" -> "2026-06-30T12:13:30Z", "code" -> "014", "text" -> "No subscription data found"))
+                .obj(
+                  "errorDetail" -> Json.obj(
+                    "timestamp"    -> "2023-02-14T12:58:44Z",
+                    "errorCode"    -> "014",
+                    "errorMessage" -> "No subscription data found",
+                    "source"       -> "Back End"
+                  )
+                )
                 .toString()
             )
         )
@@ -96,7 +103,14 @@ class SubscriptionControllerIntegrationSpec
             .withHeader("Content-Type", "application/json")
             .withBody(
               Json
-                .obj("errors" -> Json.obj("processingDate" -> "2026-06-30T12:13:30Z", "code" -> "089", "text" -> "ID number missing or invalid"))
+                .obj(
+                  "errorDetail" -> Json.obj(
+                    "timestamp"    -> "2023-02-14T12:58:44Z",
+                    "errorCode"    -> "014",
+                    "errorMessage" -> "No subscription data found",
+                    "source"       -> "Back End"
+                  )
+                )
                 .toString()
             )
         )
@@ -110,8 +124,8 @@ class SubscriptionControllerIntegrationSpec
 
     result.status mustEqual 422
     val error = result.json.as[Pillar2ApiError]
-    error.code mustEqual "089"
-    error.message mustEqual "ID number missing or invalid"
+    error.code mustEqual "014"
+    error.message mustEqual "No subscription data found"
   }
 
   test("An unmapped downstream status is mapped to a 500 with the generic API error code") {
