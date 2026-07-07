@@ -28,6 +28,7 @@ import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.errors.{JsResultError, UnexpectedResponse}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
@@ -349,7 +350,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
 
     "return failure in case of a non-200 response" in {
-
       when(
         mockSubscriptionConnector.amendSubscriptionInformation(any[ETMPAmendSubscriptionSuccess]())(using
           any[HeaderCarrier](),
@@ -364,26 +364,23 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         }
       }
     }
-
   }
 
   "sendAmendedDataV2" - {
-    "call amend API v2 and update cache via v2 store in case of a successful response" in {
-      val dummyReadResponseV2 = arbitrarySubscriptionResponseV2.arbitrary.sample.value
+    "call amend API v2, audit, and update cache via v2 store in case of a successful response" in {
+      val testSubscriptionResponseV2 = arbitrarySubscriptionResponseV2.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
         override def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
-          Future.successful(dummyReadResponseV2)
+          Future.successful(testSubscriptionResponseV2)
       }
 
-      forAll(
-        arbitraryAmendSubscriptionSuccessV2.arbitrary,
-        arbMockId.arbitrary
-      ) { (validAmendObject, id) =>
+      when(
+        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+      ).thenReturn(Future.successful(AuditResult.Success))
+
+      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         val etmpAmendResponse = AmendResponse(
-          AmendSubscriptionSuccessResponse(
-            processingDate = LocalDate.now().toString,
-            formBundleNumber = "test-form-bundle-number"
-          )
+          AmendSubscriptionSuccessResponse(processingDate = LocalDate.now().toString, formBundleNumber = "test-form-bundle-number")
         )
         val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())
 
@@ -392,46 +389,73 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
             any[HeaderCarrier](),
             any[ExecutionContext]()
           )
-        )
-          .thenReturn(Future.successful(fakeAmendResponse))
+        ).thenReturn(Future.successful(fakeAmendResponse))
 
         subscriptionServiceWithStubbedStoreMethod.sendAmendedDataV2(id, validAmendObject).futureValue mustBe Done
       }
     }
-    "return failure in case of an unusual json response" in {
+
+    "fail with ETMPValidationError, preserving the error code and text, on a 422 response" in {
+      when(
+        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+      ).thenReturn(Future.successful(AuditResult.Success))
+
+      val failureBody = Json.obj(
+        "errorDetail" -> Json.obj(
+          "timestamp"         -> "2023-02-14T12:58:44Z",
+          "errorCode"         -> "422",
+          "errorMessage"      -> "Request Not Processed",
+          "source"            -> "Back End",
+          "sourceFaultDetail" -> Json.obj("detail" -> Json.arr("001 - Request Not Processed"))
+        )
+      )
 
       when(
         mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
           any[HeaderCarrier](),
           any[ExecutionContext]()
         )
-      )
-        .thenReturn(Future.successful(HttpResponse.apply(status = OK, json = JsObject.empty, Map.empty)))
+      ).thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, failureBody.toString())))
 
       forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
-        service.sendAmendedDataV2(id, validAmendObject).map { response =>
-          response mustBe JsResultError
-        }
+        service.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustEqual
+          ETMPValidationError("422", "Request Not Processed")
       }
     }
 
-    "return failure in case of a non-200 response" in {
+    "fail with InvalidJsonError when a 200 response has an unparseable body" in {
+      when(
+        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+      ).thenReturn(Future.successful(AuditResult.Success))
 
       when(
         mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
           any[HeaderCarrier](),
           any[ExecutionContext]()
         )
-      )
-        .thenReturn(Future.successful(HttpResponse.apply(BAD_REQUEST, "Bad Request")))
+      ).thenReturn(Future.successful(HttpResponse(OK, JsObject.empty, Map.empty)))
 
       forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
-        service.sendAmendedDataV2(id, validAmendObject).map { response =>
-          response mustBe UnexpectedResponse
-        }
+        service.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustBe a[InvalidJsonError]
       }
     }
 
+    "fail with ApiInternalServerError on any other non-200 status" in {
+      when(
+        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+      ).thenReturn(Future.successful(AuditResult.Success))
+
+      when(
+        mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      ).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, Json.obj("code" -> "400", "text" -> "Bad Request").toString())))
+
+      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        service.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustBe ApiInternalServerError
+      }
+    }
   }
 
 }

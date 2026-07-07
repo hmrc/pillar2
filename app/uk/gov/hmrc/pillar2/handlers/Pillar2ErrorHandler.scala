@@ -46,7 +46,7 @@ class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
           case error @ ApiInternalServerError      => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
           case error @ AuthorizationError          => Unauthorized(Json.toJson(Pillar2ApiError(error.code, error.message)))
         }
-        logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} statuscode", exception)
+        logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} status code. Exception: ", exception)
         Future.successful(ret)
       case _ =>
         logger.warn(s"Caught unhandled exception. Returning InternalServerError", exception)
