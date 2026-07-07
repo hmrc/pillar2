@@ -36,6 +36,7 @@ import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccessV2
 
 import java.net.URI
+import java.net.URL
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.*
 import scala.concurrent.duration.DurationInt
@@ -54,7 +55,7 @@ class SubscriptionControllerIntegrationSpec
     .configure("metrics.enabled" -> false)
     .build()
 
-  lazy val url = URI.create(s"http://localhost:$port${routes.SubscriptionController.amendSubscriptionV2(id).url}").toURL
+  lazy val url: URL = URI.create(s"http://localhost:$port${routes.SubscriptionController.amendSubscriptionV2(id).url}").toURL
 
   val id = "Int-c75cfd09-f945-41a8-90db-a93177a7663c"
 

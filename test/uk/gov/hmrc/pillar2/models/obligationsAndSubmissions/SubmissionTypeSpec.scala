@@ -22,12 +22,11 @@ import play.api.libs.json.Json
 
 class SubmissionTypeSpec extends AnyFreeSpec with Matchers {
 
-  "SubmissionType" - {
+  "SubmissionType" -
     SubmissionType.values.foreach { value =>
       s"must round-trip $value" in {
         Json.toJson(value).as[SubmissionType] mustEqual value
       }
     }
-  }
 
 }
