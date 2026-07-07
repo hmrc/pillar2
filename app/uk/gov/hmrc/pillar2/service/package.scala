@@ -22,6 +22,8 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
+import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendResponse
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
 
@@ -53,6 +55,29 @@ package object service extends Logging {
     }
   }
 
+  private[service] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] = {
+    logger.info(s"Converting amend subscription result with status ${response.status}")
+    response.status match {
+      case 200 | 201 =>
+        Try(response.json.validate[AmendResponse]) match {
+          case Success(JsSuccess(success, _)) => Future.successful(success)
+          case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
+          case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case 422 =>
+        Try(response.json.validate[ErrorDetails]) match {
+          case Success(JsSuccess(failure, _)) =>
+            logger.info(s"ETMPValidationError - Code: '${failure.errorDetail.errorCode}' Text: '${failure.errorDetail.errorMessage}'")
+            Future.failed(ETMPValidationError(failure.errorDetail.errorCode, failure.errorDetail.errorMessage))
+          case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
+          case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case status =>
+        logger.error(s"Received invalid status $status from downstream. Body: ${response.body}")
+        Future.failed(ApiInternalServerError)
+    }
+  }
+
   private[service] def convertToAccountActivityResult(response: HttpResponse): Future[AccountActivitySuccess] =
     convertToResult[AccountActivitySuccess](response)
 
@@ -67,4 +92,7 @@ package object service extends Logging {
 
   private[service] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
     convertToResult[GetORNSuccessResponse](response)
+
+//  private[service] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] =
+//    convertToAmendSubscriptionResult[AmendResponse](response)
 }
