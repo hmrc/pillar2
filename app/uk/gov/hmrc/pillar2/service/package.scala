@@ -93,6 +93,4 @@ package object service extends Logging {
   private[service] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
     convertToResult[GetORNSuccessResponse](response)
 
-//  private[service] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] =
-//    convertToAmendSubscriptionResult[AmendResponse](response)
 }

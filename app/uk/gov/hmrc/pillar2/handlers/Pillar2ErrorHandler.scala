@@ -18,6 +18,7 @@ package uk.gov.hmrc.pillar2.handlers
 
 import play.api.Logging
 import play.api.http.HttpErrorHandler
+import play.api.http.Status.UNPROCESSABLE_ENTITY
 import play.api.libs.json.Json
 import play.api.mvc.Results.*
 import play.api.mvc.{RequestHeader, Result}
@@ -35,8 +36,8 @@ class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
       Status(statusCode)(Json.toJson(Pillar2ApiError(statusCode.toString, message)))
     )
 
-  override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] =
-    exception match {
+  override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
+    val result = exception match {
       case e: Pillar2Error =>
         val ret = e match {
           case error: MissingHeaderError  => BadRequest(Json.toJson(Pillar2ApiError(error.code, error.message)))
@@ -46,10 +47,17 @@ class Pillar2ErrorHandler extends HttpErrorHandler with Logging {
           case error @ ApiInternalServerError      => InternalServerError(Json.toJson(Pillar2ApiError(error.code, error.message)))
           case error @ AuthorizationError          => Unauthorized(Json.toJson(Pillar2ApiError(error.code, error.message)))
         }
-        logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} status code. Exception: ", exception)
-        Future.successful(ret)
+        if ret.header.status == UNPROCESSABLE_ENTITY then
+          logger.warn(
+            s"Caught Pillar2Error [${e.getClass.getSimpleName}]. Returning ${ret.header.status} status code. Code: '${e.code}' Message: '${e.message}'."
+          )
+        else logger.warn(s"Caught Pillar2Error. Returning ${ret.header.status} status code. Exception: ", exception)
+        ret
       case _ =>
-        logger.warn(s"Caught unhandled exception. Returning InternalServerError", exception)
-        Future.successful(InternalServerError(Json.toJson(Pillar2ApiError(ApiInternalServerError.code, ApiInternalServerError.message))))
+        logger.warn("Caught unhandled exception. Returning InternalServerError", exception)
+        InternalServerError(Json.toJson(Pillar2ApiError(ApiInternalServerError.code, ApiInternalServerError.message)))
     }
+    Future.successful(result)
+  }
+
 }
