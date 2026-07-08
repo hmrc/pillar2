@@ -73,8 +73,8 @@ package object controllers {
       }
 
     errorMessage match {
-      case Some(msg) => logger.warn(s"Error with submission: $msg | body: $body")
-      case None      => logger.warn(s"Error with submission - unrecognised json body: $body")
+      case Some(msg) => logger.warn(s"Error with submission: $msg")
+      case None      => logger.warn(s"Error with submission - unrecognised json body")
     }
   }
 
