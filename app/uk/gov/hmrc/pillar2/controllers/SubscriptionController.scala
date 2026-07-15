@@ -33,10 +33,10 @@ import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
 class SubscriptionController @Inject() (
-  userAnswerCache:        RegistrationCacheRepository,
-  subscriptionService:    SubscriptionService,
-  authenticate:           AuthAction,
-  cc:                     ControllerComponents
+  userAnswerCache:     RegistrationCacheRepository,
+  subscriptionService: SubscriptionService,
+  authenticate:        AuthAction,
+  cc:                  ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {

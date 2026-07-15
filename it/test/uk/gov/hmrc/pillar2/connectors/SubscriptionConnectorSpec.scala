@@ -27,28 +27,27 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2, SubscriptionResponse, SubscriptionResponseV2, SubscriptionSuccessV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.create-subscription.port" -> server.port(),
-      "microservice.services.create-subscription-v2.port" -> server.port(),
+      "microservice.services.create-subscription.port"       -> server.port(),
+      "microservice.services.create-subscription-v2.port"    -> server.port(),
       "microservice.services.create-subscription-v2.context" -> "/pillar2/subscription/v2",
-      "microservice.services.amend-subscription-v2.port"      -> server.port(),
-      "microservice.services.amend-subscription-v2.context"   -> "/pillar2/subscription/v2"
+      "microservice.services.amend-subscription-v2.port"     -> server.port(),
+      "microservice.services.amend-subscription-v2.context"  -> "/pillar2/subscription/v2"
     )
     .build()
-  private val errorCodes: Gen[Int] = Gen.oneOf(Seq(203, 204, 400, 403, 500, 501, 502, 503, 504))
-  lazy val connector: SubscriptionConnector =
+  private val errorCodes: Gen[Int]              = Gen.oneOf(Seq(203, 204, 400, 403, 500, 501, 502, 503, 504))
+  lazy val connector:     SubscriptionConnector =
     app.injector.instanceOf[SubscriptionConnector]
 
   "SubscriptionConnector" - {
 
     "for a Create Subscription" - {
-      "must return status as OK" in {
-
+      "must return status as OK" in
         forAll(arbitrary[RequestDetail]) { sub =>
           stubResponse(
             "/pillar2/subscription",
@@ -57,10 +56,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = await(connector.sendCreateSubscriptionInformation(sub))
           result.status mustBe OK
         }
-      }
 
-      "must return status as BAD_REQUEST" in {
-
+      "must return status as BAD_REQUEST" in
         forAll(arbitrary[RequestDetail]) { sub =>
           stubResponse(
             "/pillar2/subscription",
@@ -70,10 +67,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = connector.sendCreateSubscriptionInformation(sub).futureValue
           result.status mustBe BAD_REQUEST
         }
-      }
 
-      "must return status as INTERNAL_SERVER_ERROR" in {
-
+      "must return status as INTERNAL_SERVER_ERROR" in
         forAll(arbitrary[RequestDetail]) { sub =>
           stubResponse(
             "/pillar2/subscription",
@@ -83,12 +78,11 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = connector.sendCreateSubscriptionInformation(sub).futureValue
           result.status mustBe INTERNAL_SERVER_ERROR
         }
-      }
     }
 
     "for retrieving Subscription Information" - {
 
-      "must return object when the response was OK" in {
+      "must return object when the response was OK" in
         forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponse.arbitrary) { (plrReference, response) =>
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/$plrReference"))
@@ -102,9 +96,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           result.status mustEqual OK
           result.json mustEqual Json.toJson(SubscriptionResponse(response.success))
         }
-      }
 
-      "must throw exception when unexpected body is received" in {
+      "must throw exception when unexpected body is received" in
         forAll(arbPlrReference.arbitrary) { plrReference =>
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/$plrReference"))
@@ -119,7 +112,6 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
             ex shouldBe a[JsResultException]
           }
         }
-      }
 
       "must return future failed for non-200 responses" in {
         val errorResponse = errorCodes.sample.value
@@ -134,13 +126,11 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
       }
 
-
-
     }
 
     "for retrieving Subscription Information from updated api" - {
 
-      "must return object when the response was OK" in {
+      "must return object when the response was OK" in
         forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponseV2.arbitrary) { (plrReference, response) =>
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
@@ -154,12 +144,11 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           result.status mustEqual OK
           result.json mustEqual Json.toJson(SubscriptionResponseV2(response.success))
         }
-      }
 
-      "must return object when the response was OK but with no accounting periods" in {
+      "must return object when the response was OK but with no accounting periods" in
         forAll(arbPlrReference.arbitrary) { plrReference =>
           val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
-          val response = SubscriptionResponseV2(subscriptionSuccess)
+          val response            = SubscriptionResponseV2(subscriptionSuccess)
 
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
@@ -174,9 +163,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           result.status mustEqual OK
           result.json mustEqual Json.toJson(SubscriptionResponseV2(response.success))
         }
-      }
 
-      "must throw exception when unexpected body is received" in {
+      "must throw exception when unexpected body is received" in
         forAll(arbPlrReference.arbitrary) { plrReference =>
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
@@ -191,7 +179,6 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
             ex shouldBe a[JsResultException]
           }
         }
-      }
 
       "must return future failed for non-200 responses" in {
         val errorResponse = errorCodes.sample.value
@@ -210,7 +197,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
     "amendSubscriptionInformationV2" - {
 
-      "must return status as OK for a successful amendment" in {
+      "must return status as OK for a successful amendment" in
         forAll(arbitrary[ETMPAmendSubscriptionSuccessV2]) { amendRequest =>
           stubPutResponse(
             s"/pillar2/subscription/v2",
@@ -220,9 +207,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = await(connector.amendSubscriptionInformationV2(amendRequest))
           result.status mustBe OK
         }
-      }
 
-      "should handle 400 Bad Request" in {
+      "should handle 400 Bad Request" in
         forAll { (amendRequest: ETMPAmendSubscriptionSuccessV2) =>
           stubPutResponse("/pillar2/subscription/v2", BAD_REQUEST)
 
@@ -230,9 +216,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
           result.status mustBe BAD_REQUEST
         }
-      }
 
-      "should handle INTERNAL_SERVER_ERROR" in {
+      "should handle INTERNAL_SERVER_ERROR" in
         forAll { (amendRequest: ETMPAmendSubscriptionSuccessV2) =>
           stubPutResponse("/pillar2/subscription/v2", INTERNAL_SERVER_ERROR)
 
@@ -240,12 +225,11 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
           result.status mustBe INTERNAL_SERVER_ERROR
         }
-      }
     }
 
     "amendSubscriptionInformation" - {
 
-      "must return status as OK for a successful amendment" in {
+      "must return status as OK for a successful amendment" in
         forAll(arbitrary[ETMPAmendSubscriptionSuccess]) { amendRequest =>
           stubPutResponse(
             s"/pillar2/subscription",
@@ -255,9 +239,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = await(connector.amendSubscriptionInformation(amendRequest))
           result.status mustBe OK
         }
-      }
 
-      "should handle 400 Bad Request" in {
+      "should handle 400 Bad Request" in
         forAll { (amendRequest: ETMPAmendSubscriptionSuccess) =>
           stubPutResponse("/pillar2/subscription", BAD_REQUEST)
 
@@ -265,9 +248,8 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
           result.status mustBe BAD_REQUEST
         }
-      }
 
-      "should handle exceptions" in {
+      "should handle exceptions" in
         forAll { (amendRequest: ETMPAmendSubscriptionSuccess) =>
           server.stop()
 
@@ -278,7 +260,6 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           exception mustBe a[Throwable]
           server.start()
         }
-      }
     }
 
   }

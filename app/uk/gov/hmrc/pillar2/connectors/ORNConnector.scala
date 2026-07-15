@@ -54,12 +54,12 @@ class ORNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(usi
   }
 
   def getOrn(fromDate: LocalDate, toDate: LocalDate)(using
-    hc:                HeaderCarrier,
-    ec:                ExecutionContext,
-    pillar2Id:         String
+    hc:        HeaderCarrier,
+    ec:        ExecutionContext,
+    pillar2Id: String
   ): Future[HttpResponse] = {
     val serviceName = "overseas-return-notification"
-    val url =
+    val url         =
       s"${config.baseUrl(serviceName)}?accountingPeriodFrom=${fromDate.toString}&accountingPeriodTo=${toDate.toString}"
     http
       .get(url"$url")

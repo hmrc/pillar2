@@ -31,10 +31,10 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class ORNController @Inject() (
-  ornService:             ORNService,
-  authenticate:           AuthAction,
-  pillar2HeaderExists:    Pillar2HeaderAction,
-  cc:                     ControllerComponents
+  ornService:          ORNService,
+  authenticate:        AuthAction,
+  pillar2HeaderExists: Pillar2HeaderAction,
+  cc:                  ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {

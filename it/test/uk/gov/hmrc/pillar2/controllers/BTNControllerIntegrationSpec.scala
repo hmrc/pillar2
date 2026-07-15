@@ -16,14 +16,16 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.must.Matchers.mustEqual
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
+import play.api.libs.json.JsObject
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.helpers.AuthStubs
@@ -32,11 +34,11 @@ import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 
 import java.net.URI
+import java.net.URL
 import java.time.LocalDate
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.*
 import scala.concurrent.duration.DurationInt
-import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler with AuthStubs {
 
@@ -46,17 +48,17 @@ class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     .configure("metrics.enabled" -> false)
     .build()
 
-  val successfulResponse =  Json.obj(
+  val successfulResponse: JsObject = Json.obj(
     "success" -> Json.obj(
-      "processingDate"   -> "2024-03-14T09:26:17Z"
+      "processingDate" -> "2024-03-14T09:26:17Z"
     )
   )
 
-  lazy val url = URI.create( s"http://localhost:$port${routes.BTNController.submitBtn().url}").toURL
+  lazy val url: URL = URI.create(s"http://localhost:$port${routes.BTNController.submitBtn().url}").toURL
 
   test("Successful BTN submission") {
     stubAuthenticate()
-    val pillar2Id = "pillar2Id"
+    val pillar2Id  = "pillar2Id"
     val btnPayload = Json.toJson(BTNRequest(LocalDate.of(2024, 1, 1), LocalDate.of(2024, 12, 31)))
     server.stubFor(
       post(urlEqualTo("/RESTAdapter/plr/below-threshold-notification"))
@@ -73,9 +75,10 @@ class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
     val httpClient = app.injector.instanceOf[HttpClientV2]
     given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("X-Pillar2-Id" -> pillar2Id, "Content-Type" -> "application/json")
-    val request = httpClient.post(url)
+    val request = httpClient
+      .post(url)
       .withBody(btnPayload)
-    val result  = Await.result(request.execute[HttpResponse], 5.seconds)
+    val result = Await.result(request.execute[HttpResponse], 5.seconds)
     result.status mustEqual 201
   }
 
@@ -85,10 +88,11 @@ class BTNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSui
 
     val httpClient = app.injector.instanceOf[HttpClientV2]
     given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
-      .withExtraHeaders( "Content-Type" -> "application/json")
-    val request = httpClient.post(url)
+      .withExtraHeaders("Content-Type" -> "application/json")
+    val request = httpClient
+      .post(url)
       .withBody(btnPayload)
-    val result  = Await.result(request.execute[HttpResponse], 5.seconds)
+    val result = Await.result(request.execute[HttpResponse], 5.seconds)
     result.status mustEqual 400
     val error = result.json.as[Pillar2ApiError]
     error.code mustEqual "001"

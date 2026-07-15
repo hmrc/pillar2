@@ -16,14 +16,15 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
-import com.github.tomakehurst.wiremock.client.WireMock._
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import org.scalatest.funsuite.AnyFunSuite
-import org.scalatest.matchers.must.Matchers.{mustEqual, mustBe}
+import org.scalatest.matchers.must.Matchers.{mustBe, mustEqual}
 import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.http.HttpReads.Implicits._
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{Authorization, HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
@@ -32,9 +33,8 @@ import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 
 import java.net.{URI, URL}
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits._
+import scala.concurrent.ExecutionContext.Implicits.*
 import scala.concurrent.duration.DurationInt
-import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 
 class ORNControllerIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSuite with WireMockServerHandler with AuthStubs with ORNDataFixture {
 

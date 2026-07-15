@@ -29,9 +29,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class RegistrationCacheController @Inject() (
-  repository:             RegistrationCacheRepository,
-  authenticate:           AuthAction,
-  cc:                     ControllerComponents
+  repository:   RegistrationCacheRepository,
+  authenticate: AuthAction,
+  cc:           ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {

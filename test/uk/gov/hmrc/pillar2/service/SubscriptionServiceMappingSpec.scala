@@ -161,7 +161,7 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         "emailAddress" -> "secondary@example.com"
       )
 
-      val baseSuccess = arbitrarySubscriptionSuccess.arbitrary.sample.value
+      val baseSuccess              = arbitrarySubscriptionSuccess.arbitrary.sample.value
       val subscriptionResponseJson = Json.obj(
         "success" -> Json.obj(
           "formBundleNumber"         -> "bundle1",

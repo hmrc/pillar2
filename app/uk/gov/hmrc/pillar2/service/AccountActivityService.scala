@@ -23,7 +23,7 @@ import uk.gov.hmrc.pillar2.models.accountactivity.{AccountActivityRequest, Accou
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AccountActivityService @Inject(accountActivityConnector: AccountActivityConnector) (using ExecutionContext) {
+class AccountActivityService @Inject (accountActivityConnector: AccountActivityConnector)(using ExecutionContext) {
 
   def getAccountActivity(request: AccountActivityRequest, pillarId: String)(using HeaderCarrier): Future[AccountActivitySuccess] =
     accountActivityConnector.retrieveAccountActivity(request, pillarId).flatMap(convertToAccountActivityResult)

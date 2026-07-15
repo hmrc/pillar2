@@ -22,11 +22,11 @@ import org.scalatestplus.play.guice.GuiceOneServerPerSuite
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.{await, defaultAwaitTimeout}
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.helpers.AuthStubs
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
-import uk.gov.hmrc.http.HttpReads.Implicits._
 
 import java.net.URI
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -39,11 +39,11 @@ class HealthEndpointIntegrationSpec extends AnyFunSuite with GuiceOneServerPerSu
       .build()
 
   test("service health endpoint returns 200") {
-    val url         = URI.create(s"http://localhost:$port/ping/ping").toURL
-    val httpClient  = app.injector.instanceOf[HttpClientV2]
+    val url        = URI.create(s"http://localhost:$port/ping/ping").toURL
+    val httpClient = app.injector.instanceOf[HttpClientV2]
     given hc: HeaderCarrier = HeaderCarrier()
-    val request     = httpClient.get(url)
-    val result      = await(request.execute[HttpResponse])
+    val request = httpClient.get(url)
+    val result  = await(request.execute[HttpResponse])
     result.status shouldEqual 200
   }
 }

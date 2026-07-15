@@ -34,7 +34,7 @@ class UKTaxReturnController @Inject() (
   ukTaxReturnService:  UKTaxReturnService,
   pillar2HeaderExists: Pillar2HeaderAction,
   authenticate:        AuthAction
-)(using ec:            ExecutionContext)
+)(using ec: ExecutionContext)
     extends BackendController(cc) {
 
   def submitUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { request =>

@@ -45,7 +45,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
 
-  val jsData: JsValue = Json.parse("""{"value": "field"}""")
+  val jsData:      JsValue     = Json.parse("""{"value": "field"}""")
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
@@ -95,8 +95,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               any[String](),
               any[Option[String]](),
               any[UserAnswers]()
-            )(
-              using any[HeaderCarrier]()
+            )(using
+              any[HeaderCarrier]()
             )
         )
           .thenReturn(
@@ -126,8 +126,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               any[String](),
               any[Option[String]](),
               any[UserAnswers]()
-            )(
-              using any[HeaderCarrier]()
+            )(using
+              any[HeaderCarrier]()
             )
         )
           .thenReturn(
@@ -157,8 +157,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               any[String](),
               any[Option[String]](),
               any[UserAnswers]()
-            )(
-              using any[HeaderCarrier]()
+            )(using
+              any[HeaderCarrier]()
             )
         )
           .thenReturn(
@@ -188,8 +188,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               any[String](),
               any[Option[String]](),
               any[UserAnswers]()
-            )(
-              using any[HeaderCarrier]()
+            )(using
+              any[HeaderCarrier]()
             )
         )
           .thenReturn(
@@ -219,8 +219,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               any[String](),
               any[Option[String]](),
               any[UserAnswers]()
-            )(
-              using any[HeaderCarrier]()
+            )(using
+              any[HeaderCarrier]()
             )
         )
           .thenReturn(
@@ -250,8 +250,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
               any[String](),
               any[Option[String]](),
               any[UserAnswers]()
-            )(
-              using any[HeaderCarrier]()
+            )(using
+              any[HeaderCarrier]()
             )
         )
           .thenReturn(
@@ -276,7 +276,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     }
 
     "readAndCacheSubscription" - {
-      "return ok with the response if the connector returns successful" in {
+      "return ok with the response if the connector returns successful" in
         forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (id, plrReference, response) =>
           when(mockSubscriptionService.storeSubscriptionResponse(any[String](), any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(response))
@@ -285,7 +285,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
-      }
 
       "return UnexpectedResponse if connector returns non-OK response" in {
         when(mockSubscriptionService.storeSubscriptionResponse(any[String](), any[String]())(using any[HeaderCarrier]()))
@@ -297,7 +296,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     }
 
     "readAndCacheSubscriptionV2" - {
-      "return ok with the response if the connector returns successful" in {
+      "return ok with the response if the connector returns successful" in
         forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (id, plrReference, response) =>
           when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(response))
@@ -306,9 +305,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
-      }
 
-      "return ok with the response if the connector returns successful but with no accounting periods" in {
+      "return ok with the response if the connector returns successful but with no accounting periods" in
         forAll(arbMockId.arbitrary, plrReferenceGen) { (id, plrReference) =>
           val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
           val response            = SubscriptionResponseV2(subscriptionSuccess)
@@ -320,7 +318,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
-      }
 
       "return UnexpectedResponse if connector returns non-OK response" in {
         when(mockSubscriptionService.storeSubscriptionResponseV2(any[String](), any[String]())(using any[HeaderCarrier]()))
@@ -332,7 +329,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     }
 
     "readSubscription" - {
-      "return Ok response with json object if the connector returns successful" in {
+      "return Ok response with json object if the connector returns successful" in
         forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
           when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
@@ -341,9 +338,8 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
-      }
 
-      "return Ok response with json object if the connector returns successful but with no accounting periods" in {
+      "return Ok response with json object if the connector returns successful but with no accounting periods" in
         forAll(plrReferenceGen) { plrReference =>
           val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
           val response            = SubscriptionResponseV2(subscriptionSuccess)
@@ -355,7 +351,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
-      }
 
       "return UnexpectedResponse if connector fails" in {
         when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
@@ -366,7 +361,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
     }
 
     "readSubscriptionV2" - {
-      "return Ok response with json object if the connector returns successful" in {
+      "return Ok response with json object if the connector returns successful" in
         forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (plrReference, response) =>
           when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
@@ -375,7 +370,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
-      }
 
       "return UnexpectedResponse if connector fails" in {
         when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
@@ -387,7 +381,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
     "amendSubscription" - {
 
-      "return OK when valid data is provided" in {
+      "return OK when valid data is provided" in
         forAll(arbMockId.arbitrary, arbitraryAmendSubscriptionSuccess.arbitrary) { (id, amendData) =>
           when(mockSubscriptionService.sendAmendedData(any[String](), any[AmendSubscriptionSuccess]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(Done))
@@ -398,8 +392,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe OK
         }
-      }
-      "return bad request if the validation fails on the json payload" in {
+      "return bad request if the validation fails on the json payload" in
         forAll(arbMockId.arbitrary) { id =>
           when(mockSubscriptionService.sendAmendedData(any[String](), any[AmendSubscriptionSuccess]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(Done))
@@ -410,13 +403,12 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe BAD_REQUEST
         }
-      }
 
     }
 
     "amendSubscriptionV2" - {
 
-      "return OK when valid data is provided" in {
+      "return OK when valid data is provided" in
         forAll(arbMockId.arbitrary, arbitraryAmendSubscriptionSuccessV2.arbitrary) { (id, amendData) =>
           when(mockSubscriptionService.sendAmendedDataV2(any[String](), any[AmendSubscriptionSuccessV2]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(Done))
@@ -427,8 +419,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe OK
         }
-      }
-      "return bad request if the validation fails on the json payload" in {
+      "return bad request if the validation fails on the json payload" in
         forAll(arbMockId.arbitrary) { id =>
           when(mockSubscriptionService.sendAmendedDataV2(any[String](), any[AmendSubscriptionSuccessV2]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(Done))
@@ -439,7 +430,6 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe BAD_REQUEST
         }
-      }
 
     }
 

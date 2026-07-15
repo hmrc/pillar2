@@ -80,7 +80,7 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
       status(result) mustEqual BAD_REQUEST
     }
 
-    "should return CREATED when a valid json is passed and the call to ETMP is successfull" in {
+    "should return CREATED when a valid json is passed and the call to ETMP is successfull" in
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayload =>
         val request: FakeRequest[AnyContentAsJson] =
           FakeRequest(
@@ -92,6 +92,5 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
         val result: Future[Result] = route(application, request).value
         status(result) mustEqual CREATED
       }
-    }
   }
 }

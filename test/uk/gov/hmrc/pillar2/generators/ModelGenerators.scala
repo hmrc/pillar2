@@ -122,7 +122,7 @@ trait ModelGenerators {
     )
   }
 
-  //---------------------------------------------------
+  // ---------------------------------------------------
 
   /** Generates a UserAnswers object with a random id and a user data from the provided generators.
     * @param generators
@@ -143,7 +143,7 @@ trait ModelGenerators {
 
   val arbitraryAnyIdUpeFmUserAnswers: Arbitrary[UserAnswers] = Arbitrary {
     for {
-      id <- nonEmptyString
+      id       <- nonEmptyString
       userData <- oneOf(
                     Seq(
                       arbitraryWithoutIdUpeFmUserData.arbitrary,
@@ -600,7 +600,7 @@ trait ModelGenerators {
     )
   }
 
-  //----------------------------------------------------
+  // ----------------------------------------------------
 
   val arbitraryWithIdRegDataForLimitedCompany: Arbitrary[GrsResponse] = Arbitrary {
     for {

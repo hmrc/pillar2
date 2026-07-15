@@ -66,15 +66,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     }
 
-    "Return internal server error in service" in {
-
+    "Return internal server error in service" in
       forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryUncompleteUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
         service.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
           response.status mustBe INTERNAL_SERVER_ERROR
         }
       }
-
-    }
 
     "Return internal server error with response" in {
       when(
@@ -119,7 +116,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         val userAnswersGen           = userAnswersFromGenerators(Arbitrary(llpWithoutCompanyProfile))
 
         forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-          val modifiedData = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
+          val modifiedData       = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
           val updatedGrsResponse = userAnswers.data.as[JsObject] ++ Json.obj(
             "upeGRSResponse" -> Json.obj(
               "partnershipEntityRegistrationData" -> modifiedData
@@ -141,8 +138,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
   "storeSubscriptionResponse " - {
 
-    "return done if a valid response is received from ETMP" in {
-
+    "return done if a valid response is received from ETMP" in
       forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponse]) { (mockId, plrReference, response) =>
         when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response).toString)))
@@ -153,9 +149,8 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         resultFuture.futureValue mustEqual response
       }
-    }
 
-    "throw exception if no valid json is received from ETMP" in {
+    "throw exception if no valid json is received from ETMP" in
       forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
         when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.failed(UnexpectedResponse))
@@ -164,12 +159,11 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         resultFuture.failed.futureValue mustEqual UnexpectedResponse
       }
-    }
   }
 
   "storeSubscriptionResponseV2 " - {
 
-    "return done if a valid response is received from ETMP" in {
+    "return done if a valid response is received from ETMP" in
       forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (mockId, plrReference, response) =>
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response).toString)))
@@ -180,9 +174,8 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         resultFuture.futureValue mustEqual response
       }
-    }
 
-    "throw exception if no valid json is received from ETMP" in {
+    "throw exception if no valid json is received from ETMP" in
       forAll(arbMockId.arbitrary, plrReferenceGen) { (mockId, plrReference) =>
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.failed(UnexpectedResponse))
@@ -191,13 +184,11 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
         resultFuture.failed.futureValue mustEqual UnexpectedResponse
       }
-    }
   }
 
   "readSubscriptionData " - {
 
-    "return subscription response if a valid response is received from ETMP" in {
-
+    "return subscription response if a valid response is received from ETMP" in
       forAll(plrReferenceGen, arbitrary[SubscriptionResponse]) { (plrReference, response) =>
         val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
         when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
@@ -207,7 +198,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         val resultFuture = service.readSubscriptionData(plrReference).futureValue
         resultFuture mustEqual mockResponse
       }
-    }
 
     "throw exception if no valid json is received from ETMP" in {
       when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
@@ -219,7 +209,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
 
     "handle LimitedLiabilityPartnership entity type correctly" - {
-      "when all required data is present" in {
+      "when all required data is present" in
         forAll(plrReferenceGen, arbitrary[SubscriptionResponse], arbitraryWithIdUpeFmUserDataLLP.arbitrary) { (plrReference, response, _) =>
           val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
 
@@ -233,13 +223,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
           resultFuture mustEqual mockResponse
         }
-      }
     }
   }
 
   "readSubscriptionDataV2 " - {
 
-    "return subscription response if a valid response is received from ETMP" in {
+    "return subscription response if a valid response is received from ETMP" in
       forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (plrReference, response) =>
         val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
@@ -249,9 +238,8 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         val resultFuture = service.readSubscriptionDataV2(plrReference).futureValue
         resultFuture mustEqual mockResponse
       }
-    }
 
-    "return subscription response if a valid response is received from ETMP but with no accounting periods" in {
+    "return subscription response if a valid response is received from ETMP but with no accounting periods" in
       forAll(plrReferenceGen) { plrReference =>
         val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
         val response            = SubscriptionResponseV2(subscriptionSuccess)
@@ -265,7 +253,6 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         val resultFuture = service.readSubscriptionDataV2(plrReference).futureValue
         resultFuture mustEqual mockResponse
       }
-    }
 
     "throw exception if no valid json is received from ETMP" in {
       when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
@@ -277,7 +264,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     }
 
     "handle LimitedLiabilityPartnership entity type correctly" - {
-      "when all required data is present" in {
+      "when all required data is present" in
         forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2], arbitraryWithIdUpeFmUserDataLLPV2.arbitrary) { (plrReference, response, _) =>
           val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
 
@@ -291,13 +278,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
           resultFuture mustEqual mockResponse
         }
-      }
     }
   }
 
   "sendAmendedData" - {
     "call amend API and update cache in case of a successful response" in {
-      val dummyReadResponse = arbitrarySubscriptionResponse.arbitrary.sample.value
+      val dummyReadResponse                         = arbitrarySubscriptionResponse.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
         override def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
           Future.successful(dummyReadResponse)
@@ -368,7 +354,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
   "sendAmendedDataV2" - {
     "call amend API v2, audit, and update cache via v2 store in case of a successful response" in {
-      val testSubscriptionResponseV2 = arbitrarySubscriptionResponseV2.arbitrary.sample.value
+      val testSubscriptionResponseV2                = arbitrarySubscriptionResponseV2.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
         override def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
           Future.successful(testSubscriptionResponseV2)

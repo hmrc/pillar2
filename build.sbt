@@ -6,10 +6,11 @@ val appName = "pillar2"
 
 ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / majorVersion := 0
+ThisBuild / semanticdbEnabled := true
 
 lazy val microservice = Project(appName, file("."))
   .enablePlugins(play.sbt.PlayScala, SbtDistributablesPlugin)
-  .disablePlugins(JUnitXmlReportPlugin) //Required to prevent https://github.com/scalatest/scalatest/issues/1427
+  .disablePlugins(JUnitXmlReportPlugin) // Required to prevent https://github.com/scalatest/scalatest/issues/1427
   .settings(
     ScoverageKeys.coverageExcludedFiles :=
       "<empty>;com.kenshoo.play.metrics.*;.*definition.*;prod.*;testOnlyDoNotUseInAppConf.*;.*stubs.*;.*models.*;" +
@@ -28,7 +29,7 @@ lazy val microservice = Project(appName, file("."))
     Test / unmanagedSourceDirectories := (Test / baseDirectory)(base => Seq(base / "test", base / "test-common")).value,
     Test / unmanagedResourceDirectories := Seq(baseDirectory.value / "test-resources")
   )
-  .settings(CodeCoverageSettings.settings*)
+  .settings(CodeCoverageSettings.settings *)
 
 lazy val it = project
   .enablePlugins(play.sbt.PlayScala)
@@ -42,20 +43,13 @@ lazy val it = project
     compilerSettings
   )
 
-inThisBuild(
-  List(
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
-  )
-)
-
 lazy val compilerSettings = Seq(
   scalacOptions ~= (_.distinct),
   tpolecatCiModeOptions += ScalacOptions.warnOption("conf:src=routes/.*:s"),
   Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
 )
 
-addCommandAlias("prePrChecks", "; scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check")
+addCommandAlias("prePrChecks", "; scalafmtCheckAll; it/scalafmtCheckAll; scalafmtSbtCheck; scalafixAll --check; it/scalafixAll --check")
 addCommandAlias("checkCodeCoverage", "; clean; coverage; test; it/test; coverageReport")
-addCommandAlias("lint", "; scalafmtAll; scalafmtSbt; scalafixAll")
+addCommandAlias("lint", "; scalafmtAll; it/scalafmtAll; scalafmtSbt; it/scalafixAll; scalafixAll")
 addCommandAlias("prePush", "; reload; clean; compile; test; it/test; lint;")

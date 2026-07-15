@@ -35,7 +35,7 @@ class SubscriptionConnector @Inject() (
   given logger: Logger = Logger(this.getClass.getName)
   def sendCreateSubscriptionInformation(
     subscription: RequestDetail
-  )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     logger.info(
       s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
@@ -67,7 +67,7 @@ class SubscriptionConnector @Inject() (
 
   def amendSubscriptionInformation(
     amendRequest: ETMPAmendSubscriptionSuccess
-  )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
     val url         = s"${config.baseUrl(serviceName)}"
     given writes: Writes[ETMPAmendSubscriptionSuccess] = ETMPAmendSubscriptionSuccess.format
@@ -80,7 +80,7 @@ class SubscriptionConnector @Inject() (
 
   def amendSubscriptionInformationV2(
     amendRequest: ETMPAmendSubscriptionSuccessV2
-  )(using hc:     HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "amend-subscription-v2"
     val url         = s"${config.baseUrl(serviceName)}"
     given writes: Writes[ETMPAmendSubscriptionSuccessV2] = ETMPAmendSubscriptionSuccessV2.format

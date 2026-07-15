@@ -23,7 +23,7 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class FakeAuthAction @Inject() (
   val parser: BodyParsers.Default
-)(using ec:   ExecutionContext)
+)(using ec: ExecutionContext)
     extends AuthAction {
 
   protected def executionContext: ExecutionContext = ec

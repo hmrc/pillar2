@@ -30,12 +30,12 @@ import scala.concurrent.{ExecutionContext, Future}
 
 class AuditService @Inject() (
   auditConnector: AuditConnector
-)(using ec:       ExecutionContext)
+)(using ec: ExecutionContext)
     extends Logging {
 
   def auditUpeRegisterWithoutId(
     upeRegistration: UpeRegistration
-  )(using hc:        HeaderCarrier): Future[AuditResult] =
+  )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       UpeRegisterWithoutIdAuditEvent(
         upeRegistration = upeRegistration
@@ -44,7 +44,7 @@ class AuditService @Inject() (
 
   def auditFmRegisterWithoutId(
     nominatedFilingMember: NominatedFilingMember
-  )(using hc:              HeaderCarrier): Future[AuditResult] =
+  )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       FmRegisterWithoutIdAuditEvent(
         nominatedFilingMember = nominatedFilingMember
@@ -54,8 +54,8 @@ class AuditService @Inject() (
   def auditCreateSubscription(
     subscriptionRequest: RequestDetail,
     responseReceived:    AuditResponseReceived
-  )(using hc:            HeaderCarrier): Future[AuditResult] = {
-    //TODO - This needs to be fixed as we are loosing failure of response
+  )(using hc: HeaderCarrier): Future[AuditResult] = {
+    // TODO - This needs to be fixed as we are loosing failure of response
     val resData = responseReceived.status match {
       case CREATED =>
         val response = responseReceived.responseData.as[SuccessResponse]
@@ -80,7 +80,7 @@ class AuditService @Inject() (
   def auditReadSubscriptionSuccess(
     plrReference: String,
     responseData: SubscriptionResponse
-  )(using hc:     HeaderCarrier): Future[AuditResult] =
+  )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       ReadSubscriptionSuccessAuditEvent(
         plrReference = plrReference,
@@ -98,7 +98,7 @@ class AuditService @Inject() (
   def auditReadSubscriptionSuccessV2(
     plrReference: String,
     responseData: SubscriptionResponseV2
-  )(using hc:     HeaderCarrier): Future[AuditResult] =
+  )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       ReadSubscriptionSuccessAuditEventV2(
         plrReference = plrReference,
@@ -117,7 +117,7 @@ class AuditService @Inject() (
     plrReference: String,
     status:       Int,
     responseData: JsValue
-  )(using hc:     HeaderCarrier): Future[AuditResult] =
+  )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       ReadSubscriptionFailedAuditEvent(
         plrReference = plrReference,
@@ -128,8 +128,8 @@ class AuditService @Inject() (
   def auditAmendSubscription(
     requestData:  AmendSubscriptionSuccess,
     responseData: AuditResponseReceived
-  )(using hc:     HeaderCarrier): Future[AuditResult] = {
-    //TODO - This needs to be fixed as we are loosing failure of response
+  )(using hc: HeaderCarrier): Future[AuditResult] = {
+    // TODO - This needs to be fixed as we are loosing failure of response
     val resData = responseData.status match {
       case OK =>
         val response = responseData.responseData.as[AmendResponse]
@@ -153,7 +153,7 @@ class AuditService @Inject() (
   def auditAmendSubscriptionV2(
     requestData:  AmendSubscriptionSuccessV2,
     responseData: AuditResponseReceived
-  )(using hc:     HeaderCarrier): Future[AuditResult] = {
+  )(using hc: HeaderCarrier): Future[AuditResult] = {
     val resData = responseData.status match {
       case OK =>
         val response = responseData.responseData.as[AmendResponse]

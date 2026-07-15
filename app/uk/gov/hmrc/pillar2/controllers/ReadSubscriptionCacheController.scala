@@ -27,9 +27,9 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class ReadSubscriptionCacheController @Inject() (
-  repository:             ReadSubscriptionCacheRepository,
-  authenticate:           AuthAction,
-  cc:                     ControllerComponents
+  repository:   ReadSubscriptionCacheRepository,
+  authenticate: AuthAction,
+  cc:           ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {

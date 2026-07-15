@@ -51,7 +51,7 @@ class SubscriptionService @Inject() (
 ) extends Logging {
 
   def sendCreateSubscription(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                 HeaderCarrier
+    hc: HeaderCarrier
   ): Future[HttpResponse] =
     userAnswers.get(NominateFilingMemberId) match {
       case Some(true) =>
@@ -84,7 +84,7 @@ class SubscriptionService @Inject() (
     }
 
   private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using
-    hc:                                         HeaderCarrier
+    hc: HeaderCarrier
   ) =
     for {
       upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
@@ -107,7 +107,7 @@ class SubscriptionService @Inject() (
     }
 
   private def upeRegisteredInUK(upeSafeId: String, userAnswers: UserAnswers)(using
-    hc:                                    HeaderCarrier
+    hc: HeaderCarrier
   ) =
     for {
       upeOrgType            <- userAnswers.get(upeEntityTypeId)
@@ -132,7 +132,7 @@ class SubscriptionService @Inject() (
     }
 
   private def upeOutsideUKFMInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                     HeaderCarrier
+    hc: HeaderCarrier
   ) =
     for {
       upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
@@ -158,7 +158,7 @@ class SubscriptionService @Inject() (
     }
 
   private def upeInUKFMOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                     HeaderCarrier
+    hc: HeaderCarrier
   ) =
     for {
       upeOrgType            <- userAnswers.get(upeEntityTypeId)
@@ -184,7 +184,7 @@ class SubscriptionService @Inject() (
     }
 
   private def bothOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                HeaderCarrier
+    hc: HeaderCarrier
   ) =
     for {
       upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
@@ -209,7 +209,7 @@ class SubscriptionService @Inject() (
     }
 
   private def bothRegisteredInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc:                                     HeaderCarrier
+    hc: HeaderCarrier
   ) =
     for {
       upeOrgType            <- userAnswers.get(upeEntityTypeId)
@@ -236,7 +236,7 @@ class SubscriptionService @Inject() (
     }
 
   private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(using
-    hc:                                                  HeaderCarrier
+    hc: HeaderCarrier
   ): Future[HttpResponse] =
     subscriptionConnector
       .sendCreateSubscriptionInformation(subscriptionRequest)
@@ -347,7 +347,7 @@ class SubscriptionService @Inject() (
     val doYouHaveSecondContactPhone = userAnswers.get(subSecondaryPhonePreferenceId)
 
     (doYouHaveSecondContact, doYouHaveSecondContactPhone) match {
-      case (Some(false), _) => None
+      case (Some(false), _)      => None
       case (Some(true), Some(_)) =>
         for {
           secondaryContactName <- userAnswers.get(subSecondaryContactNameId)
@@ -409,7 +409,7 @@ class SubscriptionService @Inject() (
   def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
     for {
       response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
-      _ <- response.status match {
+      _        <- response.status match {
              case UNPROCESSABLE_ENTITY => Future.failed(SubscriptionProcessingError)
              case _                    => Future.unit
            }

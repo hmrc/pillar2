@@ -47,7 +47,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         stubControllerComponents()
       )
   }
-  val jsData: JsValue = Json.parse("""{"value": "field"}""")
+  val jsData:      JsValue     = Json.parse("""{"value": "field"}""")
   val application: Application = new GuiceApplicationBuilder()
     .configure(
       Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false)
@@ -61,8 +61,8 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
     .build()
 
   def routeUpeWithoutID(id: String): String = routes.RegistrationController.withoutIdUpeRegistrationSubmission(id).url
-  def routeFmWithoutID(id: String):  String = routes.RegistrationController.withoutIdFmRegistrationSubmission(id).url
-  def rfmRoute(id: String):          String = routes.RegistrationController.registerNewFilingMember(id).url
+  def routeFmWithoutID(id:  String): String = routes.RegistrationController.withoutIdFmRegistrationSubmission(id).url
+  def rfmRoute(id:          String): String = routes.RegistrationController.registerNewFilingMember(id).url
 
   "withoutIdUpeRegistrationSubmission" - {
 

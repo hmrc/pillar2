@@ -24,7 +24,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.libs.json.Json
-import uk.gov.hmrc.crypto.{Crypted, Decrypter, Encrypter, SymmetricCryptoFactory}
+import uk.gov.hmrc.crypto.*
 import uk.gov.hmrc.mongo.MongoComponent
 import uk.gov.hmrc.mongo.test.DefaultPlayMongoRepositorySupport
 
@@ -96,7 +96,7 @@ class RegistrationCacheRepositoryISpec
   "getAll" should {
     "successfully fetch all records" in {
       repository.upsert(userAnswersCache.id, Json.parse(userAnswersCache.data)).futureValue
-      val result = repository.getAll.futureValue
+      val result         = repository.getAll.futureValue
       val expectedResult = Seq(
         Json.toJson(("foo" -> "bar", "name" -> "steve", "address" -> "address1"))
       )

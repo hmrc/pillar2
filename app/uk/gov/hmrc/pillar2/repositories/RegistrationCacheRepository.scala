@@ -74,7 +74,7 @@ class RegistrationCacheRepository @Inject() (
     if cryptoToggle then
       val encryptedRecord = RegistrationDataEntry(id, data.toString(), updatedAt)
       val encrypter: Writes[String] = JsonEncryption.stringEncrypter(crypto)
-      val encryptedData = encrypter.writes(data.toString()).as[String]
+      val encryptedData   = encrypter.writes(data.toString()).as[String]
       val encryptedUpdate = Updates.combine(
         Updates.set(idField, encryptedRecord.id),
         Updates.set(dataKey, encryptedData),
@@ -88,7 +88,7 @@ class RegistrationCacheRepository @Inject() (
         .map(_ => ())
     else
       val nonEncryptedRecord = JsonDataEntry(id, data, updatedAt)
-      val update = Updates.combine(
+      val update             = Updates.combine(
         Updates.set(idField, nonEncryptedRecord.id),
         Updates.set(dataKey, Codecs.toBson(nonEncryptedRecord.data)),
         Updates.set(lastUpdatedKey, Codecs.toBson(nonEncryptedRecord.lastUpdated)(using JsonDataEntry.dateFormat))

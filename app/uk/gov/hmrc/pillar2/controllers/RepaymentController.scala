@@ -28,9 +28,9 @@ import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class RepaymentController @Inject() (
-  repaymentService:       RepaymentService,
-  authenticate:           AuthAction,
-  cc:                     ControllerComponents
+  repaymentService: RepaymentService,
+  authenticate:     AuthAction,
+  cc:               ControllerComponents
 )(using executionContext: ExecutionContext)
     extends BackendController(cc)
     with Logging {
