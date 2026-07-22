@@ -27,7 +27,6 @@ import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.*
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.SubscriptionProcessingError
-import uk.gov.hmrc.pillar2.models.errors.{JsResultError, UnexpectedResponse}
 import uk.gov.hmrc.pillar2.models.grs.EntityType
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
@@ -56,7 +55,6 @@ class SubscriptionService @Inject() (
     userAnswers.get(NominateFilingMemberId) match {
       case Some(true) =>
         (userAnswers.get(upeRegisteredInUKId), userAnswers.get(fmRegisteredInUKId)) match {
-
           case (Some(true), Some(true)) =>
             bothRegisteredInUK(upeSafeId, fmSafeId, userAnswers).getOrElse(subscriptionError)
           case (Some(false), Some(false)) =>
@@ -83,9 +81,7 @@ class SubscriptionService @Inject() (
       case None => subscriptionError
     }
 
-  private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using
-    hc: HeaderCarrier
-  ) =
+  private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
       upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -106,9 +102,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeRegisteredInUK(upeSafeId: String, userAnswers: UserAnswers)(using
-    hc: HeaderCarrier
-  ) =
+  private def upeRegisteredInUK(upeSafeId: String, userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
       upeOrgType            <- userAnswers.get(upeEntityTypeId)
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -131,9 +125,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeOutsideUKFMInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc: HeaderCarrier
-  ) =
+  private def upeOutsideUKFMInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
       upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -157,9 +149,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def upeInUKFMOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc: HeaderCarrier
-  ) =
+  private def upeInUKFMOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
       upeOrgType            <- userAnswers.get(upeEntityTypeId)
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -183,9 +173,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def bothOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc: HeaderCarrier
-  ) =
+  private def bothOutsideUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
       upeNameRegistration   <- userAnswers.get(upeNameRegistrationId)
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -208,9 +196,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def bothRegisteredInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using
-    hc: HeaderCarrier
-  ) =
+  private def bothRegisteredInUK(upeSafeId: String, fmSafeId: Option[String], userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
       upeOrgType            <- userAnswers.get(upeEntityTypeId)
       subMneOrDomestic      <- userAnswers.get(subMneOrDomesticId)
@@ -235,9 +221,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(using
-    hc: HeaderCarrier
-  ): Future[HttpResponse] =
+  private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(using hc: HeaderCarrier): Future[HttpResponse] =
     subscriptionConnector
       .sendCreateSubscriptionInformation(subscriptionRequest)
       .flatTap { res =>
@@ -287,7 +271,6 @@ class SubscriptionService @Inject() (
   ): UpeDetails = {
     val domesticOnly = if subMneOrDomestic == MneOrDomestic.uk then true else false
     UpeDetails(Some(upeSafeId), None, None, upeNameRegistration, LocalDate.now(), domesticOnly, nominateFm)
-
   }
 
   private def getWithIdFilingMemberDetails(
@@ -307,9 +290,7 @@ class SubscriptionService @Inject() (
                 logger.info("UK Limited Company selected as Entity")
                 val incorporatedEntityRegistrationData =
                   fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
-                    throw new Exception(
-                      "Malformed IncorporatedEntityRegistrationData in Filing Member"
-                    )
+                    throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
                   )
                 val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
                 val name = incorporatedEntityRegistrationData.companyProfile.companyName
@@ -391,23 +372,6 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  @deprecated("use storeSubscriptionResponseV2")
-  def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
-    for {
-      response <- subscriptionConnector.getSubscriptionInformation(plrReference)
-      subscriptionResponse = response.json.as[SubscriptionResponse]
-      _ <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
-      dataToStore = createCachedObject(subscriptionResponse.success, plrReference)
-      _ <- repository.upsert(id, Json.toJson(dataToStore))
-    } yield subscriptionResponse
-
-  @deprecated("use readSubscriptionDataV2")
-  def readSubscriptionData(plrReference: String)(using hc: HeaderCarrier): Future[HttpResponse] =
-    for {
-      response <- subscriptionConnector.getSubscriptionInformation(plrReference)
-      _        <- createAuditForReadSubscription(plrReference, response)
-    } yield response
-
   def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
     for {
       response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
@@ -427,69 +391,11 @@ class SubscriptionService @Inject() (
       _        <- createAuditForReadSubscriptionV2(plrReference, response)
     } yield response
 
-  @deprecated("use createAuditForReadSubscriptionV2")
-  private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
-    response.status match {
-      case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionResponse])
-      case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
-    }
-
   private def createAuditForReadSubscriptionV2(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
     response.status match {
       case 200 => auditService.auditReadSubscriptionSuccessV2(plrReference, response.json.as[SubscriptionResponseV2])
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
     }
-
-  @deprecated("use createCachedObjectV2")
-  private def createCachedObject(sub: SubscriptionSuccess, plrReference: String): ReadSubscriptionCachedData = {
-
-    val nonUKAddress = NonUKAddress(
-      addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
-      addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty),
-      addressLine3 = sub.upeCorrespAddressDetails.addressLine3.getOrElse(""),
-      addressLine4 = sub.upeCorrespAddressDetails.addressLine4.filter(_.nonEmpty),
-      postalCode = sub.upeCorrespAddressDetails.postCode.filter(_.nonEmpty),
-      countryCode = sub.upeCorrespAddressDetails.countryCode
-    )
-    val accountingPeriod = AccountingPeriod(
-      startDate = sub.accountingPeriod.startDate,
-      endDate = sub.accountingPeriod.endDate,
-      dueDate = sub.accountingPeriod.dueDate
-    )
-    val primaryHasTelephone: Boolean = sub.primaryContactDetails.telephone.isDefined
-
-    val secContactTel: (Boolean, Boolean) = sub.secondaryContactDetails
-      .map { sContact =>
-        (sContact.telephone.isDefined, sContact.telephone.exists(_.nonEmpty) || sContact.emailAddress.nonEmpty || sContact.name.nonEmpty)
-      }
-      .getOrElse(false -> false)
-
-    val secDetails: (Option[String], Option[String], Option[String]) = sub.secondaryContactDetails
-      .map { sec =>
-        (Some(sec.name), sec.telephone, Some(sec.emailAddress))
-      }
-      .getOrElse((None, None, None))
-
-    val organisationName: Option[String] = Some(sub.upeDetails.organisationName)
-
-    ReadSubscriptionCachedData(
-      plrReference = Some(plrReference),
-      subMneOrDomestic = if sub.upeDetails.domesticOnly then MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
-      subPrimaryContactName = sub.primaryContactDetails.name,
-      subPrimaryEmail = sub.primaryContactDetails.emailAddress,
-      subPrimaryCapturePhone = sub.primaryContactDetails.telephone,
-      subPrimaryPhonePreference = primaryHasTelephone,
-      subSecondaryContactName = secDetails._1,
-      subAddSecondaryContact = secContactTel._2,
-      subSecondaryEmail = secDetails._3,
-      subSecondaryCapturePhone = secDetails._2,
-      subSecondaryPhonePreference = Option.when(secContactTel._1)(secContactTel._1),
-      subRegisteredAddress = nonUKAddress,
-      subAccountingPeriod = accountingPeriod,
-      accountStatus = sub.accountStatus,
-      organisationName = organisationName
-    )
-  }
 
   private def createCachedObjectV2(sub: SubscriptionDataDisplay, plrReference: String): ReadSubscriptionCachedDataV2 = {
 
@@ -535,34 +441,6 @@ class SubscriptionService @Inject() (
       accountStatus = sub.accountStatus,
       organisationName = organisationName
     )
-  }
-
-  @deprecated("use sendAmendedDataV2")
-  def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(using hc: HeaderCarrier): Future[Done] = {
-    val etmpAmendSubscriptionSuccess = ETMPAmendSubscriptionSuccess(amendData)
-    subscriptionConnector.amendSubscriptionInformation(etmpAmendSubscriptionSuccess).flatMap { response =>
-      if response.status == 200 then {
-        auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json)) >> {
-          response.json.validate[AmendResponse] match {
-            case JsSuccess(result, _) =>
-              logger.info(
-                s"Successful response received for amend subscription for form ${result.success.formBundleNumber} at ${result.success.processingDate}"
-              )
-              storeSubscriptionResponse(
-                id = id,
-                plrReference = etmpAmendSubscriptionSuccess.upeDetails.plrReference
-              ).as(Done)
-            case _ => Future.failed(JsResultError)
-          }
-        }
-      } else {
-        logger.info(
-          s"Unsuccessful response received for amend subscription v1 with ${response.status} status and body: ${response.body} "
-        )
-        auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json)) >>
-          Future.failed(UnexpectedResponse)
-      }
-    }
   }
 
   def sendAmendedDataV2(id: String, amendData: SubscriptionDataAmend)(using hc: HeaderCarrier): Future[Done] = {
