@@ -77,6 +77,7 @@ class AuditService @Inject() (
     )
   }
 
+  @deprecated("use auditReadSubscriptionSuccessV2")
   def auditReadSubscriptionSuccess(
     plrReference: String,
     responseData: SubscriptionResponse
@@ -125,6 +126,7 @@ class AuditService @Inject() (
       ).extendedDataEvent
     )
 
+  @deprecated("use auditAmendSubscriptionV2")
   def auditAmendSubscription(
     requestData:  AmendSubscriptionSuccess,
     responseData: AuditResponseReceived
@@ -151,7 +153,7 @@ class AuditService @Inject() (
   }
 
   def auditAmendSubscriptionV2(
-    requestData:  AmendSubscriptionSuccessV2,
+    requestData:  SubscriptionDataAmend,
     responseData: AuditResponseReceived
   )(using hc: HeaderCarrier): Future[AuditResult] = {
     val resData = responseData.status match {

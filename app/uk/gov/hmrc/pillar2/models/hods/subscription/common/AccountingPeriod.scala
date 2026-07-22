@@ -29,24 +29,3 @@ final case class AccountingPeriod(
 object AccountingPeriod {
   given format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
 }
-
-final case class AccountingPeriodAmend(
-  startDate: LocalDate,
-  endDate:   LocalDate
-)
-
-object AccountingPeriodAmend {
-  given format: OFormat[AccountingPeriodAmend] = Json.format[AccountingPeriodAmend]
-}
-
-case class AccountingPeriodV2(
-  startDate:         Option[LocalDate] = None,
-  endDate:           Option[LocalDate] = None,
-  dueDate:           Option[LocalDate] = None,
-  canAmendStartDate: Option[Boolean] = Some(false),
-  canAmendEndDate:   Option[Boolean] = Some(false)
-)
-
-object AccountingPeriodV2 {
-  given format: OFormat[AccountingPeriodV2] = Json.format[AccountingPeriodV2]
-}

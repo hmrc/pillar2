@@ -391,6 +391,7 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
+  @deprecated("use storeSubscriptionResponseV2")
   def storeSubscriptionResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponse] =
     for {
       response <- subscriptionConnector.getSubscriptionInformation(plrReference)
@@ -400,6 +401,7 @@ class SubscriptionService @Inject() (
       _ <- repository.upsert(id, Json.toJson(dataToStore))
     } yield subscriptionResponse
 
+  @deprecated("use readSubscriptionDataV2")
   def readSubscriptionData(plrReference: String)(using hc: HeaderCarrier): Future[HttpResponse] =
     for {
       response <- subscriptionConnector.getSubscriptionInformation(plrReference)
@@ -425,6 +427,7 @@ class SubscriptionService @Inject() (
       _        <- createAuditForReadSubscriptionV2(plrReference, response)
     } yield response
 
+  @deprecated("use createAuditForReadSubscriptionV2")
   private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
     response.status match {
       case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionResponse])
@@ -437,6 +440,7 @@ class SubscriptionService @Inject() (
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
     }
 
+  @deprecated("use createCachedObjectV2")
   private def createCachedObject(sub: SubscriptionSuccess, plrReference: String): ReadSubscriptionCachedData = {
 
     val nonUKAddress = NonUKAddress(
@@ -487,7 +491,7 @@ class SubscriptionService @Inject() (
     )
   }
 
-  private def createCachedObjectV2(sub: SubscriptionSuccessV2, plrReference: String): ReadSubscriptionCachedDataV2 = {
+  private def createCachedObjectV2(sub: SubscriptionDataDisplay, plrReference: String): ReadSubscriptionCachedDataV2 = {
 
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
@@ -533,6 +537,7 @@ class SubscriptionService @Inject() (
     )
   }
 
+  @deprecated("use sendAmendedDataV2")
   def sendAmendedData(id: String, amendData: AmendSubscriptionSuccess)(using hc: HeaderCarrier): Future[Done] = {
     val etmpAmendSubscriptionSuccess = ETMPAmendSubscriptionSuccess(amendData)
     subscriptionConnector.amendSubscriptionInformation(etmpAmendSubscriptionSuccess).flatMap { response =>
@@ -552,7 +557,7 @@ class SubscriptionService @Inject() (
         }
       } else {
         logger.info(
-          s"Unsuccessful response received for amend subscription with ${response.status} status and body: ${response.body} "
+          s"Unsuccessful response received for amend subscription v1 with ${response.status} status and body: ${response.body} "
         )
         auditService.auditAmendSubscription(requestData = amendData, responseData = AuditResponseReceived(response.status, response.json)) >>
           Future.failed(UnexpectedResponse)
@@ -560,7 +565,7 @@ class SubscriptionService @Inject() (
     }
   }
 
-  def sendAmendedDataV2(id: String, amendData: AmendSubscriptionSuccessV2)(using hc: HeaderCarrier): Future[Done] = {
+  def sendAmendedDataV2(id: String, amendData: SubscriptionDataAmend)(using hc: HeaderCarrier): Future[Done] = {
     val etmpAmendRequest = ETMPAmendSubscriptionSuccessV2(amendData)
     subscriptionConnector.amendSubscriptionInformationV2(etmpAmendRequest).flatMap { response =>
       auditService.auditAmendSubscriptionV2(
@@ -568,7 +573,7 @@ class SubscriptionService @Inject() (
         responseData = AuditResponseReceived(response.status, response.json)
       ) >> convertToAmendSubscriptionResult(response).flatMap { amendResponse =>
         logger.info(
-          s"Successful response received for amend subscription v2 for form ${amendResponse.success.formBundleNumber} at ${amendResponse.success.processingDate}"
+          s"Successful response received for amend subscription for form ${amendResponse.success.formBundleNumber} at ${amendResponse.success.processingDate}"
         )
         storeSubscriptionResponseV2(
           id = id,

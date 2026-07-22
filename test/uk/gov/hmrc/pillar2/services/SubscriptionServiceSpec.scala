@@ -241,7 +241,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "return subscription response if a valid response is received from ETMP but with no accounting periods" in
       forAll(plrReferenceGen) { plrReference =>
-        val subscriptionSuccess = arbitrary[SubscriptionSuccessV2].sample.get.copy(accountingPeriod = None)
+        val subscriptionSuccess = arbitrary[SubscriptionDataDisplay].sample.get.copy(accountingPeriod = None)
         val response            = SubscriptionResponseV2(subscriptionSuccess)
 
         val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
@@ -361,7 +361,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
 
       when(
-        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+        mockAuditService.auditAmendSubscriptionV2(any[SubscriptionDataAmend], any[AuditResponseReceived])(using any[HeaderCarrier])
       ).thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
@@ -383,7 +383,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "fail with ETMPValidationError, preserving the error code and text, on a 422 response" in {
       when(
-        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+        mockAuditService.auditAmendSubscriptionV2(any[SubscriptionDataAmend], any[AuditResponseReceived])(using any[HeaderCarrier])
       ).thenReturn(Future.successful(AuditResult.Success))
 
       val failureBody = Json.obj(
@@ -411,7 +411,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "fail with InvalidJsonError when a 200 response has an unparseable body" in {
       when(
-        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+        mockAuditService.auditAmendSubscriptionV2(any[SubscriptionDataAmend], any[AuditResponseReceived])(using any[HeaderCarrier])
       ).thenReturn(Future.successful(AuditResult.Success))
 
       when(
@@ -428,7 +428,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "fail with ApiInternalServerError on any other non-200 status" in {
       when(
-        mockAuditService.auditAmendSubscriptionV2(any[AmendSubscriptionSuccessV2], any[AuditResponseReceived])(using any[HeaderCarrier])
+        mockAuditService.auditAmendSubscriptionV2(any[SubscriptionDataAmend], any[AuditResponseReceived])(using any[HeaderCarrier])
       ).thenReturn(Future.successful(AuditResult.Success))
 
       when(
