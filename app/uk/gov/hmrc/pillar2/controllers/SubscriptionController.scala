@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ import play.api.{Logger, Logging}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.models.UserAnswers
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AmendSubscriptionSuccess, AmendSubscriptionSuccessV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionDataAmend
 import uk.gov.hmrc.pillar2.models.subscription.SubscriptionRequestParameters
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.pillar2.service.SubscriptionService
+import uk.gov.hmrc.pillar2.services.SubscriptionService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
@@ -48,15 +48,17 @@ class SubscriptionController @Inject() (
     subscriptionParameters.fold(
       invalid = error => {
         logger.info(s"SubscriptionController - createSubscription called $error")
-
-        Future.successful(
-          BadRequest("Subscription parameter is invalid")
-        )
+        Future.successful(BadRequest("Subscription parameter is invalid"))
       },
-      valid = subs =>
+      valid = subscriptionRequestParameters =>
         for {
-          userAnswer <- getUserAnswers(subs.id)
-          response   <- subscriptionService.sendCreateSubscription(subs.regSafeId, subs.fmSafeId, userAnswer)
+          userAnswer <- getUserAnswers(subscriptionRequestParameters.id)
+          response   <- subscriptionService
+                        .sendCreateSubscription(
+                          upeSafeId = subscriptionRequestParameters.regSafeId,
+                          fmSafeId = subscriptionRequestParameters.fmSafeId,
+                          userAnswers = userAnswer
+                        )
         } yield convertToResult(response)(using logger: Logger)
     )
   }
@@ -66,17 +68,10 @@ class SubscriptionController @Inject() (
       UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
     }
 
-  def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
+  def readSubscriptionV2(plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     for {
-      response <- subscriptionService.storeSubscriptionResponse(id, plrReference)
-    } yield Ok(Json.toJson(response.success))
-  }
-
-  def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { request =>
-    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    for {
-      response <- subscriptionService.readSubscriptionData(plrReference)
+      response <- subscriptionService.readSubscriptionDataV2(plrReference)
     } yield convertToResult(response)(using logger: Logger)
   }
 
@@ -88,20 +83,7 @@ class SubscriptionController @Inject() (
     } yield Ok(Json.toJson(response.success))
   }
 
-  def readSubscriptionV2(plrReference: String): Action[AnyContent] = authenticate.async { request =>
-    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
-    for {
-      response <- subscriptionService.readSubscriptionDataV2(plrReference)
-    } yield convertToResult(response)(using logger: Logger)
-  }
-
-  def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
-    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
-  }
-
-  def amendSubscriptionV2(id: String): Action[AmendSubscriptionSuccessV2] = authenticate(parse.json[AmendSubscriptionSuccessV2]).async { request =>
+  def amendSubscriptionV2(id: String): Action[SubscriptionDataAmend] = authenticate(parse.json[SubscriptionDataAmend]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     subscriptionService.sendAmendedDataV2(id, request.body).map(_ => Ok)
   }
