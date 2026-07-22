@@ -43,13 +43,10 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
 
   private val service = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService)
 
-  "storeSubscriptionResponse" - {
+  "storeSubscriptionResponse V2" - {
     "must correctly map contact details to ReadSubscriptionCachedData" in {
-      val plrReference = "XMPLR0012345678"
-      val id           = "testId"
-
       // Create a SubscriptionSuccess object with known contact details
-      val subscriptionSuccess = arbitrarySubscriptionSuccess.arbitrary.sample.value.copy(
+      val subscriptionSuccess: SubscriptionDataDisplay = arbitrarySubscriptionSuccessV2.arbitrary.sample.value.copy(
         primaryContactDetails = ContactDetailsType(
           name = "Test Name",
           telephone = Some("0123456789"),
@@ -64,22 +61,22 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         )
       )
 
-      val subscriptionResponse = SubscriptionResponse(subscriptionSuccess)
+      val subscriptionResponse = SubscriptionResponseV2(success = subscriptionSuccess)
 
-      when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(HttpResponse(200, Json.toJson(subscriptionResponse), Map.empty)))
 
-      when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(using any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
 
-      service.storeSubscriptionResponse(id, plrReference).futureValue
+      service.storeSubscriptionResponseV2(testId, testPillar2Id).futureValue
 
       val captor = ArgumentCaptor.forClass(classOf[JsValue])
-      verify(mockedCache).upsert(eqTo(id), captor.capture())(using any[ExecutionContext]())
+      verify(mockedCache).upsert(eqTo(testId), captor.capture())(using any[ExecutionContext]())
 
-      val capturedData = captor.getValue.as[ReadSubscriptionCachedData]
+      val capturedData = captor.getValue.as[ReadSubscriptionCachedDataV2]
 
       // Verify Primary Contact Mapping
       capturedData.subPrimaryContactName mustBe "Test Name"
@@ -95,11 +92,8 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
     }
 
     "must correctly map contact details when telephone is missing" in {
-      val plrReference = "XMPLR0012345678"
-      val id           = "testId"
-
       // Create a SubscriptionSuccess object with known contact details
-      val subscriptionSuccess = arbitrarySubscriptionSuccess.arbitrary.sample.value.copy(
+      val subscriptionSuccess: SubscriptionDataDisplay = arbitrarySubscriptionSuccessV2.arbitrary.sample.value.copy(
         primaryContactDetails = ContactDetailsType(
           name = "Test Name",
           telephone = None,
@@ -114,22 +108,22 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         )
       )
 
-      val subscriptionResponse = SubscriptionResponse(subscriptionSuccess)
+      val subscriptionResponse = SubscriptionResponseV2(subscriptionSuccess)
 
-      when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(HttpResponse(200, Json.toJson(subscriptionResponse), Map.empty)))
 
-      when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(using any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
 
-      service.storeSubscriptionResponse(id, plrReference).futureValue
+      service.storeSubscriptionResponseV2(testId, testPillar2Id).futureValue
 
       val captor = ArgumentCaptor.forClass(classOf[JsValue])
-      verify(mockedCache).upsert(eqTo(id), captor.capture())(using any[ExecutionContext]())
+      verify(mockedCache).upsert(eqTo(testId), captor.capture())(using any[ExecutionContext]())
 
-      val capturedData = captor.getValue.as[ReadSubscriptionCachedData]
+      val capturedData = captor.getValue.as[ReadSubscriptionCachedDataV2]
 
       // Verify Primary Contact Mapping
       capturedData.subPrimaryContactName mustBe "Test Name"
@@ -145,9 +139,6 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
     }
 
     "must correctly map contact details when phone field is used instead of telephone" in {
-      val plrReference = "XMPLR0012345678"
-      val id           = "testId"
-
       // Construct JSON manually to use "phone" instead of "telephone"
       val primaryJson = Json.obj(
         "name"         -> "Test Name",
@@ -161,7 +152,7 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         "emailAddress" -> "secondary@example.com"
       )
 
-      val baseSuccess              = arbitrarySubscriptionSuccess.arbitrary.sample.value
+      val baseSuccess              = arbitrarySubscriptionSuccessV2.arbitrary.sample.value
       val subscriptionResponseJson = Json.obj(
         "success" -> Json.obj(
           "formBundleNumber"         -> "bundle1",
@@ -175,20 +166,20 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         )
       )
 
-      when(mockSubscriptionConnector.getSubscriptionInformation(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+      when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(HttpResponse(200, subscriptionResponseJson, Map.empty)))
 
-      when(mockAuditService.auditReadSubscriptionSuccess(any[String](), any[SubscriptionResponse]())(using any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
 
-      service.storeSubscriptionResponse(id, plrReference).futureValue
+      service.storeSubscriptionResponseV2(testId, testPillar2Id).futureValue
 
       val captor = ArgumentCaptor.forClass(classOf[JsValue])
-      verify(mockedCache).upsert(eqTo(id), captor.capture())(using any[ExecutionContext]())
+      verify(mockedCache).upsert(eqTo(testId), captor.capture())(using any[ExecutionContext]())
 
-      val capturedData = captor.getValue.as[ReadSubscriptionCachedData]
+      val capturedData = captor.getValue.as[ReadSubscriptionCachedDataV2]
 
       // Verify Primary Contact Mapping from 'phone'
       capturedData.subPrimaryCapturePhone mustBe Some("0123456789")

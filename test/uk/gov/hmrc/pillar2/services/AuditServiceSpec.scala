@@ -78,33 +78,8 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
     }
   }
 
-  "ReadSubscription" - {
-    "Send successful readSubscription" in new Setup {
-
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
-        .thenReturn(Future.successful(AuditResult.Success))
-
-      forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponse.arbitrary) { (plrRef, response) =>
-        val result = await(service.auditReadSubscriptionSuccess(plrRef, response))
-        result mustBe AuditResult.Success
-      }
-    }
-
-    "Send failed readSubscription" in new Setup {
-
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
-        .thenReturn(Future.successful(AuditResult.Success))
-      forAll(arbPlrReference.arbitrary) { plrRef =>
-        val result = await(service.auditReadSubscriptionFailure(plrRef, 404, Json.obj()))
-        result mustBe AuditResult.Success
-      }
-    }
-
-  }
-
   "ReadSubscriptionV2" - {
     "Send successful readSubscription" in new Setup {
-
       when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
@@ -112,18 +87,15 @@ class AuditServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyC
         val result = await(service.auditReadSubscriptionSuccessV2(plrRef, response))
         result mustBe AuditResult.Success
       }
-    }
-  }
 
-  "AmendSubscription" - {
-    "Send successful amendSubscription" in new Setup {
+      "Send failed readSubscription" in new Setup {
+        when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
+          .thenReturn(Future.successful(AuditResult.Success))
 
-      when(mockAuditConnector.sendExtendedEvent(any[ExtendedDataEvent]())(using any[HeaderCarrier](), any[ExecutionContext]()))
-        .thenReturn(Future.successful(AuditResult.Success))
-
-      forAll(arbitraryAmendSubscriptionSuccess.arbitrary, arbitraryAmendAuditResponseReceived.arbitrary) { (requestDetail, responseDetail) =>
-        val result = await(service.auditAmendSubscription(requestDetail, responseDetail))
-        result mustBe AuditResult.Success
+        forAll(arbPlrReference.arbitrary) { plrRef =>
+          val result = await(service.auditReadSubscriptionFailure(plrRef, 404, Json.obj()))
+          result mustBe AuditResult.Success
+        }
       }
     }
   }

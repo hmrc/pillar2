@@ -77,25 +77,6 @@ class AuditService @Inject() (
     )
   }
 
-  @deprecated("use auditReadSubscriptionSuccessV2")
-  def auditReadSubscriptionSuccess(
-    plrReference: String,
-    responseData: SubscriptionResponse
-  )(using hc: HeaderCarrier): Future[AuditResult] =
-    auditConnector.sendExtendedEvent(
-      ReadSubscriptionSuccessAuditEvent(
-        plrReference = plrReference,
-        formBundleNumber = responseData.success.formBundleNumber,
-        upeDetails = responseData.success.upeDetails,
-        upeCorrespAddressDetails = responseData.success.upeCorrespAddressDetails,
-        primaryContactDetails = responseData.success.primaryContactDetails,
-        secondaryContactDetails = responseData.success.secondaryContactDetails,
-        filingMemberDetails = responseData.success.filingMemberDetails,
-        accountingPeriod = responseData.success.accountingPeriod,
-        accountStatus = responseData.success.accountStatus
-      ).extendedDataEvent
-    )
-
   def auditReadSubscriptionSuccessV2(
     plrReference: String,
     responseData: SubscriptionResponseV2
@@ -125,32 +106,6 @@ class AuditService @Inject() (
         responseData = AuditResponseReceived(status = status, responseData = responseData)
       ).extendedDataEvent
     )
-
-  @deprecated("use auditAmendSubscriptionV2")
-  def auditAmendSubscription(
-    requestData:  AmendSubscriptionSuccess,
-    responseData: AuditResponseReceived
-  )(using hc: HeaderCarrier): Future[AuditResult] = {
-    // TODO - This needs to be fixed as we are loosing failure of response
-    val resData = responseData.status match {
-      case OK =>
-        val response = responseData.responseData.as[AmendResponse]
-        response.success.processingDate
-      case _ => ""
-    }
-    auditConnector.sendExtendedEvent(
-      AmendSubscriptionSuccessAuditEvent(
-        requestData.replaceFilingMember,
-        requestData.upeDetails,
-        requestData.accountingPeriod,
-        requestData.upeCorrespAddressDetails,
-        requestData.primaryContactDetails,
-        requestData.secondaryContactDetails,
-        requestData.filingMemberDetails,
-        processingDate = resData
-      ).extendedDataEvent
-    )
-  }
 
   def auditAmendSubscriptionV2(
     requestData:  SubscriptionDataAmend,

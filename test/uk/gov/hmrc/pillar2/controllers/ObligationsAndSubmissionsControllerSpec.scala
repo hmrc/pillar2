@@ -36,7 +36,7 @@ import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.*
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.SubmissionType.ORN_CREATE
-import uk.gov.hmrc.pillar2.service.ObligationsAndSubmissionsService
+import uk.gov.hmrc.pillar2.services.ObligationsAndSubmissionsService
 
 import java.time.format.DateTimeFormatter
 import java.time.{LocalDate, ZonedDateTime}

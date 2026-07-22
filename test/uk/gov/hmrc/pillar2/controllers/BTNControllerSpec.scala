@@ -34,7 +34,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, UKTaxReturnDataFixture}
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
-import uk.gov.hmrc.pillar2.service.BTNService
+import uk.gov.hmrc.pillar2.services.BTNService
 
 import java.time.LocalDate
 import scala.concurrent.Future

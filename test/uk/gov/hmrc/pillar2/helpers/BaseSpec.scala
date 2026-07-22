@@ -35,6 +35,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.fixtures.SubscriptionDataFixtures
 import uk.gov.hmrc.pillar2.utils.LogUtility
 
 import scala.concurrent.ExecutionContext
@@ -52,6 +53,7 @@ trait BaseSpec
     with Configs
     with Status
     with WireMockServerHandler
+    with SubscriptionDataFixtures
     with UKTaxReturnDataFixture {
 
   given ec:           ExecutionContext = scala.concurrent.ExecutionContext.global
@@ -66,12 +68,14 @@ trait BaseSpec
 
   def messagesApi: MessagesApi = injector.instanceOf[MessagesApi]
 
-  given fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-    .withHeaders(contentType)
+  given fakeRequest: FakeRequest[AnyContentAsEmpty.type] = FakeRequest().withHeaders(contentType)
 
   val PLATFORM_LOG_LIMIT = 12288
 
   val logUtils = new LogUtility
+
+  val testId:        String = "testId"
+  val testPillar2Id: String = "XMPLR0123456789"
 
   protected def applicationBuilder(): GuiceApplicationBuilder =
     new GuiceApplicationBuilder()
