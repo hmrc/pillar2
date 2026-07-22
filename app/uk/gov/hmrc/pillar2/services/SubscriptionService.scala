@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import cats.syntax.flatMap.*
 import cats.syntax.functor.*
@@ -35,7 +35,7 @@ import uk.gov.hmrc.pillar2.models.identifiers.*
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
-import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.pillar2.services.audit.AuditService
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
 import java.time.LocalDate
@@ -566,7 +566,7 @@ class SubscriptionService @Inject() (
   }
 
   def sendAmendedDataV2(id: String, amendData: SubscriptionDataAmend)(using hc: HeaderCarrier): Future[Done] = {
-    val etmpAmendRequest = ETMPAmendSubscriptionSuccessV2(amendData)
+    val etmpAmendRequest: ETMPAmendSubscriptionSuccessV2 = ETMPAmendSubscriptionSuccessV2(amendData)
     subscriptionConnector.amendSubscriptionInformationV2(etmpAmendRequest).flatMap { response =>
       auditService.auditAmendSubscriptionV2(
         requestData = amendData,

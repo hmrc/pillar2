@@ -30,9 +30,9 @@ import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-package object service extends Logging {
+package object services extends Logging {
 
-  private[service] def convertToResult[A](response: HttpResponse)(using reads: Reads[A]): Future[A] = {
+  private[services] def convertToResult[A](response: HttpResponse)(using reads: Reads[A]): Future[A] = {
     logger.info(s"Converting to API result with status ${response.status}")
     response.status match {
       case 200 | 201 =>
@@ -55,7 +55,7 @@ package object service extends Logging {
     }
   }
 
-  private[service] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] = {
+  private[services] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] = {
     logger.info(s"Converting amend subscription result with status ${response.status}")
     response.status match {
       case 200 | 201 =>
@@ -78,19 +78,19 @@ package object service extends Logging {
     }
   }
 
-  private[service] def convertToAccountActivityResult(response: HttpResponse): Future[AccountActivitySuccess] =
+  private[services] def convertToAccountActivityResult(response: HttpResponse): Future[AccountActivitySuccess] =
     convertToResult[AccountActivitySuccess](response)
 
-  private[service] def convertToUKTRApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
+  private[services] def convertToUKTRApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
     convertToResult[ApiSuccessResponse](response)
 
-  private[service] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
+  private[services] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
     convertToResult[ObligationsAndSubmissionsResponse](response)
 
-  private[service] def convertToORNApiResult(response: HttpResponse): Future[ORNSuccessResponse] =
+  private[services] def convertToORNApiResult(response: HttpResponse): Future[ORNSuccessResponse] =
     convertToResult[ORNSuccessResponse](response)
 
-  private[service] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
+  private[services] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
     convertToResult[GetORNSuccessResponse](response)
 
 }

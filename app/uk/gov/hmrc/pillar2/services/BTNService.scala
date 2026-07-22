@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.connectors.BTNConnector
@@ -24,9 +24,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.Future
 
 @Singleton
-class BTNService @Inject() (
-  btnConnector: BTNConnector
-) {
+class BTNService @Inject() (btnConnector: BTNConnector) {
 
   def sendBtn(btnRequest: BTNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] =
     btnConnector

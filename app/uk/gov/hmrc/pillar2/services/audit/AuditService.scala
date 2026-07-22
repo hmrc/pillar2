@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service.audit
+package uk.gov.hmrc.pillar2.services.audit
 
 import play.api.Logging
 import play.api.http.Status.*

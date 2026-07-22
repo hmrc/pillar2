@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.when
@@ -24,7 +24,7 @@ import play.api.test.Helpers.await
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
-import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.pillar2.services.audit.AuditService
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 import uk.gov.hmrc.play.audit.model.ExtendedDataEvent
 

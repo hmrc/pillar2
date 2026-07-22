@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import cats.syntax.flatMap.*
 import play.api.Logging
@@ -25,7 +25,7 @@ import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.models.audit.{NominatedFilingMember, UpeRegistration}
 import uk.gov.hmrc.pillar2.models.hods.{Address, ContactDetails, RegisterWithoutIDRequest}
 import uk.gov.hmrc.pillar2.models.identifiers.*
-import uk.gov.hmrc.pillar2.service.audit.AuditService
+import uk.gov.hmrc.pillar2.services.audit.AuditService
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}

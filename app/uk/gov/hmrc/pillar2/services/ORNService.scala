@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.ORNConnector
@@ -25,9 +25,7 @@ import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class ORNService @Inject() (
-  ornConnector: ORNConnector
-)(using ec: ExecutionContext) {
+class ORNService @Inject() (ornConnector: ORNConnector)(using ec: ExecutionContext) {
 
   def submitOrn(ornRequest: ORNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[ORNSuccessResponse] =
     ornConnector

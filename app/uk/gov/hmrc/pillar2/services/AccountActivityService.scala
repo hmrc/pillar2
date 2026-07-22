@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.connectors.AccountActivityConnector

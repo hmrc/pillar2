@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.service
+package uk.gov.hmrc.pillar2.services
 
 import org.apache.pekko.Done
 import play.api.Logging
@@ -26,11 +26,7 @@ import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class RepaymentService @Inject() (
-  repaymentConnector: RepaymentConnector
-)(using
-  ec: ExecutionContext
-) extends Logging {
+class RepaymentService @Inject() (repaymentConnector: RepaymentConnector)(using ec: ExecutionContext) extends Logging {
 
   def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(using hc: HeaderCarrier): Future[Done] =
     repaymentConnector.sendRepaymentDetails(rePaymentData).flatMap { response =>
