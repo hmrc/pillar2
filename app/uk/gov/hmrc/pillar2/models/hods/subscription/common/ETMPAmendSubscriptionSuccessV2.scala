@@ -29,7 +29,7 @@ final case class ETMPAmendSubscriptionSuccessV2(
 
 object ETMPAmendSubscriptionSuccessV2 {
 
-  def apply(amendSubscriptionSuccess: AmendSubscriptionSuccessV2): ETMPAmendSubscriptionSuccessV2 =
+  def apply(amendSubscriptionSuccess: SubscriptionDataAmend): ETMPAmendSubscriptionSuccessV2 =
     ETMPAmendSubscriptionSuccessV2(
       amendSubscriptionSuccess.upeDetails,
       amendSubscriptionSuccess.accountingPeriod,

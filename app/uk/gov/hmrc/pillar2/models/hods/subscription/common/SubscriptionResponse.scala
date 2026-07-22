@@ -21,12 +21,14 @@ import uk.gov.hmrc.pillar2.models.*
 
 import java.time.LocalDate
 
+@deprecated("use SubscriptionResponseV2")
 case class SubscriptionResponse(success: SubscriptionSuccess)
 
 object SubscriptionResponse {
   given format: OFormat[SubscriptionResponse] = Json.format[SubscriptionResponse]
 }
 
+@deprecated("use SubscriptionSuccessV2")
 case class SubscriptionSuccess(
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
@@ -56,57 +58,58 @@ object AmendSubscriptionSuccess {
   given format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
 }
 
-case class SubscriptionResponseV2(success: SubscriptionSuccessV2)
+final case class SubscriptionResponseV2(
+  success: SubscriptionDataDisplay
+)
 
 object SubscriptionResponseV2 {
   given format: OFormat[SubscriptionResponseV2] = Json.format[SubscriptionResponseV2]
 }
 
-case class SubscriptionSuccessV2(
-  formBundleNumber:         String,
-  upeDetails:               UpeDetails,
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    ContactDetailsType,
-  secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriod:         Option[Seq[AccountingPeriodV2]],
-  accountStatus:            Option[AccountStatus]
+final case class AmendSubscriptionInput(
+  value: AmendSubscriptionSuccess
 )
-
-object SubscriptionSuccessV2 {
-  given format: OFormat[SubscriptionSuccessV2] = Json.format[SubscriptionSuccessV2]
-}
-
-final case class AmendSubscriptionInput(value: AmendSubscriptionSuccess)
 
 object AmendSubscriptionInput {
   given format: OFormat[AmendSubscriptionInput] = Json.format[AmendSubscriptionInput]
 }
 
-final case class AmendResponse(success: AmendSubscriptionSuccessResponse)
+final case class AmendResponse(
+  success: AmendSubscriptionSuccessResponse
+)
 
 object AmendResponse {
   given format: OFormat[AmendResponse] = Json.format[AmendResponse]
 }
 
-final case class AmendSubscriptionSuccessResponse(processingDate: String, formBundleNumber: String)
+final case class AmendSubscriptionSuccessResponse(
+  processingDate:   String,
+  formBundleNumber: String
+)
 
 object AmendSubscriptionSuccessResponse {
   given format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }
 
-final case class AmendSubscriptionFailureResponse(failures: Array[Failure])
+// FIXME: this seems to not being used anywhere
+final case class AmendSubscriptionFailureResponse(
+  failures: Array[Failure]
+)
 
 object AmendSubscriptionFailureResponse {
   given format: OFormat[AmendSubscriptionFailureResponse] = Json.format[AmendSubscriptionFailureResponse]
 }
 
-final case class Failure(reason: String, code: String)
+final case class Failure(
+  reason: String,
+  code:   String
+)
 
 object Failure {
   given format: OFormat[Failure] = Json.format[Failure]
 }
 
+@deprecated("remove ? - not being used anywhere")
 case class DashboardInfo(
   organisationName: String,
   registrationDate: LocalDate

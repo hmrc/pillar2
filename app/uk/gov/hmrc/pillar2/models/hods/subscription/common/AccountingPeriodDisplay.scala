@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,14 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.LocalDate
 
-@deprecated("delete this")
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  dueDate:   Option[LocalDate] = None
+final case class AccountingPeriodDisplay(
+  startDate:         Option[LocalDate] = None,
+  endDate:           Option[LocalDate] = None,
+  dueDate:           Option[LocalDate] = None,
+  canAmendStartDate: Option[Boolean] = Some(false),
+  canAmendEndDate:   Option[Boolean] = Some(false)
 )
 
-object AccountingPeriod {
-  given format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object AccountingPeriodDisplay {
+  given format: OFormat[AccountingPeriodDisplay] = Json.format[AccountingPeriodDisplay]
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.common
+package uk.gov.hmrc.pillar2.models.accountactivity
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, Json}
 
 import java.time.LocalDate
 
-@deprecated("delete this")
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  dueDate:   Option[LocalDate] = None
+final case class AccountActivityClearance(
+  transactionDesc: String,
+  chargeRefNo:     Option[String],
+  dueDate:         Option[LocalDate],
+  amount:          BigDecimal,
+  clearingDate:    LocalDate,
+  clearingReason:  Option[String]
 )
 
-object AccountingPeriod {
-  given format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object AccountActivityClearance {
+  given Format[AccountActivityClearance] = Json.format
 }

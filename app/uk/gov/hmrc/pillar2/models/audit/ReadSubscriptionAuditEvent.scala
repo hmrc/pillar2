@@ -17,10 +17,11 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
+import uk.gov.hmrc.pillar2.models.AccountStatus
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.{AccountStatus, AccountingPeriod, AccountingPeriodV2}
 
-case class ReadSubscriptionSuccessAuditEvent(
+@deprecated("use ReadSubscriptionSuccessAuditEventV2")
+final case class ReadSubscriptionSuccessAuditEvent(
   plrReference:             String,
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
@@ -47,7 +48,6 @@ case class ReadSubscriptionFailedAuditEvent(
   override val detailJson: JsValue = Json.toJson(this)
 }
 
-/**/
 object ReadSubscriptionFailedAuditEvent {
   given formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
 }
@@ -60,7 +60,7 @@ case class ReadSubscriptionSuccessAuditEventV2(
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
   filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriod:         Option[Seq[AccountingPeriodV2]],
+  accountingPeriod:         Option[Seq[AccountingPeriodDisplay]],
   accountStatus:            Option[AccountStatus]
 ) extends AuditEvent {
   override val auditType:  String  = "readPillar2Subscription"

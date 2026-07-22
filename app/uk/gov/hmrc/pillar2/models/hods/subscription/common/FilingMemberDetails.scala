@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,13 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
-
-@deprecated("delete this")
-final case class AccountingPeriod(
-  startDate: LocalDate,
-  endDate:   LocalDate,
-  dueDate:   Option[LocalDate] = None
+final case class FilingMemberDetails(
+  safeId:                  String,
+  customerIdentification1: Option[String],
+  customerIdentification2: Option[String],
+  organisationName:        String
 )
 
-object AccountingPeriod {
-  given format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object FilingMemberDetails {
+  given format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
 }

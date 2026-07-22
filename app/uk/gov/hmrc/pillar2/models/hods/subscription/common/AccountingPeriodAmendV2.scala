@@ -18,30 +18,11 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
 
-import java.time.LocalDate
-
-final case class OriginalAccountingPeriod(
-  taxObligationStartDate: LocalDate,
-  taxObligationEndDate:   LocalDate
-)
-
-object OriginalAccountingPeriod {
-  given format: OFormat[OriginalAccountingPeriod] = Json.format[OriginalAccountingPeriod]
-}
-
-final case class NewAccountingPeriodDetails(
-  updateObligationStartDate: LocalDate,
-  updateObligationEndDate:   LocalDate
-)
-
-object NewAccountingPeriodDetails {
-  given format: OFormat[NewAccountingPeriodDetails] = Json.format[NewAccountingPeriodDetails]
-}
-
+// TODO: rename to AccountingPeriodAmend
 final case class AccountingPeriodAmendV2(
   amendAccountingPeriod:     Boolean,
   originalAccountingPeriods: Option[Seq[OriginalAccountingPeriod]] = None,
-  newAccountingPeriod:       Option[NewAccountingPeriodDetails] = None
+  newAccountingPeriod:       Option[NewAccountingPeriod] = None
 )
 
 object AccountingPeriodAmendV2 {

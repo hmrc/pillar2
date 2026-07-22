@@ -17,7 +17,6 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.*
-import uk.gov.hmrc.pillar2.models.AccountingPeriod
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
 import java.time.LocalDateTime

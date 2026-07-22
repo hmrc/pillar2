@@ -17,8 +17,8 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
 
+@deprecated("use ETMPAmendSubscriptionSuccessV2")
 final case class ETMPAmendSubscriptionSuccess(
   upeDetails:               UpeDetailsAmend,
   accountingPeriod:         AccountingPeriodAmend,

@@ -17,9 +17,9 @@
 package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
-import uk.gov.hmrc.pillar2.models.AccountingPeriodAmend
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
+@deprecated("use AmendSubscriptionSuccessAuditEventV2")
 case class AmendSubscriptionSuccessAuditEvent(
   replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
