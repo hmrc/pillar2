@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,23 +23,20 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.ETMPAmendSubscriptionSuccessV2
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class SubscriptionConnector @Inject() (
-  val config: AppConfig,
-  val http:   HttpClientV2
-) {
+class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClientV2) {
+
   given logger: Logger = Logger(this.getClass.getName)
+
   def sendCreateSubscriptionInformation(
     subscription: RequestDetail
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription"
-    logger.info(
-      s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
-    )
+    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}")
     http
       .post(url"${config.baseUrl(serviceName)}")
       .setHeader(extraHeaders(config, serviceName)*)
@@ -47,33 +44,13 @@ class SubscriptionConnector @Inject() (
       .execute[HttpResponse]
   }
 
-  def getSubscriptionInformation(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
-    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
-    http
-      .get(url"$url")
-      .setHeader(extraHeaders(config, serviceName)*)
-      .execute[HttpResponse]
-  }
-
-  def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription-v2"
-    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
-    http
-      .get(url"$url")
-      .setHeader(extraHeaders(config, serviceName)*)
-      .execute[HttpResponse]
-  }
-
-  def amendSubscriptionInformation(
-    amendRequest: ETMPAmendSubscriptionSuccess
+  def getSubscriptionInformationV2(
+    plrReference: String
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
-    val url         = s"${config.baseUrl(serviceName)}"
-    given writes: Writes[ETMPAmendSubscriptionSuccess] = ETMPAmendSubscriptionSuccess.format
+    val serviceName = "create-subscription-v2"
+    val url         = s"${config.baseUrl(serviceName)}/$plrReference" // FIXME: URL type
     http
-      .put(url"$url")
-      .withBody(Json.toJson(amendRequest))
+      .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
   }
