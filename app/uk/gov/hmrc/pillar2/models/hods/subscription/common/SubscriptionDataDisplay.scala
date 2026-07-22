@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,19 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.AccountStatus
 
-final case class SubscriptionDataAmend(
-  replaceFilingMember:      Boolean,
-  upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriodAmendV2,
+final case class SubscriptionDataDisplay(
+  formBundleNumber:         String,
+  upeDetails:               UpeDetails,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberAmendDetails]
+  filingMemberDetails:      Option[FilingMemberDetails],
+  accountingPeriod:         Option[Seq[AccountingPeriodDisplay]], // TODO: align with frontend (default None)
+  accountStatus:            Option[AccountStatus]
 )
 
-object SubscriptionDataAmend {
-  given format: OFormat[SubscriptionDataAmend] = Json.format[SubscriptionDataAmend]
+object SubscriptionDataDisplay {
+  given format: OFormat[SubscriptionDataDisplay] = Json.format[SubscriptionDataDisplay]
 }
