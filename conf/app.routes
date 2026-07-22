@@ -1,44 +1,50 @@
 # microservice specific routes
 
-# user answers caching in mongo
+# Registration
+POST          /upe/registration/:id                                        uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdUpeRegistrationSubmission(id: String)
+POST          /fm/registration/:id                                         uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
+POST          /rfm/registration/:id                                        uk.gov.hmrc.pillar2.controllers.RegistrationController.registerNewFilingMember(id: String)
+
+# Registration - user answers caching in mongo
 GET           /user-cache/registration-subscription/:id                    uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.get(id: String)
 POST          /user-cache/registration-subscription/:id                    uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.save(id: String)
 DELETE        /user-cache/registration-subscription/:id                    uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.remove(id: String)
 GET           /user-cache/registration-subscription/:id/lastUpdated        uk.gov.hmrc.pillar2.controllers.RegistrationCacheController.lastUpdated(id: String)
 
-
-POST          /upe/registration/:id                                        uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdUpeRegistrationSubmission(id: String)
-POST          /fm/registration/:id                                         uk.gov.hmrc.pillar2.controllers.RegistrationController.withoutIdFmRegistrationSubmission(id: String)
-POST          /rfm/registration/:id                                        uk.gov.hmrc.pillar2.controllers.RegistrationController.registerNewFilingMember(id: String)
-
-
+# Subscription
 POST          /subscription/create-subscription                            uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
+
+# V1 - remove controller methods - then rename v2 to v1 method names
 GET           /subscription/read-subscription/:id/:plrReference            uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
 GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
 PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
-PUT           /subscription/v2/amend-subscription/:id                      uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscriptionV2(id:String)
 
-# V2 subscription routes:
-GET           /subscription/v2/read-subscription/:id/:plrReference         uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscriptionV2(id: String, plrReference: String)
+# Subscription V2 routes:
 GET           /subscription/v2/read-subscription/:plrReference             uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscriptionV2(plrReference: String)
-
+GET           /subscription/v2/read-subscription/:id/:plrReference         uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscriptionV2(id: String, plrReference: String)
+PUT           /subscription/v2/amend-subscription/:id                      uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscriptionV2(id:String)
 
 GET           /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.get(id: String)
 POST          /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)
 DELETE        /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.remove(id: String)
 
+# Repayments
 POST          /repayment                                                   uk.gov.hmrc.pillar2.controllers.RepaymentController.repaymentsSendRequest
 
+# Account Activity
 GET           /account-activity                                            uk.gov.hmrc.pillar2.controllers.AccountActivityController.getAccountActivity(fromDate: String, toDate: String)
 
+# Below Threshold Notification (BTN)
 POST          /below-threshold-notification/submit                         uk.gov.hmrc.pillar2.controllers.BTNController.submitBtn()
 
+# UK Tax Return (UKTR)
 POST          /submit-uk-tax-return                                        uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.submitUKTaxReturn()
-
 PUT           /amend-uk-tax-return                                         uk.gov.hmrc.pillar2.controllers.UKTaxReturnController.amendUKTaxReturn()
 
+# Obligation and Submissions (OaS)
 GET           /obligations-and-submissions/:fromDate/:toDate               uk.gov.hmrc.pillar2.controllers.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate: String, toDate: String)
 
+# Overseas Return Notification (ORN)
 POST          /overseas-return-notification/submit                         uk.gov.hmrc.pillar2.controllers.ORNController.submitOrn()
 PUT           /overseas-return-notification/amend                          uk.gov.hmrc.pillar2.controllers.ORNController.amendOrn()
 GET           /overseas-return-notification/:fromDate/:toDate              uk.gov.hmrc.pillar2.controllers.ORNController.getOrn(fromDate: String, toDate: String)
