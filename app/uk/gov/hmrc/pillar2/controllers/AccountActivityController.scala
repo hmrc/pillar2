@@ -21,7 +21,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
-import uk.gov.hmrc.pillar2.service.AccountActivityService
+import uk.gov.hmrc.pillar2.services.AccountActivityService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
 import java.time.LocalDate
