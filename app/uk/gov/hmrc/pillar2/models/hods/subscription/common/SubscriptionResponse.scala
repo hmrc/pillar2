@@ -19,24 +19,6 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.common
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.*
 
-import java.time.LocalDate
-
-@deprecated("use SubscriptionSuccessV2")
-final case class SubscriptionSuccess(
-  formBundleNumber:         String,
-  upeDetails:               UpeDetails,
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    ContactDetailsType,
-  secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriod:         AccountingPeriod,
-  accountStatus:            Option[AccountStatus]
-)
-
-object SubscriptionSuccess {
-  given format: OFormat[SubscriptionSuccess] = Json.format[SubscriptionSuccess]
-}
-
 final case class AmendSubscriptionSuccess(
   replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
@@ -76,7 +58,7 @@ object AmendSubscriptionSuccessResponse {
   given format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }
 
-// FIXME: this seems to not being used anywhere
+// TODO: remove - seems to not being used anywhere
 final case class AmendSubscriptionFailureResponse(
   failures: Array[Failure]
 )
@@ -92,14 +74,4 @@ final case class Failure(
 
 object Failure {
   given format: OFormat[Failure] = Json.format[Failure]
-}
-
-@deprecated("remove ? - not being used anywhere")
-case class DashboardInfo(
-  organisationName: String,
-  registrationDate: LocalDate
-)
-
-object DashboardInfo {
-  given format: OFormat[DashboardInfo] = Json.format[DashboardInfo]
 }

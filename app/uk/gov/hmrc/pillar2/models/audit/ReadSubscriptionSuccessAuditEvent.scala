@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,41 +18,9 @@ package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.AccountStatus
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.{AccountingPeriodDisplay, ContactDetailsType, FilingMemberDetails, UpeCorrespAddressDetails, UpeDetails}
 
-@deprecated("use ReadSubscriptionSuccessAuditEventV2")
 final case class ReadSubscriptionSuccessAuditEvent(
-  plrReference:             String,
-  formBundleNumber:         String,
-  upeDetails:               UpeDetails,
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    ContactDetailsType,
-  secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriod:         AccountingPeriod,
-  accountStatus:            Option[AccountStatus]
-) extends AuditEvent {
-  override val auditType:  String  = "readPillar2Subscription"
-  override val detailJson: JsValue = Json.toJson(this)
-}
-
-object ReadSubscriptionSuccessAuditEvent {
-  given formats: Format[ReadSubscriptionSuccessAuditEvent] = Json.format[ReadSubscriptionSuccessAuditEvent]
-}
-
-case class ReadSubscriptionFailedAuditEvent(
-  plrReference: String,
-  responseData: AuditResponseReceived
-) extends AuditEvent {
-  override val auditType:  String  = "readPillar2Subscription"
-  override val detailJson: JsValue = Json.toJson(this)
-}
-
-object ReadSubscriptionFailedAuditEvent {
-  given formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
-}
-
-case class ReadSubscriptionSuccessAuditEventV2(
   plrReference:             String,
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
@@ -67,6 +35,6 @@ case class ReadSubscriptionSuccessAuditEventV2(
   override val detailJson: JsValue = Json.toJson(this)
 }
 
-object ReadSubscriptionSuccessAuditEventV2 {
-  given formats: Format[ReadSubscriptionSuccessAuditEventV2] = Json.format[ReadSubscriptionSuccessAuditEventV2]
+object ReadSubscriptionSuccessAuditEvent {
+  given formats: Format[ReadSubscriptionSuccessAuditEvent] = Json.format[ReadSubscriptionSuccessAuditEvent]
 }

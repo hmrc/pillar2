@@ -63,29 +63,28 @@ class SubscriptionController @Inject() (
     )
   }
 
-  def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
-    userAnswerCache.get(id).map { userAnswer =>
-      UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
-    }
-
-  def readSubscriptionV2(plrReference: String): Action[AnyContent] = authenticate.async { request =>
+  def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     for {
-      response <- subscriptionService.readSubscriptionDataV2(plrReference)
+      response <- subscriptionService.readSubscriptionData(plrReference)
     } yield convertToResult(response)(using logger: Logger)
   }
 
-  def readAndCacheSubscriptionV2(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
+  def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
     for {
       response <- subscriptionService.storeSubscriptionDisplayResponse(id, plrReference)
     } yield Ok(Json.toJson(response.success))
   }
 
-  def amendSubscriptionV2(id: String): Action[SubscriptionDataAmend] = authenticate(parse.json[SubscriptionDataAmend]).async { request =>
+  def amendSubscription(id: String): Action[SubscriptionDataAmend] = authenticate(parse.json[SubscriptionDataAmend]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    subscriptionService.sendAmendedDataV2(id, request.body).map(_ => Ok)
+    subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
   }
+
+  def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
+    userAnswerCache.get(id).map { userAnswer =>
+      UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
+    }
 
 }

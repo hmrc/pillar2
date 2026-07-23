@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.helpers
+package uk.gov.hmrc.pillar2.fixtures
 
 import play.api.libs.json.{JsObject, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccess, GetORNSuccessResponse, ORNRequest}
 
 import java.time.{LocalDate, ZonedDateTime}
 
-trait ORNDataFixture {
+trait ORNDataFixtures {
 
   val fromDate: LocalDate = LocalDate.now()
   val toDate:   LocalDate = fromDate.plusYears(1)
@@ -57,7 +57,8 @@ trait ORNDataFixture {
   val ornSubmitResponse: JsObject = Json.obj(
     "success" -> Json.obj(
       "processingDate"   -> "2024-03-14T09:26:17Z",
-      "formBundleNumber" -> "123456789012345"
+      "formBundleNumber" -> "123456789012"
     )
   )
+
 }

@@ -22,7 +22,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 final case class SubscriptionDataAmend(
   replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriodAmendV2,
+  accountingPeriod:         AccountingPeriodAmend,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],

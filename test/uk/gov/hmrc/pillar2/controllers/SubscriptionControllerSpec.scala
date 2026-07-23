@@ -44,7 +44,6 @@ import uk.gov.hmrc.pillar2.services.SubscriptionService
 
 import scala.concurrent.{ExecutionContext, Future}
 
-// TODO: remove all occurrences of V2
 class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
   private val mockedCache = mock[ReadSubscriptionCacheRepository]
 
@@ -168,12 +167,12 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "readAndCacheSubscriptionV2" - {
+    "readAndCacheSubscription" - {
       "return ok with the response if the connector returns successful" in
         forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionDisplayResponse]) { (id, plrReference, response) =>
           when(mockSubscriptionService.storeSubscriptionDisplayResponse(any[String](), any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(response))
-          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2(id, plrReference).url)
+          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription(id, plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
@@ -186,7 +185,7 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
           when(mockSubscriptionService.storeSubscriptionDisplayResponse(any[String](), any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(response))
-          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2(id, plrReference).url)
+          val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription(id, plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
@@ -195,18 +194,18 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
       "return UnexpectedResponse if connector returns non-OK response" in {
         when(mockSubscriptionService.storeSubscriptionDisplayResponse(any[String](), any[String]())(using any[HeaderCarrier]()))
           .thenReturn(Future.failed(UnexpectedResponse))
-        val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscriptionV2(testId, testPillar2Id).url)
+        val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription(testId, testPillar2Id).url)
         val result  = route(application, request).value
         result.failed.futureValue mustEqual UnexpectedResponse
       }
     }
 
-    "readSubscriptionV2" - {
+    "readSubscription" - {
       "return Ok response with json object if the connector returns successful" in
         forAll(plrReferenceGen, arbitrary[SubscriptionDisplayResponse]) { (plrReference, response) =>
-          when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]()))
+          when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2(plrReference).url)
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
@@ -217,30 +216,30 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           val subscriptionSuccess = arbitrary[SubscriptionDataDisplay].sample.get.copy(accountingPeriod = None)
           val response            = SubscriptionDisplayResponse(subscriptionSuccess)
 
-          when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]()))
+          when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response.success).toString)))
-          val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2(plrReference).url)
+          val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(plrReference).url)
           val result  = route(application, request).value
           status(result) mustEqual OK
           contentAsJson(result) mustEqual Json.toJson(response.success)
         }
 
       "return UnexpectedResponse if connector fails" in {
-        when(mockSubscriptionService.readSubscriptionDataV2(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
-        val request = FakeRequest(GET, routes.SubscriptionController.readSubscriptionV2(testPillar2Id).url)
+        when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]())).thenReturn(Future.failed(UnexpectedResponse))
+        val request = FakeRequest(GET, routes.SubscriptionController.readSubscription(testPillar2Id).url)
         val result  = route(application, request).value
         result.failed.futureValue mustEqual UnexpectedResponse
       }
     }
 
-    "amendSubscriptionV2" - {
+    "amendSubscription" - {
       "return OK when valid data is provided" in
         forAll(arbMockId.arbitrary, arbitrarySubscriptionDataAmend.arbitrary) { (id, amendData) =>
-          when(mockSubscriptionService.sendAmendedDataV2(any[String](), any[SubscriptionDataAmend]())(using any[HeaderCarrier]()))
+          when(mockSubscriptionService.sendAmendedData(any[String](), any[SubscriptionDataAmend]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(Done))
 
           val requestJson = Json.toJson(amendData)
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscriptionV2(id).url)
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
             .withJsonBody(requestJson)
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe OK
@@ -248,11 +247,11 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
 
       "return bad request if the validation fails on the json payload" in
         forAll(arbMockId.arbitrary) { id =>
-          when(mockSubscriptionService.sendAmendedDataV2(any[String](), any[SubscriptionDataAmend]())(using any[HeaderCarrier]()))
+          when(mockSubscriptionService.sendAmendedData(any[String](), any[SubscriptionDataAmend]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(Done))
 
           val requestJson = Json.obj("invalid" -> "payload")
-          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscriptionV2(id).url)
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
             .withJsonBody(requestJson)
           val resultFuture = route(application, fakeRequest).value
           status(resultFuture) shouldBe BAD_REQUEST

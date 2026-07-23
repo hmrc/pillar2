@@ -20,13 +20,12 @@ import play.api.libs.json.{Json, OFormat}
 
 import java.time.LocalDate
 
-@deprecated("delete this")
-final case class AccountingPeriod(
+final case class AccountingPeriodCreate(
   startDate: LocalDate,
   endDate:   LocalDate,
   dueDate:   Option[LocalDate] = None
 )
 
-object AccountingPeriod {
-  given format: OFormat[AccountingPeriod] = Json.format[AccountingPeriod]
+object AccountingPeriodCreate {
+  given format: OFormat[AccountingPeriodCreate] = Json.format[AccountingPeriodCreate]
 }

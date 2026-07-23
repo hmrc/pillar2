@@ -23,8 +23,9 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.libs.json.Json
 import play.api.test.Helpers.await
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
+import uk.gov.hmrc.pillar2.fixtures.ORNDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.*
 import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
@@ -32,13 +33,13 @@ import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessRespons
 import java.time.ZonedDateTime
 import scala.concurrent.{ExecutionContext, Future}
 
-class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixture {
+class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixtures {
 
   val service = new ORNService(mockOrnConnector)
 
   "submitOrn" - {
     "should return SuccessResponse for valid ornRequest (201)" in {
-      val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
+      val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), testFormBundleNumber))
       when(mockOrnConnector.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpCreated))
 
@@ -159,7 +160,7 @@ class ORNServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChe
 
   "amendOrn" - {
     "should return SuccessResponse for valid ORN request (200)" in {
-      val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), "123456789012345"))
+      val successResponse = ORNSuccessResponse(ORNSuccess(ZonedDateTime.parse("2024-03-14T09:26:17Z"), testFormBundleNumber))
       when(mockOrnConnector.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
         .thenReturn(Future.successful(httpOk))
 

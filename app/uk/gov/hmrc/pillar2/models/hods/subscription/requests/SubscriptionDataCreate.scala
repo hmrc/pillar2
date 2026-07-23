@@ -21,7 +21,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
 final case class SubscriptionDataCreate(
   upeDetails:               UpeDetails,
-  accountingPeriod:         AccountingPeriod,
+  accountingPeriod:         AccountingPeriodCreate,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],

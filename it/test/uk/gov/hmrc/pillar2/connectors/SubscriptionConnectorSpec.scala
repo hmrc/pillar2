@@ -74,9 +74,9 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
     }
 
-    "for retrieving Subscription Information (V2)" - {
+    "for retrieving Subscription Information" - {
       "must return object when the response was OK" in
-        forAll(arbPlrReference.arbitrary, arbitrarySubscriptionResponseV2.arbitrary) { (plrReference, response) =>
+        forAll(arbPlrReference.arbitrary, arbitrarySubscriptionDisplayResponse.arbitrary) { (plrReference, response) =>
           server.stubFor(
             get(urlEqualTo(s"/pillar2/subscription/v2/$plrReference"))
               .willReturn(
@@ -85,7 +85,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
                   .withBody(Json.stringify(Json.toJson(SubscriptionDisplayResponse(response.success))))
               )
           )
-          val result = subscriptionConnector.getSubscriptionInformationV2(plrReference).futureValue
+          val result = subscriptionConnector.getSubscriptionInformation(plrReference).futureValue
           result.status mustEqual OK
           result.json mustEqual Json.toJson(SubscriptionDisplayResponse(response.success))
         }
@@ -104,7 +104,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
               )
           )
 
-          val result = subscriptionConnector.getSubscriptionInformationV2(plrReference).futureValue
+          val result = subscriptionConnector.getSubscriptionInformation(plrReference).futureValue
           result.status mustEqual OK
           result.json mustEqual Json.toJson(SubscriptionDisplayResponse(response.success))
         }
@@ -119,7 +119,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
                   .withBody(Json.stringify(Json.obj()))
               )
           )
-          val result = subscriptionConnector.getSubscriptionInformationV2(plrReference)
+          val result = subscriptionConnector.getSubscriptionInformation(plrReference)
           result.failed.map { ex =>
             ex shouldBe a[JsResultException]
           }
@@ -130,18 +130,18 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         forAll(plrReferenceGen) { (plrReference: String) =>
           stubGetResponse(s"/pillar2/subscription/v2/$plrReference", errorResponse)
 
-          val result = subscriptionConnector.getSubscriptionInformationV2(plrReference)
+          val result = subscriptionConnector.getSubscriptionInformation(plrReference)
           result.futureValue.status mustBe errorResponse
         }
       }
     }
 
-    "amendSubscriptionInformationV2" - {
+    "amendSubscriptionInformation" - {
       "must return status as OK for a successful amendment" in
         forAll(arbitrary[EtmpAmendSubscriptionRequest]) { amendRequest =>
           stubPutResponse("/pillar2/subscription/v2", OK)
 
-          val result = await(subscriptionConnector.amendSubscriptionInformationV2(amendRequest))
+          val result = await(subscriptionConnector.amendSubscriptionInformation(amendRequest))
           result.status mustBe OK
         }
 
@@ -149,7 +149,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         forAll { (amendRequest: EtmpAmendSubscriptionRequest) =>
           stubPutResponse("/pillar2/subscription/v2", BAD_REQUEST)
 
-          val result = await(subscriptionConnector.amendSubscriptionInformationV2(amendRequest))
+          val result = await(subscriptionConnector.amendSubscriptionInformation(amendRequest))
 
           result.status mustBe BAD_REQUEST
         }
@@ -158,7 +158,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         forAll { (amendRequest: EtmpAmendSubscriptionRequest) =>
           stubPutResponse("/pillar2/subscription/v2", INTERNAL_SERVER_ERROR)
 
-          val result = await(subscriptionConnector.amendSubscriptionInformationV2(amendRequest))
+          val result = await(subscriptionConnector.amendSubscriptionInformation(amendRequest))
 
           result.status mustBe INTERNAL_SERVER_ERROR
         }
@@ -168,7 +168,7 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           server.stop()
 
           val exception = intercept[Throwable] {
-            await(subscriptionConnector.amendSubscriptionInformationV2(amendRequest))
+            await(subscriptionConnector.amendSubscriptionInformation(amendRequest))
           }
 
           exception mustBe a[Throwable]

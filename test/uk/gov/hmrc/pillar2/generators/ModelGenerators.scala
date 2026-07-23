@@ -225,7 +225,7 @@ trait ModelGenerators {
       fmContactName            <- stringsWithMaxLength(200)
       fmContactEmail           <- stringsWithMaxLength(200)
       fmCapturePhone           <- arbitrary[Int]
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -268,7 +268,7 @@ trait ModelGenerators {
 
       upeGRSResponse           <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
       fmGRSResponse            <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -305,7 +305,7 @@ trait ModelGenerators {
     for {
       upeGRSResponse           <- arbitraryWithIdRegDataFoLLP.arbitrary
       fmGRSResponse            <- arbitraryWithIdRegDataFoLLP.arbitrary
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -386,7 +386,7 @@ trait ModelGenerators {
       fmContactName            <- stringsWithMaxLength(200)
       fmContactEmail           <- stringsWithMaxLength(200)
       fmCapturePhone           <- arbitrary[Int]
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -431,7 +431,7 @@ trait ModelGenerators {
       upeContactEmail          <- arbitrary[String]
       upeCapturePhone          <- arbitrary[Int]
       fmGRSResponse            <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -470,7 +470,7 @@ trait ModelGenerators {
     for {
 
       upeGRSResponse           <- arbitraryWithIdRegDataForLimitedCompany.arbitrary
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -503,7 +503,7 @@ trait ModelGenerators {
     for {
 
       upeNameRegistration      <- stringsWithMaxLength(105)
-      subAccountingPeriod      <- arbitrary[AccountingPeriod]
+      subAccountingPeriod      <- arbitrary[AccountingPeriodCreate]
       subPrimaryEmail          <- arbitrary[String]
       subPrimaryContactName    <- stringsWithMaxLength(200)
       subSecondaryContactName  <- stringsWithMaxLength(200)
@@ -708,7 +708,7 @@ trait ModelGenerators {
   given arbitraryRequestDetail: Arbitrary[SubscriptionDataCreate] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetails]
-      accountingPeriod         <- arbitrary[AccountingPeriod]
+      accountingPeriod         <- arbitrary[AccountingPeriodCreate]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
@@ -743,11 +743,11 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryAccountingPeriod: Arbitrary[AccountingPeriod] = Arbitrary {
+  given arbitraryAccountingPeriod: Arbitrary[AccountingPeriodCreate] = Arbitrary {
     for {
       startDate <- arbitrary[LocalDate]
       endDate   <- arbitrary[LocalDate]
-    } yield AccountingPeriod(
+    } yield AccountingPeriodCreate(
       startDate = startDate,
       endDate = endDate
     )
@@ -764,16 +764,6 @@ trait ModelGenerators {
       endDate = endDate,
       canAmendStartDate = canAmendStartDate,
       canAmendEndDate = canAmendEndDate
-    )
-  }
-
-  given arbitraryAccountingPeriodAmend: Arbitrary[AccountingPeriodAmend] = Arbitrary {
-    for {
-      startDate <- arbitrary[LocalDate]
-      endDate   <- arbitrary[LocalDate]
-    } yield AccountingPeriodAmend(
-      startDate = startDate,
-      endDate = endDate
     )
   }
 
@@ -855,13 +845,13 @@ trait ModelGenerators {
     arbitrary[Boolean].map(AccountStatus(_))
   }
 
-  given arbitrarySubscriptionResponseV2: Arbitrary[SubscriptionDisplayResponse] = Arbitrary {
+  given arbitrarySubscriptionDisplayResponse: Arbitrary[SubscriptionDisplayResponse] = Arbitrary {
     for {
       success <- arbitrary[SubscriptionDataDisplay]
     } yield SubscriptionDisplayResponse(success)
   }
 
-  given arbitrarySubscriptionSuccessV2: Arbitrary[SubscriptionDataDisplay] = Arbitrary {
+  given arbitrarySubscriptionDataDisplay: Arbitrary[SubscriptionDataDisplay] = Arbitrary {
     for {
       formBundleNumber         <- stringsWithMaxLength(20)
       upeDetails               <- arbitrary[UpeDetails]
@@ -954,24 +944,23 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryAccountingPeriodAmendV2: Arbitrary[AccountingPeriodAmendV2] = Arbitrary {
+  given arbitraryAccountingPeriodAmendV2: Arbitrary[AccountingPeriodAmend] = Arbitrary {
     for {
       amendAccountingPeriod     <- arbitrary[Boolean]
       originalAccountingPeriods <- Gen.option(Gen.listOfN(2, arbitrary[OriginalAccountingPeriod]).map(_.toSeq))
       newAccountingPeriod       <- Gen.option(arbitrary[NewAccountingPeriod])
-    } yield AccountingPeriodAmendV2(
+    } yield AccountingPeriodAmend(
       amendAccountingPeriod = amendAccountingPeriod,
       originalAccountingPeriods = originalAccountingPeriods,
       newAccountingPeriod = newAccountingPeriod
     )
   }
 
-  // former arbitraryAmendSubscriptionSuccessV2
   given arbitrarySubscriptionDataAmend: Arbitrary[SubscriptionDataAmend] = Arbitrary {
     for {
       replaceFilingMember      <- arbitrary[Boolean]
       upeDetails               <- arbitrary[UpeDetailsAmend]
-      accountingPeriod         <- arbitrary[AccountingPeriodAmendV2]
+      accountingPeriod         <- arbitrary[AccountingPeriodAmend]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
@@ -987,11 +976,10 @@ trait ModelGenerators {
     )
   }
 
-  // TODO: former arbitraryETMPAmendSubscriptionSuccessV2
   given arbitraryEtmpAmendSubscriptionRequest: Arbitrary[EtmpAmendSubscriptionRequest] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetailsAmend]
-      accountingPeriod         <- arbitrary[AccountingPeriodAmendV2]
+      accountingPeriod         <- arbitrary[AccountingPeriodAmend]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])

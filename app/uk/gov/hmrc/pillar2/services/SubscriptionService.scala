@@ -28,7 +28,7 @@ import uk.gov.hmrc.pillar2.models.*
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.SubscriptionProcessingError
 import uk.gov.hmrc.pillar2.models.grs.EntityType
-import uk.gov.hmrc.pillar2.models.hods.subscription.cache.ReadSubscriptionCachedDataV2
+import uk.gov.hmrc.pillar2.models.hods.subscription.cache.ReadSubscriptionCachedData
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.requests.{SubscriptionDataAmend, SubscriptionDataCreate}
 import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
@@ -82,6 +82,24 @@ class SubscriptionService @Inject() (
         }
       case None => subscriptionError
     }
+
+  def sendAmendedData(id: String, amendData: SubscriptionDataAmend)(using hc: HeaderCarrier): Future[Done] = {
+    val etmpAmendRequest: EtmpAmendSubscriptionRequest = EtmpAmendSubscriptionRequest(amendData)
+    subscriptionConnector.amendSubscriptionInformation(etmpAmendRequest).flatMap { response =>
+      auditService.auditAmendSubscription(
+        requestData = amendData,
+        responseData = AuditResponseReceived(response.status, response.json)
+      ) >> convertToAmendSubscriptionResult(response).flatMap { amendResponse =>
+        logger.info(
+          s"Successful response received for amend subscription for form ${amendResponse.success.formBundleNumber} at ${amendResponse.success.processingDate}"
+        )
+        storeSubscriptionDisplayResponse(
+          id = id,
+          plrReference = etmpAmendRequest.upeDetails.plrReference
+        ).as(Done)
+      }
+    }
+  }
 
   private def upeRegisteredOutsideUK(upeSafeId: String, userAnswers: UserAnswers)(using hc: HeaderCarrier) =
     for {
@@ -371,37 +389,36 @@ class SubscriptionService @Inject() (
       countryCode = subAddressId.countryCode
     )
 
-  private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
-    AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
+  private def getAccountingPeriod(accountingPeriod: AccountingPeriodCreate): AccountingPeriodCreate =
+    AccountingPeriodCreate(accountingPeriod.startDate, accountingPeriod.endDate)
 
   def storeSubscriptionDisplayResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionDisplayResponse] =
     for {
-      response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
+      response <- subscriptionConnector.getSubscriptionInformation(plrReference)
       _        <- response.status match {
              case UNPROCESSABLE_ENTITY => Future.failed(SubscriptionProcessingError)
              case _                    => Future.unit
            }
       subscriptionResponse = response.json.as[SubscriptionDisplayResponse]
-      // subscriptionResponse <- convertToSubscriptionResponseV2Result(response) // TODO: use this?
-      _ <- auditService.auditReadSubscriptionSuccessV2(plrReference, subscriptionResponse)
-      dataToStore = createCachedObjectV2(subscriptionResponse.success, plrReference)
+      // subscriptionResponse <- convertToSubscriptionResponseResult(response) // TODO: use this?
+      _ <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
+      dataToStore = createCachedObject(subscriptionResponse.success, plrReference)
       _ <- repository.upsert(id, Json.toJson(dataToStore))
     } yield subscriptionResponse
 
-  def readSubscriptionDataV2(plrReference: String)(using hc: HeaderCarrier): Future[HttpResponse] =
+  def readSubscriptionData(plrReference: String)(using hc: HeaderCarrier): Future[HttpResponse] =
     for {
-      response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
-      _        <- createAuditForReadSubscriptionV2(plrReference, response)
+      response <- subscriptionConnector.getSubscriptionInformation(plrReference)
+      _        <- createAuditForReadSubscription(plrReference, response)
     } yield response
 
-  private def createAuditForReadSubscriptionV2(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
+  private def createAuditForReadSubscription(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
     response.status match {
-      case 200 => auditService.auditReadSubscriptionSuccessV2(plrReference, response.json.as[SubscriptionDisplayResponse])
+      case 200 => auditService.auditReadSubscriptionSuccess(plrReference, response.json.as[SubscriptionDisplayResponse])
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
     }
 
-  private def createCachedObjectV2(sub: SubscriptionDataDisplay, plrReference: String): ReadSubscriptionCachedDataV2 = {
-
+  private def createCachedObject(sub: SubscriptionDataDisplay, plrReference: String): ReadSubscriptionCachedData = {
     val nonUKAddress = NonUKAddress(
       addressLine1 = sub.upeCorrespAddressDetails.addressLine1,
       addressLine2 = sub.upeCorrespAddressDetails.addressLine2.filter(_.nonEmpty),
@@ -427,7 +444,7 @@ class SubscriptionService @Inject() (
 
     val organisationName: Option[String] = Some(sub.upeDetails.organisationName)
 
-    ReadSubscriptionCachedDataV2(
+    ReadSubscriptionCachedData(
       plrReference = Some(plrReference),
       subMneOrDomestic = if sub.upeDetails.domesticOnly then MneOrDomestic.Uk else MneOrDomestic.UkAndOther,
       subPrimaryContactName = sub.primaryContactDetails.name,
@@ -444,24 +461,6 @@ class SubscriptionService @Inject() (
       accountStatus = sub.accountStatus,
       organisationName = organisationName
     )
-  }
-
-  def sendAmendedDataV2(id: String, amendData: SubscriptionDataAmend)(using hc: HeaderCarrier): Future[Done] = {
-    val etmpAmendRequest: EtmpAmendSubscriptionRequest = EtmpAmendSubscriptionRequest(amendData)
-    subscriptionConnector.amendSubscriptionInformationV2(etmpAmendRequest).flatMap { response =>
-      auditService.auditAmendSubscriptionV2(
-        requestData = amendData,
-        responseData = AuditResponseReceived(response.status, response.json)
-      ) >> convertToAmendSubscriptionResult(response).flatMap { amendResponse =>
-        logger.info(
-          s"Successful response received for amend subscription for form ${amendResponse.success.formBundleNumber} at ${amendResponse.success.processingDate}"
-        )
-        storeSubscriptionDisplayResponse(
-          id = id,
-          plrReference = etmpAmendRequest.upeDetails.plrReference
-        ).as(Done)
-      }
-    }
   }
 
 }

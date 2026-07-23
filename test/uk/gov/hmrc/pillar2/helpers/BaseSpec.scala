@@ -35,7 +35,7 @@ import play.api.mvc.AnyContentAsEmpty
 import play.api.test.{DefaultAwaitTimeout, FakeRequest}
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.fixtures.SubscriptionDataFixtures
+import uk.gov.hmrc.pillar2.fixtures.{SubscriptionDataFixtures, UKTaxReturnDataFixtures}
 import uk.gov.hmrc.pillar2.utils.LogUtility
 
 import scala.concurrent.ExecutionContext
@@ -54,7 +54,7 @@ trait BaseSpec
     with Status
     with WireMockServerHandler
     with SubscriptionDataFixtures
-    with UKTaxReturnDataFixture {
+    with UKTaxReturnDataFixtures {
 
   given ec:           ExecutionContext = scala.concurrent.ExecutionContext.global
   given hc:           HeaderCarrier    = HeaderCarrier()
@@ -73,6 +73,8 @@ trait BaseSpec
   val PLATFORM_LOG_LIMIT = 12288
 
   val logUtils = new LogUtility
+
+  val xPillar2IdHeader: String = "X-Pillar2-Id"
 
   val testId:        String = "testId"
   val testPillar2Id: String = "XMPLR0123456789"

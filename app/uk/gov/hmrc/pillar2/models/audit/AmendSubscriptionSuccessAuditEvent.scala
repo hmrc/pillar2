@@ -19,20 +19,21 @@ package uk.gov.hmrc.pillar2.models.audit
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
-final case class AmendSubscriptionSuccessAuditEventV2(
+final case class AmendSubscriptionSuccessAuditEvent(
   replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriodAmendV2,
+  accountingPeriod:         AccountingPeriodAmend,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
   filingMemberDetails:      Option[FilingMemberDetailsAmend],
   processingDate:           String
 ) extends AuditEvent {
-  override val auditType:  String  = "updatePillar2SubscriptionV2"
+  // TODO: is this updatePillar2SubscriptionV2 or updatePillar2Subscription?
+  override val auditType:  String  = "updatePillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)
 }
 
-object AmendSubscriptionSuccessAuditEventV2 {
-  given formats: Format[AmendSubscriptionSuccessAuditEventV2] = Json.format[AmendSubscriptionSuccessAuditEventV2]
+object AmendSubscriptionSuccessAuditEvent {
+  given formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
 }

@@ -29,10 +29,7 @@ import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class AuditService @Inject() (
-  auditConnector: AuditConnector
-)(using ec: ExecutionContext)
-    extends Logging {
+class AuditService @Inject() (auditConnector: AuditConnector)(using ec: ExecutionContext) extends Logging {
 
   def auditUpeRegisterWithoutId(
     upeRegistration: UpeRegistration
@@ -56,7 +53,6 @@ class AuditService @Inject() (
     subscriptionRequest: SubscriptionDataCreate,
     responseReceived:    AuditResponseReceived
   )(using hc: HeaderCarrier): Future[AuditResult] = {
-    // TODO - This needs to be fixed as we are loosing failure of response
     val resData = responseReceived.status match {
       case CREATED =>
         val response = responseReceived.responseData.as[SuccessResponse]
@@ -78,12 +74,12 @@ class AuditService @Inject() (
     )
   }
 
-  def auditReadSubscriptionSuccessV2(
+  def auditReadSubscriptionSuccess(
     plrReference: String,
     responseData: SubscriptionDisplayResponse
   )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
-      ReadSubscriptionSuccessAuditEventV2(
+      ReadSubscriptionSuccessAuditEvent(
         plrReference = plrReference,
         formBundleNumber = responseData.success.formBundleNumber,
         upeDetails = responseData.success.upeDetails,
@@ -108,7 +104,7 @@ class AuditService @Inject() (
       ).extendedDataEvent
     )
 
-  def auditAmendSubscriptionV2(
+  def auditAmendSubscription(
     requestData:  SubscriptionDataAmend,
     responseData: AuditResponseReceived
   )(using hc: HeaderCarrier): Future[AuditResult] = {
@@ -119,7 +115,7 @@ class AuditService @Inject() (
       case _ => ""
     }
     auditConnector.sendExtendedEvent(
-      AmendSubscriptionSuccessAuditEventV2(
+      AmendSubscriptionSuccessAuditEvent(
         requestData.replaceFilingMember,
         requestData.upeDetails,
         requestData.accountingPeriod,

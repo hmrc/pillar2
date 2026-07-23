@@ -21,9 +21,9 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
 import java.time.LocalDateTime
 
-case class CreateSubscriptionAuditEvent(
+final case class CreateSubscriptionAuditEvent(
   upeDetails:               UpeDetails,
-  accountingPeriod:         AccountingPeriod,
+  accountingPeriod:         AccountingPeriodCreate,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
@@ -39,13 +39,19 @@ object CreateSubscriptionAuditEvent {
   given formats: Format[CreateSubscriptionAuditEvent] = Json.format[CreateSubscriptionAuditEvent]
 }
 
-case class SubscriptionSuccessResponse(plrReference: String, formBundleNumber: String, processingDate: LocalDateTime)
+final case class SubscriptionSuccessResponse(
+  plrReference:     String,
+  formBundleNumber: String,
+  processingDate:   LocalDateTime
+)
 
 object SubscriptionSuccessResponse {
   given format: OFormat[SubscriptionSuccessResponse] = Json.format[SubscriptionSuccessResponse]
 }
 
-case class SuccessResponse(success: SubscriptionSuccessResponse)
+final case class SuccessResponse(
+  success: SubscriptionSuccessResponse
+)
 
 object SuccessResponse {
   given format: OFormat[SuccessResponse] = Json.format[SuccessResponse]

@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.common
+package uk.gov.hmrc.pillar2.models.audit
 
-import play.api.libs.json.{Json, OFormat}
+import play.api.libs.json.{Format, JsValue, Json}
 
-// TODO: rename to AccountingPeriodAmend
-final case class AccountingPeriodAmendV2(
-  amendAccountingPeriod:     Boolean,
-  originalAccountingPeriods: Option[Seq[OriginalAccountingPeriod]] = None,
-  newAccountingPeriod:       Option[NewAccountingPeriod] = None
-)
+final case class ReadSubscriptionFailedAuditEvent(
+  plrReference: String,
+  responseData: AuditResponseReceived
+) extends AuditEvent {
+  override val auditType:  String  = "readPillar2Subscription"
+  override val detailJson: JsValue = Json.toJson(this)
+}
 
-object AccountingPeriodAmendV2 {
-  given format: OFormat[AccountingPeriodAmendV2] = Json.format[AccountingPeriodAmendV2]
+object ReadSubscriptionFailedAuditEvent {
+  given formats: Format[ReadSubscriptionFailedAuditEvent] = Json.format[ReadSubscriptionFailedAuditEvent]
 }

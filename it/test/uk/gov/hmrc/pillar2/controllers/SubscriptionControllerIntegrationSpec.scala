@@ -55,7 +55,7 @@ class SubscriptionControllerIntegrationSpec
     .configure("metrics.enabled" -> false)
     .build()
 
-  lazy val url: URL = URI.create(s"http://localhost:$port${routes.SubscriptionController.amendSubscriptionV2(id).url}").toURL
+  lazy val url: URL = URI.create(s"http://localhost:$port${routes.SubscriptionController.amendSubscription(id).url}").toURL
 
   val id = "Int-c75cfd09-f945-41a8-90db-a93177a7663c"
 

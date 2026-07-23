@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.helpers
+package uk.gov.hmrc.pillar2.fixtures
 
 import play.api.http.Status.{CREATED, OK}
 import play.api.libs.json.Json
@@ -23,13 +23,14 @@ import uk.gov.hmrc.pillar2.models.hip.{ApiSuccess, ApiSuccessResponse}
 
 import java.time.ZonedDateTime
 
-trait UKTaxReturnDataFixture {
+trait UKTaxReturnDataFixtures {
 
-  given pillar2Id:     String             = "XMPLR0000000012"
+  given pillar2Id: String = "XMPLR0000000012"
+
   val successResponse: ApiSuccessResponse = ApiSuccessResponse(
     ApiSuccess(
       processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"),
-      formBundleNumber = "123456789012345",
+      formBundleNumber = "123456789012",
       chargeReference = Some("12345678")
     )
   )

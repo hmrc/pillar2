@@ -38,33 +38,33 @@ class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClie
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp")
     val serviceName = "create-subscription"
-    val url: URL = url"${config.baseUrl(serviceName)}"
+    val createSubscriptionUrl: URL = url"${config.baseUrl(serviceName)}"
     http
-      .post(url)
+      .post(createSubscriptionUrl)
       .setHeader(extraHeaders(config, serviceName)*)
       .withBody(Json.toJson(subscription))
       .execute[HttpResponse]
   }
 
-  def getSubscriptionInformationV2(
+  def getSubscriptionInformation(
     plrReference: String
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription-v2"
-    val url: URL = url"${config.baseUrl(serviceName)}/$plrReference"
+    val getSubscriptionUrl: URL = url"${config.baseUrl(serviceName)}/$plrReference"
     http
-      .get(url)
+      .get(getSubscriptionUrl)
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
   }
 
-  def amendSubscriptionInformationV2(
+  def amendSubscriptionInformation(
     amendRequest: EtmpAmendSubscriptionRequest
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "amend-subscription-v2"
-    val url         = url"${config.baseUrl(serviceName)}"
+    val serviceName          = "amend-subscription-v2"
+    val amendSubscriptionUrl = url"${config.baseUrl(serviceName)}"
     given writes: Writes[EtmpAmendSubscriptionRequest] = EtmpAmendSubscriptionRequest.format
     http
-      .put(url)
+      .put(amendSubscriptionUrl)
       .withBody(Json.toJson(amendRequest))
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]

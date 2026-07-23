@@ -21,7 +21,7 @@ import uk.gov.hmrc.pillar2.models.hods.subscription.requests.SubscriptionDataAme
 
 final case class EtmpAmendSubscriptionRequest(
   upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriodAmendV2,
+  accountingPeriod:         AccountingPeriodAmend,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
