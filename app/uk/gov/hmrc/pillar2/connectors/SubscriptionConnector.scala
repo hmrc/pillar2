@@ -23,6 +23,7 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2}
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
@@ -45,6 +46,7 @@ class SubscriptionConnector @Inject() (
       .setHeader(extraHeaders(config, serviceName)*)
       .withBody(Json.toJson(subscription))
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def getSubscriptionInformation(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
@@ -54,6 +56,7 @@ class SubscriptionConnector @Inject() (
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
@@ -63,6 +66,7 @@ class SubscriptionConnector @Inject() (
       .get(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def amendSubscriptionInformation(
@@ -76,6 +80,7 @@ class SubscriptionConnector @Inject() (
       .withBody(Json.toJson(amendRequest))
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def amendSubscriptionInformationV2(
@@ -89,5 +94,6 @@ class SubscriptionConnector @Inject() (
       .withBody(Json.toJson(amendRequest))
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 }

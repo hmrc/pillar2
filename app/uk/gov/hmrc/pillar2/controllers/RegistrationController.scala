@@ -45,29 +45,44 @@ class RegistrationController @Inject() (
 
   def withoutIdUpeRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    getUserAnswers(id).flatMap { userAnswer =>
-      dataSubmissionService
-        .sendNoIdUpeRegistration(userAnswer)
-        .map(handleResult)
-    }
+    getUserAnswers(id)
+      .flatMap { userAnswer =>
+        dataSubmissionService
+          .sendNoIdUpeRegistration(userAnswer)
+          .map(handleResult)
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationController] Failed to submit no-ID UPE registration for ID: $id", exception)
+        Future.failed(exception)
+      }
   }
 
   def withoutIdFmRegistrationSubmission(id: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    getUserAnswers(id).flatMap { userAnswer =>
-      dataSubmissionService
-        .sendNoIdFmRegistration(userAnswer)
-        .map(handleResult)
-    }
+    getUserAnswers(id)
+      .flatMap { userAnswer =>
+        dataSubmissionService
+          .sendNoIdFmRegistration(userAnswer)
+          .map(handleResult)
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationController] Failed to submit no-ID FM registration for ID: $id", exception)
+        Future.failed(exception)
+      }
   }
 
   def registerNewFilingMember(id: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    getUserAnswers(id).flatMap { userAnswer =>
-      dataSubmissionService
-        .registerNewFilingMember(userAnswer)
-        .map(handleResult)
-    }
+    getUserAnswers(id)
+      .flatMap { userAnswer =>
+        dataSubmissionService
+          .registerNewFilingMember(userAnswer)
+          .map(handleResult)
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationController] Failed to register new filing member for ID: $id", exception)
+        Future.failed(exception)
+      }
   }
 
   def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =

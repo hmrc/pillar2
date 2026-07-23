@@ -21,6 +21,7 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
 
 import javax.inject.{Inject, Singleton}
@@ -43,6 +44,7 @@ class UKTaxReturnConnector @Inject() (
       .setHeader(hipHeaders(config = config)*)
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def amendUKTaxReturn(
@@ -56,5 +58,6 @@ class UKTaxReturnConnector @Inject() (
       .setHeader(hipHeaders(config = config)*)
       .withBody(Json.toJson(payload))
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 }

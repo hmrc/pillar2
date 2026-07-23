@@ -45,20 +45,25 @@ class SubscriptionController @Inject() (
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
     val subscriptionParameters: JsResult[SubscriptionRequestParameters] =
       request.body.validate[SubscriptionRequestParameters]
-    subscriptionParameters.fold(
-      invalid = error => {
-        logger.info(s"SubscriptionController - createSubscription called $error")
+    subscriptionParameters
+      .fold(
+        invalid = error => {
+          logger.info(s"[SubscriptionController] createSubscription called $error")
 
-        Future.successful(
-          BadRequest("Subscription parameter is invalid")
-        )
-      },
-      valid = subs =>
-        for {
-          userAnswer <- getUserAnswers(subs.id)
-          response   <- subscriptionService.sendCreateSubscription(subs.regSafeId, subs.fmSafeId, userAnswer)
-        } yield convertToResult(response)(using logger: Logger)
-    )
+          Future.successful(
+            BadRequest("Subscription parameter is invalid")
+          )
+        },
+        valid = subs =>
+          for {
+            userAnswer <- getUserAnswers(subs.id)
+            response   <- subscriptionService.sendCreateSubscription(subs.regSafeId, subs.fmSafeId, userAnswer)
+          } yield convertToResult(response)(using logger: Logger)
+      )
+      .recoverWith { case exception =>
+        logger.error(s"[SubscriptionController] Failed to create subscription for id ${subscriptionParameters.map(_.id)}", exception)
+        Future.failed(exception)
+      }
   }
 
   def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
@@ -68,42 +73,70 @@ class SubscriptionController @Inject() (
 
   def readAndCacheSubscription(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    for {
-      response <- subscriptionService.storeSubscriptionResponse(id, plrReference)
-    } yield Ok(Json.toJson(response.success))
+    subscriptionService
+      .storeSubscriptionResponse(id, plrReference)
+      .map(response => Ok(Json.toJson(response.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[SubscriptionController] Failed to read and cache subscription for plrReference: $plrReference", exception)
+        Future.failed(exception)
+      }
   }
 
   def readSubscription(plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    for {
-      response <- subscriptionService.readSubscriptionData(plrReference)
-    } yield convertToResult(response)(using logger: Logger)
+    subscriptionService
+      .readSubscriptionData(plrReference)
+      .map(convertToResult(_)(using logger: Logger))
+      .recoverWith { case exception =>
+        logger.error(s"[SubscriptionController] Failed to read subscription for plrReference: $plrReference", exception)
+        Future.failed(exception)
+      }
   }
 
   def readAndCacheSubscriptionV2(id: String, plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
-    for {
-      response <- subscriptionService.storeSubscriptionResponseV2(id, plrReference)
-    } yield Ok(Json.toJson(response.success))
+    subscriptionService
+      .storeSubscriptionResponseV2(id, plrReference)
+      .map(response => Ok(Json.toJson(response.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[SubscriptionController] Failed to read and cache subscription V2 for plrReference: $plrReference", exception)
+        Future.failed(exception)
+      }
   }
 
   def readSubscriptionV2(plrReference: String): Action[AnyContent] = authenticate.async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-
-    for {
-      response <- subscriptionService.readSubscriptionDataV2(plrReference)
-    } yield convertToResult(response)(using logger: Logger)
+    subscriptionService
+      .readSubscriptionDataV2(plrReference)
+      .map(convertToResult(_)(using logger: Logger))
+      .recoverWith { case exception =>
+        logger.error(s"[SubscriptionController] Failed to read subscription V2 for plrReference: $plrReference", exception)
+        Future.failed(exception)
+      }
   }
 
-  def amendSubscription(id: String): Action[AmendSubscriptionSuccess] = authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
-    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    subscriptionService.sendAmendedData(id, request.body).map(_ => Ok)
-  }
+  def amendSubscription(id: String): Action[AmendSubscriptionSuccess] =
+    authenticate(parse.json[AmendSubscriptionSuccess]).async { request =>
+      given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+      subscriptionService
+        .sendAmendedData(id, request.body)
+        .map(_ => Ok)
+        .recoverWith { case exception =>
+          logger.error(s"[SubscriptionController] Failed to amend subscription for id: $id", exception)
+          Future.failed(exception)
+        }
+    }
 
-  def amendSubscriptionV2(id: String): Action[AmendSubscriptionSuccessV2] = authenticate(parse.json[AmendSubscriptionSuccessV2]).async { request =>
-    given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    subscriptionService.sendAmendedDataV2(id, request.body).map(_ => Ok)
-  }
+  def amendSubscriptionV2(id: String): Action[AmendSubscriptionSuccessV2] =
+    authenticate(parse.json[AmendSubscriptionSuccessV2]).async { request =>
+      given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
+      subscriptionService
+        .sendAmendedDataV2(id, request.body)
+        .map(_ => Ok)
+        .recoverWith { case exception =>
+          logger.error(s"[SubscriptionController] Failed to amend subscription V2 for id: $id", exception)
+          Future.failed(exception)
+        }
+    }
 
 }
