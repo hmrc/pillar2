@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.subscription
+package uk.gov.hmrc.pillar2.models.hods.subscription.responses
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.*
 
-final case class AmendSubscriptionRequestParameters(
-  id:        String,
-  amendData: AmendSubscriptionSuccess
+final case class AmendSubscriptionSuccessResponse(
+  processingDate:   String,
+  formBundleNumber: String
 )
 
-object AmendSubscriptionRequestParameters {
-  given format: OFormat[AmendSubscriptionRequestParameters] = Json.format[AmendSubscriptionRequestParameters]
+object AmendSubscriptionSuccessResponse {
+  given format: OFormat[AmendSubscriptionSuccessResponse] = Json.format[AmendSubscriptionSuccessResponse]
 }

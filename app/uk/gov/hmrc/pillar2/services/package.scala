@@ -23,7 +23,7 @@ import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendResponse
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.responses.SubscriptionDisplayResponse
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
@@ -56,11 +56,11 @@ package object services extends Logging {
     }
   }
 
-  private[services] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendResponse] = {
+  private[services] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendSubscriptionResponse] = {
     logger.info(s"Converting amend subscription result with status ${response.status}")
     response.status match {
       case 200 | 201 =>
-        Try(response.json.validate[AmendResponse]) match {
+        Try(response.json.validate[AmendSubscriptionResponse]) match {
           case Success(JsSuccess(success, _)) => Future.successful(success)
           case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
           case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
@@ -94,6 +94,7 @@ package object services extends Logging {
   private[services] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
     convertToResult[GetORNSuccessResponse](response)
 
+  // TODO: not used yet
   private[services] def convertToSubscriptionResponseResult(response: HttpResponse): Future[SubscriptionDisplayResponse] =
     convertToResult[SubscriptionDisplayResponse](response)
 

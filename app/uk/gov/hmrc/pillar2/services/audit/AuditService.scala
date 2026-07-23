@@ -21,9 +21,8 @@ import play.api.http.Status.*
 import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.models.audit.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.requests.{SubscriptionDataAmend, SubscriptionDataCreate}
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.SubscriptionDisplayResponse
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{AmendSubscriptionResponse, SubscriptionDisplayResponse}
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
@@ -110,7 +109,7 @@ class AuditService @Inject() (auditConnector: AuditConnector)(using ec: Executio
   )(using hc: HeaderCarrier): Future[AuditResult] = {
     val resData = responseData.status match {
       case OK =>
-        val response = responseData.responseData.as[AmendResponse]
+        val response = responseData.responseData.as[AmendSubscriptionResponse]
         response.success.processingDate
       case _ => ""
     }

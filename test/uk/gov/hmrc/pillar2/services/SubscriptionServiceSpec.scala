@@ -32,7 +32,7 @@ import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, E
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.requests.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{AmendSubscriptionResponse, AmendSubscriptionSuccessResponse, SubscriptionDataDisplay, SubscriptionDisplayResponse}
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
@@ -211,7 +211,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
 
       forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
-        val etmpAmendResponse = AmendResponse(
+        val etmpAmendResponse = AmendSubscriptionResponse(
           AmendSubscriptionSuccessResponse(processingDate = LocalDate.now().toString, formBundleNumber = testFormBundleNumber)
         )
         val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())

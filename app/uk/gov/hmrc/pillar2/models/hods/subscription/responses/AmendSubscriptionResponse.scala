@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.subscription
+package uk.gov.hmrc.pillar2.models.hods.subscription.responses
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionSuccess
 
-final case class AmendSubscriptionRequestParameters(
-  id:        String,
-  amendData: AmendSubscriptionSuccess
+final case class AmendSubscriptionResponse(
+  success: AmendSubscriptionSuccessResponse
 )
 
-object AmendSubscriptionRequestParameters {
-  given format: OFormat[AmendSubscriptionRequestParameters] = Json.format[AmendSubscriptionRequestParameters]
+object AmendSubscriptionResponse {
+  given format: OFormat[AmendSubscriptionResponse] = Json.format[AmendSubscriptionResponse]
 }

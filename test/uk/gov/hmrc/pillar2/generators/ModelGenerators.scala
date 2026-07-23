@@ -28,7 +28,7 @@ import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentC
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.requests.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.*
 import uk.gov.hmrc.pillar2.models.registration.*
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
 
@@ -1063,17 +1063,17 @@ trait ModelGenerators {
   given arbitraryAmendAuditResponseReceived: Arbitrary[AuditResponseReceived] = Arbitrary {
     for {
       status          <- responseStatusGen
-      successResponse <- arbitrary[AmendResponse]
+      successResponse <- arbitrary[AmendSubscriptionResponse]
     } yield AuditResponseReceived(
       status = status,
       responseData = Json.toJson(successResponse)
     )
   }
 
-  given arbitraryAmendResponse: Arbitrary[AmendResponse] = Arbitrary {
+  given arbitraryAmendSubscriptionResponse: Arbitrary[AmendSubscriptionResponse] = Arbitrary {
     for {
       success <- arbitrary[AmendSubscriptionSuccessResponse]
-    } yield AmendResponse(success)
+    } yield AmendSubscriptionResponse(success)
   }
 
   given arbitraryAmendSubscriptionSuccessResponse: Arbitrary[AmendSubscriptionSuccessResponse] = Arbitrary {
