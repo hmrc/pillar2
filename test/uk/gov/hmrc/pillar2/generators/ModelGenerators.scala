@@ -27,7 +27,8 @@ import uk.gov.hmrc.pillar2.models.hods.*
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.*
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
 import uk.gov.hmrc.pillar2.models.registration.*
 import uk.gov.hmrc.pillar2.models.subscription.{ReadSubscriptionRequestParameters, SubscriptionAddress, SubscriptionRequestParameters}
 
@@ -704,7 +705,7 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryRequestDetail: Arbitrary[RequestDetail] = Arbitrary {
+  given arbitraryRequestDetail: Arbitrary[SubscriptionDataCreate] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetails]
       accountingPeriod         <- arbitrary[AccountingPeriod]
@@ -712,7 +713,7 @@ trait ModelGenerators {
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
       filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
-    } yield RequestDetail(
+    } yield SubscriptionDataCreate(
       upeDetails = upeDetails,
       accountingPeriod = accountingPeriod,
       upeCorrespAddressDetails = upeCorrespAddressDetails,
@@ -821,14 +822,14 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryFilingMemberAmendDetails: Arbitrary[FilingMemberAmendDetails] = Arbitrary {
+  given arbitraryFilingMemberAmendDetails: Arbitrary[FilingMemberDetailsAmend] = Arbitrary {
     for {
       addNewFm                <- arbitrary[Boolean]
       safeId                  <- arbitrary[String]
       customerIdentification1 <- Gen.option(arbitrary[String])
       customerIdentification2 <- Gen.option(arbitrary[String])
       organisationName        <- arbitrary[String]
-    } yield FilingMemberAmendDetails(
+    } yield FilingMemberDetailsAmend(
       addNewFm,
       safeId = safeId,
       customerIdentification1 = customerIdentification1,
@@ -854,40 +855,10 @@ trait ModelGenerators {
     arbitrary[Boolean].map(AccountStatus(_))
   }
 
-  @deprecated("use arbitrarySubscriptionResponseV2")
-  given arbitrarySubscriptionResponse: Arbitrary[SubscriptionResponse] = Arbitrary {
-    for {
-      success <- arbitrary[SubscriptionSuccess]
-    } yield SubscriptionResponse(success)
-  }
-
-  @deprecated("use arbitrarySubscriptionSuccessV2")
-  given arbitrarySubscriptionSuccess: Arbitrary[SubscriptionSuccess] = Arbitrary {
-    for {
-      formBundleNumber         <- stringsWithMaxLength(20)
-      upeDetails               <- arbitrary[UpeDetails]
-      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
-      primaryContactDetails    <- arbitrary[ContactDetailsType]
-      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
-      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetails])
-      accountingPeriod         <- arbitrary[AccountingPeriod]
-      accountStatus            <- Gen.option(arbitrary[AccountStatus])
-    } yield SubscriptionSuccess(
-      formBundleNumber,
-      upeDetails,
-      upeCorrespAddressDetails,
-      primaryContactDetails,
-      secondaryContactDetails,
-      filingMemberDetails,
-      accountingPeriod,
-      accountStatus
-    )
-  }
-
-  given arbitrarySubscriptionResponseV2: Arbitrary[SubscriptionResponseV2] = Arbitrary {
+  given arbitrarySubscriptionResponseV2: Arbitrary[SubscriptionDisplayResponse] = Arbitrary {
     for {
       success <- arbitrary[SubscriptionDataDisplay]
-    } yield SubscriptionResponseV2(success)
+    } yield SubscriptionDisplayResponse(success)
   }
 
   given arbitrarySubscriptionSuccessV2: Arbitrary[SubscriptionDataDisplay] = Arbitrary {
@@ -939,24 +910,6 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryETMPAmendSubscriptionSuccess: Arbitrary[ETMPAmendSubscriptionSuccess] = Arbitrary {
-    for {
-      upeDetails               <- arbitrary[UpeDetailsAmend]
-      accountingPeriod         <- arbitrary[AccountingPeriodAmend]
-      upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
-      primaryContactDetails    <- arbitrary[ContactDetailsType]
-      secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
-      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
-    } yield ETMPAmendSubscriptionSuccess(
-      upeDetails,
-      accountingPeriod,
-      upeCorrespAddressDetails,
-      primaryContactDetails,
-      secondaryContactDetails,
-      filingMemberDetails
-    )
-  }
-
   given arbitraryAmendSubscriptionSuccess: Arbitrary[AmendSubscriptionSuccess] = Arbitrary {
     for {
       replaceFilingMember      <- arbitrary[Boolean]
@@ -965,7 +918,7 @@ trait ModelGenerators {
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
-      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetailsAmend])
     } yield AmendSubscriptionSuccess(
       replaceFilingMember,
       upeDetails,
@@ -1013,7 +966,8 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryAmendSubscriptionSuccessV2: Arbitrary[SubscriptionDataAmend] = Arbitrary {
+  // former arbitraryAmendSubscriptionSuccessV2
+  given arbitrarySubscriptionDataAmend: Arbitrary[SubscriptionDataAmend] = Arbitrary {
     for {
       replaceFilingMember      <- arbitrary[Boolean]
       upeDetails               <- arbitrary[UpeDetailsAmend]
@@ -1021,7 +975,7 @@ trait ModelGenerators {
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
-      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetailsAmend])
     } yield SubscriptionDataAmend(
       replaceFilingMember,
       upeDetails,
@@ -1033,15 +987,16 @@ trait ModelGenerators {
     )
   }
 
-  given arbitraryETMPAmendSubscriptionSuccessV2: Arbitrary[ETMPAmendSubscriptionSuccessV2] = Arbitrary {
+  // TODO: former arbitraryETMPAmendSubscriptionSuccessV2
+  given arbitraryEtmpAmendSubscriptionRequest: Arbitrary[EtmpAmendSubscriptionRequest] = Arbitrary {
     for {
       upeDetails               <- arbitrary[UpeDetailsAmend]
       accountingPeriod         <- arbitrary[AccountingPeriodAmendV2]
       upeCorrespAddressDetails <- arbitrary[UpeCorrespAddressDetails]
       primaryContactDetails    <- arbitrary[ContactDetailsType]
       secondaryContactDetails  <- Gen.option(arbitrary[ContactDetailsType])
-      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberAmendDetails])
-    } yield ETMPAmendSubscriptionSuccessV2(
+      filingMemberDetails      <- Gen.option(arbitrary[FilingMemberDetailsAmend])
+    } yield EtmpAmendSubscriptionRequest(
       upeDetails,
       accountingPeriod,
       upeCorrespAddressDetails,

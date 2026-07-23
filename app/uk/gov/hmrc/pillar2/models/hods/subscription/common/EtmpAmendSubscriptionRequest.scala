@@ -17,17 +17,28 @@
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.SubscriptionDataAmend
 
-final case class SubscriptionDataAmend(
-  replaceFilingMember:      Boolean,
+final case class EtmpAmendSubscriptionRequest(
   upeDetails:               UpeDetailsAmend,
   accountingPeriod:         AccountingPeriodAmendV2,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberAmendDetails]
+  filingMemberDetails:      Option[FilingMemberDetailsAmend]
 )
 
-object SubscriptionDataAmend {
-  given format: OFormat[SubscriptionDataAmend] = Json.format[SubscriptionDataAmend]
+object EtmpAmendSubscriptionRequest {
+
+  def apply(amendSubscriptionSuccess: SubscriptionDataAmend): EtmpAmendSubscriptionRequest =
+    EtmpAmendSubscriptionRequest(
+      amendSubscriptionSuccess.upeDetails,
+      amendSubscriptionSuccess.accountingPeriod,
+      amendSubscriptionSuccess.upeCorrespAddressDetails,
+      amendSubscriptionSuccess.primaryContactDetails,
+      amendSubscriptionSuccess.secondaryContactDetails,
+      amendSubscriptionSuccess.filingMemberDetails
+    )
+
+  given format: OFormat[EtmpAmendSubscriptionRequest] = Json.format[EtmpAmendSubscriptionRequest]
 }

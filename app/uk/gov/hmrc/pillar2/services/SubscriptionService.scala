@@ -28,8 +28,10 @@ import uk.gov.hmrc.pillar2.models.*
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.SubscriptionProcessingError
 import uk.gov.hmrc.pillar2.models.grs.EntityType
+import uk.gov.hmrc.pillar2.models.hods.subscription.cache.ReadSubscriptionCachedDataV2
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.{SubscriptionDataAmend, SubscriptionDataCreate}
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
 import uk.gov.hmrc.pillar2.models.identifiers.*
 import uk.gov.hmrc.pillar2.models.registration.GrsResponse
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
@@ -91,7 +93,7 @@ class SubscriptionService @Inject() (
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
-      val subscriptionRequest = RequestDetail(
+      val subscriptionRequest = SubscriptionDataCreate(
         getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
         getAccountingPeriod(accountingPeriod),
         getUpeAddressDetails(subAddressId),
@@ -113,7 +115,7 @@ class SubscriptionService @Inject() (
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
-      val subscriptionRequest = RequestDetail(
+      val subscriptionRequest = SubscriptionDataCreate(
         getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
         getAccountingPeriod(accountingPeriod),
         getUpeAddressDetails(subAddressId),
@@ -137,7 +139,7 @@ class SubscriptionService @Inject() (
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
-      val subscriptionRequest = RequestDetail(
+      val subscriptionRequest = SubscriptionDataCreate(
         getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
         getAccountingPeriod(accountingPeriod),
         getUpeAddressDetails(subAddressId),
@@ -161,7 +163,7 @@ class SubscriptionService @Inject() (
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
-      val subscriptionRequest = RequestDetail(
+      val subscriptionRequest = SubscriptionDataCreate(
         getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
         getAccountingPeriod(accountingPeriod),
         getUpeAddressDetails(subAddressId),
@@ -184,7 +186,7 @@ class SubscriptionService @Inject() (
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
-      val subscriptionRequest = RequestDetail(
+      val subscriptionRequest = SubscriptionDataCreate(
         getWithoutIdUpeDetails(upeSafeId, subMneOrDomestic, !nominateFm, upeNameRegistration),
         getAccountingPeriod(accountingPeriod),
         getUpeAddressDetails(subAddressId),
@@ -209,7 +211,7 @@ class SubscriptionService @Inject() (
       primaryContactDetails <- getPrimaryContactInformation(userAnswers)
 
     } yield {
-      val subscriptionRequest = RequestDetail(
+      val subscriptionRequest = SubscriptionDataCreate(
         getWithIdUpeDetails(upeSafeId, upeOrgType, subMneOrDomestic, !nominateFm, upeGrsResponse),
         getAccountingPeriod(accountingPeriod),
         getUpeAddressDetails(subAddressId),
@@ -221,7 +223,7 @@ class SubscriptionService @Inject() (
       sendSubmissionRequest(subscriptionRequest)
     }
 
-  private def sendSubmissionRequest(subscriptionRequest: RequestDetail)(using hc: HeaderCarrier): Future[HttpResponse] =
+  private def sendSubmissionRequest(subscriptionRequest: SubscriptionDataCreate)(using hc: HeaderCarrier): Future[HttpResponse] =
     subscriptionConnector
       .sendCreateSubscriptionInformation(subscriptionRequest)
       .flatTap { res =>
@@ -372,14 +374,15 @@ class SubscriptionService @Inject() (
   private def getAccountingPeriod(accountingPeriod: AccountingPeriod): AccountingPeriod =
     AccountingPeriod(accountingPeriod.startDate, accountingPeriod.endDate)
 
-  def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
+  def storeSubscriptionDisplayResponse(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionDisplayResponse] =
     for {
       response <- subscriptionConnector.getSubscriptionInformationV2(plrReference)
       _        <- response.status match {
              case UNPROCESSABLE_ENTITY => Future.failed(SubscriptionProcessingError)
              case _                    => Future.unit
            }
-      subscriptionResponse = response.json.as[SubscriptionResponseV2]
+      subscriptionResponse = response.json.as[SubscriptionDisplayResponse]
+      // subscriptionResponse <- convertToSubscriptionResponseV2Result(response) // TODO: use this?
       _ <- auditService.auditReadSubscriptionSuccessV2(plrReference, subscriptionResponse)
       dataToStore = createCachedObjectV2(subscriptionResponse.success, plrReference)
       _ <- repository.upsert(id, Json.toJson(dataToStore))
@@ -393,7 +396,7 @@ class SubscriptionService @Inject() (
 
   private def createAuditForReadSubscriptionV2(plrReference: String, response: HttpResponse)(using hc: HeaderCarrier): Future[AuditResult] =
     response.status match {
-      case 200 => auditService.auditReadSubscriptionSuccessV2(plrReference, response.json.as[SubscriptionResponseV2])
+      case 200 => auditService.auditReadSubscriptionSuccessV2(plrReference, response.json.as[SubscriptionDisplayResponse])
       case _   => auditService.auditReadSubscriptionFailure(plrReference, response.status, response.json)
     }
 
@@ -444,7 +447,7 @@ class SubscriptionService @Inject() (
   }
 
   def sendAmendedDataV2(id: String, amendData: SubscriptionDataAmend)(using hc: HeaderCarrier): Future[Done] = {
-    val etmpAmendRequest: ETMPAmendSubscriptionSuccessV2 = ETMPAmendSubscriptionSuccessV2(amendData)
+    val etmpAmendRequest: EtmpAmendSubscriptionRequest = EtmpAmendSubscriptionRequest(amendData)
     subscriptionConnector.amendSubscriptionInformationV2(etmpAmendRequest).flatMap { response =>
       auditService.auditAmendSubscriptionV2(
         requestData = amendData,
@@ -453,7 +456,7 @@ class SubscriptionService @Inject() (
         logger.info(
           s"Successful response received for amend subscription for form ${amendResponse.success.formBundleNumber} at ${amendResponse.success.processingDate}"
         )
-        storeSubscriptionResponseV2(
+        storeSubscriptionDisplayResponse(
           id = id,
           plrReference = etmpAmendRequest.upeDetails.plrReference
         ).as(Done)

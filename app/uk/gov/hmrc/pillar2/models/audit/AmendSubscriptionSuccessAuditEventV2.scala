@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,33 +19,14 @@ package uk.gov.hmrc.pillar2.models.audit
 import play.api.libs.json.{Format, JsValue, Json}
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
-@deprecated("use AmendSubscriptionSuccessAuditEventV2")
-case class AmendSubscriptionSuccessAuditEvent(
-  replaceFilingMember:      Boolean,
-  upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriodAmend,
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    ContactDetailsType,
-  secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberAmendDetails],
-  processingDate:           String
-) extends AuditEvent {
-  override val auditType:  String  = "updatePillar2Subscription"
-  override val detailJson: JsValue = Json.toJson(this)
-}
-
-object AmendSubscriptionSuccessAuditEvent {
-  given formats: Format[AmendSubscriptionSuccessAuditEvent] = Json.format[AmendSubscriptionSuccessAuditEvent]
-}
-
-case class AmendSubscriptionSuccessAuditEventV2(
+final case class AmendSubscriptionSuccessAuditEventV2(
   replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
   accountingPeriod:         AccountingPeriodAmendV2,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberAmendDetails],
+  filingMemberDetails:      Option[FilingMemberDetailsAmend],
   processingDate:           String
 ) extends AuditEvent {
   override val auditType:  String  = "updatePillar2SubscriptionV2"

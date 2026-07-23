@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.common
+package uk.gov.hmrc.pillar2.models.hods.subscription.requests
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
-final case class FilingMemberDetailsAmend(
-  addNewFilingMember:      Boolean = false,
-  safeId:                  String,
-  customerIdentification1: Option[String],
-  customerIdentification2: Option[String],
-  organisationName:        String
+final case class SubscriptionDataCreate(
+  upeDetails:               UpeDetails,
+  accountingPeriod:         AccountingPeriod,
+  upeCorrespAddressDetails: UpeCorrespAddressDetails,
+  primaryContactDetails:    ContactDetailsType,
+  secondaryContactDetails:  Option[ContactDetailsType],
+  filingMemberDetails:      Option[FilingMemberDetails]
 )
 
-object FilingMemberDetailsAmend {
-  given format: OFormat[FilingMemberDetailsAmend] = Json.format[FilingMemberDetailsAmend]
+object SubscriptionDataCreate {
+  given format: OFormat[SubscriptionDataCreate] = Json.format[SubscriptionDataCreate]
 }

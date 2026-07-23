@@ -14,31 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.common
+package uk.gov.hmrc.pillar2.models.hods.subscription.requests
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
-@deprecated("use ETMPAmendSubscriptionSuccessV2")
-final case class ETMPAmendSubscriptionSuccess(
+final case class SubscriptionDataAmend(
+  replaceFilingMember:      Boolean,
   upeDetails:               UpeDetailsAmend,
-  accountingPeriod:         AccountingPeriodAmend,
+  accountingPeriod:         AccountingPeriodAmendV2,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberAmendDetails]
+  filingMemberDetails:      Option[FilingMemberDetailsAmend]
 )
 
-object ETMPAmendSubscriptionSuccess {
-
-  def apply(amendSubscriptionSuccess: AmendSubscriptionSuccess): ETMPAmendSubscriptionSuccess =
-    ETMPAmendSubscriptionSuccess(
-      amendSubscriptionSuccess.upeDetails,
-      amendSubscriptionSuccess.accountingPeriod,
-      amendSubscriptionSuccess.upeCorrespAddressDetails,
-      amendSubscriptionSuccess.primaryContactDetails,
-      amendSubscriptionSuccess.secondaryContactDetails,
-      amendSubscriptionSuccess.filingMemberDetails
-    )
-
-  given format: OFormat[ETMPAmendSubscriptionSuccess] = Json.format[ETMPAmendSubscriptionSuccess]
+object SubscriptionDataAmend {
+  given format: OFormat[SubscriptionDataAmend] = Json.format[SubscriptionDataAmend]
 }

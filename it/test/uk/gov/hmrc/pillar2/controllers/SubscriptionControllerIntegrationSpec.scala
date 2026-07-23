@@ -33,7 +33,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.AuthStubs
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.SubscriptionDataAmend
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.SubscriptionDataAmend
 
 import java.net.URI
 import java.net.URL

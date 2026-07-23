@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,15 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.request
+package uk.gov.hmrc.pillar2.models.hods.subscription.responses
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
-case class RequestDetail(
-  upeDetails:               UpeDetails,
-  accountingPeriod:         AccountingPeriod,
-  upeCorrespAddressDetails: UpeCorrespAddressDetails,
-  primaryContactDetails:    ContactDetailsType,
-  secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberDetails]
+// TODO: former SubscriptionResponseV2
+final case class SubscriptionDisplayResponse(
+  success: SubscriptionDataDisplay
 )
 
-object RequestDetail {
-  given format: OFormat[RequestDetail] = Json.format[RequestDetail]
+object SubscriptionDisplayResponse {
+  given format: OFormat[SubscriptionDisplayResponse] = Json.format[SubscriptionDisplayResponse]
 }

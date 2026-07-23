@@ -31,7 +31,8 @@ import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.*
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
@@ -49,83 +50,88 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
   private val subscriptionService = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService)
 
   "sendCreateSubscription" - {
-    // TODO: improve descriptions
-    "Return successful Http Response" in {
-      when(mockSubscriptionConnector.sendCreateSubscriptionInformation(any[RequestDetail]())(using any[HeaderCarrier](), any[ExecutionContext]()))
-        .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
+    "must return OK when the connector responds successfully" in {
+      when(
+        mockSubscriptionConnector.sendCreateSubscriptionInformation(any[SubscriptionDataCreate]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
+        .thenReturn(Future.successful(HttpResponse.apply(OK, Json.obj().toString)))
+      when(mockAuditService.auditCreateSubscription(any[SubscriptionDataCreate](), any[AuditResponseReceived]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryAnyIdUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-        subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
-          response.status mustBe OK
-        }
+        subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).futureValue.status mustBe OK
       }
     }
 
-    "Return internal server error in service" in
+    "must return INTERNAL_SERVER_ERROR when the user answers are incomplete" in
       forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryUncompleteUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-        subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-        }
+        subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).futureValue.status mustBe INTERNAL_SERVER_ERROR
       }
 
-    "Return internal server error with response" in {
-      when(mockSubscriptionConnector.sendCreateSubscriptionInformation(any[RequestDetail]())(using any[HeaderCarrier](), any[ExecutionContext]()))
-        .thenReturn(Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, "Internal Server Error")))
+    "must return INTERNAL_SERVER_ERROR when the connector responds with a server error" in {
+      when(
+        mockSubscriptionConnector.sendCreateSubscriptionInformation(any[SubscriptionDataCreate]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
+        .thenReturn(Future.successful(HttpResponse.apply(INTERNAL_SERVER_ERROR, Json.obj().toString)))
+      when(mockAuditService.auditCreateSubscription(any[SubscriptionDataCreate](), any[AuditResponseReceived]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.successful(AuditResult.Success))
 
       forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryAnyIdUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-        subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
-          response.status mustBe INTERNAL_SERVER_ERROR
-        }
+        subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).futureValue.status mustBe INTERNAL_SERVER_ERROR
       }
-
     }
 
     "must handle LimitedLiabilityPartnership entity type correctly" - {
       "when all required data is present" in {
-        val userAnswersGen = userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP)
-
-        when(mockSubscriptionConnector.sendCreateSubscriptionInformation(any[RequestDetail]())(using any[HeaderCarrier](), any[ExecutionContext]()))
-          .thenReturn(Future.successful(HttpResponse.apply(OK, "Success")))
-
-        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-          subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).map { response =>
-            response.status mustBe OK
-          }
-        }
-      }
-
-      "throw exception when company profile is missing" in {
-        val llpWithoutCompanyProfile = arbitraryWithIdUpeFmUserDataLLP.arbitrary
-        val userAnswersGen           = userAnswersFromGenerators(Arbitrary(llpWithoutCompanyProfile))
-
-        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersGen.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
-          val modifiedData       = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
-          val updatedGrsResponse = userAnswers.data.as[JsObject] ++ Json.obj(
-            "upeGRSResponse" -> Json.obj(
-              "partnershipEntityRegistrationData" -> modifiedData
-            )
+        when(
+          mockSubscriptionConnector.sendCreateSubscriptionInformation(any[SubscriptionDataCreate]())(using
+            any[HeaderCarrier](),
+            any[ExecutionContext]()
           )
+        )
+          .thenReturn(Future.successful(HttpResponse.apply(OK, Json.obj().toString)))
+        when(mockAuditService.auditCreateSubscription(any[SubscriptionDataCreate](), any[AuditResponseReceived]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(AuditResult.Success))
 
-          val userAnswersWithoutCompanyProfile = userAnswers.copy(data = updatedGrsResponse)
-
-          intercept[Exception] {
-            val result = subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswersWithoutCompanyProfile).failed.futureValue
-            result.getMessage mustEqual "Malformed company Profile"
-          }
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP).arbitrary) {
+          (upeSafeId, fmSafeId, userAnswers) =>
+            subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).futureValue.status mustBe OK
         }
       }
+
+      "must fail when the company profile is missing" in
+        forAll(arbitrary[String], Gen.option(arbitrary[String]), userAnswersFromGenerators(arbitraryWithIdUpeFmUserDataLLP).arbitrary) {
+          (upeSafeId, fmSafeId, userAnswers) =>
+            val partnershipData = (userAnswers.data \ "upeGRSResponse" \ "partnershipEntityRegistrationData").as[JsObject] - "companyProfile"
+            val userAnswersWithoutCompanyProfile = userAnswers.copy(
+              data = userAnswers.data.as[JsObject] ++ Json.obj(
+                "upeGRSResponse" -> Json.obj("partnershipEntityRegistrationData" -> partnershipData)
+              )
+            )
+
+            val exception = intercept[Exception] {
+              subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswersWithoutCompanyProfile)
+            }
+            exception.getMessage mustEqual "Malformed company Profile"
+        }
     }
   }
 
   "storeSubscriptionResponseV2 " - {
     "return done if a valid response is received from ETMP" in
-      forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (mockId, plrReference, response) =>
+      forAll(arbMockId.arbitrary, plrReferenceGen, arbitrary[SubscriptionDisplayResponse]) { (mockId, plrReference, response) =>
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(HttpResponse.apply(status = OK, body = Json.toJson(response).toString)))
-        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(AuditResult.Success))
         when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
-        val resultFuture = subscriptionService.storeSubscriptionResponseV2(mockId, plrReference)
+        val resultFuture = subscriptionService.storeSubscriptionDisplayResponse(mockId, plrReference)
 
         resultFuture.futureValue mustEqual response
       }
@@ -135,7 +141,7 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.failed(UnexpectedResponse))
 
-        val resultFuture = subscriptionService.storeSubscriptionResponseV2(mockId, plrReference)
+        val resultFuture = subscriptionService.storeSubscriptionDisplayResponse(mockId, plrReference)
 
         resultFuture.failed.futureValue mustEqual UnexpectedResponse
       }
@@ -143,12 +149,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
   "readSubscriptionDataV2 " - {
     "must return subscription response if a valid response is received from ETMP" in
-      forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2]) { (plrReference, response) =>
+      forAll(plrReferenceGen, arbitrary[SubscriptionDisplayResponse]) { (plrReference, response) =>
         val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
 
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(mockResponse))
-        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(AuditResult.Success))
 
         val resultFuture = subscriptionService.readSubscriptionDataV2(plrReference).futureValue
@@ -158,12 +164,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "must return subscription response if a valid response is received from ETMP but with no accounting periods" in
       forAll(plrReferenceGen) { plrReference =>
         val subscriptionSuccess = arbitrary[SubscriptionDataDisplay].sample.get.copy(accountingPeriod = None)
-        val response            = SubscriptionResponseV2(subscriptionSuccess)
+        val response            = SubscriptionDisplayResponse(subscriptionSuccess)
         val mockResponse        = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
 
         when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
           .thenReturn(Future.successful(mockResponse))
-        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+        when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(AuditResult.Success))
 
         val resultFuture = subscriptionService.readSubscriptionDataV2(plrReference).futureValue
@@ -181,12 +187,12 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
     "must handle LimitedLiabilityPartnership entity type correctly" - {
       "when all required data is present" in
-        forAll(plrReferenceGen, arbitrary[SubscriptionResponseV2], arbitraryWithIdUpeFmUserDataLLPV2.arbitrary) { (plrReference, response, _) =>
+        forAll(plrReferenceGen, arbitrary[SubscriptionDisplayResponse], arbitraryWithIdUpeFmUserDataLLPV2.arbitrary) { (plrReference, response, _) =>
           val mockResponse = HttpResponse.apply(status = OK, body = Json.toJson(response).toString)
 
           when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
             .thenReturn(Future.successful(mockResponse))
-          when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+          when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
             .thenReturn(Future.successful(AuditResult.Success))
 
           val resultFuture = subscriptionService.readSubscriptionDataV2(plrReference).futureValue
@@ -199,18 +205,20 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
     "must call amend API, audit, and update cache in case of a successful response" in {
       val testSubscriptionResponseV2                = arbitrarySubscriptionResponseV2.arbitrary.sample.value
       val subscriptionServiceWithStubbedStoreMethod = new SubscriptionService(mockedCache, mockSubscriptionConnector, mockAuditService) {
-        override def storeSubscriptionResponseV2(id: String, plrReference: String)(using hc: HeaderCarrier): Future[SubscriptionResponseV2] =
+        override def storeSubscriptionDisplayResponse(id: String, plrReference: String)(using
+          hc: HeaderCarrier
+        ): Future[SubscriptionDisplayResponse] =
           Future.successful(testSubscriptionResponseV2)
       }
 
-      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+      forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         val etmpAmendResponse = AmendResponse(
           AmendSubscriptionSuccessResponse(processingDate = LocalDate.now().toString, formBundleNumber = testFormBundleNumber)
         )
         val fakeAmendResponse = HttpResponse(OK, Json.toJson(etmpAmendResponse).toString())
 
         when(
-          mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+          mockSubscriptionConnector.amendSubscriptionInformationV2(any[EtmpAmendSubscriptionRequest]())(using
             any[HeaderCarrier](),
             any[ExecutionContext]()
           )
@@ -240,13 +248,13 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       )
 
       when(
-        mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+        mockSubscriptionConnector.amendSubscriptionInformationV2(any[EtmpAmendSubscriptionRequest]())(using
           any[HeaderCarrier](),
           any[ExecutionContext]()
         )
       ).thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, failureBody.toString())))
 
-      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+      forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         subscriptionService.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustEqual
           ETMPValidationError("422", "Request Not Processed")
       }
@@ -257,14 +265,14 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(
-        mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+        mockSubscriptionConnector.amendSubscriptionInformationV2(any[EtmpAmendSubscriptionRequest]())(using
           any[HeaderCarrier](),
           any[ExecutionContext]()
         )
       )
         .thenReturn(Future.successful(HttpResponse(OK, JsObject.empty, Map.empty)))
 
-      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+      forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         subscriptionService.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustBe a[InvalidJsonError]
       }
     }
@@ -275,13 +283,13 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       ).thenReturn(Future.successful(AuditResult.Success))
 
       when(
-        mockSubscriptionConnector.amendSubscriptionInformationV2(any[ETMPAmendSubscriptionSuccessV2]())(using
+        mockSubscriptionConnector.amendSubscriptionInformationV2(any[EtmpAmendSubscriptionRequest]())(using
           any[HeaderCarrier](),
           any[ExecutionContext]()
         )
       ).thenReturn(Future.successful(HttpResponse(BAD_REQUEST, Json.obj("code" -> "400", "text" -> "Bad Request").toString())))
 
-      forAll(arbitraryAmendSubscriptionSuccessV2.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+      forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         subscriptionService.sendAmendedDataV2(id, validAmendObject).failed.futureValue mustBe ApiInternalServerError
       }
     }

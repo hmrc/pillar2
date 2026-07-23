@@ -15,9 +15,9 @@ GET           /user-cache/registration-subscription/:id/lastUpdated        uk.go
 POST          /subscription/create-subscription                            uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
 
 # V1 - remove controller methods - then rename v2 to v1 method names
-GET           /subscription/read-subscription/:id/:plrReference            uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
-GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
-PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
+#GET           /subscription/read-subscription/:id/:plrReference            uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
+#GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
+#PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
 
 # Subscription V2 routes:
 GET           /subscription/v2/read-subscription/:plrReference             uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscriptionV2(plrReference: String)

@@ -25,7 +25,9 @@ import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.hods.subscription.cache.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{SubscriptionDataDisplay, SubscriptionDisplayResponse}
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
 import uk.gov.hmrc.play.audit.http.connector.AuditResult
 
@@ -61,17 +63,17 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         )
       )
 
-      val subscriptionResponse = SubscriptionResponseV2(success = subscriptionSuccess)
+      val subscriptionResponse = SubscriptionDisplayResponse(success = subscriptionSuccess)
 
       when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(HttpResponse(200, Json.toJson(subscriptionResponse), Map.empty)))
 
-      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
 
-      service.storeSubscriptionResponseV2(testId, testPillar2Id).futureValue
+      service.storeSubscriptionDisplayResponse(testId, testPillar2Id).futureValue
 
       val captor = ArgumentCaptor.forClass(classOf[JsValue])
       verify(mockedCache).upsert(eqTo(testId), captor.capture())(using any[ExecutionContext]())
@@ -108,17 +110,17 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
         )
       )
 
-      val subscriptionResponse = SubscriptionResponseV2(subscriptionSuccess)
+      val subscriptionResponse = SubscriptionDisplayResponse(subscriptionSuccess)
 
       when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(HttpResponse(200, Json.toJson(subscriptionResponse), Map.empty)))
 
-      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
 
-      service.storeSubscriptionResponseV2(testId, testPillar2Id).futureValue
+      service.storeSubscriptionDisplayResponse(testId, testPillar2Id).futureValue
 
       val captor = ArgumentCaptor.forClass(classOf[JsValue])
       verify(mockedCache).upsert(eqTo(testId), captor.capture())(using any[ExecutionContext]())
@@ -169,12 +171,12 @@ class SubscriptionServiceMappingSpec extends BaseSpec with Generators with Scala
       when(mockSubscriptionConnector.getSubscriptionInformationV2(any[String]())(using any[HeaderCarrier](), any[ExecutionContext]()))
         .thenReturn(Future.successful(HttpResponse(200, subscriptionResponseJson, Map.empty)))
 
-      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionResponseV2]())(using any[HeaderCarrier]()))
+      when(mockAuditService.auditReadSubscriptionSuccessV2(any[String](), any[SubscriptionDisplayResponse]())(using any[HeaderCarrier]()))
         .thenReturn(Future.successful(AuditResult.Success))
 
       when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())).thenReturn(Future.unit)
 
-      service.storeSubscriptionResponseV2(testId, testPillar2Id).futureValue
+      service.storeSubscriptionDisplayResponse(testId, testPillar2Id).futureValue
 
       val captor = ArgumentCaptor.forClass(classOf[JsValue])
       verify(mockedCache).upsert(eqTo(testId), captor.capture())(using any[ExecutionContext]())

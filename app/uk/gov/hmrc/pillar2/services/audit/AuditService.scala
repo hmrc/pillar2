@@ -22,7 +22,8 @@ import play.api.libs.json.JsValue
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.models.audit.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.{SubscriptionDataAmend, SubscriptionDataCreate}
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.SubscriptionDisplayResponse
 import uk.gov.hmrc.play.audit.http.connector.{AuditConnector, AuditResult}
 
 import javax.inject.Inject
@@ -52,7 +53,7 @@ class AuditService @Inject() (
     )
 
   def auditCreateSubscription(
-    subscriptionRequest: RequestDetail,
+    subscriptionRequest: SubscriptionDataCreate,
     responseReceived:    AuditResponseReceived
   )(using hc: HeaderCarrier): Future[AuditResult] = {
     // TODO - This needs to be fixed as we are loosing failure of response
@@ -79,7 +80,7 @@ class AuditService @Inject() (
 
   def auditReadSubscriptionSuccessV2(
     plrReference: String,
-    responseData: SubscriptionResponseV2
+    responseData: SubscriptionDisplayResponse
   )(using hc: HeaderCarrier): Future[AuditResult] =
     auditConnector.sendExtendedEvent(
       ReadSubscriptionSuccessAuditEventV2(

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.common
+package uk.gov.hmrc.pillar2.models.hods.subscription.responses
 
 import play.api.libs.json.{Json, OFormat}
 import uk.gov.hmrc.pillar2.models.AccountStatus
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 
 final case class SubscriptionDataDisplay(
   formBundleNumber:         String,

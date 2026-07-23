@@ -21,15 +21,8 @@ import uk.gov.hmrc.pillar2.models.*
 
 import java.time.LocalDate
 
-@deprecated("use SubscriptionResponseV2")
-case class SubscriptionResponse(success: SubscriptionSuccess)
-
-object SubscriptionResponse {
-  given format: OFormat[SubscriptionResponse] = Json.format[SubscriptionResponse]
-}
-
 @deprecated("use SubscriptionSuccessV2")
-case class SubscriptionSuccess(
+final case class SubscriptionSuccess(
   formBundleNumber:         String,
   upeDetails:               UpeDetails,
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
@@ -51,19 +44,11 @@ final case class AmendSubscriptionSuccess(
   upeCorrespAddressDetails: UpeCorrespAddressDetails,
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
-  filingMemberDetails:      Option[FilingMemberAmendDetails]
+  filingMemberDetails:      Option[FilingMemberDetailsAmend]
 )
 
 object AmendSubscriptionSuccess {
   given format: OFormat[AmendSubscriptionSuccess] = Json.format[AmendSubscriptionSuccess]
-}
-
-final case class SubscriptionResponseV2(
-  success: SubscriptionDataDisplay
-)
-
-object SubscriptionResponseV2 {
-  given format: OFormat[SubscriptionResponseV2] = Json.format[SubscriptionResponseV2]
 }
 
 final case class AmendSubscriptionInput(

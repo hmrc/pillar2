@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 HM Revenue & Customs
+ * Copyright 2023 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.models.hods.subscription.common
+package uk.gov.hmrc.pillar2.models.hods.subscription.cache
 
 import play.api.libs.json.{Json, OFormat}
+import uk.gov.hmrc.pillar2.models.*
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AccountingPeriod
 import uk.gov.hmrc.pillar2.models.subscription.MneOrDomestic
-import uk.gov.hmrc.pillar2.models.{AccountStatus, NonUKAddress}
 
-final case class ReadSubscriptionCachedDataV2(
+@deprecated("use ReadSubscriptionCachedDataV2")
+final case class ReadSubscriptionCachedData(
   plrReference:                Option[String],
   subMneOrDomestic:            MneOrDomestic,
-  subAccountingPeriod:         Seq[AccountingPeriodDisplay],
+  subAccountingPeriod:         AccountingPeriod,
   subPrimaryContactName:       String,
   subPrimaryEmail:             String,
   subPrimaryPhonePreference:   Boolean,
@@ -38,6 +40,6 @@ final case class ReadSubscriptionCachedDataV2(
   organisationName:            Option[String]
 )
 
-object ReadSubscriptionCachedDataV2 {
-  given format: OFormat[ReadSubscriptionCachedDataV2] = Json.format[ReadSubscriptionCachedDataV2]
+object ReadSubscriptionCachedData {
+  given format: OFormat[ReadSubscriptionCachedData] = Json.format[ReadSubscriptionCachedData]
 }
