@@ -16,7 +16,7 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock.*
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen
 import org.scalatest.concurrent.IntegrationPatience
@@ -27,6 +27,7 @@ import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.*
 import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
 
@@ -78,6 +79,16 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           val result = connector.sendCreateSubscriptionInformation(sub).futureValue
           result.status mustBe INTERNAL_SERVER_ERROR
         }
+
+      "must return UnexpectedResponse when creating a subscription fails" in
+        forAll(arbitrary[RequestDetail]) { sub =>
+          stubFailedPostResponse("/pillar2/subscription")
+
+          connector
+            .sendCreateSubscriptionInformation(sub)
+            .failed
+            .futureValue mustBe UnexpectedResponse
+        }
     }
 
     "for retrieving Subscription Information" - {
@@ -125,6 +136,16 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           result.futureValue.status mustBe errorResponse
         }
       }
+
+      "must return UnexpectedResponse when retrieving subscription information fails" in
+        forAll(arbPlrReference.arbitrary) { plrReference =>
+          stubFailedGetResponse(s"/pillar2/subscription/$plrReference")
+
+          connector
+            .getSubscriptionInformation(plrReference)
+            .failed
+            .futureValue mustBe UnexpectedResponse
+        }
 
     }
 
@@ -225,6 +246,16 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
           result.status mustBe INTERNAL_SERVER_ERROR
         }
+
+      "must return UnexpectedResponse when amending a V2 subscription fails" in
+        forAll(arbitrary[ETMPAmendSubscriptionSuccessV2]) { amendRequest =>
+          stubFailedPutResponse("/pillar2/subscription/v2")
+
+          connector
+            .amendSubscriptionInformationV2(amendRequest)
+            .failed
+            .futureValue mustBe UnexpectedResponse
+        }
     }
 
     "amendSubscriptionInformation" - {
@@ -260,8 +291,17 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
           exception mustBe a[Throwable]
           server.start()
         }
+
+      "must return UnexpectedResponse when amending a subscription fails" in
+        forAll(arbitrary[ETMPAmendSubscriptionSuccess]) { amendRequest =>
+          stubFailedPutResponse("/pillar2/subscription")
+
+          connector
+            .amendSubscriptionInformation(amendRequest)
+            .failed
+            .futureValue mustBe UnexpectedResponse
+        }
     }
 
   }
-
 }

@@ -21,8 +21,8 @@ import org.mockito.Mockito.when
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.inject.bind
 import play.api.inject.guice.GuiceApplicationBuilder
-import play.api.libs.json.JsValue
-import play.api.libs.json.Json
+import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.AnyContentAsJson
 import play.api.test.FakeRequest
 import play.api.test.Helpers.*
 import play.api.{Application, Configuration}
@@ -66,7 +66,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
   "withoutIdUpeRegistrationSubmission" - {
 
-    "rerutn OK with valid data has been submitted" in new Setup {
+    "return OK with valid data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -81,22 +81,35 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn BAD_REQUEST with data has been submitted" in new Setup {
+    "return BAD_REQUEST with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
-        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
-        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
-          Future.successful(
-            HttpResponse.apply(BAD_REQUEST, "Bad Request")
+        val errorBody = Json
+          .obj(
+            "errorDetail" -> Json.obj(
+              "timestamp"         -> "2026-07-24T10:00:00Z",
+              "correlationId"     -> "correlation-id",
+              "errorCode"         -> "400",
+              "errorMessage"      -> "Bad Request",
+              "source"            -> "ETMP",
+              "sourceFaultDetail" -> Json.obj(
+                "detail" -> Json.arr("Invalid registration")
+              )
+            )
           )
-        )
+          .toString()
+
+        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
+        when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(BAD_REQUEST, errorBody)))
+
         val request = FakeRequest(POST, routeUpeWithoutID(userAnswers.id)).withJsonBody(jsData)
         val result  = route(application, request).value
-        status(result) mustEqual BAD_REQUEST
 
+        status(result) mustEqual BAD_REQUEST
       }
     }
 
-    "rerutn NOT_FOUND with data has been submitted" in new Setup {
+    "return NOT_FOUND with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -110,7 +123,8 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
       }
     }
-    "rerutn FORBIDDEN with data has been submitted" in new Setup {
+
+    "return FORBIDDEN with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -125,7 +139,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
+    "return INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -138,13 +152,26 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         status(result) mustEqual INTERNAL_SERVER_ERROR
 
       }
+    }
+
+    "throw an unexpected exception when submitting no-ID UPE registration" in new Setup {
+      when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]()))
+        .thenReturn(Future.successful(Some(jsData)))
+
+      when(mockDataSubmissionsService.sendNoIdUpeRegistration(any[UserAnswers]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routeUpeWithoutID("id")).withJsonBody(jsData)
+      val result:  Throwable                     = route(application, request).value.failed.futureValue
+
+      result.getMessage mustEqual "someError"
     }
 
   }
 
   "withoutIdFmRegistrationSubmission" - {
 
-    "rerutn OK with valid data has been submitted" in new Setup {
+    "return OK with valid data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -159,7 +186,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn BAD_REQUEST with data has been submitted" in new Setup {
+    "return BAD_REQUEST with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -174,7 +201,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn NOT_FOUND with data has been submitted" in new Setup {
+    "return NOT_FOUND with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -188,7 +215,8 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
       }
     }
-    "rerutn FORBIDDEN with data has been submitted" in new Setup {
+
+    "return FORBIDDEN with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -203,7 +231,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
       }
     }
 
-    "rerutn INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
+    "return INTERNAL_SERVER_ERROR with data has been submitted" in new Setup {
       forAll(arbitraryWithoutIdUpeFmUserAnswers.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
         when(mockDataSubmissionsService.sendNoIdFmRegistration(any[UserAnswers]())(using any[HeaderCarrier]())).thenReturn(
@@ -216,6 +244,19 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         status(result) mustEqual INTERNAL_SERVER_ERROR
 
       }
+    }
+
+    "throw an unexpected exception when submitting no-ID FM registration" in new Setup {
+      when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]()))
+        .thenReturn(Future.successful(Some(jsData)))
+
+      when(mockDataSubmissionsService.sendNoIdFmRegistration(any[UserAnswers]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routeFmWithoutID("id")).withJsonBody(jsData)
+      val result:  Throwable                     = route(application, request).value.failed.futureValue
+
+      result.getMessage mustEqual "someError"
     }
 
   }
@@ -266,6 +307,7 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
 
       }
     }
+
     "return FORBIDDEN with data has been submitted" in new Setup {
       forAll(NewFilingMemberRegistrationDetails.arbitrary) { userAnswers =>
         when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
@@ -294,6 +336,19 @@ class RegistrationControllerSpec extends BaseSpec with Generators with ScalaChec
         status(result) mustEqual INTERNAL_SERVER_ERROR
 
       }
+    }
+
+    "throw an unexpected exception when registering a new filing member" in new Setup {
+      when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]()))
+        .thenReturn(Future.successful(Some(jsData)))
+
+      when(mockDataSubmissionsService.registerNewFilingMember(any[UserAnswers]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsJson] = FakeRequest(POST, rfmRoute("id")).withJsonBody(jsData)
+      val result:  Throwable                     = route(application, request).value.failed.futureValue
+
+      result.getMessage mustEqual "someError"
     }
 
   }

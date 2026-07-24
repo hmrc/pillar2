@@ -75,6 +75,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
     }
+
     "throw exception when mongo is down" in new Setup {
       when(mockRegistrationCacheRepository.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]())) thenReturn Future.failed(
         new Exception("")
@@ -86,6 +87,19 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
 
+    }
+
+    "throw an unexpected exception from repository" in new Setup {
+      when(mockRegistrationCacheRepository.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsJson] =
+        FakeRequest(POST, routes.RegistrationCacheController.save("id").url)
+          .withJsonBody(Json.obj("abc" -> "def"))
+
+      val result: Throwable = route(application, request).value.failed.futureValue
+
+      result.getMessage mustBe "someError"
     }
   }
   "get" - {
@@ -100,6 +114,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       contentAsString(result) mustBe "{}"
 
     }
+
     "return NOT_FOUND when data exists" in new Setup {
       when(mockRegistrationCacheRepository.get(eqTo("id"))(using any[ExecutionContext]())) thenReturn Future.successful {
         None
@@ -111,6 +126,19 @@ class RegistrationCacheControllerSpec extends BaseSpec {
       status(result) mustBe NOT_FOUND
 
     }
+
+    "throw an unexpected exception from repository" in new Setup {
+      when(mockRegistrationCacheRepository.get(eqTo("id"))(using any[ExecutionContext]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsEmpty.type] =
+        FakeRequest(GET, routes.RegistrationCacheController.get("id").url)
+
+      val result: Throwable = route(application, request).value.failed.futureValue
+
+      result.getMessage mustBe "someError"
+    }
+
     "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
         when(mockRegistrationCacheRepository.remove(eqTo("id"))(using any[ExecutionContext]())) thenReturn Future.successful(true)
@@ -120,6 +148,7 @@ class RegistrationCacheControllerSpec extends BaseSpec {
 
         status(result) mustBe OK
       }
+
       "return InternalServerError if the record is not removed successfully" in new Setup {
         when(mockRegistrationCacheRepository.remove(eqTo("id"))(using any[ExecutionContext]())) thenReturn Future.successful(false)
 
@@ -129,6 +158,17 @@ class RegistrationCacheControllerSpec extends BaseSpec {
         status(result) mustBe INTERNAL_SERVER_ERROR
       }
 
+      "throw an unexpected exception from repository" in new Setup {
+        when(mockRegistrationCacheRepository.remove(eqTo("id"))(using any[ExecutionContext]()))
+          .thenReturn(Future.failed(new RuntimeException("someError")))
+
+        val request: FakeRequest[AnyContentAsEmpty.type] =
+          FakeRequest(DELETE, routes.RegistrationCacheController.remove("id").url)
+
+        val result: Throwable = route(application, request).value.failed.futureValue
+
+        result.getMessage mustBe "someError"
+      }
     }
     "lastUpdated" - {
       "return 200 and if record when it exists" in new Setup {
@@ -153,6 +193,18 @@ class RegistrationCacheControllerSpec extends BaseSpec {
         val result:  Future[Result]                      = route(application, request).value
 
         status(result) mustBe NOT_FOUND
+      }
+
+      "throw an unexpected exception from repository" in new Setup {
+        when(mockRegistrationCacheRepository.getLastUpdated(eqTo("foo"))(using any[ExecutionContext]()))
+          .thenReturn(Future.failed(new RuntimeException("someError")))
+
+        val request: FakeRequest[AnyContentAsEmpty.type] =
+          FakeRequest(GET, routes.RegistrationCacheController.lastUpdated("foo").url)
+
+        val result: Throwable = route(application, request).value.failed.futureValue
+
+        result.getMessage mustBe "someError"
       }
     }
   }

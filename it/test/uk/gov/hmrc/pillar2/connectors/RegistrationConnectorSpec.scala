@@ -22,6 +22,7 @@ import play.api.Application
 import play.api.test.Helpers.await
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
 
 class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
@@ -67,6 +68,16 @@ class RegistrationConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
           val result = connector.sendWithoutIDInformation(sub).futureValue
           result.status mustBe INTERNAL_SERVER_ERROR
+        }
+
+      "must return UnexpectedResponse when the HTTP call fails" in
+        forAll(arbitrary[RegisterWithoutIDRequest]) { sub =>
+          stubFailedPostResponse("/registration/02.00.00/organisation")
+
+          connector
+            .sendWithoutIDInformation(sub)
+            .failed
+            .futureValue mustBe UnexpectedResponse
         }
     }
 

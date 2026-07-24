@@ -92,5 +92,22 @@ class RepaymentControllerSpec extends BaseSpec with Generators with ScalaCheckPr
         val result: Future[Result] = route(application, request).value
         status(result) mustEqual CREATED
       }
+
+    "should throw an unexpected exception from service" in
+      forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayload =>
+        when(mockRepaymentService.sendRepaymentsData(any[RepaymentRequestDetail])(using any[HeaderCarrier]()))
+          .thenReturn(Future.failed(new RuntimeException("someError")))
+
+        val request: FakeRequest[AnyContentAsJson] =
+          FakeRequest(
+            POST,
+            routes.RepaymentController.repaymentsSendRequest.url
+          )
+            .withJsonBody(Json.toJson(repaymentPayload))
+
+        val result = route(application, request).value.failed.futureValue
+
+        result.getMessage mustEqual "someError"
+      }
   }
 }

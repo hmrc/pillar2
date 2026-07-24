@@ -136,6 +136,19 @@ class AccountActivityControllerSpec extends BaseSpec {
       }
       result mustEqual ApiInternalServerError
     }
+
+    "handles unexpected exception from service" in new AccountActivityControllerTestCase(
+      serviceResponse = Future.failed(new RuntimeException("someError"))
+    ) {
+      val result: RuntimeException = intercept[RuntimeException] {
+        throw controller
+          .getAccountActivity(aYearAgo.toString, today.toString)(requestWithPillarId)
+          .failed
+          .futureValue
+      }
+
+      result.getMessage mustEqual "someError"
+    }
   }
 
 }
