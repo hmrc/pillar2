@@ -24,7 +24,7 @@ import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.pillar2.fixtures.ORNDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
 class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixtures {

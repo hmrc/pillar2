@@ -50,16 +50,17 @@ class SubscriptionController @Inject() (
         invalid = error => {
           logger.info(s"[SubscriptionController] createSubscription called $error")
 
-          Future.successful(
-            BadRequest("Subscription parameter is invalid"))
-          },
+          Future.successful(BadRequest("Subscription parameter is invalid"))
+        },
 
         valid = subscriptionRequestParameters =>
           for {
             userAnswer <- getUserAnswers(subscriptionRequestParameters.id)
-            response   <- subscriptionService.sendCreateSubscription(upeSafeId = subscriptionRequestParameters.regSafeId,
+            response   <- subscriptionService.sendCreateSubscription(
+                          upeSafeId = subscriptionRequestParameters.regSafeId,
                           fmSafeId = subscriptionRequestParameters.fmSafeId,
-                          userAnswers = userAnswer)
+                          userAnswers = userAnswer
+                        )
           } yield convertToResult(response)(using logger: Logger)
       )
       .recoverWith { case exception =>
@@ -96,13 +97,15 @@ class SubscriptionController @Inject() (
   }
 
   def getUserAnswers(id: String)(using executionContext: ExecutionContext): Future[UserAnswers] =
-      userAnswerCache.get(id)
-        .map{ userAnswer =>
-      UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
-        .recoverWith { case exception =>
-          logger.error(s"[SubscriptionController] Failed to amend subscription V2 for id: $id", exception)
-          Future.failed(exception)
-        }
-    }
+    userAnswerCache
+      .get(id)
+      .map { userAnswer =>
+        UserAnswers(id = id, data = userAnswer.getOrElse(Json.obj()).as[JsObject])
+
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[SubscriptionController] Failed to amend subscription V2 for id: $id", exception)
+        Future.failed(exception)
+      }
 
 }

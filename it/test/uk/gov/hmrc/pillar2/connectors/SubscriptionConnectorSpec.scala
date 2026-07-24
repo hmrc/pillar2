@@ -75,10 +75,10 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
 
       "must return UnexpectedResponse when creating a subscription fails" in
-        forAll(arbitrary[RequestDetail]) { sub =>
+        forAll(arbitrary[SubscriptionDataCreate]) { sub =>
           stubFailedPostResponse("/pillar2/subscription")
 
-          connector
+          subscriptionConnector
             .sendCreateSubscriptionInformation(sub)
             .failed
             .futureValue mustBe UnexpectedResponse
@@ -148,9 +148,9 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
       "must return UnexpectedResponse when retrieving subscription information fails" in
         forAll(arbPlrReference.arbitrary) { plrReference =>
-          stubFailedGetResponse(s"/pillar2/subscription/$plrReference")
+          stubFailedGetResponse(s"/pillar2/subscription/v2/$plrReference")
 
-          connector
+          subscriptionConnector
             .getSubscriptionInformation(plrReference)
             .failed
             .futureValue mustBe UnexpectedResponse
@@ -197,21 +197,11 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
         }
 
       "must return UnexpectedResponse when amending a subscription fails" in
-        forAll(arbitrary[ETMPAmendSubscriptionSuccess]) { amendRequest =>
+        forAll(arbitrary[EtmpAmendSubscriptionRequest]) { amendRequest =>
           stubFailedPutResponse("/pillar2/subscription")
 
-          connector
+          subscriptionConnector
             .amendSubscriptionInformation(amendRequest)
-            .failed
-            .futureValue mustBe UnexpectedResponse
-        }
-
-      "must return UnexpectedResponse when amending a V2 subscription fails" in
-        forAll(arbitrary[ETMPAmendSubscriptionSuccessV2]) { amendRequest =>
-          stubFailedPutResponse("/pillar2/subscription/v2")
-
-          connector
-            .amendSubscriptionInformationV2(amendRequest)
             .failed
             .futureValue mustBe UnexpectedResponse
         }
