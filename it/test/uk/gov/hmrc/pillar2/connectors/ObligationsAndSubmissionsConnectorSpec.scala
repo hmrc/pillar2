@@ -23,6 +23,7 @@ import play.api.libs.json.Json
 import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.*
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationStatus.{Fulfilled, Open}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationType.{GIR, UKTR}
@@ -113,5 +114,14 @@ class ObligationsAndSubmissionsConnectorSpec extends BaseSpec with Generators wi
     result.failed.map { ex =>
       ex mustBe a[InternalServerException]
     }
+  }
+
+  "must return UnexpectedResponse when the request fails" in {
+    stubFailedGetResponse(url)
+
+    connector
+      .getObligationsAndSubmissions(fromDate, toDate)
+      .failed
+      .futureValue mustBe UnexpectedResponse
   }
 }
