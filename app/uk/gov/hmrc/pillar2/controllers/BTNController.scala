@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class BTNController @Inject() (
   btnService:          BTNService,
@@ -43,5 +43,9 @@ class BTNController @Inject() (
     btnService
       .sendBtn(request.body)
       .map(response => Status(response.status)(response.body))
+      .recoverWith { case exception =>
+        logger.error(s"[BTNController] Failed to submit BTN for plrReference $pillar2Id", exception)
+        Future.failed(exception)
+      }
   }
 }

@@ -118,6 +118,15 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       val result = intercept[ApiInternalServerError.type](await(route(application, submitOrnRequest).value))
       result mustEqual ApiInternalServerError
     }
+
+    "should throw an unexpected exception from service" in {
+      when(mockOrnService.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val result = intercept[RuntimeException](await(route(application, submitOrnRequest).value))
+
+      result.getMessage mustEqual "someError"
+    }
   }
 
   "amendOrn" - {
@@ -164,6 +173,15 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
       val result = intercept[ApiInternalServerError.type](await(route(application, amendOrnRequest).value))
       result mustEqual ApiInternalServerError
+    }
+
+    "should throw an unexpected exception from service" in {
+      when(mockOrnService.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val result = intercept[RuntimeException](await(route(application, amendOrnRequest).value))
+
+      result.getMessage mustEqual "someError"
     }
   }
 
@@ -235,6 +253,22 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
 
       val result = intercept[ApiInternalServerError.type](await(route(application, getOrnRequest).value))
       result mustEqual ApiInternalServerError
+    }
+
+    "should throw an unexpected exception from service" in {
+      when(
+        mockOrnService.getOrn(
+          ArgumentMatchers.eq(fromDate),
+          ArgumentMatchers.eq(toDate)
+        )(using
+          any[HeaderCarrier],
+          ArgumentMatchers.eq(pillar2Id)
+        )
+      ).thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val result = intercept[RuntimeException](await(route(application, getOrnRequest).value))
+
+      result.getMessage mustEqual "someError"
     }
   }
 }
