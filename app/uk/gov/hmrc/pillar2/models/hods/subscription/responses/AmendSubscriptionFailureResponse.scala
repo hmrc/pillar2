@@ -18,7 +18,6 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.responses
 
 import play.api.libs.json.{Json, OFormat}
 
-// TODO: remove - seems to not being used anywhere
 final case class AmendSubscriptionFailureResponse(
   failures: Array[Failure]
 )

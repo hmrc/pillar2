@@ -400,7 +400,6 @@ class SubscriptionService @Inject() (
              case _                    => Future.unit
            }
       subscriptionResponse = response.json.as[SubscriptionDisplayResponse]
-      // subscriptionResponse <- convertToSubscriptionResponseResult(response) // TODO: use this?
       _ <- auditService.auditReadSubscriptionSuccess(plrReference, subscriptionResponse)
       dataToStore = createCachedObject(subscriptionResponse.success, plrReference)
       _ <- repository.upsert(id, Json.toJson(dataToStore))

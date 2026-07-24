@@ -27,7 +27,7 @@ final case class SubscriptionDataDisplay(
   primaryContactDetails:    ContactDetailsType,
   secondaryContactDetails:  Option[ContactDetailsType],
   filingMemberDetails:      Option[FilingMemberDetails],
-  accountingPeriod:         Option[Seq[AccountingPeriodDisplay]], // TODO: align with frontend (default None)
+  accountingPeriod:         Option[Seq[AccountingPeriodDisplay]],
   accountStatus:            Option[AccountStatus]
 )
 

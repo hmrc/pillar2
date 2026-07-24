@@ -18,7 +18,6 @@ package uk.gov.hmrc.pillar2.models.hods.subscription.responses
 
 import play.api.libs.json.{Json, OFormat}
 
-// TODO: remove - not used
 final case class AmendSubscriptionInput(
   value: AmendSubscriptionSuccess
 )

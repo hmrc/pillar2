@@ -29,7 +29,6 @@ final case class AmendSubscriptionSuccessAuditEvent(
   filingMemberDetails:      Option[FilingMemberDetailsAmend],
   processingDate:           String
 ) extends AuditEvent {
-  // TODO: is this updatePillar2SubscriptionV2 or updatePillar2Subscription?
   override val auditType:  String  = "updatePillar2Subscription"
   override val detailJson: JsValue = Json.toJson(this)
 }

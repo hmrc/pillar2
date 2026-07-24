@@ -24,7 +24,6 @@ import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, E
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
 import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionResponse
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.SubscriptionDisplayResponse
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
 
@@ -93,9 +92,5 @@ package object services extends Logging {
 
   private[services] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
     convertToResult[GetORNSuccessResponse](response)
-
-  // TODO: not used yet
-  private[services] def convertToSubscriptionResponseResult(response: HttpResponse): Future[SubscriptionDisplayResponse] =
-    convertToResult[SubscriptionDisplayResponse](response)
 
 }

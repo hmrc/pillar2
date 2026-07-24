@@ -46,7 +46,6 @@ lazy val it = project
 lazy val compilerSettings = Seq(
   scalacOptions ~= (_.distinct),
   tpolecatCiModeOptions += ScalacOptions.warnOption("conf:src=routes/.*:s"),
-  tpolecatCiModeOptions += ScalacOptions.warnOption("conf:cat=deprecation:i"), // TODO: remove - temporarily deprecations are warnings not errors
   Test / tpolecatExcludeOptions += ScalacOptions.warnNonUnitStatement
 )
 
