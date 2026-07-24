@@ -16,7 +16,6 @@
 
 package uk.gov.hmrc.pillar2.models.hods.subscription.common
 
-import play.api.libs.functional.syntax.*
 import play.api.libs.json.*
 
 import java.time.LocalDate
@@ -33,76 +32,4 @@ final case class UpeDetails(
 
 object UpeDetails {
   given format: OFormat[UpeDetails] = Json.format[UpeDetails]
-}
-
-final case class UpeDetailsAmend(
-  plrReference:            String,
-  customerIdentification1: Option[String],
-  customerIdentification2: Option[String],
-  organisationName:        String,
-  registrationDate:        LocalDate,
-  domesticOnly:            Boolean,
-  filingMember:            Boolean
-)
-
-object UpeDetailsAmend {
-  given format: OFormat[UpeDetailsAmend] = Json.format[UpeDetailsAmend]
-}
-
-final case class UpeCorrespAddressDetails(
-  addressLine1: String,
-  addressLine2: Option[String],
-  addressLine3: Option[String],
-  addressLine4: Option[String],
-  postCode:     Option[String],
-  countryCode:  String
-)
-
-object UpeCorrespAddressDetails {
-  given format: OFormat[UpeCorrespAddressDetails] = Json.format[UpeCorrespAddressDetails]
-}
-
-final case class ContactDetailsType(
-  name:         String,
-  telephone:    Option[String],
-  emailAddress: String
-)
-
-object ContactDetailsType {
-  val reads: Reads[ContactDetailsType] = (
-    (__ \ "name").read[String] and
-      (__ \ "telephone")
-        .read[String]
-        .map(Some(_))
-        .orElse((__ \ "phone").read[String].map(Some(_)))
-        .orElse(Reads.pure(None)) and
-      (__ \ "emailAddress").read[String]
-  )(ContactDetailsType.apply _)
-
-  val writes: OWrites[ContactDetailsType] = Json.writes[ContactDetailsType]
-
-  given format: OFormat[ContactDetailsType] = OFormat(reads, writes)
-}
-
-final case class FilingMemberDetails(
-  safeId:                  String,
-  customerIdentification1: Option[String],
-  customerIdentification2: Option[String],
-  organisationName:        String
-)
-
-object FilingMemberDetails {
-  given format: OFormat[FilingMemberDetails] = Json.format[FilingMemberDetails]
-}
-
-final case class FilingMemberAmendDetails(
-  addNewFilingMember:      Boolean = false,
-  safeId:                  String,
-  customerIdentification1: Option[String],
-  customerIdentification2: Option[String],
-  organisationName:        String
-)
-
-object FilingMemberAmendDetails {
-  given format: OFormat[FilingMemberAmendDetails] = Json.format[FilingMemberAmendDetails]
 }

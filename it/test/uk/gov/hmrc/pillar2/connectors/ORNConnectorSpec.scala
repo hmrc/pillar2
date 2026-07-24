@@ -22,11 +22,12 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.pillar2.fixtures.ORNDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
-class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixture {
+class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixtures {
 
   override lazy val app: Application = applicationBuilder()
     .configure("microservice.services.overseas-return-notification.port" -> server.port())
@@ -74,7 +75,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       given response: JsObject = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-14T09:26:17Z",
-          "formBundleNumber" -> "123456789012345"
+          "formBundleNumber" -> testFormBundleNumber
         )
       )
 
@@ -151,7 +152,7 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       given response: JsObject = Json.obj(
         "success" -> Json.obj(
           "processingDate"   -> "2024-03-15T016:07:22Z",
-          "formBundleNumber" -> "123456789012345"
+          "formBundleNumber" -> testFormBundleNumber
         )
       )
 

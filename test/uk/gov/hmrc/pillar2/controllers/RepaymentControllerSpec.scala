@@ -34,7 +34,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 import uk.gov.hmrc.pillar2.repositories.ReadSubscriptionCacheRepository
-import uk.gov.hmrc.pillar2.service.{RepaymentService, SubscriptionService}
+import uk.gov.hmrc.pillar2.services.{RepaymentService, SubscriptionService}
 
 import scala.concurrent.Future
 

@@ -59,7 +59,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
         val successResponse = Json.obj(
           "success" -> Json.obj(
             "processingDate"   -> "2024-03-14T09:26:17Z",
-            "formBundleNumber" -> "123456789012345",
+            "formBundleNumber" -> testFormBundleNumber,
             "chargeReference"  -> "123456789012345"
           )
         )
@@ -174,7 +174,7 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
         val successResponse = Json.obj(
           "success" -> Json.obj(
             "processingDate"   -> "2024-03-14T09:26:17Z",
-            "formBundleNumber" -> "123456789012345",
+            "formBundleNumber" -> testFormBundleNumber,
             "chargeReference"  -> "123456789012345"
           )
         )

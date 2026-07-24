@@ -22,7 +22,7 @@ import play.api.mvc.*
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
-import uk.gov.hmrc.pillar2.service.UKTaxReturnService
+import uk.gov.hmrc.pillar2.services.UKTaxReturnService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 

@@ -21,7 +21,6 @@ import play.api.libs.concurrent.PekkoGuiceSupport
 
 class GuiceModule extends AbstractModule with PekkoGuiceSupport {
 
-  override def configure(): Unit =
-    bind(classOf[AppConfig]).asEagerSingleton()
+  override def configure(): Unit = bind(classOf[AppConfig]).asEagerSingleton()
 
 }

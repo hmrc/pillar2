@@ -33,7 +33,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.UKTRSubmission
-import uk.gov.hmrc.pillar2.service.UKTaxReturnService
+import uk.gov.hmrc.pillar2.services.UKTaxReturnService
 
 import scala.concurrent.Future
 

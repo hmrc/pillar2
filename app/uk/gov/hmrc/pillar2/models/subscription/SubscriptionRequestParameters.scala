@@ -18,11 +18,12 @@ package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json.{Json, OFormat}
 
-case class SubscriptionRequestParameters(
+final case class SubscriptionRequestParameters(
   id:        String,
   regSafeId: String,
   fmSafeId:  Option[String]
 )
+
 object SubscriptionRequestParameters {
   given format: OFormat[SubscriptionRequestParameters] = Json.format[SubscriptionRequestParameters]
 }

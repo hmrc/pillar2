@@ -19,13 +19,15 @@ package uk.gov.hmrc.pillar2.models.hods
 import play.api.libs.json.Json
 import play.api.libs.json.OFormat
 
-case class SourceFaultDetail(detail: Seq[String])
+final case class SourceFaultDetail(
+  detail: Seq[String]
+)
 
 object SourceFaultDetail {
   given format: OFormat[SourceFaultDetail] = Json.format[SourceFaultDetail]
 }
 
-case class ErrorDetail(
+final case class ErrorDetail(
   timestamp:         String,
   correlationId:     Option[String],
   errorCode:         String,
@@ -38,7 +40,9 @@ object ErrorDetail {
   given format: OFormat[ErrorDetail] = Json.format[ErrorDetail]
 }
 
-case class ErrorDetails(errorDetail: ErrorDetail)
+final case class ErrorDetails(
+  errorDetail: ErrorDetail
+)
 
 object ErrorDetails {
   given format: OFormat[ErrorDetails] = Json.format[ErrorDetails]
