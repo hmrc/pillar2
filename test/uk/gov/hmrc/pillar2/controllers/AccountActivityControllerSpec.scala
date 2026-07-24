@@ -30,7 +30,7 @@ import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
-import uk.gov.hmrc.pillar2.service.AccountActivityService
+import uk.gov.hmrc.pillar2.services.AccountActivityService
 
 import java.time.LocalDate
 import scala.concurrent.Future

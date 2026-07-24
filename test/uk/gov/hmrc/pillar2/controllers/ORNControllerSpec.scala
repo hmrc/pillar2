@@ -30,16 +30,17 @@ import play.api.{Application, Configuration}
 import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
+import uk.gov.hmrc.pillar2.fixtures.ORNDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.{BaseSpec, ORNDataFixture}
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
 import uk.gov.hmrc.pillar2.models.orn.{ORNRequest, ORNSuccess, ORNSuccessResponse}
-import uk.gov.hmrc.pillar2.service.ORNService
+import uk.gov.hmrc.pillar2.services.ORNService
 
 import java.time.ZonedDateTime
 import scala.concurrent.Future
 
-class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixture {
+class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixtures {
 
   val application: Application = new GuiceApplicationBuilder()
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
@@ -65,7 +66,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
   "submitOrn" - {
     "should return Created with OrnSuccessResponse when submission is successful" in {
       val successResponse: ORNSuccessResponse = ORNSuccessResponse(
-        ORNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"), formBundleNumber = "123456789012345")
+        ORNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"), formBundleNumber = testFormBundleNumber)
       )
 
       when(mockOrnService.submitOrn(any[ORNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))
@@ -122,7 +123,7 @@ class ORNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
   "amendOrn" - {
     "should return Accepted with ORNSuccessResponse when amendment is successful" in {
       val successResponse: ORNSuccessResponse = ORNSuccessResponse(
-        ORNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"), formBundleNumber = "123456789012345")
+        ORNSuccess(processingDate = ZonedDateTime.parse("2024-03-14T09:26:17Z"), formBundleNumber = testFormBundleNumber)
       )
 
       when(mockOrnService.amendOrn(any[ORNRequest])(using any[HeaderCarrier], any[String])).thenReturn(Future.successful(successResponse))

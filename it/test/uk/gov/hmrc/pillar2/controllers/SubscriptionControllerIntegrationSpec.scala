@@ -33,7 +33,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.AuthStubs
 import uk.gov.hmrc.pillar2.helpers.wiremock.WireMockServerHandler
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccessV2
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.SubscriptionDataAmend
 
 import java.net.URI
 import java.net.URL
@@ -55,7 +55,7 @@ class SubscriptionControllerIntegrationSpec
     .configure("metrics.enabled" -> false)
     .build()
 
-  lazy val url: URL = URI.create(s"http://localhost:$port${routes.SubscriptionController.amendSubscriptionV2(id).url}").toURL
+  lazy val url: URL = URI.create(s"http://localhost:$port${routes.SubscriptionController.amendSubscription(id).url}").toURL
 
   val id = "Int-c75cfd09-f945-41a8-90db-a93177a7663c"
 
@@ -85,7 +85,7 @@ class SubscriptionControllerIntegrationSpec
     val httpClient = app.injector.instanceOf[HttpClientV2]
     given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("Content-Type" -> "application/json")
-    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[AmendSubscriptionSuccessV2].sample.value))
+    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[SubscriptionDataAmend].sample.value))
     val result  = Await.result(request.execute[HttpResponse], 5.seconds)
 
     result.status mustEqual 422
@@ -120,7 +120,7 @@ class SubscriptionControllerIntegrationSpec
     val httpClient = app.injector.instanceOf[HttpClientV2]
     given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("Content-Type" -> "application/json")
-    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[AmendSubscriptionSuccessV2].sample.value))
+    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[SubscriptionDataAmend].sample.value))
     val result  = Await.result(request.execute[HttpResponse], 5.seconds)
 
     result.status mustEqual 422
@@ -144,7 +144,7 @@ class SubscriptionControllerIntegrationSpec
     val httpClient = app.injector.instanceOf[HttpClientV2]
     given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("Content-Type" -> "application/json")
-    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[AmendSubscriptionSuccessV2].sample.value))
+    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[SubscriptionDataAmend].sample.value))
     val result  = Await.result(request.execute[HttpResponse], 5.seconds)
 
     result.status mustEqual 500
@@ -165,7 +165,7 @@ class SubscriptionControllerIntegrationSpec
     val httpClient = app.injector.instanceOf[HttpClientV2]
     given headerCarrier: HeaderCarrier = HeaderCarrier(authorization = Option(Authorization("bearertoken")))
       .withExtraHeaders("Content-Type" -> "application/json")
-    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[AmendSubscriptionSuccessV2].sample.value))
+    val request = httpClient.put(url).withBody(Json.toJson(arbitrary[SubscriptionDataAmend].sample.value))
     val result  = Await.result(request.execute[HttpResponse], 5.seconds)
 
     result.status mustEqual 401

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,69 +23,48 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.{ETMPAmendSubscriptionSuccess, ETMPAmendSubscriptionSuccessV2}
-import uk.gov.hmrc.pillar2.models.hods.subscription.request.RequestDetail
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.EtmpAmendSubscriptionRequest
+import uk.gov.hmrc.pillar2.models.hods.subscription.requests.SubscriptionDataCreate
 
+import java.net.URL
 import scala.concurrent.{ExecutionContext, Future}
 
-class SubscriptionConnector @Inject() (
-  val config: AppConfig,
-  val http:   HttpClientV2
-) {
+class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClientV2) {
+
   given logger: Logger = Logger(this.getClass.getName)
+
   def sendCreateSubscriptionInformation(
-    subscription: RequestDetail
+    subscription: SubscriptionDataCreate
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+    logger.info(s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp")
     val serviceName = "create-subscription"
-    logger.info(
-      s"SubscriptionConnector - CreateSubscriptionRequest going to Etmp - ${Json.toJson(subscription)}"
-    )
+    val createSubscriptionUrl: URL = url"${config.baseUrl(serviceName)}"
     http
-      .post(url"${config.baseUrl(serviceName)}")
+      .post(createSubscriptionUrl)
       .setHeader(extraHeaders(config, serviceName)*)
       .withBody(Json.toJson(subscription))
       .execute[HttpResponse]
   }
 
-  def getSubscriptionInformation(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
-    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
-    http
-      .get(url"$url")
-      .setHeader(extraHeaders(config, serviceName)*)
-      .execute[HttpResponse]
-  }
-
-  def getSubscriptionInformationV2(plrReference: String)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
+  def getSubscriptionInformation(
+    plrReference: String
+  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
     val serviceName = "create-subscription-v2"
-    val url         = s"${config.baseUrl(serviceName)}/$plrReference"
+    val getSubscriptionUrl: URL = url"${config.baseUrl(serviceName)}/$plrReference"
     http
-      .get(url"$url")
+      .get(getSubscriptionUrl)
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
   }
 
   def amendSubscriptionInformation(
-    amendRequest: ETMPAmendSubscriptionSuccess
+    amendRequest: EtmpAmendSubscriptionRequest
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription"
-    val url         = s"${config.baseUrl(serviceName)}"
-    given writes: Writes[ETMPAmendSubscriptionSuccess] = ETMPAmendSubscriptionSuccess.format
+    val serviceName          = "amend-subscription-v2"
+    val amendSubscriptionUrl = url"${config.baseUrl(serviceName)}"
+    given writes: Writes[EtmpAmendSubscriptionRequest] = EtmpAmendSubscriptionRequest.format
     http
-      .put(url"$url")
-      .withBody(Json.toJson(amendRequest))
-      .setHeader(extraHeaders(config, serviceName)*)
-      .execute[HttpResponse]
-  }
-
-  def amendSubscriptionInformationV2(
-    amendRequest: ETMPAmendSubscriptionSuccessV2
-  )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "amend-subscription-v2"
-    val url         = s"${config.baseUrl(serviceName)}"
-    given writes: Writes[ETMPAmendSubscriptionSuccessV2] = ETMPAmendSubscriptionSuccessV2.format
-    http
-      .put(url"$url")
+      .put(amendSubscriptionUrl)
       .withBody(Json.toJson(amendRequest))
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]

@@ -1,0 +1,96 @@
+/*
+ * Copyright 2024 HM Revenue & Customs
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package uk.gov.hmrc.pillar2
+
+import play.api.Logging
+import play.api.libs.json.{JsError, JsSuccess, Reads}
+import uk.gov.hmrc.http.HttpResponse
+import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
+import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
+import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionResponse
+import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
+import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
+
+import scala.concurrent.Future
+import scala.util.{Failure, Success, Try}
+
+package object services extends Logging {
+
+  private[services] def convertToResult[A](response: HttpResponse)(using reads: Reads[A]): Future[A] = {
+    logger.info(s"Converting to API result with status ${response.status}")
+    response.status match {
+      case 200 | 201 =>
+        Try(response.json.validate[A]) match {
+          case Success(JsSuccess(success, _)) => Future.successful(success)
+          case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
+          case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case 422 =>
+        Try(response.json.validate[ApiFailureResponse]) match {
+          case Success(JsSuccess(apiFailure, _)) =>
+            logger.info(s"ETMPValidationError - Code: '${apiFailure.errors.code}' Text: '${apiFailure.errors.text}'")
+            Future.failed(ETMPValidationError(apiFailure.errors.code, apiFailure.errors.text))
+          case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
+          case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case status =>
+        logger.error(s"Received invalid status $status from downstream.")
+        Future.failed(ApiInternalServerError)
+    }
+  }
+
+  private[services] def convertToAmendSubscriptionResult(response: HttpResponse): Future[AmendSubscriptionResponse] = {
+    logger.info(s"Converting amend subscription result with status ${response.status}")
+    response.status match {
+      case 200 | 201 =>
+        Try(response.json.validate[AmendSubscriptionResponse]) match {
+          case Success(JsSuccess(success, _)) => Future.successful(success)
+          case Success(JsError(error))        => Future.failed(InvalidJsonError(error.toString))
+          case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case 422 =>
+        Try(response.json.validate[ErrorDetails]) match {
+          case Success(JsSuccess(failure, _)) =>
+            logger.info(s"ETMPValidationError - Code: '${failure.errorDetail.errorCode}' Text: '${failure.errorDetail.errorMessage}'")
+            Future.failed(ETMPValidationError(failure.errorDetail.errorCode, failure.errorDetail.errorMessage))
+          case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
+          case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
+        }
+      case status =>
+        logger.error(s"Received invalid status $status from downstream. Body: ${response.body}")
+        Future.failed(ApiInternalServerError)
+    }
+  }
+
+  private[services] def convertToAccountActivityResult(response: HttpResponse): Future[AccountActivitySuccess] =
+    convertToResult[AccountActivitySuccess](response)
+
+  private[services] def convertToUKTRApiResult(response: HttpResponse): Future[ApiSuccessResponse] =
+    convertToResult[ApiSuccessResponse](response)
+
+  private[services] def convertToObligationsAndSubmissionsApiResult(response: HttpResponse): Future[ObligationsAndSubmissionsResponse] =
+    convertToResult[ObligationsAndSubmissionsResponse](response)
+
+  private[services] def convertToORNApiResult(response: HttpResponse): Future[ORNSuccessResponse] =
+    convertToResult[ORNSuccessResponse](response)
+
+  private[services] def convertToGetORNApiResult(response: HttpResponse): Future[GetORNSuccessResponse] =
+    convertToResult[GetORNSuccessResponse](response)
+
+}

@@ -17,9 +17,9 @@
 package uk.gov.hmrc.pillar2.models.identifiers
 
 import play.api.libs.json.JsPath
-import uk.gov.hmrc.pillar2.models.AccountingPeriod
+import uk.gov.hmrc.pillar2.models.hods.subscription.common.AccountingPeriodCreate
 
-case object subAccountingPeriodId extends TypedIdentifier[AccountingPeriod] {
+case object subAccountingPeriodId extends TypedIdentifier[AccountingPeriodCreate] {
 
   override def path: JsPath = JsPath \ toString
 

@@ -18,7 +18,10 @@ package uk.gov.hmrc.pillar2.models.audit
 
 import play.api.libs.json.{Format, JsValue, Json}
 
-final case class AuditResponseReceived(status: Int, responseData: JsValue)
+final case class AuditResponseReceived(
+  status:       Int,
+  responseData: JsValue
+)
 
 object AuditResponseReceived {
   given formats: Format[AuditResponseReceived] = Json.format[AuditResponseReceived]

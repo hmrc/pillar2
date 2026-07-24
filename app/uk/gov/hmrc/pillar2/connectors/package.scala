@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2
 
+import play.api.Logger
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.pillar2.config.AppConfig
 
@@ -25,6 +26,8 @@ import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 package object connectors {
+
+  private val logger: Logger = Logger("uk.gov.hmrc.pillar2.connectors")
 
   given httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
 

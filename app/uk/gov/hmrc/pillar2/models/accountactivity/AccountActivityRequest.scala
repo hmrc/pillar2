@@ -20,7 +20,7 @@ import play.api.libs.json.{Json, Reads}
 
 import java.time.LocalDate
 
-case class AccountActivityRequest(
+final case class AccountActivityRequest(
   fromDate: LocalDate,
   toDate:   LocalDate
 )

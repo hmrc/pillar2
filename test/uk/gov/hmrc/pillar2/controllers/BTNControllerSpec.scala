@@ -30,16 +30,17 @@ import uk.gov.hmrc.auth.core.AuthConnector
 import uk.gov.hmrc.http.HeaderCarrier
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, FakeAuthAction}
+import uk.gov.hmrc.pillar2.fixtures.UKTaxReturnDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
-import uk.gov.hmrc.pillar2.helpers.{BaseSpec, UKTaxReturnDataFixture}
+import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.*
-import uk.gov.hmrc.pillar2.service.BTNService
+import uk.gov.hmrc.pillar2.services.BTNService
 
 import java.time.LocalDate
 import scala.concurrent.Future
 
-class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with UKTaxReturnDataFixture {
+class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with UKTaxReturnDataFixtures {
 
   val application: Application = new GuiceApplicationBuilder()
     .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
@@ -98,7 +99,6 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
     }
 
     "should return MissingHeaderError when X-Pillar2-Id header is missing" in {
-
       val headlessRequest: FakeRequest[AnyContentAsJson] = FakeRequest(POST, routes.BTNController.submitBtn().url)
         .withJsonBody(Json.toJson(btnPayload))
 

@@ -33,7 +33,7 @@ import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.UserAnswers
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
-import uk.gov.hmrc.pillar2.service.RegistrationService
+import uk.gov.hmrc.pillar2.services.RegistrationService
 
 import scala.concurrent.{ExecutionContext, Future}
 

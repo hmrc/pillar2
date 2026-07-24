@@ -17,12 +17,13 @@
 package uk.gov.hmrc.pillar2.models.subscription
 
 import play.api.libs.json.{Json, OFormat}
-import uk.gov.hmrc.pillar2.models.hods.subscription.common.AmendSubscriptionSuccess
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionSuccess
 
-case class AmendSubscriptionRequestParameters(
+final case class AmendSubscriptionRequestParameters(
   id:        String,
   amendData: AmendSubscriptionSuccess
 )
+
 object AmendSubscriptionRequestParameters {
   given format: OFormat[AmendSubscriptionRequestParameters] = Json.format[AmendSubscriptionRequestParameters]
 }
