@@ -23,6 +23,7 @@ import play.api.Application
 import play.api.libs.json.{JsValue, Json}
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
 import java.time.LocalDate
 
@@ -144,6 +145,18 @@ class AccountActivityConnectorSpec extends BaseSpec with IntegrationPatience {
       )
 
       verifyHipHeaders("GET", accountActivityUrl, expectedBody = None)
+    }
+
+    "returns UnexpectedResponse when the request fails" in {
+      stubFailedGetResponse(accountActivityUrl)
+
+      connector
+        .retrieveAccountActivity(
+          AccountActivityRequest(fromDate, toDate),
+          pillar2Id
+        )
+        .failed
+        .futureValue mustBe UnexpectedResponse
     }
   }
 }

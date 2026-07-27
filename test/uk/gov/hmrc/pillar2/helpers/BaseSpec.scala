@@ -17,6 +17,7 @@
 package uk.gov.hmrc.pillar2.helpers
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import com.github.tomakehurst.wiremock.http.Fault
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
@@ -121,6 +122,39 @@ trait BaseSpec
             .withStatus(expectedStatus)
         )
     )
+
+  protected def stubFailedGetResponse(path: String): Unit = {
+    server.stubFor(
+      get(urlEqualTo(path))
+        .willReturn(
+          aResponse()
+            .withFault(Fault.CONNECTION_RESET_BY_PEER)
+        )
+    )
+    ()
+  }
+
+  protected def stubFailedPostResponse(path: String): Unit = {
+    server.stubFor(
+      post(urlEqualTo(path))
+        .willReturn(
+          aResponse()
+            .withFault(Fault.CONNECTION_RESET_BY_PEER)
+        )
+    )
+    ()
+  }
+
+  protected def stubFailedPutResponse(path: String): Unit = {
+    server.stubFor(
+      put(urlEqualTo(path))
+        .willReturn(
+          aResponse()
+            .withFault(Fault.CONNECTION_RESET_BY_PEER)
+        )
+    )
+    ()
+  }
 
   protected def verifyHipHeaders(method: String, etmpUrl: String, expectedBody: Option[String] = None): Unit = {
     val requestBuilder = method match {

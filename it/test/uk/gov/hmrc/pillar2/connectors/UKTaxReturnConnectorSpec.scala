@@ -23,6 +23,7 @@ import play.api.Application
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hip.uktrsubmissions.{LiabilityNilReturn, ReturnType, UKTRSubmissionNilReturn}
 
 import java.time.LocalDate
@@ -157,6 +158,15 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
         result.status mustBe INTERNAL_SERVER_ERROR
         result.json mustBe errorResponse
       }
+
+      "must return UnexpectedResponse when the HTTP call fails" in {
+        stubFailedPostResponse(etmpUKTRUrl)
+
+        connector
+          .submitUKTaxReturn(submissionPayload)
+          .failed
+          .futureValue mustBe UnexpectedResponse
+      }
     }
 
     "amend UK tax return" - {
@@ -261,6 +271,15 @@ class UKTaxReturnConnectorSpec extends BaseSpec with Generators with ScalaCheckP
         val result = connector.amendUKTaxReturn(submissionPayload).futureValue
         result.status mustBe INTERNAL_SERVER_ERROR
         result.json mustBe errorResponse
+      }
+
+      "must return UnexpectedResponse when the HTTP call fails" in {
+        stubFailedPutResponse(etmpUKTRUrl)
+
+        connector
+          .amendUKTaxReturn(submissionPayload)
+          .failed
+          .futureValue mustBe UnexpectedResponse
       }
     }
   }

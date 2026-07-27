@@ -39,19 +39,36 @@ class RegistrationCacheController @Inject() (
   def save(id: String): Action[AnyContent] = authenticate.async { request =>
     request.body.asJson.map { jsValue =>
       repository.upsert(id, jsValue).map(_ => Ok)
-    } getOrElse Future.successful(EntityTooLarge)
+    } getOrElse Future
+      .successful(EntityTooLarge)
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationCacheController] Failed to save cache for plrReference $id", exception)
+        Future.failed(exception)
+      }
   }
 
   def get(id: String): Action[AnyContent] = authenticate.async { _ =>
-    repository.get(id).map { response =>
-      response.map(Ok(_)).getOrElse(NotFound)
-    }
+    repository
+      .get(id)
+      .map { response =>
+        response.map(Ok(_)).getOrElse(NotFound)
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationCacheController] Failed to retrieve cache for plrReference $id", exception)
+        Future.failed(exception)
+      }
   }
 
   def remove(id: String): Action[AnyContent] = authenticate.async { _ =>
-    repository.remove(id).map { response =>
-      if response then Ok else InternalServerError
-    }
+    repository
+      .remove(id)
+      .map { response =>
+        if response then Ok else InternalServerError
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationCacheController] Failed to delete cache for plrReference $id", exception)
+        Future.failed(exception)
+      }
   }
 
   private val javaDateTimeNumberWrites = new Writes[Instant] {
@@ -59,10 +76,16 @@ class RegistrationCacheController @Inject() (
   }
 
   def lastUpdated(id: String): Action[AnyContent] = authenticate.async { _ =>
-    repository.getLastUpdated(id).map { response =>
-      response.map { date =>
-        Ok(Json.toJson(date)(javaDateTimeNumberWrites))
-      } getOrElse NotFound
-    }
+    repository
+      .getLastUpdated(id)
+      .map { response =>
+        response.map { date =>
+          Ok(Json.toJson(date)(javaDateTimeNumberWrites))
+        } getOrElse NotFound
+      }
+      .recoverWith { case exception =>
+        logger.error(s"[RegistrationCacheController] Failed to retrieve lastUpdated for plrReference $id", exception)
+        Future.failed(exception)
+      }
   }
 }

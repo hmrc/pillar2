@@ -25,6 +25,7 @@ import uk.gov.hmrc.http.InternalServerException
 import uk.gov.hmrc.pillar2.fixtures.ORNDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
 class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with ORNDataFixtures {
 
@@ -135,6 +136,15 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
     }
+
+    "return UnexpectedResponse when submitting an ORN fails" in {
+      stubFailedPostResponse("/RESTAdapter/plr/overseas-return-notification")
+
+      connector
+        .submitOrn(ornRequest)
+        .failed
+        .futureValue mustBe UnexpectedResponse
+    }
   }
 
   "amendOrn" - {
@@ -203,6 +213,15 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
     }
+
+    "return UnexpectedResponse when amending an ORN fails" in {
+      stubFailedPutResponse("/RESTAdapter/plr/overseas-return-notification")
+
+      connector
+        .amendOrn(ornRequest)
+        .failed
+        .futureValue mustBe UnexpectedResponse
+    }
   }
 
   "getOrn" - {
@@ -224,6 +243,15 @@ class ORNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       result.failed.map { ex =>
         ex mustBe a[InternalServerException]
       }
+    }
+
+    "return UnexpectedResponse when retrieving an ORN fails" in {
+      stubFailedGetResponse(getUrl)
+
+      connector
+        .getOrn(fromDate, toDate)
+        .failed
+        .futureValue mustBe UnexpectedResponse
     }
   }
 }

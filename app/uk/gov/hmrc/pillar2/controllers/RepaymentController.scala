@@ -25,7 +25,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class RepaymentController @Inject() (
   repaymentService: RepaymentService,
@@ -37,7 +37,13 @@ class RepaymentController @Inject() (
 
   def repaymentsSendRequest: Action[RepaymentRequestDetail] = authenticate(parse.json[RepaymentRequestDetail]).async { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
-    repaymentService.sendRepaymentsData(request.body).map(_ => Created)
+    repaymentService
+      .sendRepaymentsData(request.body)
+      .map(_ => Created)
+      .recoverWith { case exception =>
+        logger.error(s"[RepaymentController] Failed to send repayment request for ID: ${request.body.repaymentDetails.plrReference}", exception)
+        Future.failed(exception)
+      }
   }
 
 }

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import play.api.Logging
 import play.api.libs.json.*
 import play.api.mvc.*
 import uk.gov.hmrc.http.HeaderCarrier
@@ -26,7 +27,7 @@ import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class UKTaxReturnController @Inject() (
@@ -35,7 +36,8 @@ class UKTaxReturnController @Inject() (
   pillar2HeaderExists: Pillar2HeaderAction,
   authenticate:        AuthAction
 )(using ec: ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def submitUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { request =>
     given HeaderCarrier = HeaderCarrierConverter.fromRequest(request)
@@ -43,6 +45,10 @@ class UKTaxReturnController @Inject() (
     ukTaxReturnService
       .submitUKTaxReturn(request.body)
       .map(response => Created(Json.toJson(response.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[UKTaxReturnController] Failed to submit UK Tax Return for plrReference: $pillar2Id", exception)
+        Future.failed(exception)
+      }
   }
 
   def amendUKTaxReturn(): Action[UKTRSubmission] = (authenticate andThen pillar2HeaderExists).async(parse.json[UKTRSubmission]) { request =>
@@ -51,5 +57,9 @@ class UKTaxReturnController @Inject() (
     ukTaxReturnService
       .amendUKTaxReturn(request.body)
       .map(response => Ok(Json.toJson(response.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[UKTaxReturnController] Failed to amend UK Tax Return for plrReference: $pillar2Id", exception)
+        Future.failed(exception)
+      }
   }
 }

@@ -23,6 +23,7 @@ import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.subscription.common.EtmpAmendSubscriptionRequest
 import uk.gov.hmrc.pillar2.models.hods.subscription.requests.SubscriptionDataCreate
 
@@ -44,6 +45,7 @@ class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClie
       .setHeader(extraHeaders(config, serviceName)*)
       .withBody(Json.toJson(subscription))
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def getSubscriptionInformation(
@@ -55,6 +57,7 @@ class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClie
       .get(getSubscriptionUrl)
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 
   def amendSubscriptionInformation(
@@ -68,5 +71,6 @@ class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClie
       .withBody(Json.toJson(amendRequest))
       .setHeader(extraHeaders(config, serviceName)*)
       .execute[HttpResponse]
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
   }
 }

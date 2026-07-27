@@ -165,6 +165,31 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(result) mustEqual NOT_FOUND
         }
       }
+
+      "throw an unexpected exception when creating subscription" in
+        forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
+          when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]()))
+            .thenReturn(Future.successful(Some(jsData)))
+
+          when(
+            mockSubscriptionService.sendCreateSubscription(
+              any[String](),
+              any[Option[String]](),
+              any[UserAnswers]()
+            )(using any[HeaderCarrier]())
+          ).thenReturn(Future.failed(new RuntimeException("someError")))
+
+          val request =
+            FakeRequest(
+              POST,
+              routes.SubscriptionController.createSubscription.url
+            ).withJsonBody(Json.toJson(subscriptionRequestParameters))
+
+          val result = route(application, request).value.failed.futureValue
+
+          result.getMessage mustEqual "someError"
+        }
+
     }
 
     "readAndCacheSubscription" - {
@@ -198,6 +223,16 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val result  = route(application, request).value
         result.failed.futureValue mustEqual UnexpectedResponse
       }
+
+      "throw an unexpected exception from service" in {
+        when(mockSubscriptionService.storeSubscriptionDisplayResponse(any[String](), any[String]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.failed(new RuntimeException("someError")))
+
+        val request = FakeRequest(GET, routes.SubscriptionController.readAndCacheSubscription("id", "pillar2Id").url)
+        val result  = route(application, request).value.failed.futureValue
+
+        result.getMessage mustEqual "someError"
+      }
     }
 
     "readSubscription" - {
@@ -230,9 +265,20 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         val result  = route(application, request).value
         result.failed.futureValue mustEqual UnexpectedResponse
       }
+
+      "throw an unexpected exception from service" in {
+        when(mockSubscriptionService.readSubscriptionData(any[String]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.failed(new RuntimeException("someError")))
+
+        val request = FakeRequest(GET, routes.SubscriptionController.readSubscription("pillar2Id").url)
+        val result  = route(application, request).value.failed.futureValue
+
+        result.getMessage mustEqual "someError"
+      }
     }
 
     "amendSubscription" - {
+
       "return OK when valid data is provided" in
         forAll(arbMockId.arbitrary, arbitrarySubscriptionDataAmend.arbitrary) { (id, amendData) =>
           when(mockSubscriptionService.sendAmendedData(any[String](), any[SubscriptionDataAmend]())(using any[HeaderCarrier]()))
@@ -257,6 +303,18 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
           status(resultFuture) shouldBe BAD_REQUEST
         }
 
+      "throw an unexpected exception from service" in
+        forAll(arbMockId.arbitrary, arbitrarySubscriptionDataAmend.arbitrary) { (id, amendData) =>
+          when(mockSubscriptionService.sendAmendedData(any[String](), any[SubscriptionDataAmend]())(using any[HeaderCarrier]()))
+            .thenReturn(Future.failed(new RuntimeException("someError")))
+
+          val fakeRequest = FakeRequest(PUT, routes.SubscriptionController.amendSubscription(id).url)
+            .withJsonBody(Json.toJson(amendData))
+
+          val result = route(application, fakeRequest).value.failed.futureValue
+
+          result.getMessage mustEqual "someError"
+        }
     }
 
   }

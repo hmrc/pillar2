@@ -28,7 +28,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.time.LocalDate
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ORNController @Inject() (
   ornService:          ORNService,
@@ -45,6 +45,10 @@ class ORNController @Inject() (
     ornService
       .submitOrn(request.body)
       .map(response => Created(Json.toJson(response.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[ORNController] Failed to submit ORN for plrReference $pillar2Id", exception)
+        Future.failed(exception)
+      }
   }
 
   def amendOrn: Action[ORNRequest] = (authenticate andThen pillar2HeaderExists).async(parse.json[ORNRequest]) { request =>
@@ -53,6 +57,10 @@ class ORNController @Inject() (
     ornService
       .amendOrn(request.body)
       .map(response => Ok(Json.toJson(response.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[ORNController] Failed to amend ORN for plrReference $pillar2Id", exception)
+        Future.failed(exception)
+      }
   }
 
   def getOrn(fromDate: String, toDate: String): Action[AnyContent] = (authenticate andThen pillar2HeaderExists).async { request =>
@@ -61,6 +69,10 @@ class ORNController @Inject() (
     ornService
       .getOrn(LocalDate.parse(fromDate), LocalDate.parse(toDate))
       .map(data => Ok(Json.toJson(data.success)))
+      .recoverWith { case exception =>
+        logger.error(s"[ORNController] Failed to retrieve ORN for plrReference $pillar2Id", exception)
+        Future.failed(exception)
+      }
   }
 
 }

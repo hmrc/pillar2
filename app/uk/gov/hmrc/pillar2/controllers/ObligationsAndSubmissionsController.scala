@@ -27,7 +27,7 @@ import uk.gov.hmrc.play.http.HeaderCarrierConverter
 
 import java.time.LocalDate
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ObligationsAndSubmissionsController @Inject() (
   submissionsAndObligationsService: ObligationsAndSubmissionsService,
@@ -45,5 +45,9 @@ class ObligationsAndSubmissionsController @Inject() (
       submissionsAndObligationsService
         .getObligationsAndSubmissions(fromDate = LocalDate.parse(fromDate), LocalDate.parse(toDate))
         .map(data => Ok(Json.toJson(data.success)))
+        .recoverWith { case exception =>
+          logger.error(s"[ObligationsAndSubmissionsController] Failed to retrieve Obligations and Submissions for plrReference $pillar2Id", exception)
+          Future.failed(exception)
+        }
   }
 }

@@ -147,6 +147,30 @@ class ObligationsAndSubmissionsControllerSpec extends BaseSpec with Generators w
       val result = route(application, request).value.failed.futureValue
       result mustEqual ApiInternalServerError
     }
+
+    "should throw an unexpected exception from the service" in {
+      when(
+        mockObligationsAndSubmissionsService.getObligationsAndSubmissions(ArgumentMatchers.eq(fromDate), ArgumentMatchers.eq(toDate))(using
+          any[HeaderCarrier],
+          ArgumentMatchers.eq(pillar2Id)
+        )
+      )
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request =
+        FakeRequest(GET, routes.ObligationsAndSubmissionsController.getObligationsAndSubmissions(fromDate.toString, toDate.toString).url)
+          .withHeaders(
+            "correlationid"         -> UUID.randomUUID().toString,
+            "X-Transmitting-System" -> "HIP",
+            "X-Originating-System"  -> "MDTP",
+            "X-Receipt-Date"        -> ZonedDateTime.now().format(DateTimeFormatter.ISO_INSTANT),
+            "X-Pillar2-Id"          -> pillar2Id
+          )
+
+      val result = route(application, request).value.failed.futureValue
+
+      result.getMessage mustEqual "someError"
+    }
   }
 
 }

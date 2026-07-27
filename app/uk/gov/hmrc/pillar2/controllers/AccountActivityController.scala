@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.controllers
 
+import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
@@ -35,7 +36,8 @@ class AccountActivityController @Inject() (
   checkPillar2HeaderExists: Pillar2HeaderAction,
   cc:                       ControllerComponents
 )(using ExecutionContext)
-    extends BackendController(cc) {
+    extends BackendController(cc)
+    with Logging {
 
   def getAccountActivity(fromDate: String, toDate: String): Action[AnyContent] =
     (authenticate andThen checkPillar2HeaderExists).async { request =>
@@ -49,5 +51,9 @@ class AccountActivityController @Inject() (
               .getAccountActivity(queryParams, request.pillar2Id)(using hc(request))
               .map(success => Ok(Json.toJson(success)))
         )
+        .recoverWith { case exception =>
+          logger.error(s"[AccountActivityController] Failed to retrieve account activity for {${request.pillar2Id}}", exception)
+          Future.failed(exception)
+        }
     }
 }

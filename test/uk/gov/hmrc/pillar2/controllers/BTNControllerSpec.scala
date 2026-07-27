@@ -115,5 +115,16 @@ class BTNControllerSpec extends BaseSpec with Generators with ScalaCheckProperty
       val result = intercept[AuthorizationError.type](await(route(unauthorizedApp, request).value))
       result mustEqual AuthorizationError
     }
+
+    "should throw an unexpected exception from the service" in {
+      when(mockBTNService.sendBtn(any[BTNRequest])(using any[HeaderCarrier], any[String]))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val result: RuntimeException = intercept[RuntimeException] {
+        throw route(application, request).value.failed.futureValue
+      }
+
+      result.getMessage mustEqual "someError"
+    }
   }
 }

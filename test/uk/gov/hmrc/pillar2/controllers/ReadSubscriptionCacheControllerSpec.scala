@@ -76,6 +76,19 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
       status(result) mustBe REQUEST_ENTITY_TOO_LARGE
 
     }
+
+    "throw an unexpected exception from repository" in new Setup {
+      when(mockedCache.upsert(any[String](), any[JsValue]())(using any[ExecutionContext]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsJson] =
+        FakeRequest(POST, routes.ReadSubscriptionCacheController.save("id").url)
+          .withJsonBody(Json.obj("abc" -> "def"))
+
+      val result: Throwable = route(application, request).value.failed.futureValue
+
+      result.getMessage mustBe "someError"
+    }
   }
   "get" - {
     "return 200 when data exists" in new Setup {
@@ -88,6 +101,7 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
       contentAsJson(result) mustBe jsonObject
 
     }
+
     "return NOT_FOUND when data exists" in new Setup {
       when(mockedCache.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(None))
       val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
@@ -96,6 +110,19 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
       status(result) mustBe NOT_FOUND
 
     }
+
+    "throw an unexpected exception from repository" in new Setup {
+      when(mockedCache.get(any[String]())(using any[ExecutionContext]()))
+        .thenReturn(Future.failed(new RuntimeException("someError")))
+
+      val request: FakeRequest[AnyContentAsEmpty.type] =
+        FakeRequest(GET, routes.ReadSubscriptionCacheController.get("id").url)
+
+      val result: Throwable = route(application, request).value.failed.futureValue
+
+      result.getMessage mustBe "someError"
+    }
+
     "remove" - {
       "return 200 when the record is removed successfully" in new Setup {
         when(mockedCache.remove(eqTo("id"))(using any[ExecutionContext]())) thenReturn Future.successful(true)
@@ -109,6 +136,18 @@ class ReadSubscriptionCacheControllerSpec extends BaseSpec {
         val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
         val result:  Future[Result]                      = route(application, request).value
         status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+
+      "throw an unexpected exception from repository" in new Setup {
+        when(mockedCache.remove(eqTo("id"))(using any[ExecutionContext]()))
+          .thenReturn(Future.failed(new RuntimeException("someError")))
+
+        val request: FakeRequest[AnyContentAsEmpty.type] =
+          FakeRequest(DELETE, routes.ReadSubscriptionCacheController.remove("id").url)
+
+        val result: Throwable = route(application, request).value.failed.futureValue
+
+        result.getMessage mustBe "someError"
       }
 
     }

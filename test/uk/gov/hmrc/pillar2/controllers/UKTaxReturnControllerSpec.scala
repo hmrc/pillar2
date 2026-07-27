@@ -74,8 +74,6 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
           result mustEqual MissingHeaderError("X-Pillar2-Id")
         }
 
-      // Maybe we should update the auth action to make use of the error handler?
-
       "should return UNAUTHORIZED when authentication fails" in {
         val unauthorizedApp = new GuiceApplicationBuilder()
           .configure(Configuration("metrics.enabled" -> "false", "auditing.enabled" -> false))
@@ -93,8 +91,6 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
           result mustEqual AuthorizationError
         }
       }
-
-      // Everything after this is perhaps useless
 
       "should handle ValidationError from service" in
         forAll(arbitrary[UKTRSubmission]) { submission =>
@@ -133,6 +129,20 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
 
           val result = intercept[ApiInternalServerError.type](await(route(application, request).value))
           result mustEqual ApiInternalServerError
+        }
+
+      "should throw an unexpected exception from service" in
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          when(mockUKTaxReturnService.submitUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
+            .thenReturn(Future.failed(new RuntimeException("someError")))
+
+          val request = FakeRequest(POST, routes.UKTaxReturnController.submitUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = route(application, request).value.failed.futureValue
+
+          result.getMessage mustEqual "someError"
         }
     }
 
@@ -217,6 +227,19 @@ class UKTaxReturnControllerSpec extends BaseSpec with Generators with ScalaCheck
           result mustEqual ApiInternalServerError
         }
 
+      "should throw an unexpected exception from service" in
+        forAll(arbitrary[UKTRSubmission]) { submission =>
+          when(mockUKTaxReturnService.amendUKTaxReturn(any[UKTRSubmission])(using any[HeaderCarrier], any[String]))
+            .thenReturn(Future.failed(new RuntimeException("someError")))
+
+          val request = FakeRequest(PUT, routes.UKTaxReturnController.amendUKTaxReturn().url)
+            .withHeaders("X-Pillar2-Id" -> pillar2Id)
+            .withJsonBody(Json.toJson(submission))
+
+          val result = route(application, request).value.failed.futureValue
+
+          result.getMessage mustEqual "someError"
+        }
     }
   }
 }

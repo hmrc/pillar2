@@ -22,6 +22,7 @@ import play.api.Application
 import play.api.libs.json.Json
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.BankDetails
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentContactDetails
 import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentDetails
@@ -254,6 +255,17 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
       val response = connector.sendRepaymentDetails(repaymentRequest).futureValue
       response.status mustBe 200
       response.body mustBe "{malformed json}"
+    }
+
+    "must return UnexpectedResponse when the HTTP call fails" in {
+      val repaymentRequest = createRepaymentRequest()
+
+      stubFailedPostResponse("/pillar2/repayment")
+
+      connector
+        .sendRepaymentDetails(repaymentRequest)
+        .failed
+        .futureValue mustBe UnexpectedResponse
     }
 
   }

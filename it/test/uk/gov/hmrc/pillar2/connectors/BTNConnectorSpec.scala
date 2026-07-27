@@ -24,6 +24,7 @@ import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
+import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
 import java.time.LocalDate
 
@@ -124,6 +125,15 @@ class BTNConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyC
       val result = connector.sendBtn(btnPayload).futureValue
       result.status mustBe INTERNAL_SERVER_ERROR
       result.json mustBe response
+    }
+
+    "return UnexpectedResponse when the request fails" in {
+      stubFailedPostResponse(etmpBTNUrl)
+
+      connector
+        .sendBtn(btnPayload)
+        .failed
+        .futureValue mustBe UnexpectedResponse
     }
   }
 }
