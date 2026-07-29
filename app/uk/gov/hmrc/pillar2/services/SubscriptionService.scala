@@ -325,7 +325,6 @@ class SubscriptionService @Inject() (
             }
 
           case false =>
-            logger.warn("nominateFm value is False")
             None
         }
       case _ => None
