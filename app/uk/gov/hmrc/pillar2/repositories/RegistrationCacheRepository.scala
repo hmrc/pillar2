@@ -122,7 +122,6 @@ class RegistrationCacheRepository @Inject() (
 
   def remove(id: String)(using ec: ExecutionContext): Future[Boolean] =
     collection.deleteOne(Filters.equal(idField, id)).toFuture().map { result =>
-      logger.info(s"Removing row from collection $collectionName externalId:$id")
       result.wasAcknowledged
     }
 
@@ -143,7 +142,6 @@ class RegistrationCacheRepository @Inject() (
 
   def clearAllData()(using ec: ExecutionContext): Future[Boolean] =
     collection.deleteMany(BsonDocument()).toFuture().map { result =>
-      logger.info(s"Removing all the rows from collection $collectionName")
       result.wasAcknowledged
     }
 }

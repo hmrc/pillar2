@@ -38,8 +38,10 @@ package object connectors {
     val authHeader = headerCarrier
       .copy(authorization = Some(Authorization(s"Basic ${config.hipKey}")))
 
+    val correlationId = UUID.randomUUID.toString
+    logger.info(s"HIP Request correlationId: $correlationId")
     Seq(
-      "correlationid"        -> UUID.randomUUID().toString,
+      "correlationid"        -> correlationId,
       "X-Originating-System" -> "MDTP",
       "X-Pillar2-Id"         -> pillar2Id,
       "X-Receipt-Date"       -> ZonedDateTime
@@ -69,14 +71,16 @@ package object connectors {
     // HTTP-date format defined by RFC 7231 e.g. Fri, 01 Aug 2020 15:51:38 GMT+1
     val formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O")
 
+    val correlationId = UUID.randomUUID.toString
+    logger.info(s"Request correlationId: $correlationId")
     Seq(
       "x-forwarded-host"  -> "mdtp",
       "date"              -> ZonedDateTime.now().format(formatter),
-      "x-correlation-id"  -> UUID.randomUUID().toString,
+      "x-correlation-id"  -> correlationId,
       "x-conversation-id" ->
         headerCarrier.sessionId
           .map(s => stripSession(s.value))
-          .getOrElse(UUID.randomUUID().toString),
+          .getOrElse(UUID.randomUUID.toString),
       "content-type" -> "application/json",
       "accept"       -> "application/json",
       "Environment"  -> eisEnvironment
