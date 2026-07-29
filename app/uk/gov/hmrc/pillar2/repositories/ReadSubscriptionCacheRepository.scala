@@ -112,7 +112,6 @@ class ReadSubscriptionCacheRepository @Inject() (
 
   def remove(id: String)(using ec: ExecutionContext): Future[Boolean] =
     collection.deleteOne(Filters.equal(idField, id)).toFuture().map { result =>
-      logger.info(s"Removing row from collection $collectionName externalId:$id")
       result.wasAcknowledged
     }
 

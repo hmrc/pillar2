@@ -301,10 +301,8 @@ class SubscriptionService @Inject() (
   ): Option[FilingMemberDetails] =
     filingMemberSafeId match {
       case Some(fmSafeId) =>
-        logger.info("filingMemberSafeId is matched")
         nominateFm match {
           case true =>
-            logger.info("nominateFm value is True")
             fmEntityTypeId match {
               case EntityType.UKLimitedCompany =>
                 logger.info("UK Limited Company selected as Entity")
@@ -331,7 +329,7 @@ class SubscriptionService @Inject() (
             }
 
           case false =>
-            logger.info("nominateFm value is False")
+            logger.warn("nominateFm value is False")
             None
         }
       case _ => None
