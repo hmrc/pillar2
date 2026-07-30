@@ -261,7 +261,6 @@ class SubscriptionService @Inject() (
     val domesticOnly = if subMneOrDomestic == MneOrDomestic.uk then true else false
     upeOrgType match {
       case EntityType.UKLimitedCompany =>
-        logger.info("UK Limited Company selected as Entity")
         val incorporatedEntityRegistrationData =
           upeGrsResponse.incorporatedEntityRegistrationData.getOrElse(throw new Exception("Malformed Incorporation Registration Data"))
         val crn  = incorporatedEntityRegistrationData.companyProfile.companyNumber
@@ -271,7 +270,6 @@ class SubscriptionService @Inject() (
         UpeDetails(Some(upeSafeId), Some(crn), Some(utr), name, LocalDate.now(), domesticOnly, nominateFm)
 
       case EntityType.LimitedLiabilityPartnership =>
-        logger.info("Limited Liability Partnership selected as Entity")
         val partnershipEntityRegistrationData =
           upeGrsResponse.partnershipEntityRegistrationData.getOrElse(throw new Exception("Malformed LLP data"))
         val companyProfile = partnershipEntityRegistrationData.companyProfile.getOrElse(throw new Exception("Malformed company Profile"))
@@ -301,13 +299,10 @@ class SubscriptionService @Inject() (
   ): Option[FilingMemberDetails] =
     filingMemberSafeId match {
       case Some(fmSafeId) =>
-        logger.info("filingMemberSafeId is matched")
         nominateFm match {
           case true =>
-            logger.info("nominateFm value is True")
             fmEntityTypeId match {
               case EntityType.UKLimitedCompany =>
-                logger.info("UK Limited Company selected as Entity")
                 val incorporatedEntityRegistrationData =
                   fmGrsResponseId.incorporatedEntityRegistrationData.getOrElse(
                     throw new Exception("Malformed IncorporatedEntityRegistrationData in Filing Member")
@@ -318,7 +313,6 @@ class SubscriptionService @Inject() (
 
                 Some(FilingMemberDetails(fmSafeId, Some(crn), Some(utr), name))
               case EntityType.LimitedLiabilityPartnership =>
-                logger.info("Limited Liability Corporation selected as Entity")
                 val partnershipEntityRegistrationData =
                   fmGrsResponseId.partnershipEntityRegistrationData.getOrElse(
                     throw new Exception("Malformed partnershipEntityRegistrationData data for Filing Member")
@@ -331,7 +325,6 @@ class SubscriptionService @Inject() (
             }
 
           case false =>
-            logger.info("nominateFm value is False")
             None
         }
       case _ => None

@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2
 
 import play.api.Logger
 import play.api.http.Status.*
-import play.api.libs.json.{JsError, Json}
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.api.mvc.Results.*
 import uk.gov.hmrc.http.HttpResponse
@@ -27,10 +27,6 @@ import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
 import scala.util.Try
 
 package object controllers {
-
-  extension (error: JsError) {
-    def toLogFormat: String = Json.prettyPrint(JsError.toJson(error))
-  }
 
   def convertToResult(httpResponse: HttpResponse)(using logger: Logger): Result =
     httpResponse.status match {
