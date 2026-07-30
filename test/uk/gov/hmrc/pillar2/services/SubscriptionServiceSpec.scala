@@ -65,6 +65,56 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       }
     }
 
+    "must handle a UPE registered outside the UK with no nominated filing member" in {
+      when(
+        mockSubscriptionConnector.sendCreateSubscriptionInformation(any[SubscriptionDataCreate]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      ).thenReturn(Future.successful(HttpResponse(OK, Json.obj().toString)))
+
+      when(
+        mockAuditService.auditCreateSubscription(
+          any[SubscriptionDataCreate](),
+          any[AuditResponseReceived]()
+        )(using any[HeaderCarrier]())
+      ).thenReturn(Future.successful(AuditResult.Success))
+
+      forAll(
+        arbitrary[String],
+        userAnswersFromGenerators(arbitraryWithoutIdUpeNoNominatedFilingMember).arbitrary
+      ) { (upeSafeId, userAnswers) =>
+        subscriptionService
+          .sendCreateSubscription(upeSafeId, None, userAnswers)
+          .futureValue
+          .status mustBe OK
+      }
+    }
+
+    "must handle a UPE registered in the UK with no nominated filing member" in {
+      when(
+        mockSubscriptionConnector.sendCreateSubscriptionInformation(any[SubscriptionDataCreate]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      )
+        .thenReturn(Future.successful(HttpResponse.apply(OK, Json.obj().toString)))
+
+      when(mockAuditService.auditCreateSubscription(any[SubscriptionDataCreate](), any[AuditResponseReceived]())(using any[HeaderCarrier]()))
+        .thenReturn(Future.successful(AuditResult.Success))
+
+      forAll(
+        arbitrary[String],
+        Gen.option(arbitrary[String]),
+        userAnswersFromGenerators(arbitraryWithIdUpeAndNoNominatedFilingMember).arbitrary
+      ) { (upeSafeId, fmSafeId, userAnswers) =>
+        subscriptionService
+          .sendCreateSubscription(upeSafeId, fmSafeId, userAnswers)
+          .futureValue
+          .status mustBe OK
+      }
+    }
+
     "must return INTERNAL_SERVER_ERROR when the user answers are incomplete" in
       forAll(arbitrary[String], Gen.option(arbitrary[String]), arbitraryUncompleteUpeFmUserAnswers.arbitrary) { (upeSafeId, fmSafeId, userAnswers) =>
         subscriptionService.sendCreateSubscription(upeSafeId, fmSafeId, userAnswers).futureValue.status mustBe INTERNAL_SERVER_ERROR

@@ -16,6 +16,7 @@
 
 package uk.gov.hmrc.pillar2.utils
 
+import com.typesafe.config.ConfigException
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers.*
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
@@ -41,6 +42,46 @@ class CountryOptionsSpec extends BaseSpec {
         val countryOption: CountryOptions = app.injector.instanceOf[CountryOptions]
         countryOption.options mustEqual Seq(InputOption("AF", "Afghanistan"), InputOption("AG", "Antigua and Barbuda"))
       }
+    }
+  }
+
+  "return the country code for the given country name" in {
+    val app =
+      new GuiceApplicationBuilder()
+        .configure(
+          Map(
+            "location.canonical.list.all" -> "country-canonical-list-test.json",
+            "metrics.enabled"             -> "false"
+          )
+        )
+        .build()
+
+    running(app) {
+      val countryOption: CountryOptions = app.injector.instanceOf[CountryOptions]
+
+      countryOption.getCountryCodeFromName("Afghanistan") mustEqual "AF"
+    }
+  }
+
+  "throw a BadValue exception when the country JSON does not exist" in {
+    val app =
+      new GuiceApplicationBuilder()
+        .configure(
+          Map(
+            "location.canonical.list.all" -> "missing-country-list.json",
+            "metrics.enabled"             -> "false"
+          )
+        )
+        .build()
+
+    running(app) {
+      val countryOption = app.injector.instanceOf[CountryOptions]
+
+      val exception = intercept[ConfigException.BadValue] {
+        countryOption.options
+      }
+
+      exception.getMessage must include("country json does not exist")
     }
   }
 }
