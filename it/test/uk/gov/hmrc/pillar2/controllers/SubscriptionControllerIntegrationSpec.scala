@@ -51,7 +51,7 @@ class SubscriptionControllerIntegrationSpec
 
   override def fakeApplication(): Application = new GuiceApplicationBuilder()
     .configure("microservice.services.auth.port" -> wiremockPort)
-    .configure("microservice.services.amend-subscription-v2.port" -> wiremockPort)
+    .configure("microservice.services.amend-subscription.port" -> wiremockPort)
     .configure("metrics.enabled" -> false)
     .build()
 
@@ -62,7 +62,7 @@ class SubscriptionControllerIntegrationSpec
   test("A downstream 422 is mapped to a 422 carrying the validation error code and text") {
     stubAuthenticate()
     server.stubFor(
-      put(urlEqualTo("/pillar2/subscription/v2"))
+      put(urlEqualTo("/pillar2/subscription"))
         .willReturn(
           aResponse()
             .withStatus(422)
@@ -97,7 +97,7 @@ class SubscriptionControllerIntegrationSpec
   test("The downstream validation code is propagated to the caller unchanged") {
     stubAuthenticate()
     server.stubFor(
-      put(urlEqualTo("/pillar2/subscription/v2"))
+      put(urlEqualTo("/pillar2/subscription"))
         .willReturn(
           aResponse()
             .withStatus(422)
@@ -132,7 +132,7 @@ class SubscriptionControllerIntegrationSpec
   test("An unmapped downstream status is mapped to a 500 with the generic API error code") {
     stubAuthenticate()
     server.stubFor(
-      put(urlEqualTo("/pillar2/subscription/v2"))
+      put(urlEqualTo("/pillar2/subscription"))
         .willReturn(
           aResponse()
             .withStatus(503)
@@ -171,7 +171,7 @@ class SubscriptionControllerIntegrationSpec
     result.status mustEqual 401
     val error = result.json.as[Pillar2ApiError]
     error.code mustEqual "401"
-    server.verify(0, putRequestedFor(urlEqualTo("/pillar2/subscription/v2")))
+    server.verify(0, putRequestedFor(urlEqualTo("/pillar2/subscription")))
   }
 
   test("An invalid request body is rejected with 400 and the downstream service is never called") {
@@ -186,7 +186,7 @@ class SubscriptionControllerIntegrationSpec
     result.status mustEqual 400
     val error = result.json.as[Pillar2ApiError]
     error.code mustEqual "400"
-    server.verify(0, putRequestedFor(urlEqualTo("/pillar2/subscription/v2")))
+    server.verify(0, putRequestedFor(urlEqualTo("/pillar2/subscription")))
   }
 
 }
