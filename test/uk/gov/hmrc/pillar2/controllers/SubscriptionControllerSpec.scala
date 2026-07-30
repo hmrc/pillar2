@@ -166,6 +166,96 @@ class SubscriptionControllerSpec extends BaseSpec with Generators with ScalaChec
         }
       }
 
+      "should return OK when EIS responds with CREATED" in {
+        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
+        when(mockSubscriptionService.sendCreateSubscription(any[String](), any[Option[String]](), any[UserAnswers]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(201, Json.obj(), Map.empty[String, Seq[String]])))
+
+        forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
+          val request = FakeRequest(POST, routes.SubscriptionController.createSubscription.url)
+            .withJsonBody(Json.toJson(subscriptionRequestParameters))
+
+          val result = route(application, request).value
+          status(result) mustEqual OK
+        }
+      }
+
+      "should return UNPROCESSABLE_ENTITY when EIS cannot process the request" in {
+        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
+        when(mockSubscriptionService.sendCreateSubscription(any[String](), any[Option[String]](), any[UserAnswers]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(422, Json.obj(), Map.empty[String, Seq[String]])))
+
+        forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
+          val request = FakeRequest(POST, routes.SubscriptionController.createSubscription.url)
+            .withJsonBody(Json.toJson(subscriptionRequestParameters))
+
+          val result = route(application, request).value
+          status(result) mustEqual UNPROCESSABLE_ENTITY
+        }
+      }
+
+      "should return INTERNAL_SERVER_ERROR when EIS responds with INTERNAL_SERVER_ERROR" in {
+        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
+        when(mockSubscriptionService.sendCreateSubscription(any[String](), any[Option[String]](), any[UserAnswers]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(500, Json.obj(), Map.empty[String, Seq[String]])))
+
+        forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
+          val request = FakeRequest(POST, routes.SubscriptionController.createSubscription.url)
+            .withJsonBody(Json.toJson(subscriptionRequestParameters))
+
+          val result = route(application, request).value
+          status(result) mustEqual INTERNAL_SERVER_ERROR
+        }
+      }
+
+      "should return BAD_REQUEST when EIS responds with a fault detail in the error envelope" in {
+        val errorBody = Json.obj(
+          "errorDetail" -> Json.obj(
+            "timestamp"         -> "2026-07-30T12:00:00Z",
+            "correlationId"     -> "some-correlation-id",
+            "errorCode"         -> "004",
+            "errorMessage"      -> "Duplicate submission",
+            "source"            -> "ETMP",
+            "sourceFaultDetail" -> Json.obj("detail" -> Json.arr("first fault", "second fault"))
+          )
+        )
+
+        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
+        when(mockSubscriptionService.sendCreateSubscription(any[String](), any[Option[String]](), any[UserAnswers]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(400, errorBody, Map.empty[String, Seq[String]])))
+
+        forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
+          val request = FakeRequest(POST, routes.SubscriptionController.createSubscription.url)
+            .withJsonBody(Json.toJson(subscriptionRequestParameters))
+
+          val result = route(application, request).value
+          status(result) mustEqual BAD_REQUEST
+        }
+      }
+
+      "should return BAD_REQUEST when EIS responds with an error envelope carrying no fault detail" in {
+        val errorBody = Json.obj(
+          "errorDetail" -> Json.obj(
+            "timestamp"    -> "2026-07-30T12:00:00Z",
+            "errorCode"    -> "089",
+            "errorMessage" -> "Business validation failure",
+            "source"       -> "ETMP"
+          )
+        )
+
+        when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]())).thenReturn(Future.successful(Some(jsData)))
+        when(mockSubscriptionService.sendCreateSubscription(any[String](), any[Option[String]](), any[UserAnswers]())(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(400, errorBody, Map.empty[String, Seq[String]])))
+
+        forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
+          val request = FakeRequest(POST, routes.SubscriptionController.createSubscription.url)
+            .withJsonBody(Json.toJson(subscriptionRequestParameters))
+
+          val result = route(application, request).value
+          status(result) mustEqual BAD_REQUEST
+        }
+      }
+
       "throw an unexpected exception when creating subscription" in
         forAll(arbitrary[SubscriptionRequestParameters]) { subscriptionRequestParameters =>
           when(mockRegistrationCacheRepository.get(any[String]())(using any[ExecutionContext]()))

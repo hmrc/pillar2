@@ -75,6 +75,14 @@ class Pillar2ErrorHandlerSpec extends AnyFunSuite with ScalaCheckDrivenPropertyC
     result.message mustEqual "Invalid JSON payload: test decode error"
   }
 
+  test("SubscriptionProcessingError error response") {
+    val response = classUnderTest.onServerError(dummyRequest, SubscriptionProcessingError)
+    status(response) mustEqual 422
+    val result = contentAsJson(response).as[Pillar2ApiError]
+    result.code mustEqual "422"
+    result.message mustEqual "Subscription is being processed"
+  }
+
   test("ApiInternalServerError error response") {
     val response = classUnderTest.onServerError(dummyRequest, ApiInternalServerError)
     status(response) mustEqual 500

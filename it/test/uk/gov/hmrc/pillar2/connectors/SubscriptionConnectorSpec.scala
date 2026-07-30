@@ -25,6 +25,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.{JsResultException, Json}
 import play.api.test.Helpers.await
+import uk.gov.hmrc.http.{HeaderCarrier, SessionId}
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
@@ -50,6 +51,21 @@ class SubscriptionConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
   "SubscriptionConnector" - {
     "for a Create Subscription" - {
+      "must strip the session prefix when building the conversation id" in
+        forAll(arbitrary[SubscriptionDataCreate]) { sub =>
+          given hc: HeaderCarrier = HeaderCarrier(sessionId = Some(SessionId("session-1a2b3c4d")))
+
+          stubResponse("/pillar2/subscription", OK)
+
+          val result = await(subscriptionConnector.sendCreateSubscriptionInformation(sub))
+          result.status mustBe OK
+
+          server.verify(
+            postRequestedFor(urlEqualTo("/pillar2/subscription"))
+              .withHeader("x-conversation-id", equalTo("1a2b3c4d"))
+          )
+        }
+
       "must return status as OK" in
         forAll(arbitrary[SubscriptionDataCreate]) { sub =>
           stubResponse("/pillar2/subscription", OK)
