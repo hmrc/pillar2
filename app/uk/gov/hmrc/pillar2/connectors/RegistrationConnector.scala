@@ -40,6 +40,9 @@ class RegistrationConnector @Inject() (
       .setHeader(extraHeaders(config, serviceName)*)
       .withBody(Json.toJson(registration))
       .execute[HttpResponse]
-      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
+      .recoverWith { case e =>
+        logger.error(s"RegistrationConnector - Failed to post to $serviceName", e)
+        Future.failed(UnexpectedResponse)
+      }
   }
 }
