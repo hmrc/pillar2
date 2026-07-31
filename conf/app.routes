@@ -14,15 +14,9 @@ GET           /user-cache/registration-subscription/:id/lastUpdated        uk.go
 # Subscription
 POST          /subscription/create-subscription                            uk.gov.hmrc.pillar2.controllers.SubscriptionController.createSubscription
 
-# V1
-#GET           /subscription/read-subscription/:plrReference                uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
-#GET           /subscription/read-subscription/:id/:plrReference            uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
-#PUT           /subscription/amend-subscription/:id                         uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
-
-# V2 - TODO: align paths between frontend and then rename v2 path
-GET           /subscription/v2/read-subscription/:plrReference             uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
-GET           /subscription/v2/read-subscription/:id/:plrReference         uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
-PUT           /subscription/v2/amend-subscription/:id                      uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
+GET           /subscription/read-subscription/:plrReference             uk.gov.hmrc.pillar2.controllers.SubscriptionController.readSubscription(plrReference: String)
+GET           /subscription/read-subscription/:id/:plrReference         uk.gov.hmrc.pillar2.controllers.SubscriptionController.readAndCacheSubscription(id: String, plrReference: String)
+PUT           /subscription/amend-subscription/:id                      uk.gov.hmrc.pillar2.controllers.SubscriptionController.amendSubscription(id:String)
 
 GET           /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.get(id: String)
 POST          /user-cache/read-subscription/:id                            uk.gov.hmrc.pillar2.controllers.ReadSubscriptionCacheController.save(id: String)

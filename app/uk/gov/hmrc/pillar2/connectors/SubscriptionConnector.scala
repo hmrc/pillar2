@@ -51,7 +51,7 @@ class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClie
   def getSubscriptionInformation(
     plrReference: String
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "create-subscription-v2"
+    val serviceName = "create-subscription"
     val getSubscriptionUrl: URL = url"${config.baseUrl(serviceName)}/$plrReference"
     http
       .get(getSubscriptionUrl)
@@ -63,7 +63,7 @@ class SubscriptionConnector @Inject() (val config: AppConfig, val http: HttpClie
   def amendSubscriptionInformation(
     amendRequest: EtmpAmendSubscriptionRequest
   )(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName          = "amend-subscription-v2"
+    val serviceName          = "amend-subscription"
     val amendSubscriptionUrl = url"${config.baseUrl(serviceName)}"
     given writes: Writes[EtmpAmendSubscriptionRequest] = EtmpAmendSubscriptionRequest.format
     http
