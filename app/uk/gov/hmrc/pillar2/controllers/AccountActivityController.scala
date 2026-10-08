@@ -22,6 +22,7 @@ import play.api.mvc.{Action, AnyContent, ControllerComponents}
 import uk.gov.hmrc.pillar2.controllers.actions.{AuthAction, Pillar2HeaderAction}
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
 import uk.gov.hmrc.pillar2.models.errors.Pillar2ApiError
+import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.ETMPValidationError
 import uk.gov.hmrc.pillar2.services.AccountActivityService
 import uk.gov.hmrc.play.bootstrap.backend.controller.BackendController
 
@@ -51,9 +52,11 @@ class AccountActivityController @Inject() (
               .getAccountActivity(queryParams, request.pillar2Id)(using hc(request))
               .map(success => Ok(Json.toJson(success)))
         )
-        .recoverWith { case exception =>
-          logger.error(s"[AccountActivityController] Failed to retrieve account activity for {${request.pillar2Id}}", exception)
-          Future.failed(exception)
+        .recoverWith {
+          case error: ETMPValidationError if error.code == "014" => Future.failed(error)
+          case exception =>
+            logger.error(s"[AccountActivityController] Failed to retrieve account activity for {${request.pillar2Id}}", exception)
+            Future.failed(exception)
         }
     }
 }

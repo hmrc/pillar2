@@ -119,6 +119,15 @@ class AccountActivityControllerSpec extends BaseSpec {
       result mustEqual ETMPValidationError("422", "Validation failed")
     }
 
+    "handles ETMPValidationError 014 (no data found)" in new AccountActivityControllerTestCase(
+      serviceResponse = Future.failed(ETMPValidationError("014", "No data found"))
+    ) {
+      val result: ETMPValidationError = intercept[ETMPValidationError] {
+        throw controller.getAccountActivity(aYearAgo.toString, today.toString)(requestWithPillarId).failed.futureValue
+      }
+      result mustEqual ETMPValidationError("014", "No data found")
+    }
+
     "handles InvalidJson from service" in new AccountActivityControllerTestCase(
       serviceResponse = Future.failed(InvalidJsonError("invalid-json"))
     ) {
