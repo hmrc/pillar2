@@ -22,6 +22,7 @@ import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.{JsObject, Json}
 import uk.gov.hmrc.http.InternalServerException
+import uk.gov.hmrc.pillar2.connectors.hip.ORNConnector
 import uk.gov.hmrc.pillar2.fixtures.ORNDataFixtures
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec

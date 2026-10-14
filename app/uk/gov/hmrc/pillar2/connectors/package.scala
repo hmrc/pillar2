@@ -17,19 +17,20 @@
 package uk.gov.hmrc.pillar2
 
 import play.api.Logger
+import play.api.http.{HeaderNames as PlayHeaderNames, MimeTypes}
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.pillar2.config.AppConfig
 
+import java.time.{Instant, ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.{ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
 package object connectors {
 
   private val logger: Logger = Logger("uk.gov.hmrc.pillar2.connectors")
 
-  given httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
+//  given httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
 
   private[connectors] def hipHeaders(config: AppConfig)(using
     headerCarrier: HeaderCarrier,
@@ -51,6 +52,16 @@ package object connectors {
       "X-Transmitting-System" -> "HIP"
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))
   }
+
+  private[connectors] def hipHeadersNew(correlationId: String, appConfig: AppConfig): Seq[(String, String)] =
+    Seq(
+      PlayHeaderNames.ACCEPT  -> MimeTypes.JSON,
+      "correlationid"         -> correlationId,
+      "X-Originating-System"  -> "PLR",
+      "X-Receipt-Date"        -> DateTimeFormatter.ISO_INSTANT.format(Instant.now().truncatedTo(ChronoUnit.SECONDS)),
+      "X-Transmitting-System" -> "HIP",
+      "Authorization"         -> s"Basic ${appConfig.hipKey}"
+    )
 
   private[connectors] def extraHeaders(
     config:      AppConfig,

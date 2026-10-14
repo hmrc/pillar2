@@ -19,14 +19,27 @@ package uk.gov.hmrc.pillar2.services
 import org.apache.pekko.Done
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
+import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.connectors.hip.HipRepaymentConnector
 import uk.gov.hmrc.pillar2.connectors.RepaymentConnector
+import uk.gov.hmrc.pillar2.connectors.ifs.IFRepaymentConnector
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
 import javax.inject.Inject
 import scala.concurrent.{ExecutionContext, Future}
 
-class RepaymentService @Inject() (repaymentConnector: RepaymentConnector)(using ec: ExecutionContext) extends Logging {
+class RepaymentService @Inject() (
+  ifRepaymentConnector:  IFRepaymentConnector,
+  hipRepaymentConnector: HipRepaymentConnector,
+  appConfig:             AppConfig
+)(using
+  ec: ExecutionContext
+) extends Logging {
+
+  private val repaymentConnector: RepaymentConnector =
+    if appConfig.hipEnabled then hipRepaymentConnector
+    else ifRepaymentConnector
 
   def sendRepaymentsData(rePaymentData: RepaymentRequestDetail)(using hc: HeaderCarrier): Future[Done] =
     repaymentConnector.sendRepaymentDetails(rePaymentData).flatMap { response =>

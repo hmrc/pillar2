@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.services
 
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.connectors.AccountActivityConnector
+import uk.gov.hmrc.pillar2.connectors.hip.AccountActivityConnector
 import uk.gov.hmrc.pillar2.models.accountactivity.{AccountActivityRequest, AccountActivitySuccess}
 
 import javax.inject.Inject

@@ -18,7 +18,7 @@ package uk.gov.hmrc.pillar2.services
 
 import play.api.Logging
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.connectors.ObligationsAndSubmissionsConnector
+import uk.gov.hmrc.pillar2.connectors.hip.ObligationsAndSubmissionsConnector
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 
 import java.time.LocalDate

@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.services
 
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.connectors.BTNConnector
+import uk.gov.hmrc.pillar2.connectors.hip.BTNConnector
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 
 import javax.inject.{Inject, Singleton}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,36 +16,28 @@
 
 package uk.gov.hmrc.pillar2.connectors
 
-import com.google.inject.Inject
 import play.api.Logging
-import play.api.libs.json.{Json, Writes}
-import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import play.api.libs.json.Writes
 import uk.gov.hmrc.http.client.HttpClientV2
-import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
+import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class RepaymentConnector @Inject() (
-  val ec:     ExecutionContext,
-  val config: AppConfig,
-  val http:   HttpClientV2
-) extends Logging {
+trait RepaymentConnector extends Logging {
 
+  val config: AppConfig
+  val serviceName: String
+  val http:   HttpClientV2
+  val ec: ExecutionContext
+  given executionContext: ExecutionContext = ec
+
+  lazy val url = s"${config.baseUrl(serviceName)}"
+  given writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
+  
   def sendRepaymentDetails(
     repaymentRequest: RepaymentRequestDetail
-  )(using hc: HeaderCarrier): Future[HttpResponse] = {
-    val serviceName = "create-repayment"
-    val url         = s"${config.baseUrl(serviceName)}"
-    given writes:           Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
-    given executionContext: ExecutionContext               = ec
-    http
-      .post(url"$url")
-      .setHeader(extraHeaders(config, serviceName)*)
-      .withBody(Json.toJson(repaymentRequest))
-      .execute[HttpResponse]
-      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
-  }
+  )(using hc: HeaderCarrier): Future[HttpResponse]
+
 }

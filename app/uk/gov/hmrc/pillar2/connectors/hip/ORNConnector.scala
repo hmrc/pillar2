@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.connectors
+package uk.gov.hmrc.pillar2.connectors.hip
 
 import com.google.inject.Inject
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.connectors.hipHeaders
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.orn.ORNRequest
 

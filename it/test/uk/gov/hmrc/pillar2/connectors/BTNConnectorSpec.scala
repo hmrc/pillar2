@@ -21,6 +21,7 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.{JsObject, Json}
+import uk.gov.hmrc.pillar2.connectors.hip.BTNConnector
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.btn.BTNRequest
