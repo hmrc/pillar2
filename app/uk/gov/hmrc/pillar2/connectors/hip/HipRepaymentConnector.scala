@@ -38,10 +38,9 @@ class HipRepaymentConnector @Inject() (
   val http:   HttpClientV2
 ) extends RepaymentConnector {
 
-  val serviceName = "hip.create-repayment"
+  val serviceName   = "hip.create-repayment"
   val correlationId = UUID.randomUUID().toString
-//  val headers = hipHeadersNew(correlationId ,config)
-//  
+
   override def sendRepaymentDetails(
     repaymentRequest: RepaymentRequestDetail
   )(using
@@ -52,9 +51,9 @@ class HipRepaymentConnector @Inject() (
 
     http
       .post(url"$url")
-      .setHeader(hipHeadersNew(correlationId ,config)*)
+      .setHeader(hipHeadersNew(correlationId, config)*)
       .withBody(Json.toJson(repaymentRequest))
-      .execute[HttpResponse] 
+      .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
 
 }

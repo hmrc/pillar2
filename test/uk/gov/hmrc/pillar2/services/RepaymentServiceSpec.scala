@@ -31,26 +31,43 @@ import scala.concurrent.Future
 
 class RepaymentServiceSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
 
-  val service =
+  def service(useHip: Boolean = false): RepaymentService = {
+    if useHip then when(mockAppConfig.hipEnabled).thenReturn(true): Unit
+    else when(mockAppConfig.hipEnabled).thenReturn(false):          Unit
     new RepaymentService(
       mockIFRepaymentConnector,
       mockHipRepaymentConnector,
       mockAppConfig
     )
+  }
 
   "RepaymentService" - {
     "Return Done in case of a CREATED Http Response" in
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
         when(mockIFRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(HttpResponse(status = 201, json = JsObject.empty, Map.empty)))
-        val result = service.sendRepaymentsData(repaymentPayLoad)
+        val result = service().sendRepaymentsData(repaymentPayLoad)
         result.futureValue mustBe Done
       }
     "return a failed result in case of a response other than 201" in
       forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
         when(mockIFRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(using any[HeaderCarrier]()))
           .thenReturn(Future.successful(HttpResponse(status = 200, json = JsObject.empty, Map.empty)))
-        val result = service.sendRepaymentsData(repaymentPayLoad)
+        val result = service().sendRepaymentsData(repaymentPayLoad)
+        result.failed.futureValue mustBe UnexpectedResponse
+      }
+    "Return Done in case of a CREATED Http Response using Hip" in
+      forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
+        when(mockHipRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(status = 201, json = JsObject.empty, Map.empty)))
+        val result = service(true).sendRepaymentsData(repaymentPayLoad)
+        result.futureValue mustBe Done
+      }
+    "return a failed result in case of a response other than 201 when using Hip" in
+      forAll(arbitraryRepaymentPayload.arbitrary) { repaymentPayLoad =>
+        when(mockHipRepaymentConnector.sendRepaymentDetails(any[RepaymentRequestDetail])(using any[HeaderCarrier]()))
+          .thenReturn(Future.successful(HttpResponse(status = 200, json = JsObject.empty, Map.empty)))
+        val result = service(true).sendRepaymentsData(repaymentPayLoad)
         result.failed.futureValue mustBe UnexpectedResponse
       }
   }

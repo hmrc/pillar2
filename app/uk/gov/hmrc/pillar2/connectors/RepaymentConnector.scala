@@ -27,15 +27,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 trait RepaymentConnector extends Logging {
 
-  val config: AppConfig
+  val config:      AppConfig
   val serviceName: String
-  val http:   HttpClientV2
-  val ec: ExecutionContext
+  val http:        HttpClientV2
+  val ec:          ExecutionContext
   given executionContext: ExecutionContext = ec
 
   lazy val url = s"${config.baseUrl(serviceName)}"
   given writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
-  
+
   def sendRepaymentDetails(
     repaymentRequest: RepaymentRequestDetail
   )(using hc: HeaderCarrier): Future[HttpResponse]
