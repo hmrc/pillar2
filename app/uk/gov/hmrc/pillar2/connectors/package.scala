@@ -30,8 +30,6 @@ package object connectors {
 
   private val logger: Logger = Logger("uk.gov.hmrc.pillar2.connectors")
 
-//  given httpReads: HttpReads[HttpResponse] = (_: String, _: String, response: HttpResponse) => response
-
   private[connectors] def hipHeaders(config: AppConfig)(using
     headerCarrier: HeaderCarrier,
     pillar2Id:     String
