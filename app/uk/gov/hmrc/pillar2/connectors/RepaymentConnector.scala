@@ -33,7 +33,7 @@ trait RepaymentConnector extends Logging {
   val ec:          ExecutionContext
   given executionContext: ExecutionContext = ec
 
-  lazy val url: String = s"${config.baseUrl(serviceName)}"
+  lazy val url: String                         = s"${config.baseUrl(serviceName)}"
   given writes: Writes[RepaymentRequestDetail] = RepaymentRequestDetail.format
 
   def sendRepaymentDetails(
