@@ -23,7 +23,7 @@ import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors.{RepaymentConnector, extraHeaders}
+import uk.gov.hmrc.pillar2.connectors.RepaymentConnector
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 

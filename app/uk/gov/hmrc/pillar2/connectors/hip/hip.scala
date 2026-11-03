@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2
+package uk.gov.hmrc.pillar2.connectors
 
 import play.api.Logger
 import play.api.http.{HeaderNames as PlayHeaderNames, MimeTypes}
 import uk.gov.hmrc.http.*
 import uk.gov.hmrc.pillar2.config.AppConfig
 
-import java.time.{Instant, ZoneOffset, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import java.time.{Instant, ZoneOffset, ZonedDateTime}
 import java.util.UUID
 
-package object connectors {
+package object hip {
 
-  private val logger: Logger = Logger("uk.gov.hmrc.pillar2.connectors")
+  private val logger: Logger = Logger("uk.gov.hmrc.pillar2.connectors.hip")
 
   private[connectors] def hipHeaders(config: AppConfig)(using
     headerCarrier: HeaderCarrier,
@@ -51,7 +51,7 @@ package object connectors {
     ) ++ authHeader.headers(Seq(HeaderNames.authorisation))
   }
 
-  private[connectors] def hipHeadersNew(correlationId: String, appConfig: AppConfig): Seq[(String, String)] =
+  private[connectors] def hipHeadersCreateRepayment(correlationId: String, appConfig: AppConfig): Seq[(String, String)] =
     Seq(
       PlayHeaderNames.ACCEPT  -> MimeTypes.JSON,
       "correlationid"         -> correlationId,
@@ -61,38 +61,4 @@ package object connectors {
       "Authorization"         -> s"Basic ${appConfig.hipKey}"
     )
 
-  private[connectors] def extraHeaders(
-    config:      AppConfig,
-    serviceName: String
-  )(using headerCarrier: HeaderCarrier): Seq[(String, String)] = {
-    val newHeaders = headerCarrier
-      .copy(authorization = Some(Authorization(s"Bearer ${config.bearerToken(serviceName)}")))
-
-    newHeaders.headers(Seq(HeaderNames.authorisation)) ++ addHeaders(config.environment(serviceName))
-  }
-
-  private val stripSession: String => String = (input: String) => input.replace("session-", "")
-
-  private def addHeaders(
-    eisEnvironment: String
-  )(using headerCarrier: HeaderCarrier): Seq[(String, String)] = {
-
-    // HTTP-date format defined by RFC 7231 e.g. Fri, 01 Aug 2020 15:51:38 GMT+1
-    val formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O")
-
-    val correlationId = UUID.randomUUID.toString
-    logger.info(s"Request correlationId: $correlationId")
-    Seq(
-      "x-forwarded-host"  -> "mdtp",
-      "date"              -> ZonedDateTime.now().format(formatter),
-      "x-correlation-id"  -> correlationId,
-      "x-conversation-id" ->
-        headerCarrier.sessionId
-          .map(s => stripSession(s.value))
-          .getOrElse(UUID.randomUUID.toString),
-      "content-type" -> "application/json",
-      "accept"       -> "application/json",
-      "Environment"  -> eisEnvironment
-    )
-  }
 }

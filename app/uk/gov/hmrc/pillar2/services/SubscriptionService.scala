@@ -23,7 +23,7 @@ import play.api.Logging
 import play.api.http.Status.*
 import play.api.libs.json.*
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse}
-import uk.gov.hmrc.pillar2.connectors.SubscriptionConnector
+import uk.gov.hmrc.pillar2.connectors.ifs.SubscriptionConnector
 import uk.gov.hmrc.pillar2.models.*
 import uk.gov.hmrc.pillar2.models.audit.AuditResponseReceived
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.SubscriptionProcessingError

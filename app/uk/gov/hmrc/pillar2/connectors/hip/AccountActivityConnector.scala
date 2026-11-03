@@ -22,7 +22,6 @@ import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, given}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors.hipHeaders
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 

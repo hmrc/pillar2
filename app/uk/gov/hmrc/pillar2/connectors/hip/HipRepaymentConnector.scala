@@ -19,7 +19,6 @@ package uk.gov.hmrc.pillar2.connectors.hip
 import com.google.inject.Inject
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
-import uk.gov.hmrc.pillar2.connectors.hipHeadersNew
 import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
@@ -50,7 +49,7 @@ class HipRepaymentConnector @Inject() (
 
     http
       .post(url"$url")
-      .setHeader(hipHeadersNew(correlationId, config)*)
+      .setHeader(hipHeadersCreateRepayment(correlationId, config)*)
       .withBody(Json.toJson(repaymentRequest))
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }

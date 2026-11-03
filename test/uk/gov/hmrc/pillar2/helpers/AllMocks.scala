@@ -23,9 +23,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors.*
 import uk.gov.hmrc.pillar2.connectors.hip.{BTNConnector, HipRepaymentConnector, ORNConnector, ObligationsAndSubmissionsConnector, UKTaxReturnConnector}
-import uk.gov.hmrc.pillar2.connectors.ifs.IFRepaymentConnector
+import uk.gov.hmrc.pillar2.connectors.ifs.{IFRepaymentConnector, RegistrationConnector, SubscriptionConnector}
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.services.*
