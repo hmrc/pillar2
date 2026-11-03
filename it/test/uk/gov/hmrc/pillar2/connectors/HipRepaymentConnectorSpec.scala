@@ -21,7 +21,7 @@ import org.scalatest.Inspectors.forAll as forAllInspectors
 import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
-import play.api.http.{MimeTypes, HeaderNames as PlayHeaderNames}
+import play.api.http.{HeaderNames as PlayHeaderNames, MimeTypes}
 import play.api.libs.json.Json
 import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.connectors.hip.HipRepaymentConnector
