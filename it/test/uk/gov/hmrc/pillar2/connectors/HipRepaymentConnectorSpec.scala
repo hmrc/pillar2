@@ -36,8 +36,7 @@ class HipRepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheck
 
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.hip.create-repayment.port" -> server.port(),
-      "features.hip.create-payment"                     -> true
+      "microservice.services.hip.create-repayment.port" -> server.port()
     )
     .build()
 

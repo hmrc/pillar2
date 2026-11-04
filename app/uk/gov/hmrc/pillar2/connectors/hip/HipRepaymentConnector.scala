@@ -36,8 +36,7 @@ class HipRepaymentConnector @Inject() (
   val http:   HttpClientV2
 ) extends RepaymentConnector {
 
-  val serviceName:   String = "hip.create-repayment"
-  val correlationId: String = UUID.randomUUID().toString
+  val serviceName: String = "hip.create-repayment"
 
   override def sendRepaymentDetails(
     repaymentRequest: RepaymentRequestDetail
