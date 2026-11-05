@@ -35,7 +35,7 @@ class IFRepaymentConnector @Inject() (
   val http:   HttpClientV2
 ) extends RepaymentConnector {
 
-  val serviceName = "if.create-repayment"
+  val serviceName = "create-repayment"
 
   def sendRepaymentDetails(
     repaymentRequest: RepaymentRequestDetail

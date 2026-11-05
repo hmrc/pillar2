@@ -32,7 +32,7 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
 
   override lazy val app: Application = applicationBuilder()
     .configure(
-      "microservice.services.if.create-repayment.port" -> server.port()
+      "microservice.services.create-repayment.port" -> server.port()
     )
     .build()
 
