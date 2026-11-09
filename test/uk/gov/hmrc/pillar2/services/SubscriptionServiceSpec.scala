@@ -290,12 +290,11 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
       ).thenReturn(Future.successful(AuditResult.Success))
 
       val failureBody = Json.obj(
-        "errorDetail" -> Json.obj(
-          "timestamp"         -> "2023-02-14T12:58:44Z",
-          "errorCode"         -> "422",
-          "errorMessage"      -> "Request Not Processed",
-          "source"            -> "Back End",
-          "sourceFaultDetail" -> Json.obj("detail" -> Json.arr("001 - Request Not Processed"))
+        "failures" -> Json.arr(
+          Json.obj(
+            "code"   -> "REQUEST_NOT_PROCESSED",
+            "reason" -> "The backend has indicated that the request could not be processed."
+          )
         )
       )
 
@@ -308,7 +307,28 @@ class SubscriptionServiceSpec extends BaseSpec with Generators with ScalaCheckPr
 
       forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
         subscriptionService.sendAmendedData(id, validAmendObject).failed.futureValue mustEqual
-          ETMPValidationError("422", "Request Not Processed")
+          ETMPValidationError("REQUEST_NOT_PROCESSED", "The backend has indicated that the request could not be processed.")
+      }
+    }
+
+    "must fail with InvalidJsonError when the downstream 422 response contains an empty failure array" in {
+      when(
+        mockAuditService.auditAmendSubscription(any[SubscriptionDataAmend], any[AuditResponseReceived])(using any[HeaderCarrier])
+      ).thenReturn(Future.successful(AuditResult.Success))
+
+      val failureBody = Json.obj(
+        "failures" -> Json.arr()
+      )
+
+      when(
+        mockSubscriptionConnector.amendSubscriptionInformation(any[EtmpAmendSubscriptionRequest]())(using
+          any[HeaderCarrier](),
+          any[ExecutionContext]()
+        )
+      ).thenReturn(Future.successful(HttpResponse(UNPROCESSABLE_ENTITY, failureBody.toString())))
+
+      forAll(arbitrarySubscriptionDataAmend.arbitrary, arbMockId.arbitrary) { (validAmendObject, id) =>
+        subscriptionService.sendAmendedData(id, validAmendObject).failed.futureValue mustBe InvalidJsonError(failureBody.toString)
       }
     }
 

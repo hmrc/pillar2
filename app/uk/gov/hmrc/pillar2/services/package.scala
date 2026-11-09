@@ -22,8 +22,7 @@ import uk.gov.hmrc.http.HttpResponse
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivitySuccess
 import uk.gov.hmrc.pillar2.models.errors.Pillar2Error.{ApiInternalServerError, ETMPValidationError, InvalidJsonError}
 import uk.gov.hmrc.pillar2.models.hip.{ApiFailureResponse, ApiSuccessResponse}
-import uk.gov.hmrc.pillar2.models.hods.ErrorDetails
-import uk.gov.hmrc.pillar2.models.hods.subscription.responses.AmendSubscriptionResponse
+import uk.gov.hmrc.pillar2.models.hods.subscription.responses.{AmendSubscriptionFailureResponse, AmendSubscriptionResponse}
 import uk.gov.hmrc.pillar2.models.obligationsAndSubmissions.ObligationsAndSubmissionsResponse
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNSuccessResponse}
 
@@ -65,10 +64,14 @@ package object services extends Logging {
           case Failure(exception)             => Future.failed(InvalidJsonError(exception.getMessage))
         }
       case 422 =>
-        Try(response.json.validate[ErrorDetails]) match {
+        Try(response.json.validate[AmendSubscriptionFailureResponse]) match {
           case Success(JsSuccess(failure, _)) =>
-            logger.info(s"ETMPValidationError - Code: '${failure.errorDetail.errorCode}' Text: '${failure.errorDetail.errorMessage}'")
-            Future.failed(ETMPValidationError(failure.errorDetail.errorCode, failure.errorDetail.errorMessage))
+            failure.failures.headOption match {
+              case Some(first) =>
+                logger.info(s"ETMPValidationError - Code: '${first.code}' Text: '${first.reason}'")
+                Future.failed(ETMPValidationError(first.code, first.reason))
+              case None => Future.failed(InvalidJsonError(response.body))
+            }
           case Success(JsError(_)) => Future.failed(InvalidJsonError(response.body))
           case Failure(exception)  => Future.failed(InvalidJsonError(exception.getMessage))
         }
