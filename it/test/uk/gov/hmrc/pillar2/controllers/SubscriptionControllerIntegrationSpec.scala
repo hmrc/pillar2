@@ -70,11 +70,11 @@ class SubscriptionControllerIntegrationSpec
             .withBody(
               Json
                 .obj(
-                  "errorDetail" -> Json.obj(
-                    "timestamp"    -> "2023-02-14T12:58:44Z",
-                    "errorCode"    -> "014",
-                    "errorMessage" -> "No subscription data found",
-                    "source"       -> "Back End"
+                  "failures" -> Json.arr(
+                    Json.obj(
+                      "code"   -> "REQUEST_NOT_PROCESSED",
+                      "reason" -> "The backend has indicated that the request could not be processed."
+                    )
                   )
                 )
                 .toString()
@@ -90,8 +90,8 @@ class SubscriptionControllerIntegrationSpec
 
     result.status mustEqual 422
     val error = result.json.as[Pillar2ApiError]
-    error.code mustEqual "014"
-    error.message mustEqual "No subscription data found"
+    error.code mustEqual "REQUEST_NOT_PROCESSED"
+    error.message mustEqual "The backend has indicated that the request could not be processed."
   }
 
   test("The downstream validation code is propagated to the caller unchanged") {
@@ -105,11 +105,11 @@ class SubscriptionControllerIntegrationSpec
             .withBody(
               Json
                 .obj(
-                  "errorDetail" -> Json.obj(
-                    "timestamp"    -> "2023-02-14T12:58:44Z",
-                    "errorCode"    -> "014",
-                    "errorMessage" -> "No subscription data found",
-                    "source"       -> "Back End"
+                  "failures" -> Json.arr(
+                    Json.obj(
+                      "code"   -> "REQUEST_NOT_PROCESSED",
+                      "reason" -> "The backend has indicated that the request could not be processed."
+                    )
                   )
                 )
                 .toString()
@@ -125,8 +125,8 @@ class SubscriptionControllerIntegrationSpec
 
     result.status mustEqual 422
     val error = result.json.as[Pillar2ApiError]
-    error.code mustEqual "014"
-    error.message mustEqual "No subscription data found"
+    error.code mustEqual "REQUEST_NOT_PROCESSED"
+    error.message mustEqual "The backend has indicated that the request could not be processed."
   }
 
   test("An unmapped downstream status is mapped to a 500 with the generic API error code") {
