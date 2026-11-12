@@ -17,18 +17,18 @@
 package uk.gov.hmrc.pillar2.connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock.*
+import org.scalatest.concurrent.IntegrationPatience
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.libs.json.Json
+import uk.gov.hmrc.pillar2.connectors.ifs.IFRepaymentConnector
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
-import uk.gov.hmrc.pillar2.models.hods.repayment.common.BankDetails
-import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentContactDetails
-import uk.gov.hmrc.pillar2.models.hods.repayment.common.RepaymentDetails
+import uk.gov.hmrc.pillar2.models.hods.repayment.common.{BankDetails, RepaymentContactDetails, RepaymentDetails}
 import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
-class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks {
+class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPropertyChecks with IntegrationPatience {
 
   override lazy val app: Application = applicationBuilder()
     .configure(
@@ -36,8 +36,8 @@ class RepaymentConnectorSpec extends BaseSpec with Generators with ScalaCheckPro
     )
     .build()
 
-  lazy val connector: RepaymentConnector =
-    app.injector.instanceOf[RepaymentConnector]
+  lazy val connector: IFRepaymentConnector =
+    app.injector.instanceOf[IFRepaymentConnector]
 
   "RepaymentConnector" - {
 

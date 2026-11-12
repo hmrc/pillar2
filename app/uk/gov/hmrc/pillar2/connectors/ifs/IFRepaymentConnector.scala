@@ -14,35 +14,37 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.connectors
+package uk.gov.hmrc.pillar2.connectors.ifs
 
 import com.google.inject.Inject
-import play.api.Logger
 import play.api.libs.json.Json
 import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.connectors.RepaymentConnector
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
-import uk.gov.hmrc.pillar2.models.hods.RegisterWithoutIDRequest
+import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class RegistrationConnector @Inject() (
+class IFRepaymentConnector @Inject() (
+  val ec:     ExecutionContext,
   val config: AppConfig,
   val http:   HttpClientV2
-) {
-  given logger: Logger = Logger(this.getClass.getName)
-  def sendWithoutIDInformation(registration: RegisterWithoutIDRequest)(using hc: HeaderCarrier, ec: ExecutionContext): Future[HttpResponse] = {
-    val serviceName = "register-without-id"
+) extends RepaymentConnector {
+
+  val serviceName = "create-repayment"
+
+  def sendRepaymentDetails(
+    repaymentRequest: RepaymentRequestDetail
+  )(using hc: HeaderCarrier): Future[HttpResponse] =
     http
-      .post(url"${config.baseUrl(serviceName)}")
+      .post(url"$url")
       .setHeader(extraHeaders(config, serviceName)*)
-      .withBody(Json.toJson(registration))
+      .withBody(Json.toJson(repaymentRequest))
       .execute[HttpResponse]
-      .recoverWith { case e =>
-        logger.error(s"RegistrationConnector - Failed to post to $serviceName", e)
-        Future.failed(UnexpectedResponse)
-      }
-  }
+      .recoverWith { case _ => Future.failed(UnexpectedResponse) }
+
 }

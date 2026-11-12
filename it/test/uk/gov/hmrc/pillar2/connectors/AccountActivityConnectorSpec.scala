@@ -21,6 +21,7 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.scalatest.concurrent.IntegrationPatience
 import play.api.Application
 import play.api.libs.json.{JsValue, Json}
+import uk.gov.hmrc.pillar2.connectors.hip.AccountActivityConnector
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.accountactivity.AccountActivityRequest
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse

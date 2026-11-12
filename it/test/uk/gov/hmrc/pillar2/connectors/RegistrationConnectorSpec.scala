@@ -20,6 +20,7 @@ import org.scalacheck.Arbitrary.arbitrary
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import play.api.Application
 import play.api.test.Helpers.await
+import uk.gov.hmrc.pillar2.connectors.ifs.RegistrationConnector
 import uk.gov.hmrc.pillar2.generators.Generators
 import uk.gov.hmrc.pillar2.helpers.BaseSpec
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse

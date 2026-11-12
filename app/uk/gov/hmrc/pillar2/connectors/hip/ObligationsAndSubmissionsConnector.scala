@@ -1,5 +1,5 @@
 /*
- * Copyright 2023 HM Revenue & Customs
+ * Copyright 2024 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,30 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.connectors
+package uk.gov.hmrc.pillar2.connectors.hip
 
 import com.google.inject.Inject
-import play.api.Logging
-import play.api.libs.json.Json
-import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.*
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.models.btn.BTNRequest
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
 
+import java.time.LocalDate
 import scala.concurrent.{ExecutionContext, Future}
 
-class BTNConnector @Inject() (val config: AppConfig, val http: HttpClientV2)(using ec: ExecutionContext) extends Logging {
+class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
 
-  def sendBtn(btnRequest: BTNRequest)(using hc: HeaderCarrier, pillar2Id: String): Future[HttpResponse] = {
-    val serviceName = "below-threshold-notification"
-    val url         = config.baseUrl(serviceName)
-    logger.info(s"Calling $url to submit a BTN")
-    http
-      .post(url"$url")
-      .withBody(Json.toJson(btnRequest))
+  def getObligationsAndSubmissions(fromDate: LocalDate, toDate: LocalDate)(using
+    hc:        HeaderCarrier,
+    ec:        ExecutionContext,
+    pillar2Id: String
+  ): Future[HttpResponse] = {
+    val serviceName = "obligations-and-submissions"
+    val url         =
+      s"${config.baseUrl(serviceName)}?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
+    httpClient
+      .get(url"$url")
       .setHeader(hipHeaders(config = config)*)
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }

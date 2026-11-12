@@ -23,7 +23,8 @@ import org.scalatestplus.mockito.MockitoSugar
 import uk.gov.hmrc.auth.core.{AuthConnector, AuthorisedFunctions}
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.pillar2.config.AppConfig
-import uk.gov.hmrc.pillar2.connectors.*
+import uk.gov.hmrc.pillar2.connectors.hip.{BTNConnector, HipRepaymentConnector, ORNConnector, ObligationsAndSubmissionsConnector, UKTaxReturnConnector}
+import uk.gov.hmrc.pillar2.connectors.ifs.{IFRepaymentConnector, RegistrationConnector, SubscriptionConnector}
 import uk.gov.hmrc.pillar2.controllers.actions.AuthAction
 import uk.gov.hmrc.pillar2.repositories.RegistrationCacheRepository
 import uk.gov.hmrc.pillar2.services.*
@@ -41,7 +42,8 @@ trait AllMocks extends MockitoSugar {
   val mockRegistrationCacheRepository:        RegistrationCacheRepository        = mock[RegistrationCacheRepository]
   val mockHttpClient:                         HttpClientV2                       = mock[HttpClientV2]
   val mockDataSubmissionsConnector:           RegistrationConnector              = mock[RegistrationConnector]
-  val mockRepaymentConnector:                 RepaymentConnector                 = mock[RepaymentConnector]
+  val mockIFRepaymentConnector:               IFRepaymentConnector               = mock[IFRepaymentConnector]
+  val mockHipRepaymentConnector:              HipRepaymentConnector              = mock[HipRepaymentConnector]
   val mockDataSubmissionsService:             RegistrationService                = mock[RegistrationService]
   val mockSubscriptionConnector:              SubscriptionConnector              = mock[SubscriptionConnector]
   val mockSubscriptionService:                SubscriptionService                = mock[SubscriptionService]
@@ -64,7 +66,7 @@ trait AllMocks extends MockitoSugar {
       mockActorSystem,
       mockAuditConnector,
       mockAuthConnector,
-      mockRepaymentConnector,
+      mockIFRepaymentConnector,
       mockAppConfig,
       mockRegistrationCacheRepository,
       mockHttpClient,

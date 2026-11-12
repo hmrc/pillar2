@@ -1,5 +1,5 @@
 /*
- * Copyright 2024 HM Revenue & Customs
+ * Copyright 2026 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,31 +14,43 @@
  * limitations under the License.
  */
 
-package uk.gov.hmrc.pillar2.connectors
+package uk.gov.hmrc.pillar2.connectors.hip
 
 import com.google.inject.Inject
+import play.api.libs.json.Json
+import play.api.libs.ws.JsonBodyWritables.writeableOf_JsValue
+import uk.gov.hmrc.http.HttpReads.Implicits.readRaw
 import uk.gov.hmrc.http.client.HttpClientV2
 import uk.gov.hmrc.http.{HeaderCarrier, HttpResponse, StringContextOps}
 import uk.gov.hmrc.pillar2.config.AppConfig
+import uk.gov.hmrc.pillar2.connectors.RepaymentConnector
 import uk.gov.hmrc.pillar2.models.errors.UnexpectedResponse
+import uk.gov.hmrc.pillar2.models.hods.repayment.request.RepaymentRequestDetail
 
-import java.time.LocalDate
+import java.util.UUID
 import scala.concurrent.{ExecutionContext, Future}
 
-class ObligationsAndSubmissionsConnector @Inject() (val config: AppConfig, val httpClient: HttpClientV2) {
+class HipRepaymentConnector @Inject() (
+  val ec:     ExecutionContext,
+  val config: AppConfig,
+  val http:   HttpClientV2
+) extends RepaymentConnector {
 
-  def getObligationsAndSubmissions(fromDate: LocalDate, toDate: LocalDate)(using
-    hc:        HeaderCarrier,
-    ec:        ExecutionContext,
-    pillar2Id: String
-  ): Future[HttpResponse] = {
-    val serviceName = "obligations-and-submissions"
-    val url         =
-      s"${config.baseUrl(serviceName)}?fromDate=${fromDate.toString}&toDate=${toDate.toString}"
-    httpClient
-      .get(url"$url")
-      .setHeader(hipHeaders(config = config)*)
+  val serviceName: String = "hip.create-repayment"
+
+  override def sendRepaymentDetails(
+    repaymentRequest: RepaymentRequestDetail
+  )(using
+    hc: HeaderCarrier
+  ): Future[HttpResponse] =
+
+    val correlationId = UUID.randomUUID().toString
+
+    http
+      .post(url"$url")
+      .setHeader(hipHeadersCreateRepayment(correlationId, config)*)
+      .withBody(Json.toJson(repaymentRequest))
       .execute[HttpResponse]
       .recoverWith { case _ => Future.failed(UnexpectedResponse) }
-  }
+
 }

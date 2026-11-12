@@ -17,7 +17,7 @@
 package uk.gov.hmrc.pillar2.services
 
 import uk.gov.hmrc.http.HeaderCarrier
-import uk.gov.hmrc.pillar2.connectors.ORNConnector
+import uk.gov.hmrc.pillar2.connectors.hip.ORNConnector
 import uk.gov.hmrc.pillar2.models.orn.{GetORNSuccessResponse, ORNRequest, ORNSuccessResponse}
 
 import java.time.LocalDate
